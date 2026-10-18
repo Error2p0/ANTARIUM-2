@@ -23,7 +23,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 82062fe8fc8ce4340acebec1ad5d1a4a, type: 2}
   - {fileID: 11400000, guid: 959260656c9bb594c934bda44d4e911c, type: 2}
   - {fileID: 11400000, guid: dba79727118b0a345894740594dce39d, type: 2}
+  - {fileID: 11400000, guid: 0476c2bba1101384798b9f1c72376ed0, type: 2}
   - {fileID: 11400000, guid: 0dd4bfd0cec15104e972dc28786bc7eb, type: 2}
   - {fileID: 11400000, guid: 573e1a799c0f506459e7c20fec5df5fc, type: 2}
   - {fileID: 11400000, guid: 8b7e86cb7dce5c942a47b6799374ebf6, type: 2}
+  items:
+  - {fileID: 11400000, guid: 1556088c0f9216946bf4cf46fe978a9c, type: 2}
+  - {fileID: 11400000, guid: f24c38572f3c4124e84a9f71196cbcf4, type: 2}
+  - {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+  - {fileID: 11400000, guid: dcdeb32bddf75074f83de6aa0c054e8c, type: 2}
+  - {fileID: 11400000, guid: 1214da5b82e5ae54095e70eb5c1d0b63, type: 2}
+  - {fileID: 11400000, guid: a69dfc8b68d100646aef866438294865, type: 2}
+  - {fileID: 11400000, guid: 3db7f9fb66f9a1746bce8b0ed6f21c66, type: 2}
+  - {fileID: 11400000, guid: efec2290bebb34e41a12c3b5e43269b1, type: 2}
   worldGen: {fileID: 11400000, guid: a3d636bbb984f0744b89ea11c673b5d7, type: 2}
+  surfaceForage:
+  - {fileID: 11400000, guid: efec2290bebb34e41a12c3b5e43269b1, type: 2}

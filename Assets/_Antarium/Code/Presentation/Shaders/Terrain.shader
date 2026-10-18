@@ -52,7 +52,7 @@ Shader "Antarium/Terrain"
             {
                 TerrainSurface s = EvaluateTerrain(input.positionWS);
                 if (s.hidden)
-                    return half4(0, 0, 0, 1);
+                    return s.fogOrder ? half4(_AntOverlay.rgb * 0.35, 1) : half4(0, 0, 0, 1);
                 if (s.unlit)
                     return half4(s.albedo, 1);
 

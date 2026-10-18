@@ -31,6 +31,7 @@ namespace Antarium.Gameplay
         [Header("Rendering")]
         [SerializeField] Material terrainMaterial;
         [SerializeField] Material particleMaterial;
+        [SerializeField] Material spriteMaterial;
 
         [Header("World")]
         [SerializeField] bool randomSeed;
@@ -43,13 +44,15 @@ namespace Antarium.Gameplay
         PixelCamera _camera;
         GameInput _input;
         CameraController _cameraController;
-        DigTool _digTool;
-        DebugHud _hud;
+        ToolController _tools;
+        HudController _hud;
+        DebugHud _debugHud;
+        ColonyView _colonyView;
         float2 _worldSize;
 
         void Awake()
         {
-            if (content == null || config == null || inputActions == null || worldCamera == null || terrainMaterial == null)
+            if (content == null || config == null || inputActions == null || worldCamera == null || terrainMaterial == null || spriteMaterial == null)
             {
                 Debug.LogError("GameBootstrap is missing references. Run 'Antarium/Setup/Create Main Scene'.", this);
                 enabled = false;
@@ -69,14 +72,18 @@ namespace Antarium.Gameplay
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, _sim.World, _sim.Light, particleMaterial, transform);
 
             _worldSize = new float2(_sim.World.Width, _sim.World.Height) * WorldConstants.CellSize;
+            _colonyView = new ColonyView(_content, spriteMaterial, transform, _worldSize);
             _camera = new PixelCamera(worldCamera, config.camera);
             int startX = _sim.World.Width / 2;
             _camera.Position = WorldGrid.CellCenterToWorld(new int2(startX, _sim.World.SurfaceY[startX] - _content.WorldGen.nestDepth / 2));
 
             _input = new GameInput(inputActions);
             _cameraController = new CameraController(_camera, _input);
-            _digTool = new DigTool(config.dig);
-            _hud = new DebugHud(hudDocument);
+            _tools = new ToolController(config.dig);
+            _hud = new HudController(hudDocument, _content);
+            _hud.ToolClicked += _tools.SetMode;
+            _tools.ModeChanged += _hud.SetActiveTool;
+            _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
         }
 
         void Update()
@@ -88,16 +95,20 @@ namespace Antarium.Gameplay
             _camera.Apply(dt, _worldSize);
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
 
-            _digTool.Update(_sim, _input.Primary.IsPressed(), _input.Primary.WasPressedThisFrame(), pointerWorld, dt, now);
+            _tools.Update(_sim, _input, pointerWorld, _hud.IsPointerOverUi(_input.Pointer), dt, now);
+            if (_input.ToggleHud.WasPressedThisFrame()) _debugHud.Visible = !_debugHud.Visible;
+            if (Debug.isDebugBuild && _input.SpawnAnts.WasPressedThisFrame()) _sim.SpawnWorkers(50);
 
             _sim.Advance(dt);
             _sim.UpdateDerived();
             _terrain.Upload();
+            _colonyView.Render(_sim, _sim.Clock.Alpha);
 
             var events = _sim.Events;
             _camera.AddTrauma(_feedback.Consume(events));
-            _digTool.Consume(events, now);
-            _hud.Update(dt, _sim, pointerWorld, _camera.Zoom, _digTool);
+            _tools.Consume(events, now);
+            _hud.Update(dt, _sim);
+            _debugHud.Update(dt, _sim, pointerWorld, _camera.Zoom, _tools);
             events.Flush();
         }
 
@@ -105,6 +116,7 @@ namespace Antarium.Gameplay
         {
             _input?.Dispose();
             _feedback?.Dispose();
+            _colonyView?.Dispose();
             _terrain?.Dispose();
             _sim?.Dispose();
             _content?.Dispose();

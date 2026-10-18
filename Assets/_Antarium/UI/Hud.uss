@@ -1,0 +1,103 @@
+/* Antarium HUD. Colours follow the earthy terrain palette; tweak freely. */
+.hud {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+}
+
+.top-bar {
+    flex-direction: row;
+    justify-content: center;
+    padding-top: 6px;
+}
+
+.resources {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    background-color: rgba(22, 14, 10, 0.88);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+    padding: 4px 10px;
+}
+
+.resource {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 8px;
+}
+
+.resource__swatch {
+    width: 8px;
+    height: 8px;
+    margin-right: 5px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.6);
+}
+
+.resource__label {
+    color: rgb(240, 230, 210);
+    font-size: 14px;
+    -unity-font-style: bold;
+    padding: 0;
+}
+
+.resource--full .resource__label {
+    color: rgb(255, 200, 110);
+}
+
+.alert-row {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.alert {
+    color: rgb(255, 130, 100);
+    font-size: 15px;
+    -unity-font-style: bold;
+    background-color: rgba(40, 6, 4, 0.8);
+    padding: 3px 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+.debug {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    color: rgb(255, 255, 255);
+    font-size: 11px;
+    background-color: rgba(0, 0, 0, 0.55);
+    padding: 4px 6px;
+}
+
+.toolbar {
+    position: absolute;
+    left: 0; right: 0; bottom: 10px;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.tool {
+    width: 112px;
+    height: 34px;
+    margin: 0 4px;
+    background-color: rgb(40, 26, 18);
+    color: rgb(230, 215, 190);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+    border-radius: 0;
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+.tool:hover {
+    background-color: rgb(62, 41, 28);
+}
+
+.tool--active {
+    border-color: rgb(255, 190, 90);
+    background-color: rgb(86, 54, 30);
+}

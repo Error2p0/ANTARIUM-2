@@ -21,6 +21,7 @@ namespace Antarium.Presentation
             public Vector4 EdgeLight;
             public Vector4 EdgeDark;
             public Vector4 Params;
+            public Vector4 BaseColor;
         }
 
         static readonly int CellsId = Shader.PropertyToID("_AntCells");
@@ -33,6 +34,9 @@ namespace Antarium.Presentation
         static readonly int SkyTopId = Shader.PropertyToID("_AntSkyTop");
         static readonly int SkyHorizonId = Shader.PropertyToID("_AntSkyHorizon");
         static readonly int SkyRangeId = Shader.PropertyToID("_AntSkyRange");
+        static readonly int OverlayId = Shader.PropertyToID("_AntOverlay");
+        static readonly int SpriteMinLightId = Shader.PropertyToID("_AntSpriteMinLight");
+        static readonly int StorageColorId = Shader.PropertyToID("_AntStorageColor");
 
         readonly WorldGrid _world;
         readonly LightSystem _light;
@@ -63,6 +67,7 @@ namespace Antarium.Presentation
                     EdgeLight = ToWorking(Color.Lerp(m.highlightColor, Color.white, 0.15f)),
                     EdgeDark = ToWorking(Color.Lerp(m.shadowColor, Color.black, 0.3f)),
                     Params = new Vector4(m.IsAir ? 1f : 0f, m.selfGlow, 0f, 0f),
+                    BaseColor = ToWorking(m.baseColor),
                 };
             }
             _materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, gpu.Length, Marshal.SizeOf<MaterialGpu>()) { name = "AntMaterials" };
@@ -91,7 +96,10 @@ namespace Antarium.Presentation
             Shader.SetGlobalVector(WorldId, new Vector4(_world.Width, _world.Height, _world.ChunksX, 0f));
             Shader.SetGlobalVector(PixelId, new Vector4(WorldConstants.PixelsPerUnit, WorldConstants.PixelsPerCell, render.lightBands, render.edgeNoise));
             float gamma = IsLinear ? 2.2f : 1f;
-            Shader.SetGlobalVector(WallId, new Vector4(render.wallBrightness, render.wallOcclusion, gamma, 0f));
+            Shader.SetGlobalVector(WallId, new Vector4(render.wallBrightness, render.wallOcclusion, gamma, render.wallContrast));
+            Shader.SetGlobalVector(SpriteMinLightId, new Vector4(render.spriteMinLight, 0f, 0f, 0f));
+            Shader.SetGlobalColor(OverlayId, render.miningOrderColor);
+            Shader.SetGlobalColor(StorageColorId, render.storageColor);
             Shader.SetGlobalColor(SkyTopId, render.skyTop);
             Shader.SetGlobalColor(SkyHorizonId, render.skyHorizon);
             float horizon = (_world.Height - content.WorldGen.skyHeight) * WorldConstants.CellSize;

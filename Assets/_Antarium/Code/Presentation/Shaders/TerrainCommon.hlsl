@@ -12,6 +12,7 @@ struct AntMaterial
     float4 edgeLight; // highlight for top-facing edges when no rim colour
     float4 edgeDark;  // outline for side/bottom-facing edges
     float4 params;    // x = is air, y = self glow
+    float4 baseColor; // average colour, used to flatten background walls
 };
 
 StructuredBuffer<uint> _AntCells;        // material(16) | density(8) | flags(8)
@@ -21,7 +22,7 @@ TEXTURE2D_ARRAY(_AntMaterialTex);
 
 float4 _AntWorld;      // x = width (cells), y = height (cells), z = chunks per row
 float4 _AntPixel;      // x = pixels per unit, y = pixels per cell, z = light bands, w = edge noise
-float4 _AntWall;       // x = wall brightness, y = wall occlusion, z = gamma exponent (2.2 in linear colour space, else 1)
+float4 _AntWall;       // x = wall brightness, y = wall occlusion, z = gamma exponent (2.2 in linear colour space, else 1), w = wall contrast
 float4 _AntSkyTop;
 float4 _AntSkyHorizon;
 float4 _AntSkyRange;   // x = horizon world y, y = top world y
@@ -70,7 +71,15 @@ struct Neighborhood
     float density[9];
     uint material[9];
     float revealed[9];
+    uint flags[9];
 };
+
+// Cell flag bits (must match Antarium.Sim.CellFlags).
+#define ANT_FLAG_DIG_DESIGNATED 4u
+#define ANT_FLAG_STORAGE 8u
+
+float4 _AntOverlay; // rgb = mining order colour
+float4 _AntStorageColor;
 
 Neighborhood LoadNeighborhood(int2 origin)
 {
@@ -83,6 +92,7 @@ Neighborhood LoadNeighborhood(int2 origin)
         n.density[y * 3 + x] = CellDensity(w);
         n.material[y * 3 + x] = CellMaterial(w);
         n.revealed[y * 3 + x] = CellRevealed(w);
+        n.flags[y * 3 + x] = w >> 24;
     }
     return n;
 }
@@ -150,9 +160,20 @@ PixelInfo GetPixel(float2 positionWS)
     return p;
 }
 
+// Smooth value noise on a 4-pixel lattice: wobbles contours organically without salt-and-pepper speckle.
+float ValueNoise4(int2 px)
+{
+    int2 c = px >> 2;
+    float2 f = ((float2)(px & 3) + 0.5) / 4.0;
+    f = f * f * (3.0 - 2.0 * f);
+    float a = Hash21(c), b = Hash21(c + int2(1, 0));
+    float d = Hash21(c + int2(0, 1)), e = Hash21(c + int2(1, 1));
+    return lerp(lerp(a, b, f.x), lerp(d, e, f.x), f.y);
+}
+
 bool IsSolid(Neighborhood n, float2 cellPos, int2 px)
 {
-    return FieldAt(n, cellPos) + (Hash21(px) - 0.5) * _AntPixel.w > 0.5;
+    return FieldAt(n, cellPos) + (ValueNoise4(px) - 0.5) * 2.0 * _AntPixel.w > 0.5;
 }
 
 struct TerrainSurface
@@ -161,6 +182,7 @@ struct TerrainSurface
     float glow;      // self illumination
     bool unlit;      // sky: output albedo directly
     bool hidden;     // fog of war
+    bool fogOrder;   // hidden, but shows a mining-order stripe
     float3 normalWS;
 };
 
@@ -197,8 +219,15 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
         float gy = FieldAt(n, p.cellPos + float2(0, st)) - FieldAt(n, p.cellPos - float2(0, st));
         s.normalWS = normalize(float3(-gx * 6.0, -gy * 6.0, -1.0));
 
+        // Mining order: diagonal stripes on the solid pixels of designated cells.
+        if ((n.flags[4] & ANT_FLAG_DIG_DESIGNATED) != 0 && ((p.px.x + p.px.y) & 3) == 0)
+        {
+            c = lerp(c, _AntOverlay.rgb, 0.75);
+            s.glow = 0.15;
+        }
+
         s.albedo = c;
-        s.glow = mat.params.y;
+        s.glow = max(s.glow, mat.params.y);
     }
     else
     {
@@ -214,15 +243,22 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
         }
         else
         {
-            // Background wall: darker material, with dithered occlusion near the tunnel edge.
-            float3 c = LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & 31, m).rgb * Perceptual(_AntWall.x);
-            float occ = saturate(FieldAt(n, p.cellPos) * 2.0);
-            occ = floor(occ * 3.0 + Bayer4(p.px)) / 3.0;
+            // Background wall: darker material, with stepped occlusion bands following the tunnel edge.
+            // Low-contrast background keeps the foreground (terrain edges, ants, items) readable.
+            float3 tex = LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & 31, m).rgb;
+            float3 c = lerp(mat.baseColor.rgb, tex, _AntWall.w) * Perceptual(_AntWall.x);
+            float occ = floor(saturate(FieldAt(n, p.cellPos) * 2.0 - 0.2) * 3.0) / 3.0;
             s.albedo = c * Perceptual(1.0 - _AntWall.y * occ);
+
+            // Storage zone: checker tint on the background wall.
+            if ((n.flags[4] & ANT_FLAG_STORAGE) != 0 && ((p.px.x ^ p.px.y) & 2) == 0)
+                s.albedo = lerp(s.albedo, _AntStorageColor.rgb, 0.35);
         }
     }
 
     s.hidden = RevealedAt(n, p.cellPos) + (Bayer4(p.px) - 0.5) * 0.7 < 0.5;
+    // Mining orders stay visible as faint stripes over the fog so the player can see the plan.
+    s.fogOrder = s.hidden && (n.flags[4] & ANT_FLAG_DIG_DESIGNATED) != 0 && ((p.px.x + p.px.y) & 3) == 0;
     return s;
 }
 

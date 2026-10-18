@@ -19,6 +19,8 @@ namespace Antarium.Editor
         const string UIFolder = "Assets/_Antarium/UI";
         const string TerrainMaterialPath = RenderingFolder + "/Terrain.mat";
         const string ParticleMaterialPath = RenderingFolder + "/PixelParticle.mat";
+        const string SpriteMaterialPath = RenderingFolder + "/ColonySprite.mat";
+        const string HudLayoutPath = UIFolder + "/Hud.uxml";
         const string ThemePath = UIFolder + "/AntariumTheme.tss";
         const string PanelSettingsPath = UIFolder + "/HudPanelSettings.asset";
         const string InputPath = "Assets/_Antarium/Input/AntariumInput.inputactions";
@@ -31,6 +33,7 @@ namespace Antarium.Editor
             ContentSetup.CreateDefaultContent();
             EnsureMaterial(TerrainMaterialPath, "Antarium/Terrain");
             EnsureMaterial(ParticleMaterialPath, "Antarium/PixelParticle");
+            EnsureMaterial(SpriteMaterialPath, "Antarium/ColonySprite");
             EnsurePanelSettings();
             AssetDatabase.SaveAssets();
 
@@ -42,6 +45,8 @@ namespace Antarium.Editor
             var input = Load<InputActionAsset>(InputPath);
             var terrainMaterial = Load<Material>(TerrainMaterialPath);
             var particleMaterial = Load<Material>(ParticleMaterialPath);
+            var spriteMaterial = Load<Material>(SpriteMaterialPath);
+            var hudLayout = Load<VisualTreeAsset>(HudLayoutPath);
             var panelSettings = Load<PanelSettings>(PanelSettingsPath);
 
             var cameraGo = new GameObject("Main Camera") { tag = "MainCamera" };
@@ -63,6 +68,7 @@ namespace Antarium.Editor
             var hudGo = new GameObject("HUD");
             var hud = hudGo.AddComponent<UIDocument>();
             hud.panelSettings = panelSettings;
+            hud.visualTreeAsset = hudLayout;
 
             var gameGo = new GameObject("Game");
             var bootstrap = gameGo.AddComponent<GameBootstrap>();
@@ -75,6 +81,7 @@ namespace Antarium.Editor
             so.FindProperty("hudDocument").objectReferenceValue = hud;
             so.FindProperty("terrainMaterial").objectReferenceValue = terrainMaterial;
             so.FindProperty("particleMaterial").objectReferenceValue = particleMaterial;
+            so.FindProperty("spriteMaterial").objectReferenceValue = spriteMaterial;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);

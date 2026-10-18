@@ -17,6 +17,9 @@ MonoBehaviour:
   hardness: 3
   value: 10
   flags: 0
+  drop: {fileID: 11400000, guid: 1556088c0f9216946bf4cf46fe978a9c, type: 2}
+  dropAmount: 1
+  dropChance: 1
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   emissionStrength: 0
   selfGlow: 0

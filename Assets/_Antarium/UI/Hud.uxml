@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="Hud.uss" />
+    <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
+        <ui:VisualElement name="top-bar" class="top-bar" picking-mode="Ignore">
+            <ui:VisualElement name="resources" class="resources" />
+        </ui:VisualElement>
+        <ui:VisualElement name="alert-row" class="alert-row" picking-mode="Ignore">
+            <ui:Label name="alert" class="alert hidden" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:Label name="debug" class="debug" picking-mode="Ignore" />
+        <ui:VisualElement name="toolbar" class="toolbar" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -13,6 +13,7 @@ namespace Antarium.Editor
         public const string Root = "Assets/_Antarium/Content";
         public const string MaterialsFolder = Root + "/Materials";
         public const string BiomesFolder = Root + "/Biomes";
+        public const string ItemsFolder = Root + "/Items";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -25,6 +26,16 @@ namespace Antarium.Editor
         {
             EnsureFolder(MaterialsFolder);
             EnsureFolder(BiomesFolder);
+            EnsureFolder(ItemsFolder);
+
+            var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
+            var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
+            var coalItem = Item("coal", "Coal", "#2a282e");
+            var amberItem = Item("amber", "Amber", "#e39b2b");
+            var fossilItem = Item("fossil", "Fossil", "#e8dcc0");
+            var crystalItem = Item("crystal_shard", "Crystal Shard", "#7fd8ff");
+            var seedItem = Item("seed", "Seed", "#c8a85a", food: 2f);
+            var grubItem = Item("grub", "Grub", "#f0e2c0", food: 5f);
 
             var air = Mat("air", "Air", 1f, PixelPattern.Soil, "#000000", "#000000", "#000000", "#000000", 0f, MaterialFlags.Air);
             var grass = Mat("grass", "Grass", 0.8f, PixelPattern.Soil, "#4c7a2e", "#33561f", "#6aa63c", "#2d4a1a", 0.2f, top: "#86c94e");
@@ -39,10 +50,21 @@ namespace Antarium.Editor
             var fossil = Mat("fossil", "Fossil", 4f, PixelPattern.Ore, "#5d6068", "#41434a", "#7a7e87", "#e8dcc0", 0.5f, value: 8);
             var crystal = Mat("glow_crystal", "Glow Crystal", 4f, PixelPattern.Crystal, "#28344f", "#1b2338", "#e0fbff", "#7fd8ff", 0.8f,
                 value: 12, flags: MaterialFlags.LightEmitting, emission: "#7fd0ff", emissionStrength: 0.85f, glow: 0.6f);
+            var grubNest = Mat("grub_nest", "Grub Nest", 0.8f, PixelPattern.Pebbles, "#6b4a2f", "#4a321f", "#86603d", "#f0e2c0", 0.7f);
             var bedrock = Mat("bedrock", "Bedrock", 1f, PixelPattern.Rock, "#2b2a30", "#1a191e", "#3d3c44", "#121115", 0.3f, MaterialFlags.Indestructible);
 
             var topsoil = Biome("topsoil", "Topsoil & Roots", 110, dirt, 0.028f, 0.62f,
-                Dep(pebbles, 0.09f, 0.5f), Dep(copper, 0.14f, 0.72f, minDepth: 10));
+                Dep(pebbles, 0.09f, 0.5f), Dep(copper, 0.14f, 0.72f, minDepth: 10), Dep(grubNest, 0.16f, 0.78f, minDepth: 6));
+            EnsureDeposit(topsoil, grubNest, 0.16f, 0.78f, 6);
+
+            // Fill drops on materials that have none (keeps hand-edited assets intact).
+            EnsureDrop(copper, copperItem);
+            EnsureDrop(iron, ironItem);
+            EnsureDrop(coal, coalItem);
+            EnsureDrop(amber, amberItem);
+            EnsureDrop(fossil, fossilItem);
+            EnsureDrop(crystal, crystalItem);
+            EnsureDrop(grubNest, grubItem);
             var clayBiome = Biome("clay", "Clay & Groundwater", 180, clay, 0.022f, 0.56f,
                 Dep(dirt, 0.05f, 0.6f), Dep(iron, 0.13f, 0.72f), Dep(copper, 0.15f, 0.8f));
             var strata = Biome("stone_strata", "Stone Strata", 400, stone, 0.018f, 0.5f,
@@ -58,6 +80,11 @@ namespace Antarium.Editor
             LoadOrCreate<GameConfig>(ConfigPath, _ => { });
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
+            if (database.surfaceForage.Count == 0)
+            {
+                database.surfaceForage.Add(seedItem);
+                EditorUtility.SetDirty(database);
+            }
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;
@@ -78,9 +105,14 @@ namespace Antarium.Editor
                 .OrderBy(p => p)
                 .Select(AssetDatabase.LoadAssetAtPath<TerrainMaterialDef>)
                 .ToList();
+            database.items = AssetDatabase.FindAssets("t:" + nameof(ItemDef))
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .OrderBy(p => p)
+                .Select(AssetDatabase.LoadAssetAtPath<ItemDef>)
+                .ToList();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
-            Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials.");
+            Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items.");
         }
 
         static TerrainMaterialDef Mat(string id, string displayName, float hardness, PixelPattern pattern,
@@ -119,6 +151,30 @@ namespace Antarium.Editor
                 b.caveThreshold = caveThreshold;
                 b.deposits = deposits.ToList();
             });
+        }
+
+        static ItemDef Item(string id, string displayName, string colorHex, float food = 0f)
+        {
+            return LoadOrCreate<ItemDef>($"{ItemsFolder}/{id}.asset", i =>
+            {
+                i.EditorSetIdentity(id, displayName);
+                i.color = Hex(colorHex);
+                i.foodValue = food;
+            });
+        }
+
+        static void EnsureDrop(TerrainMaterialDef material, ItemDef item)
+        {
+            if (material.drop != null) return;
+            material.drop = item;
+            EditorUtility.SetDirty(material);
+        }
+
+        static void EnsureDeposit(BiomeDef biome, TerrainMaterialDef material, float scale, float threshold, int minDepth)
+        {
+            if (biome.deposits.Any(d => d.material == material)) return;
+            biome.deposits.Add(Dep(material, scale, threshold, minDepth));
+            EditorUtility.SetDirty(biome);
         }
 
         static BiomeDef.Deposit Dep(TerrainMaterialDef material, float scale, float threshold, int minDepth = 0, int maxDepth = 0) =>

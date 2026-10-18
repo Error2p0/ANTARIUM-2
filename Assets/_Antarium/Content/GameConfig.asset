@@ -20,6 +20,7 @@ MonoBehaviour:
     brushRadius: 1.6
     brushEdgeFactor: 0.35
     hitsPerSecond: 10
+    orderBrushRadius: 1.6
     comboWindow: 0.45
     comboPerHit: 0.04
     maxCombo: 2.5
@@ -35,9 +36,13 @@ MonoBehaviour:
     edgeNoise: 0.16
     wallBrightness: 0.42
     wallOcclusion: 0.55
+    wallContrast: 0.35
     ambient: 0.025
     skyTop: {r: 0.36, g: 0.62, b: 0.86, a: 1}
     skyHorizon: {r: 0.72, g: 0.86, b: 0.93, a: 1}
+    spriteMinLight: 0.85
+    miningOrderColor: {r: 1, g: 0.69, b: 0.25, a: 1}
+    storageColor: {r: 0.3, g: 0.75, b: 0.85, a: 1}
   camera:
     minZoom: 1
     maxZoom: 8
@@ -52,3 +57,29 @@ MonoBehaviour:
     particleLifetime: 0.6
     shakePerBreak: 0.06
     maxShakePerHit: 0.25
+  colony:
+    startingWorkers: 6
+    startingFood: 40
+    baseItemCapacity: 30
+    baseFoodCapacity: 100
+    storageItemsPerCell: 4
+    storageFoodPerCell: 6
+    eggFoodCost: 6
+    eggInterval: 6
+    maxEggs: 6
+    hatchTime: 20
+    royalRadius: 4
+    workerUpkeep: 0.25
+    queenUpkeep: 1.5
+    starvingSpeedFactor: 0.5
+    forageInterval: 5
+    maxSurfaceFood: 12
+    forageRange: 120
+    fieldRefreshTicks: 4
+  worker:
+    moveSpeed: 3
+    fallSpeed: 14
+    digPower: 0.5
+    digWeight: 1
+    haulWeight: 0.8
+    wanderRadius: 16

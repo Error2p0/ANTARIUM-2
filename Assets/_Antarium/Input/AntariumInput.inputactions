@@ -176,17 +176,6 @@
                     "action": "DragPan",
                     "isComposite": false,
                     "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "83abcef0-2cd5-4685-b25f-66feae2f21cf",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "DragPan",
-                    "isComposite": false,
-                    "isPartOfComposite": false
                 }
             ]
         },
@@ -250,6 +239,42 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Secondary",
+                    "type": "Button",
+                    "id": "f1270d2c-fab5-4367-8caf-ba07543f2268",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToolDig",
+                    "type": "Button",
+                    "id": "87dc0d91-ebbf-406c-a241-aaed99616ab5",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToolMine",
+                    "type": "Button",
+                    "id": "7ea5fd90-6aca-46c5-b157-cf8742e0afb8",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToolStorage",
+                    "type": "Button",
+                    "id": "6ce22832-89fc-4d75-a30e-214719267ca1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -272,6 +297,109 @@
                     "processors": "",
                     "groups": "",
                     "action": "Primary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c521f513-d966-4c2f-a7b0-9fd21f246051",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Secondary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1f85bcd6-62c0-4c87-96cd-3a8015596037",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Secondary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "112fcc8a-a10b-4d2d-8bcd-68265c311e8c",
+                    "path": "<Keyboard>/1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToolDig",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "36f8768c-d6e7-4df0-a58f-813a6c225c8e",
+                    "path": "<Keyboard>/2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToolMine",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "222cf66c-3e5d-49e3-81df-e790b6fac113",
+                    "path": "<Keyboard>/3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToolStorage",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Debug",
+            "id": "375b4c9b-d5a3-46f0-97f1-05ae7b10d7e1",
+            "actions": [
+                {
+                    "name": "ToggleHud",
+                    "type": "Button",
+                    "id": "ca55e899-e7fb-4ebe-8d0b-6eae09f9f7ad",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SpawnAnts",
+                    "type": "Button",
+                    "id": "cef7e4f7-7024-4ceb-96c5-ccfce0d16f38",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "5aa6bbda-4ffa-4eb1-b7d3-ace34978ab6a",
+                    "path": "<Keyboard>/f3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleHud",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ab7ae0b8-e824-4bab-8d02-c3d7e12d4114",
+                    "path": "<Keyboard>/f6",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SpawnAnts",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

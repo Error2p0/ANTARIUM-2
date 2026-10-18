@@ -1,11 +1,10 @@
 using Antarium.Sim;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Antarium.Gameplay
 {
-    /// <summary>Temporary developer readout (UI Toolkit). Refreshes a few times per second to avoid per-frame garbage.</summary>
+    /// <summary>Developer readout (F3). Refreshes a few times per second to avoid per-frame garbage.</summary>
     public sealed class DebugHud
     {
         const float RefreshInterval = 0.25f;
@@ -15,27 +14,17 @@ namespace Antarium.Gameplay
         int _frames;
         float _frameTime;
 
-        public DebugHud(UIDocument document)
+        public bool Visible
         {
-            if (document == null) return;
-            _label = new Label();
-            _label.style.position = Position.Absolute;
-            _label.style.left = 8;
-            _label.style.top = 8;
-            _label.style.color = Color.white;
-            _label.style.backgroundColor = new Color(0f, 0f, 0f, 0.55f);
-            _label.style.paddingLeft = 6;
-            _label.style.paddingRight = 6;
-            _label.style.paddingTop = 4;
-            _label.style.paddingBottom = 4;
-            _label.style.fontSize = 12;
-            _label.pickingMode = PickingMode.Ignore;
-            document.rootVisualElement.Add(_label);
+            get => _label != null && _label.style.display != DisplayStyle.None;
+            set { if (_label != null) _label.style.display = value ? DisplayStyle.Flex : DisplayStyle.None; }
         }
 
-        public void Update(float deltaTime, Simulation sim, float2 pointerWorld, int zoom, DigTool dig)
+        public DebugHud(Label label) => _label = label;
+
+        public void Update(float deltaTime, Simulation sim, float2 pointerWorld, int zoom, ToolController tools)
         {
-            if (_label == null) return;
+            if (_label == null || !Visible) return;
             _frames++;
             _frameTime += deltaTime;
             _timer -= deltaTime;
@@ -60,10 +49,11 @@ namespace Antarium.Gameplay
             }
 
             _label.text =
-                $"FPS {fps:0}   zoom x{zoom}   seed {sim.Seed}\n" +
-                $"cell {cell.x},{cell.y}   depth {depth}\n" +
-                $"{under}   light {math.cmax(light):0.00}\n" +
-                $"combo x{dig.ComboMultiplier:0.00} ({dig.ComboStreak})";
+                $"FPS {fps:0}   zoom x{zoom}   seed {sim.Seed}   tick {sim.Clock.Tick}\n" +
+                $"cell {cell.x},{cell.y}   depth {depth}   {under}   light {math.cmax(light):0.00}\n" +
+                $"tool {tools.Mode}   combo x{tools.Dig.ComboMultiplier:0.00} ({tools.Dig.ComboStreak})\n" +
+                $"ants {sim.Ants.Count}   piles {sim.Colony.Piles.Count}   orders {sim.Colony.Designated.Count}   storage {sim.Colony.StorageCells.Count}\n" +
+                "F3 toggle   F6 +50 ants";
         }
     }
 }

@@ -17,6 +17,7 @@ namespace Antarium.Presentation
         readonly Color[][] _palettes;
         readonly ParticleSystem _particles;
         Unity.Mathematics.Random _rng = new(0xD16u);
+        int _budget;
 
         public DigFeedback(ContentDB content, FeedbackConfig config, float ambient, WorldGrid world, LightSystem light,
             Material particleMaterial, Transform parent)
@@ -60,8 +61,12 @@ namespace Antarium.Presentation
         /// <summary>Spawns debris for this frame's dig events. Returns camera trauma to add.</summary>
         public float Consume(EventBus events)
         {
+            _budget = _config.maxParticlesPerFrame;
+            // Breaks first: they matter most for feel when the budget runs short.
             foreach (var e in events.Read<CellDamagedEvent>())
-                Emit(e);
+                if (e.Broken) Emit(e);
+            foreach (var e in events.Read<CellDamagedEvent>())
+                if (!e.Broken) Emit(e);
 
             float trauma = 0f;
             foreach (var e in events.Read<DigResolvedEvent>())
@@ -71,8 +76,9 @@ namespace Antarium.Presentation
 
         void Emit(in CellDamagedEvent e)
         {
-            int count = e.Broken ? _config.particlesPerBreak : _config.particlesPerDamage;
-            if (count == 0) return;
+            int count = math.min(e.Broken ? _config.particlesPerBreak : _config.particlesPerDamage, _budget);
+            if (count <= 0) return;
+            _budget -= count;
 
             float3 lit = math.saturate(_light.Sample(_world, e.Cell.x, e.Cell.y) + _ambient);
             var palette = _palettes[e.Material];
