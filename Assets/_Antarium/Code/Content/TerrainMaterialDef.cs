@@ -36,6 +36,12 @@ namespace Antarium.Content
         [Min(0)] public int value;
         public MaterialFlags flags;
 
+        [Header("Drops")]
+        [Tooltip("Item dropped when a cell of this material is dug out. Empty = nothing.")]
+        public ItemDef drop;
+        [Min(1)] public int dropAmount = 1;
+        [Range(0f, 1f)] public float dropChance = 1f;
+
         [Header("Light")]
         [ColorUsage(false)] public Color emissionColor = Color.black;
         [Tooltip("Light emitted, as a fraction of the maximum light level.")]

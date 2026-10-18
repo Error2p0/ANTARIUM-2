@@ -40,10 +40,18 @@ namespace Antarium.Tests
         [Test]
         public void Dig_ReducesDensityByPowerOverHardness()
         {
-            Dig(new float2(10.5f, 10.5f), 0.5f, 0.5f);
-            Assert.AreEqual(127, _world[10, 10].Density); // 255 - ceil(0.5 * 255)
+            Dig(new float2(10.5f, 10.5f), 0.5f, 0.4f);
+            Assert.AreEqual(153, _world[10, 10].Density); // 255 - ceil(0.4 * 255)
             Assert.AreEqual(Cell.Full, _world[11, 10].Density);
             Assert.AreEqual(0, _broken.Length);
+        }
+
+        [Test]
+        public void Dig_BelowOpenThresholdBreaksTheCell()
+        {
+            Dig(new float2(10.5f, 10.5f), 0.5f, 0.6f); // 255 - 153 = 102 < 128
+            Assert.IsTrue(_world[10, 10].IsEmpty, "no half-open cells");
+            Assert.AreEqual(1, _broken.Length);
         }
 
         [Test]

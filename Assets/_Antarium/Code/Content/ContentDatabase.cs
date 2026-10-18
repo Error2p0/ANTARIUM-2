@@ -11,6 +11,9 @@ namespace Antarium.Content
     public sealed class ContentDatabase : ScriptableObject
     {
         public List<TerrainMaterialDef> materials = new();
+        public List<ItemDef> items = new();
         public WorldGenSettings worldGen;
+        [Tooltip("Food items that appear on the surface over time for workers to forage.")]
+        public List<ItemDef> surfaceForage = new();
     }
 }

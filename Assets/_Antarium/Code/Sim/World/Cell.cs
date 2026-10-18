@@ -11,6 +11,10 @@ namespace Antarium.Sim
         Revealed = 1 << 0,
         /// <summary>Open cell known to be connected to explored space. Unexplored open cells are undiscovered caves.</summary>
         Explored = 1 << 1,
+        /// <summary>Player ordered this solid cell to be mined by workers.</summary>
+        DigDesignated = 1 << 2,
+        /// <summary>Open cell painted as a storage zone.</summary>
+        Storage = 1 << 3,
     }
 
     /// <summary>

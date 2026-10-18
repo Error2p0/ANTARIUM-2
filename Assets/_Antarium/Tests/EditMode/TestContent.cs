@@ -11,6 +11,7 @@ namespace Antarium.Tests
     {
         public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock;
         public readonly BiomeDef Topsoil, Deep;
+        public readonly ItemDef Ore, Seed;
         public readonly WorldGenSettings WorldGen;
         public readonly GameConfig Config;
         public readonly ContentDB DB;
@@ -19,10 +20,15 @@ namespace Antarium.Tests
 
         public TestContent(int chunksX = 4, int chunksY = 4, bool caves = true)
         {
+            Ore = Make<ItemDef>("ore");
+            Seed = Make<ItemDef>("seed");
+            Seed.foodValue = 2f;
+
             Air = Mat("air", 1f, MaterialFlags.Air);
             Grass = Mat("grass", 1f);
             Dirt = Mat("dirt", 1f);
             Stone = Mat("stone", 4f);
+            Stone.drop = Ore;
             Crystal = Mat("crystal", 4f, MaterialFlags.LightEmitting);
             Crystal.emissionColor = Color.white;
             Crystal.emissionStrength = 1f;
@@ -52,7 +58,7 @@ namespace Antarium.Tests
             Config = Make<GameConfig>("config");
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock }, WorldGen);
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock }, WorldGen, new[] { Ore, Seed });
         }
 
         TerrainMaterialDef Mat(string id, float hardness, MaterialFlags flags = MaterialFlags.None)

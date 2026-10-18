@@ -36,3 +36,34 @@ namespace Antarium.Sim
         }
     }
 }
+
+namespace Antarium.Sim
+{
+    /// <summary>An item pile appeared or grew (dug-out drop or surface forage).</summary>
+    public readonly struct ItemDroppedEvent
+    {
+        public readonly int2 Cell;
+        public readonly ushort Item;
+        public ItemDroppedEvent(int2 cell, ushort item) { Cell = cell; Item = item; }
+    }
+
+    /// <summary>A worker delivered an item to the royal chamber or a storage zone.</summary>
+    public readonly struct ItemDeliveredEvent
+    {
+        public readonly int2 Cell;
+        public readonly ushort Item;
+        public ItemDeliveredEvent(int2 cell, ushort item) { Cell = cell; Item = item; }
+    }
+
+    public readonly struct EggLaidEvent
+    {
+        public readonly int2 Cell;
+        public EggLaidEvent(int2 cell) { Cell = cell; }
+    }
+
+    public readonly struct AntHatchedEvent
+    {
+        public readonly int2 Cell;
+        public AntHatchedEvent(int2 cell) { Cell = cell; }
+    }
+}
