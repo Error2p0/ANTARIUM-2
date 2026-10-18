@@ -1,0 +1,6 @@
+{
+    "name": "Antarium.Content",
+    "rootNamespace": "Antarium.Content",
+    "references": ["Antarium.Core", "Unity.Mathematics", "Unity.Collections"],
+    "autoReferenced": true
+}
