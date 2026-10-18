@@ -1,0 +1,10 @@
+{
+    "name": "Antarium.Tests.EditMode",
+    "rootNamespace": "Antarium.Tests",
+    "references": ["Antarium.Core", "Antarium.Content", "Antarium.Sim", "Unity.Mathematics", "Unity.Collections", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "includePlatforms": ["Editor"],
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

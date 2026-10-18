@@ -1,0 +1,6 @@
+{
+    "name": "Antarium.Presentation",
+    "rootNamespace": "Antarium.Presentation",
+    "references": ["Antarium.Core", "Antarium.Content", "Antarium.Sim", "Unity.Mathematics", "Unity.Collections", "Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.Universal.Runtime"],
+    "autoReferenced": true
+}

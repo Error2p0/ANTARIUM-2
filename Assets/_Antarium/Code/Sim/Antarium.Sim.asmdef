@@ -1,0 +1,7 @@
+{
+    "name": "Antarium.Sim",
+    "rootNamespace": "Antarium.Sim",
+    "references": ["Antarium.Core", "Antarium.Content", "Unity.Mathematics", "Unity.Collections", "Unity.Burst"],
+    "allowUnsafeCode": true,
+    "autoReferenced": true
+}

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d5d53a365767843a61fb80a74fb41d, type: 3}
+  m_Name: topsoil
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BiomeDef
+  id: topsoil
+  displayName: Topsoil & Roots
+  thickness: 110
+  baseMaterial: {fileID: 11400000, guid: b4cf27d6cc681dc4db51be0fcae1848e, type: 2}
+  deposits:
+  - material: {fileID: 11400000, guid: 573e1a799c0f506459e7c20fec5df5fc, type: 2}
+    scale: 0.09
+    threshold: 0.5
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 3aa5218b3da2b9140bcdaea56effc376, type: 2}
+    scale: 0.14
+    threshold: 0.72
+    minDepth: 10
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 0476c2bba1101384798b9f1c72376ed0, type: 2}
+    scale: 0.16
+    threshold: 0.78
+    minDepth: 6
+    maxDepth: 0
+  caveScale: 0.028
+  caveThreshold: 0.62

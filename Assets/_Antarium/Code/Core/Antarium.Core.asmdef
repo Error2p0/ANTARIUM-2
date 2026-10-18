@@ -1,0 +1,8 @@
+{
+    "name": "Antarium.Core",
+    "rootNamespace": "Antarium.Core",
+    "references": ["Unity.Mathematics", "Unity.Collections", "Unity.Burst"],
+    "allowUnsafeCode": false,
+    "autoReferenced": true,
+    "noEngineReferences": false
+}
