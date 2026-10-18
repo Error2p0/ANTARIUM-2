@@ -62,6 +62,15 @@ Dig → discover resources → haul them (ants, then conveyors) → process them
 - **Pheromone highways**: painted trails that make ants travel faster and prefer routes.
 - Throughput stats and overlays (show flow rates, blocked belts, idle ants) so optimizing feels like a puzzle.
 
+### 2.5.1 Colony basics (as built in Milestone 2)
+- **Resources**: digging a cell may drop an item (`TerrainMaterialDef.drop`): ores, coal, amber, fossils, crystal shards, grubs. Plain dirt/clay/stone drop nothing. Drops fall straight down to the floor as piles.
+- **Food**: grub nests in the topsoil (dig them → grubs) and seeds that appear on the surface over time (`ContentDatabase.surfaceForage`), so workers go outside to forage. Food items turn into Food points on delivery.
+- **Delivery**: workers haul items to the royal chamber (around the queen) or to **Storage zones** the player paints on open cells. Everything delivered goes into one colony inventory. Capacity per item type = royal chamber base + per storage cell. Ants only pick up what can still be delivered.
+- **Orders**: the player paints **Mine** orders on solid cells (also into the fog, to plan tunnels ahead) and Storage zones; right mouse erases. Personal click-dig stays as the **Dig** tool.
+- **Queen**: consumes food to lay eggs on the chamber floor; eggs hatch into workers. Workers and queen have food upkeep. At zero food the colony is **starving**: work slows and laying stops (no game over).
+- **Jobs**: idle workers choose dig or haul by flow-field distance and priority weights, limited by open slots (a few diggers per frontier cell, one hauler per item) so crowds don't queue behind a narrow tunnel front.
+- **Watchability**: colony sprites never render darker than a minimum brightness, so the colony stays readable in dark tunnels while terrain darkness still shows where light is.
+
 ### 2.6 Pheromones (signature mechanic)
 The player paints pheromone fields onto the map: *Dig*, *Gather*, *Haul to*, *Defend*, *Avoid*. Ants follow gradients. This is the main way to direct the colony and should be thematic and fun. Pheromones fade over time unless sustained by a **Pheromone Emitter** building (automation of orders).
 
@@ -129,8 +138,9 @@ The original used Unity Tilemaps and they were a headache (no proper shadows, ha
 
 ### 3.3 Simulation
 - **Fixed-tick simulation** (e.g. 20 ticks/sec) fully separated from rendering, which interpolates. This also makes offline progress and saving sane.
-- Ants: target **several hundred to a few thousand** active ants. Store ant state in struct arrays (data-oriented), update with Burst jobs where hot, render with **GPU instancing** (`Graphics.RenderMeshInstanced` or similar) and sprite-sheet animation in the shader. Do not use one GameObject per ant. (The possessed ant can be a normal GameObject.)
-- **Navigation**: ants move through dug cells and cling to surfaces. Use **flow fields** toward common destinations (queen, storage, designated jobs) and A* for individual one-off paths; update incrementally when terrain changes.
+- Ants: target **several hundred to a few thousand** active ants. Store ant state in struct arrays (data-oriented), update with Burst jobs where hot. *(Rendering as built: one dynamic mesh for all colony sprites, written each frame by a Burst job, one draw call. Same cost class as instancing, but it sorts and receives 2D lights like any renderer.)* Sprites snap to the art-pixel grid and rotate in 90° steps to follow the surface. Do not use one GameObject per ant. (The possessed ant can be a normal GameObject.)
+- **Ant update**: a parallel Burst job moves ants and decides, emitting *intents* for anything touching shared state (dig damage, pickup, delivery); a serial pass applies intents in ant order, so results are deterministic.
+- **Navigation**: ants move through open cells that touch solid ground and cling to floors, walls and ceilings (diagonal moves only around corners). **Flow fields** (BFS distance maps) per destination kind: mining front, haulable items, drop-off (royal chamber + storage), home. Rebuilt in parallel jobs at most every few ticks when something changed. A* for one-off paths is not needed yet.
 - **Pheromones**: float grid fields per pheromone type with diffusion/decay, updated in jobs.
 - **Fluids**: simple cellular automaton, updated at a lower rate, only in active regions.
 - **Items on conveyors**: simulated as data along conveyor segments (not physics objects), rendered instanced.
