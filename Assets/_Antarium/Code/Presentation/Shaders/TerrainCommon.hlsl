@@ -72,6 +72,7 @@ struct Neighborhood
     uint material[9];
     float revealed[9];
     uint flags[9];
+    float wall[9];   // 1 if the cell has a back wall (any material but Air, which is always index 0)
 };
 
 // Cell flag bits (must match Antarium.Sim.CellFlags).
@@ -93,6 +94,7 @@ Neighborhood LoadNeighborhood(int2 origin)
         n.material[y * 3 + x] = CellMaterial(w);
         n.revealed[y * 3 + x] = CellRevealed(w);
         n.flags[y * 3 + x] = w >> 24;
+        n.wall[y * 3 + x] = CellMaterial(w) != 0u ? 1.0 : 0.0;
     }
     return n;
 }
@@ -112,6 +114,26 @@ float FieldAt(Neighborhood n, float2 p)
     int i; float4 w;
     Bilinear(n, p, i, w);
     return n.density[i] * w.x + n.density[i + 1] * w.y + n.density[i + 3] * w.z + n.density[i + 4] * w.w;
+}
+
+float WallAt(Neighborhood n, float2 p)
+{
+    int i; float4 w;
+    Bilinear(n, p, i, w);
+    return n.wall[i] * w.x + n.wall[i + 1] * w.y + n.wall[i + 3] * w.z + n.wall[i + 4] * w.w;
+}
+
+// Material of a background-wall pixel: the neighbouring cell with a wall contributing the most.
+uint WallMaterial(Neighborhood n, float2 p)
+{
+    int i; float4 w;
+    Bilinear(n, p, i, w);
+    float4 s = w * float4(n.wall[i], n.wall[i + 1], n.wall[i + 3], n.wall[i + 4]);
+    int best = i; float bestScore = s.x;
+    if (s.y > bestScore) { best = i + 1; bestScore = s.y; }
+    if (s.z > bestScore) { best = i + 3; bestScore = s.z; }
+    if (s.w > bestScore) { best = i + 4; }
+    return n.material[best];
 }
 
 float RevealedAt(Neighborhood n, float2 p)
@@ -176,6 +198,23 @@ bool IsSolid(Neighborhood n, float2 cellPos, int2 px)
     return FieldAt(n, cellPos) + (ValueNoise4(px) - 0.5) * 2.0 * _AntPixel.w > 0.5;
 }
 
+// Wall vs sky uses the same rounded, wobbly contour as solid terrain, so a dug cell at the surface
+// does not show a square of back wall sticking into the sky. The threshold is a bit higher than the
+// solid one, keeping the wall edge just inside the terrain edge: it never peeks above the surface.
+bool HasWall(Neighborhood n, float2 cellPos, int2 px)
+{
+    return WallAt(n, cellPos) + (ValueNoise4(px) - 0.5) * 2.0 * _AntPixel.w > 0.65;
+}
+
+// Material boundaries between solid cells: sample the material at a smoothly jittered point so that
+// patches (a pocket of dirt in stone) read as organic blobs instead of 8x8 squares.
+int JitteredCell(Neighborhood n, float2 cellPos, int2 px)
+{
+    float2 jitter = float2(ValueNoise4(px + int2(1307, 271)), ValueNoise4(px + int2(523, 1949))) - 0.5;
+    int2 c = clamp((int2)floor(cellPos + jitter * 0.8) - n.origin, int2(0, 0), int2(2, 2));
+    return c.y * 3 + c.x;
+}
+
 struct TerrainSurface
 {
     float3 albedo;
@@ -200,7 +239,8 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
 
     if (solid)
     {
-        uint m = SolidMaterial(n, p.cellPos);
+        int jc = JitteredCell(n, p.cellPos, p.px);
+        uint m = n.density[jc] >= 0.5 ? n.material[jc] : SolidMaterial(n, p.cellPos);
         AntMaterial mat = _AntMaterials[m];
         float3 c = LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & 31, m).rgb;
 
@@ -231,9 +271,11 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
     }
     else
     {
-        uint m = n.material[4];
+        bool wallHere = HasWall(n, p.cellPos, p.px);
+        int jc = JitteredCell(n, p.cellPos, p.px);
+        uint m = n.wall[jc] > 0.5 ? n.material[jc] : WallMaterial(n, p.cellPos);
         AntMaterial mat = _AntMaterials[m];
-        if (mat.params.x > 0.5)
+        if (!wallHere)
         {
             // Sky: dithered vertical gradient.
             float t = saturate((positionWS.y - _AntSkyRange.x) / max(_AntSkyRange.y - _AntSkyRange.x, 1e-3));
