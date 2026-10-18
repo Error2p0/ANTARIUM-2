@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5f1bef41cb0ae9479b96d9785900261, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GameConfig
+  sim:
+    ticksPerSecond: 20
+    maxTicksPerFrame: 5
+  dig:
+    power: 0.6
+    brushRadius: 1.6
+    brushEdgeFactor: 0.35
+    hitsPerSecond: 10
+    comboWindow: 0.45
+    comboPerHit: 0.04
+    maxCombo: 2.5
+    revealRadius: 4
+    caveRevealLimit: 20000
+  light:
+    maxLevel: 64
+    openCost: 2
+    solidCost: 8
+    skyLight: {r: 1, g: 1, b: 1, a: 1}
+  render:
+    lightBands: 7
+    edgeNoise: 0.16
+    wallBrightness: 0.42
+    wallOcclusion: 0.55
+    ambient: 0.025
+    skyTop: {r: 0.36, g: 0.62, b: 0.86, a: 1}
+    skyHorizon: {r: 0.72, g: 0.86, b: 0.93, a: 1}
+  camera:
+    minZoom: 1
+    maxZoom: 8
+    defaultZoom: 3
+    panSpeed: 60
+    maxShakePixels: 3
+    shakeDecay: 2.5
+  feedback:
+    particlesPerDamage: 1
+    particlesPerBreak: 6
+    particleSpeed: 4
+    particleLifetime: 0.6
+    shakePerBreak: 0.06
+    maxShakePerHit: 0.25

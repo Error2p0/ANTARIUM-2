@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e5d762bd988e474491e587556e4c018, type: 3}
+  m_Name: glow_crystal
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TerrainMaterialDef
+  id: glow_crystal
+  displayName: Glow Crystal
+  hardness: 4
+  value: 12
+  flags: 4
+  emissionColor: {r: 0.49803922, g: 0.8156863, b: 1, a: 1}
+  emissionStrength: 0.85
+  selfGlow: 0.6
+  pattern: 5
+  baseColor: {r: 0.15686275, g: 0.20392157, b: 0.30980393, a: 1}
+  shadowColor: {r: 0.105882354, g: 0.13725491, b: 0.21960784, a: 1}
+  highlightColor: {r: 0.8784314, g: 0.9843137, b: 1, a: 1}
+  accentColor: {r: 0.49803922, g: 0.84705883, b: 1, a: 1}
+  accentAmount: 0.8
+  topRimColor: {r: 0, g: 0, b: 0, a: 0}
+  textureOverride: {fileID: 0}

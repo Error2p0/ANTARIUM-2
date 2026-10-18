@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cd3ac2b753927541a744ac330194a37, type: 3}
+  m_Name: ContentDatabase
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ContentDatabase
+  materials:
+  - {fileID: 11400000, guid: cb82451f557686e41b367b63ec284a90, type: 2}
+  - {fileID: 11400000, guid: 7def0e179ba399b4cb5c709014eada32, type: 2}
+  - {fileID: 11400000, guid: 93805c4604632d04fac6c5d05a2a4993, type: 2}
+  - {fileID: 11400000, guid: e527fe19dbf5a104f9cadb314d3c9421, type: 2}
+  - {fileID: 11400000, guid: e12ff2a46eae3f34db7af9d29bb1f675, type: 2}
+  - {fileID: 11400000, guid: 3aa5218b3da2b9140bcdaea56effc376, type: 2}
+  - {fileID: 11400000, guid: b4cf27d6cc681dc4db51be0fcae1848e, type: 2}
+  - {fileID: 11400000, guid: 82062fe8fc8ce4340acebec1ad5d1a4a, type: 2}
+  - {fileID: 11400000, guid: 959260656c9bb594c934bda44d4e911c, type: 2}
+  - {fileID: 11400000, guid: dba79727118b0a345894740594dce39d, type: 2}
+  - {fileID: 11400000, guid: 0dd4bfd0cec15104e972dc28786bc7eb, type: 2}
+  - {fileID: 11400000, guid: 573e1a799c0f506459e7c20fec5df5fc, type: 2}
+  - {fileID: 11400000, guid: 8b7e86cb7dce5c942a47b6799374ebf6, type: 2}
+  worldGen: {fileID: 11400000, guid: a3d636bbb984f0744b89ea11c673b5d7, type: 2}

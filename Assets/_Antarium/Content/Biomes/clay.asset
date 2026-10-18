@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d5d53a365767843a61fb80a74fb41d, type: 3}
+  m_Name: clay
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BiomeDef
+  id: clay
+  displayName: Clay & Groundwater
+  thickness: 180
+  baseMaterial: {fileID: 11400000, guid: e527fe19dbf5a104f9cadb314d3c9421, type: 2}
+  deposits:
+  - material: {fileID: 11400000, guid: b4cf27d6cc681dc4db51be0fcae1848e, type: 2}
+    scale: 0.05
+    threshold: 0.6
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 0dd4bfd0cec15104e972dc28786bc7eb, type: 2}
+    scale: 0.13
+    threshold: 0.72
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 3aa5218b3da2b9140bcdaea56effc376, type: 2}
+    scale: 0.15
+    threshold: 0.8
+    minDepth: 0
+    maxDepth: 0
+  caveScale: 0.022
+  caveThreshold: 0.56
