@@ -37,6 +37,8 @@
 - [x] Big-number formatting (`NumberFormat`)
 - [x] Invariant: cells are either solid (eroding from 255 to 128) or fully dug; no half-open cells
 - [x] 35 EditMode tests (incl. end-to-end hauling from the surface and mining orders)
+- [x] Playtest fixes: ants crawl on the back wall of dug tunnels and use octile path costs (direct routes instead of hugging walls); background wall gets a rounded edge kept inside the terrain edge (no square or peeking pixels at the shaft top); material pockets render as blobs instead of 8×8 squares
+- [x] Docs: `docs/HOW_TO_PLAY.md` (controls + how the colony works), GDD status markers
 - Measured with 1,050 ants: ~0.1–0.15 ms per sim tick, 0.09 ms sprite mesh per frame, ~1.4 ms per local light update.
 
 ## Known limits / follow-ups
@@ -52,3 +54,44 @@
 
 ## Next: Milestone 3 — Automation
 Conveyors, lifts, splitters/filters, first processing chambers and recipes, throughput overlay.
+
+## Missing / not built yet
+Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
+
+**Food & economy**
+- Only two food sources: seeds on the surface and grubs from grub nests. No real food chain yet (fungus farms, aphid ranches, leaves as fungus feed) [M3+].
+- Food is a colony-wide stock with upkeep; no per-ant hunger/rest needs.
+- Ores have no use yet: no processing (crusher, smelter), recipes or anything to spend them on [M3].
+- Storage is one shared pool; no per-item sorting or physical stockpiles shown in storage zones.
+
+**Colony & ants**
+- Only the Worker caste; no miners, haulers, nurses, builders, soldiers, scouts, engineers [M6].
+- Eggs hatch where they are laid; no nurses carrying brood, no brood chambers [M6].
+- No player-facing job priorities (weights are only in `GameConfig.worker`).
+- No ant XP/levels or traits.
+- No ant possession mode [M6].
+- Ants on the same route walk in single file and overlap.
+
+**World**
+- Only 3 of the 7 planned biomes (topsoil, clay, stone); no crystal caverns, fungal depths, magma, ruins [M5].
+- No fluids (water/lava), flooding, gas, cave-ins or unstable materials [M5].
+- Material flags *Flammable*, *Conductive*, *Unstable* have no behaviour yet.
+- No day/night cycle or weather (GDD 2.8).
+- No roots, underground lakes or other cave features beyond open caverns.
+
+**Gameplay layers**
+- No contracts/goals, active abilities, random events [M4].
+- No research tree [M4].
+- No save/load, autosave or offline progress [M4].
+- No enemies, combat or defense [M5].
+- No pheromones [M6].
+- No prestige (Nuptial Flight) [M7].
+
+**Presentation**
+- All art is placeholder generated in code (ant/queen/egg sprites, terrain textures).
+- No audio.
+- No pixel font or pixel-art UI skin; default font.
+- No queen panel, build menu, research UI, tooltips, settings menu, offline summary.
+- No overlays (flow, light, pheromones, ore scan).
+- ShadowCaster2D and dynamic lights not used yet (deferred until glow ants / possession).
+- No number pops when items are delivered.

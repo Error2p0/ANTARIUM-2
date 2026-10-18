@@ -14,7 +14,11 @@ Design: `docs/GDD.md`. Progress / next steps: `docs/TODO.md`.
 - Rendering is separate from simulation; sim runs on a fixed tick.
 - Keep systems decoupled (events or a simple message bus); avoid singleton spaghetti.
 - Profile before optimizing, but respect the performance targets (60 FPS, thousands of ants, large world).
-- Small, focused commits with clear messages. Update `docs/GDD.md` when the design changes and keep a `docs/TODO.md` of what's done and next.
+- Small, focused commits with clear messages.
+- **Always keep the documents up to date, in the same change as the code** (never leave it for later):
+  - `docs/GDD.md`: design changes, and the status markers (✅ done, 🟡 partly done with what's missing, no mark = not started).
+  - `docs/TODO.md`: done / next per milestone, known limits, and the "Missing / not built yet" list at the bottom.
+  - `docs/HOW_TO_PLAY.md`: every control, tool, HUD element and player-visible rule or number. Update it whenever input bindings, tools or gameplay rules change.
 - When something needs to be done in the Unity Editor by hand (creating assets, setting up a scene, assigning references), give exact step-by-step instructions, or better, write an editor script that does it.
 - If a design idea turns out to be bad in practice, say so and propose an alternative instead of silently forcing it.
 
