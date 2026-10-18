@@ -3,6 +3,13 @@
 Active incremental + colony automation sim, 2D side-view ant colony cross-section. PC/Steam, Unity C#.
 Design: `docs/GDD.md`. Progress / next steps: `docs/TODO.md`.
 
+## Starting a session / a milestone
+
+- Read `docs/TODO.md` (status, known limits, missing list) and the relevant parts of `docs/GDD.md` before changing code.
+- Milestones are listed in GDD §4. For a new milestone: briefly state the design decisions you're making (and any genuinely ambiguous ones as questions), then build it.
+- Each milestone ends playable, verified in the running editor (play mode + captures), with tests passing, docs updated and committed.
+- Work on a feature branch, never directly on `main`.
+
 ## Engineering rules
 
 - Unity 6.6 (6000.6.x), URP 2D Renderer, new Input System, C#. No Tilemaps.
