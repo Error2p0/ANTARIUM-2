@@ -20,13 +20,16 @@ namespace Antarium.Sim
     }
 
     /// <summary>
-    /// Shared BFS distance maps (one per destination kind) over walkable cells. Ants descend the gradient
+    /// Shared distance maps (one per destination kind) over walkable cells. Ants descend the gradient
     /// instead of each computing its own path, so cost does not grow with the number of ants.
     /// </summary>
     public sealed class FlowFields : IDisposable
     {
         public const ushort Unreachable = ushort.MaxValue;
         public const int KindCount = 4;
+        /// <summary>Distance units per straight step; a diagonal step costs <see cref="DiagonalCost"/> (≈ √2 ratio).</summary>
+        public const int StraightCost = 2;
+        public const int DiagonalCost = 3;
 
         readonly NativeArray<ushort>[] _fields = new NativeArray<ushort>[KindCount];
         readonly NativeList<int2>[] _sources = new NativeList<int2>[KindCount];
@@ -69,7 +72,7 @@ namespace Antarium.Sim
             {
                 if (!_dirty[i]) continue;
                 _dirty[i] = false;
-                handles[scheduled++] = new BfsJob
+                handles[scheduled++] = new FieldJob
                 {
                     Nav = nav,
                     Sources = _sources[i].AsArray(),
@@ -97,18 +100,29 @@ namespace Antarium.Sim
             }
         }
 
+        /// <summary>
+        /// Dial's algorithm (bucket queue) with octile step costs: straight = 2, diagonal = 3. Max edge
+        /// cost 3 < 4 buckets, so a ring of 4 lists is enough.
+        /// </summary>
         [BurstCompile]
-        struct BfsJob : IJob
+        struct FieldJob : IJob
         {
             public NavGrid Nav;
             [ReadOnly] public NativeArray<int2> Sources;
             public NativeArray<ushort> Distance;
 
+            static NativeList<int2> Bucket(int d, NativeList<int2> b0, NativeList<int2> b1, NativeList<int2> b2, NativeList<int2> b3) =>
+                (d & 3) switch { 0 => b0, 1 => b1, 2 => b2, _ => b3 };
+
             public unsafe void Execute()
             {
                 UnsafeUtility.MemSet(Distance.GetUnsafePtr(), 0xFF, (long)Distance.Length * sizeof(ushort));
-                var queue = new NativeList<int2>(1024, Allocator.Temp);
+                var b0 = new NativeList<int2>(1024, Allocator.Temp);
+                var b1 = new NativeList<int2>(1024, Allocator.Temp);
+                var b2 = new NativeList<int2>(1024, Allocator.Temp);
+                var b3 = new NativeList<int2>(1024, Allocator.Temp);
 
+                int pending = 0;
                 for (int i = 0; i < Sources.Length; i++)
                 {
                     int2 s = Sources[i];
@@ -116,27 +130,41 @@ namespace Antarium.Sim
                     int index = Nav.Index(s);
                     if (Distance[index] == 0) continue;
                     Distance[index] = 0;
-                    queue.Add(s);
+                    b0.Add(s);
+                    pending++;
                 }
 
-                for (int head = 0; head < queue.Length; head++)
+                for (int d = 0; pending > 0 && d < Unreachable; d++)
                 {
-                    int2 c = queue[head];
-                    int next = Distance[Nav.Index(c)] + 1;
-                    if (next >= Unreachable) continue;
-                    for (int d = 0; d < NavGrid.DirectionCount; d++)
+                    var bucket = Bucket(d, b0, b1, b2, b3);
+                    // Pushes from distance d land in d+2 / d+3, never in this bucket, so it does not grow here.
+                    for (int i = 0; i < bucket.Length; i++)
                     {
-                        int2 dir = NavGrid.Direction(d);
-                        int2 n = c + dir;
-                        if (!Nav.InBounds(n)) continue;
-                        int ni = Nav.Index(n);
-                        if (Distance[ni] != Unreachable) continue;
-                        if (!Nav.CanMove(c, dir)) continue;
-                        Distance[ni] = (ushort)next;
-                        queue.Add(n);
+                        pending--;
+                        int2 c = bucket[i];
+                        if (Distance[Nav.Index(c)] != d) continue; // stale: reached cheaper later
+                        for (int k = 0; k < NavGrid.DirectionCount; k++)
+                        {
+                            int2 dir = NavGrid.Direction(k);
+                            int2 n = c + dir;
+                            if (!Nav.InBounds(n)) continue;
+                            int next = d + (k < 4 ? StraightCost : DiagonalCost);
+                            if (next >= Unreachable) continue;
+                            int ni = Nav.Index(n);
+                            if (Distance[ni] <= next) continue;
+                            if (!Nav.CanMove(c, dir)) continue;
+                            Distance[ni] = (ushort)next;
+                            Bucket(next, b0, b1, b2, b3).Add(n);
+                            pending++;
+                        }
                     }
+                    bucket.Clear();
                 }
-                queue.Dispose();
+
+                b0.Dispose();
+                b1.Dispose();
+                b2.Dispose();
+                b3.Dispose();
             }
         }
     }

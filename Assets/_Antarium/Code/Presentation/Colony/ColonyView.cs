@@ -205,7 +205,11 @@ namespace Antarium.Presentation
                 var a = Ants[index];
                 float2 cellPos = math.lerp(a.PrevPos, a.Pos, Alpha);
                 int2 cell = (int2)math.floor(cellPos);
-                int2 up = a.State == AntState.Falling ? new int2(0, 1) : Nav.SurfaceUp(cell);
+                int2 up;
+                if (a.State == AntState.Falling) up = new int2(0, 1);
+                else if (Nav.TouchesSolid(cell)) up = Nav.SurfaceUp(cell);
+                // On the back wall: walk upright when moving sideways, climb sideways-on when moving vertically.
+                else up = math.abs(a.Heading.y) > math.abs(a.Heading.x) ? new int2(-1, 0) : new int2(0, 1);
 
                 int2 forwardAxis = new int2(up.y, -up.x);
                 int along = math.dot(a.Heading, forwardAxis);

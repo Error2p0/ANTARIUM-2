@@ -32,17 +32,23 @@ namespace Antarium.Tests
         void Open(int x, int y) => _world[x, y] = new Cell(_world[x, y].Material, 0, CellFlags.Revealed);
 
         [Test]
-        public void Walkable_RequiresOpenCellTouchingSolid()
+        public void Walkable_EverywhereUndergroundButOnlyNearGroundInTheSky()
         {
             for (int y = 10; y < 20; y++)
             for (int x = 10; x < 20; x++)
                 Open(x, y);
+            ushort air = _content.Index(_content.Air);
+            for (int y = 40; y < 64; y++)
+            for (int x = 0; x < 64; x++)
+                _world[x, y] = new Cell(air, 0, CellFlags.Revealed);
+
             var nav = new NavGrid(_world);
             Assert.IsTrue(nav.IsWalkable(new int2(15, 10)), "floor");
             Assert.IsTrue(nav.IsWalkable(new int2(10, 15)), "wall");
-            Assert.IsTrue(nav.IsWalkable(new int2(15, 19)), "ceiling");
-            Assert.IsFalse(nav.IsWalkable(new int2(15, 15)), "middle of a chamber");
+            Assert.IsTrue(nav.IsWalkable(new int2(15, 15)), "middle of a chamber: the back wall");
             Assert.IsFalse(nav.IsWalkable(new int2(5, 5)), "solid");
+            Assert.IsTrue(nav.IsWalkable(new int2(20, 40)), "sky touching the ground");
+            Assert.IsFalse(nav.IsWalkable(new int2(20, 45)), "open sky");
         }
 
         [Test]
@@ -58,6 +64,12 @@ namespace Antarium.Tests
             Open(30, 30);
             Open(31, 31);
             Assert.IsFalse(nav.CanMove(new int2(30, 30), new int2(1, 1)), "squeezing through a crack");
+
+            // Inside a chamber the back wall allows diagonal steps.
+            for (int y = 40; y < 46; y++)
+            for (int x = 40; x < 46; x++)
+                Open(x, y);
+            Assert.IsTrue(nav.CanMove(new int2(42, 42), new int2(1, 1)), "diagonal across the back wall");
         }
 
         [Test]
@@ -70,8 +82,16 @@ namespace Antarium.Tests
             fields.Rebuild(_world);
 
             Assert.AreEqual(0, fields.Get(FieldKind.Home, _world, new int2(5, 20)));
-            Assert.AreEqual(35, fields.Get(FieldKind.Home, _world, new int2(40, 20)));
+            Assert.AreEqual(35 * FlowFields.StraightCost, fields.Get(FieldKind.Home, _world, new int2(40, 20)));
             Assert.AreEqual(FlowFields.Unreachable, fields.Get(FieldKind.Home, _world, new int2(50, 50)));
+
+            // Diagonal steps cost more than straight ones (octile distance).
+            for (int y = 21; y <= 30; y++)
+            for (int x = 5; x <= 15; x++)
+                Open(x, y);
+            fields.MarkDirty(FieldKind.Home);
+            fields.Rebuild(_world);
+            Assert.AreEqual(10 * FlowFields.DiagonalCost, fields.Get(FieldKind.Home, _world, new int2(15, 30)), "straight diagonal line across a chamber");
             Assert.IsFalse(fields.IsDirty(FieldKind.Home));
             Assert.AreEqual(FlowFields.Unreachable, fields.Get(FieldKind.Dig, _world, new int2(20, 20)), "field without sources is unreachable");
         }

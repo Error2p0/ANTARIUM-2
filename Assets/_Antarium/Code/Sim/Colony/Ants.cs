@@ -142,7 +142,7 @@ namespace Antarium.Sim
                 DigPower = _config.digPower * speedFactor,
                 DigWeight = _config.digWeight,
                 HaulWeight = _config.haulWeight,
-                WanderRadius = _config.wanderRadius,
+                WanderRadius = _config.wanderRadius * FlowFields.StraightCost,
                 DigChance = jobChances.x,
                 HaulChance = jobChances.y,
             }.Schedule(Ants.Length, 32).Complete();

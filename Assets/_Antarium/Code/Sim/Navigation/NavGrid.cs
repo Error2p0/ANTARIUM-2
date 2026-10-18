@@ -1,16 +1,17 @@
 using System.Runtime.CompilerServices;
+using Antarium.Content;
 using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Antarium.Sim
 {
     /// <summary>
-    /// Surface-crawling movement rules, usable from Burst jobs.
+    /// Crawling movement rules, usable from Burst jobs.
     ///
-    /// Ants live in open cells that touch solid ground on at least one side (floor, wall or ceiling).
-    /// Straight moves need both cells walkable. Diagonal moves need exactly one of the two cells in between
-    /// to be solid: that is wrapping around a corner or climbing a step. Both open = jumping through the
-    /// air, both solid = squeezing through a crack. The rules are symmetric, so BFS distance fields can be
+    /// Like ants in an ant farm, workers crawl on any surface: the floor, walls and ceiling of a tunnel and
+    /// the back wall behind it, so every dug-out cell is walkable. Open sky has no back wall, so above
+    /// ground ants must touch the ground. Diagonal steps may not squeeze between two solid cells, and in
+    /// the sky they may only wrap around a corner. The rules are symmetric, so distance fields can be
     /// descended by any ant.
     /// </summary>
     public readonly struct NavGrid
@@ -53,11 +54,18 @@ namespace Antarium.Sim
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSolid(int2 c) => !InBounds(c) || !Cells[Index(c)].IsOpen;
 
+        /// <summary>Underground cells have a back wall (their material is kept after digging); sky does not.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasBackWall(int2 c) => InBounds(c) && Cells[Index(c)].Material != ContentDB.AirIndex;
+
+        public bool TouchesSolid(int2 c) =>
+            IsSolid(c + new int2(1, 0)) || IsSolid(c + new int2(-1, 0))
+            || IsSolid(c + new int2(0, 1)) || IsSolid(c + new int2(0, -1));
+
         public bool IsWalkable(int2 c)
         {
             if (!InBounds(c) || !Cells[Index(c)].IsOpen) return false;
-            return IsSolid(c + new int2(1, 0)) || IsSolid(c + new int2(-1, 0))
-                || IsSolid(c + new int2(0, 1)) || IsSolid(c + new int2(0, -1));
+            return HasBackWall(c) || TouchesSolid(c);
         }
 
         /// <summary>True if an ant standing on walkable <paramref name="from"/> can step by <paramref name="d"/>.</summary>
@@ -66,9 +74,13 @@ namespace Antarium.Sim
             int2 to = from + d;
             if (!IsWalkable(to)) return false;
             if (d.x == 0 || d.y == 0) return true;
-            bool a = IsSolid(from + new int2(d.x, 0));
-            bool b = IsSolid(from + new int2(0, d.y));
-            return a != b;
+            int2 sideA = from + new int2(d.x, 0);
+            int2 sideB = from + new int2(0, d.y);
+            bool a = IsSolid(sideA);
+            bool b = IsSolid(sideB);
+            if (a && b) return false;      // crack between two solid cells
+            if (a != b) return true;       // wrapping a corner or climbing a step
+            return IsWalkable(sideA) && IsWalkable(sideB); // across the back wall
         }
 
         /// <summary>Unit vector pointing away from the surface the ant clings to (floor first, then walls, then ceiling).</summary>
