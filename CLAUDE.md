@@ -25,4 +25,9 @@ Design: `docs/GDD.md`. Progress / next steps: `docs/TODO.md`.
   - `unity recompile` — recompile and report compile errors (run after every code change)
   - `unity test` — run EditMode/PlayMode tests
   - `unity list` / `unity command <name> ...` — editor commands (create assets, scenes, capture game view, console, etc.)
-- Git LFS is configured via `.gitattributes` for binary assets.
+  - `unity command run_tests --mode EditMode` runs tests in the open Editor (`unity test` refuses while it is open).
+  - `unity command menu --path "Antarium/Setup/Create Main Scene"` rebuilds the wired main scene.
+  - Play mode does not free-run while the Editor is unfocused (autotick doesn't help). Drive frames with
+    `unity command eval --code 'UnityEditor.EditorApplication.Step(); return 0;'` after `editor_play`.
+  - `capture_game_view --save_path X` always writes under `Assets/X`; move the PNG out and delete the folder + `.meta` right after.
+- Git LFS is configured via `.gitattributes` for binary assets. Keep Version Control mode = Visible Meta Files.
