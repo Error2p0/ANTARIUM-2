@@ -123,6 +123,15 @@ namespace Antarium.Tests
 
             inv.SetStorageCells(10);
             Assert.AreEqual(2 + 10 * config.storageItemsPerCell, inv.ItemCapacity);
+
+            // Machine demand counts even when the stock is over-full (e.g. after a refund).
+            inv.Items[ore] = inv.ItemCapacity + 50;
+            Assert.IsFalse(inv.CanAccept(ore));
+            inv.SetConsumerRoom(ore, 2);
+            Assert.IsTrue(inv.CanAccept(ore));
+            inv.BeginTransit(ore);
+            inv.BeginTransit(ore);
+            Assert.IsFalse(inv.CanAccept(ore), "two on the way fill the machine's room");
         }
 
         [Test]

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1829b3a1b47995e4582ccd99f4699f61, type: 3}
+  m_Name: smelt_iron
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.RecipeDef
+  id: smelt_iron
+  displayName: Smelt iron
+  inputs:
+  - item: {fileID: 11400000, guid: 3db7f9fb66f9a1746bce8b0ed6f21c66, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: f24c38572f3c4124e84a9f71196cbcf4, type: 2}
+    count: 1
+  outputs:
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 1
+  duration: 6

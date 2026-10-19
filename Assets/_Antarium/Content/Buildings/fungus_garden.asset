@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: fungus_garden
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: fungus_garden
+  displayName: Fungus Garden
+  kind: 4
+  paletteOrder: 11
+  description: 2 seeds -> 3 fungus (3 food each). Feed it the seeds your workers forage.
+  size: {x: 4, y: 2}
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 8
+  foodCost: 0
+  buildWork: 6
+  speed: 2
+  recipes:
+  - {fileID: 11400000, guid: d2877dfaf3f91f14580cf2f1d19bb68e, type: 2}
+  inputBatches: 2
+  outputLimit: 6
+  color: {r: 0.60784316, g: 0.4862745, b: 0.7058824, a: 1}
+  art: 2

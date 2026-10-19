@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: smelter
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: smelter
+  displayName: Smelter
+  kind: 4
+  paletteOrder: 10
+  description: 2 copper ore -> 1 copper. 2 iron ore + 1 coal -> 1 iron.
+  size: {x: 3, y: 3}
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 12
+  foodCost: 0
+  buildWork: 8
+  speed: 2
+  recipes:
+  - {fileID: 11400000, guid: 444cc13dc8194aa4daa09c64f7a6361d, type: 2}
+  - {fileID: 11400000, guid: 29c058f435e8e46458bfadf8ba60dc88, type: 2}
+  inputBatches: 2
+  outputLimit: 6
+  color: {r: 0.72156864, g: 0.3372549, b: 0.17254902, a: 1}
+  art: 1

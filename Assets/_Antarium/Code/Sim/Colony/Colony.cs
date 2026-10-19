@@ -36,10 +36,20 @@ namespace Antarium.Sim
 
         public float SpeedFactor => Starving ? _config.starvingSpeedFactor : 1f;
 
+        /// <summary>Food eaten per minute by the workers and the queen.</summary>
+        public float UpkeepPerMinute(int workers) => workers * _config.workerUpkeep + _config.queenUpkeep;
+
+        /// <summary>True inside the royal chamber or on a storage zone cell: items delivered here go into the stock.</summary>
+        public bool IsStockCell(int2 c, int worldIndex)
+        {
+            int2 d = math.abs(c - QueenCell);
+            return (d.x <= _config.royalRadius && d.y <= _config.royalRadius) || StorageCells.Contains(worldIndex);
+        }
+
         /// <summary>Food upkeep. Starvation slows the colony and stops egg laying; it is never instant death.</summary>
         public void UpdateUpkeep(int workers, float dt)
         {
-            float perMinute = workers * _config.workerUpkeep + _config.queenUpkeep;
+            float perMinute = UpkeepPerMinute(workers);
             Starving = !Inventory.ConsumeFood(perMinute / 60f * dt) || Inventory.Food <= 0f;
         }
 

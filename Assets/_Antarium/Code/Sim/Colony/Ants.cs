@@ -17,6 +17,18 @@ namespace Antarium.Sim
         Carrying,
         Wander,
         Falling,
+        SeekBuild,
+        Building,
+    }
+
+    /// <summary>Where a carrying worker decided to take its load.</summary>
+    public enum CarryDest : byte
+    {
+        Undecided,
+        /// <summary>The stock: royal chamber, storage zones and belts leading there.</summary>
+        Stock,
+        /// <summary>A machine that needs the item, or a belt feeding one.</summary>
+        Consumer,
     }
 
     /// <summary>One worker. Plain data; all ants live in one native list and are updated by Burst jobs.</summary>
@@ -32,6 +44,7 @@ namespace Antarium.Sim
 
         public AntState State;
         public ushort Carry;
+        public CarryDest Dest;
         public int2 Target;
         public float Timer;
         public float WalkPhase;
@@ -50,6 +63,9 @@ namespace Antarium.Sim
         Dig,
         Pickup,
         Deliver,
+        Build,
+        /// <summary>Put the carried item down as a pile: nothing reachable takes it right now.</summary>
+        Drop,
     }
 
     public struct AntIntent
@@ -68,15 +84,25 @@ namespace Antarium.Sim
     public sealed class AntSystem : IDisposable
     {
         readonly WorkerConfig _config;
+        readonly LogisticsConfig _logistics;
         public NativeList<Ant> Ants;
         NativeQueue<AntIntent> _intents;
         uint _spawnCounter;
 
-        public AntSystem(WorkerConfig config)
+        /// <summary>Per item: 1 if the stock has room for it right now (refreshed every tick).</summary>
+        public NativeArray<byte> StockAccepts;
+        /// <summary>Per item: index of its consumer flow field, or -1.</summary>
+        public NativeArray<int> ConsumerField;
+
+        public AntSystem(WorkerConfig config, LogisticsConfig logistics, int itemCount)
         {
             _config = config;
+            _logistics = logistics;
             Ants = new NativeList<Ant>(64, Allocator.Persistent);
             _intents = new NativeQueue<AntIntent>(Allocator.Persistent);
+            StockAccepts = new NativeArray<byte>(System.Math.Max(1, itemCount), Allocator.Persistent);
+            ConsumerField = new NativeArray<int>(System.Math.Max(1, itemCount), Allocator.Persistent);
+            for (int i = 0; i < ConsumerField.Length; i++) ConsumerField[i] = -1;
         }
 
         public int Count => Ants.Length;
@@ -104,9 +130,9 @@ namespace Antarium.Sim
         /// Chance that an idle ant takes each kind of job this tick: free openings divided by idle ants.
         /// Keeps hundreds of ants from queueing behind a two-cell tunnel front instead of hauling.
         /// </summary>
-        public float2 JobChances(int digSlots, int haulSlots)
+        public float3 JobChances(int digSlots, int haulSlots, int buildSlots)
         {
-            int idle = 0, digging = 0, hauling = 0;
+            int idle = 0, digging = 0, hauling = 0, building = 0;
             for (int i = 0; i < Ants.Length; i++)
             {
                 switch (Ants[i].State)
@@ -116,14 +142,17 @@ namespace Antarium.Sim
                     case AntState.SeekDig:
                     case AntState.Digging: digging++; break;
                     case AntState.SeekItem: hauling++; break;
+                    case AntState.SeekBuild:
+                    case AntState.Building: building++; break;
                 }
             }
             float denom = math.max(1, idle);
-            return new float2(math.saturate((digSlots - digging) / denom), math.saturate((haulSlots - hauling) / denom));
+            return new float3(math.saturate((digSlots - digging) / denom), math.saturate((haulSlots - hauling) / denom),
+                math.saturate((buildSlots - building) / denom));
         }
 
         /// <summary>Runs the think/move job. Results are applied by <see cref="Resolve"/>.</summary>
-        public void Think(WorldGrid world, FlowFields fields, float dt, float speedFactor, float2 jobChances)
+        public void Think(WorldGrid world, FlowFields fields, float dt, float speedFactor, float3 jobChances)
         {
             _intents.Clear();
             if (Ants.Length == 0) return;
@@ -131,20 +160,24 @@ namespace Antarium.Sim
             {
                 Ants = Ants.AsArray(),
                 Nav = new NavGrid(world),
-                Dig = fields[FieldKind.Dig],
-                Items = fields[FieldKind.Items],
-                Dropoff = fields[FieldKind.Dropoff],
-                Home = fields[FieldKind.Home],
+                Fields = fields.All,
+                CellCount = fields.CellCount,
+                StockAccepts = StockAccepts,
+                ConsumerField = ConsumerField,
                 Intents = _intents.AsParallelWriter(),
                 Dt = dt,
                 MoveSpeed = _config.moveSpeed * speedFactor,
                 FallSpeed = _config.fallSpeed,
                 DigPower = _config.digPower * speedFactor,
+                BuildPower = _logistics.buildPower * speedFactor,
                 DigWeight = _config.digWeight,
                 HaulWeight = _config.haulWeight,
+                BuildWeight = _logistics.buildWeight,
+                ConsumerBias = _logistics.consumerBias,
                 WanderRadius = _config.wanderRadius * FlowFields.StraightCost,
                 DigChance = jobChances.x,
                 HaulChance = jobChances.y,
+                BuildChance = jobChances.z,
             }.Schedule(Ants.Length, 32).Complete();
         }
 
@@ -173,6 +206,8 @@ namespace Antarium.Sim
         {
             if (Ants.IsCreated) Ants.Dispose();
             if (_intents.IsCreated) _intents.Dispose();
+            if (StockAccepts.IsCreated) StockAccepts.Dispose();
+            if (ConsumerField.IsCreated) ConsumerField.Dispose();
         }
 
         [BurstCompile]
@@ -180,23 +215,35 @@ namespace Antarium.Sim
         {
             public NativeArray<Ant> Ants;
             public NavGrid Nav;
-            [ReadOnly] public NativeArray<ushort> Dig;
-            [ReadOnly] public NativeArray<ushort> Items;
-            [ReadOnly] public NativeArray<ushort> Dropoff;
-            [ReadOnly] public NativeArray<ushort> Home;
+            /// <summary>All flow fields, field-major (see <see cref="FlowFields.All"/>).</summary>
+            [ReadOnly] public NativeArray<ushort> Fields;
+            public int CellCount;
+            [ReadOnly] public NativeArray<byte> StockAccepts;
+            [ReadOnly] public NativeArray<int> ConsumerField;
             public NativeQueue<AntIntent>.ParallelWriter Intents;
 
             public float Dt;
             public float MoveSpeed;
             public float FallSpeed;
             public float DigPower;
+            public float BuildPower;
             public float DigWeight;
             public float HaulWeight;
+            public float BuildWeight;
+            public float ConsumerBias;
             public int WanderRadius;
             public float DigChance;
             public float HaulChance;
+            public float BuildChance;
 
             const ushort Unreachable = FlowFields.Unreachable;
+            const int DigField = (int)FieldKind.Dig;
+            const int ItemsField = (int)FieldKind.Items;
+            const int DropoffField = (int)FieldKind.Dropoff;
+            const int HomeField = (int)FieldKind.Home;
+            const int BuildField = (int)FieldKind.Build;
+
+            ushort F(int field, int cellIndex) => Fields[field * CellCount + cellIndex];
 
             public void Execute(int index)
             {
@@ -248,7 +295,7 @@ namespace Antarium.Sim
 
                     case AntState.SeekDig:
                     {
-                        ushort d = Dig[ci];
+                        ushort d = F(DigField, ci);
                         if (d == Unreachable) a.State = AntState.Idle;
                         else if (d == 0)
                         {
@@ -260,7 +307,7 @@ namespace Antarium.Sim
                             }
                             else a.State = AntState.Idle;
                         }
-                        else if (!StepDown(ref a, Dig, d)) a.State = AntState.Idle;
+                        else if (!StepDown(ref a, DigField, d)) a.State = AntState.Idle;
                         break;
                     }
 
@@ -274,19 +321,67 @@ namespace Antarium.Sim
 
                     case AntState.SeekItem:
                     {
-                        ushort d = Items[ci];
+                        ushort d = F(ItemsField, ci);
                         if (d == Unreachable) a.State = AntState.Idle;
                         else if (d == 0) Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Pickup, Cell = c });
-                        else if (!StepDown(ref a, Items, d)) a.State = AntState.Idle;
+                        else if (!StepDown(ref a, ItemsField, d)) a.State = AntState.Idle;
                         break;
                     }
 
                     case AntState.Carrying:
                     {
-                        ushort d = Dropoff[ci];
-                        if (d == Unreachable) { a.State = AntState.Wander; a.Timer = 2f; }
-                        else if (d == 0) Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Deliver, Cell = c });
-                        else if (!StepDown(ref a, Dropoff, d)) { a.State = AntState.Wander; a.Timer = 1f; }
+                        // Choose once between the stock (incl. belts leading there, if it has room) and a machine
+                        // that needs this item (incl. belts feeding it), biased toward machines; keep that choice
+                        // until it becomes unreachable. (Re-deciding every step would always pick the stock once
+                        // inside the royal chamber, even with a machine standing right there.)
+                        ushort dd = StockAccepts[a.Carry] != 0 ? F(DropoffField, ci) : Unreachable;
+                        int cf = ConsumerField[a.Carry];
+                        ushort dc = cf >= 0 ? F(cf, ci) : Unreachable;
+                        if (a.Dest == CarryDest.Consumer && dc == Unreachable) a.Dest = CarryDest.Undecided;
+                        if (a.Dest == CarryDest.Stock && dd == Unreachable) a.Dest = CarryDest.Undecided;
+                        if (a.Dest == CarryDest.Undecided)
+                        {
+                            if (dd == Unreachable && dc == Unreachable)
+                            {
+                                // Stock full and no machine wants it (or none reachable): put it down rather than
+                                // walk around holding it; it is picked up again once it can be delivered.
+                                Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Drop, Cell = c });
+                                break;
+                            }
+                            float sd = dd == Unreachable ? float.MaxValue : dd;
+                            float sc = dc == Unreachable ? float.MaxValue : dc * ConsumerBias;
+                            a.Dest = sc < sd ? CarryDest.Consumer : CarryDest.Stock;
+                        }
+                        bool toConsumer = a.Dest == CarryDest.Consumer;
+                        ushort d = toConsumer ? dc : dd;
+                        if (d == 0) Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Deliver, Cell = c });
+                        else if (!StepDown(ref a, toConsumer ? cf : DropoffField, d)) { a.State = AntState.Wander; a.Timer = 1f; }
+                        break;
+                    }
+
+                    case AntState.SeekBuild:
+                    {
+                        ushort d = F(BuildField, ci);
+                        if (d == Unreachable) a.State = AntState.Idle;
+                        else if (d == 0)
+                        {
+                            if (FindBlueprint(c, out int2 target))
+                            {
+                                a.State = AntState.Building;
+                                a.Target = target;
+                                if (!target.Equals(c)) a.Heading = target - c;
+                            }
+                            else a.State = AntState.Idle;
+                        }
+                        else if (!StepDown(ref a, BuildField, d)) a.State = AntState.Idle;
+                        break;
+                    }
+
+                    case AntState.Building:
+                    {
+                        if (!IsBlueprint(a.Target)) { a.State = AntState.Idle; break; }
+                        a.WalkPhase += Dt * 6f;
+                        Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Build, Cell = a.Target, Amount = BuildPower * Dt });
                         break;
                     }
 
@@ -294,8 +389,8 @@ namespace Antarium.Sim
                     {
                         a.Timer -= Dt;
                         if (a.Timer <= 0f) { a.State = AntState.Idle; break; }
-                        ushort h = Home[ci];
-                        if (h != Unreachable && h > WanderRadius) StepDown(ref a, Home, h);
+                        ushort h = F(HomeField, ci);
+                        if (h != Unreachable && h > WanderRadius) StepDown(ref a, HomeField, h);
                         else if (a.Rng.NextFloat() < 0.2f) RandomStep(ref a);
                         break;
                     }
@@ -304,21 +399,29 @@ namespace Antarium.Sim
 
             void ChooseJob(ref Ant a, int ci)
             {
-                if (a.IsCarrying) { a.State = AntState.Carrying; return; }
-                ushort dig = a.Rng.NextFloat() < DigChance ? Dig[ci] : Unreachable;
-                ushort item = a.Rng.NextFloat() < HaulChance ? Items[ci] : Unreachable;
+                if (a.IsCarrying)
+                {
+                    a.State = AntState.Carrying;
+                    a.Dest = CarryDest.Undecided;
+                    return;
+                }
+                ushort dig = a.Rng.NextFloat() < DigChance ? F(DigField, ci) : Unreachable;
+                ushort item = a.Rng.NextFloat() < HaulChance ? F(ItemsField, ci) : Unreachable;
+                ushort build = a.Rng.NextFloat() < BuildChance ? F(BuildField, ci) : Unreachable;
                 float digScore = dig == Unreachable ? float.MaxValue : (dig + 1) * DigWeight;
                 float itemScore = item == Unreachable ? float.MaxValue : (item + 1) * HaulWeight;
-                if (digScore == float.MaxValue && itemScore == float.MaxValue)
+                float buildScore = build == Unreachable ? float.MaxValue : (build + 1) * BuildWeight;
+                if (digScore == float.MaxValue && itemScore == float.MaxValue && buildScore == float.MaxValue)
                 {
                     a.State = AntState.Wander;
                     a.Timer = a.Rng.NextFloat(0.8f, 2f);
                 }
+                else if (buildScore < digScore && buildScore < itemScore) a.State = AntState.SeekBuild;
                 else a.State = digScore < itemScore ? AntState.SeekDig : AntState.SeekItem;
             }
 
             /// <summary>Steps to a neighbour with a lower field value (random among equals).</summary>
-            bool StepDown(ref Ant a, NativeArray<ushort> field, ushort current)
+            bool StepDown(ref Ant a, int field, ushort current)
             {
                 int2 c = a.Cell;
                 int2 best = c;
@@ -329,7 +432,7 @@ namespace Antarium.Sim
                     int2 dir = NavGrid.Direction(i);
                     int2 n = c + dir;
                     if (!Nav.InBounds(n)) continue;
-                    ushort v = field[Nav.Index(n)];
+                    ushort v = F(field, Nav.Index(n));
                     if (v >= current || v > bestValue) continue;
                     if (!Nav.CanMove(c, dir)) continue;
                     if (v < bestValue) { bestValue = v; best = n; ties = 1; }
@@ -373,6 +476,21 @@ namespace Antarium.Sim
                 target = c;
                 return false;
             }
+
+            /// <summary>Blueprint cell at the ant's own cell or next to it.</summary>
+            bool FindBlueprint(int2 c, out int2 target)
+            {
+                target = c;
+                if (IsBlueprint(c)) return true;
+                for (int i = 0; i < NavGrid.DirectionCount; i++)
+                {
+                    int2 n = c + NavGrid.Direction(i);
+                    if (IsBlueprint(n)) { target = n; return true; }
+                }
+                return false;
+            }
+
+            bool IsBlueprint(int2 c) => Nav.InBounds(c) && (Nav.Cells[Nav.Index(c)].Flags & CellFlags.Blueprint) != 0;
 
             bool IsDesignatedSolid(int2 c)
             {

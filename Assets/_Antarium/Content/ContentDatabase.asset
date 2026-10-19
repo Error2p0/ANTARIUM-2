@@ -30,12 +30,26 @@ MonoBehaviour:
   items:
   - {fileID: 11400000, guid: 1556088c0f9216946bf4cf46fe978a9c, type: 2}
   - {fileID: 11400000, guid: f24c38572f3c4124e84a9f71196cbcf4, type: 2}
+  - {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
   - {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
   - {fileID: 11400000, guid: dcdeb32bddf75074f83de6aa0c054e8c, type: 2}
   - {fileID: 11400000, guid: 1214da5b82e5ae54095e70eb5c1d0b63, type: 2}
+  - {fileID: 11400000, guid: 93580a647449c1f48ac3fc2667523c60, type: 2}
   - {fileID: 11400000, guid: a69dfc8b68d100646aef866438294865, type: 2}
+  - {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
   - {fileID: 11400000, guid: 3db7f9fb66f9a1746bce8b0ed6f21c66, type: 2}
   - {fileID: 11400000, guid: efec2290bebb34e41a12c3b5e43269b1, type: 2}
+  buildings:
+  - {fileID: 11400000, guid: 36faaef2779d75a44bf92d2e5b3a6322, type: 2}
+  - {fileID: 11400000, guid: 5d3b357782bfe2c42920bd76b37dfe0c, type: 2}
+  - {fileID: 11400000, guid: 49d68aa91aa50e14d8894ad9d5360ba7, type: 2}
+  - {fileID: 11400000, guid: 55d5aea9213b29842b1039a9ec98ae7a, type: 2}
+  - {fileID: 11400000, guid: f56b966fcd64eef4090324309aec17e0, type: 2}
+  - {fileID: 11400000, guid: 28f14e2371b079e43bdc1c6d5c7f1ce7, type: 2}
+  recipes:
+  - {fileID: 11400000, guid: d2877dfaf3f91f14580cf2f1d19bb68e, type: 2}
+  - {fileID: 11400000, guid: 444cc13dc8194aa4daa09c64f7a6361d, type: 2}
+  - {fileID: 11400000, guid: 29c058f435e8e46458bfadf8ba60dc88, type: 2}
   worldGen: {fileID: 11400000, guid: a3d636bbb984f0744b89ea11c673b5d7, type: 2}
   surfaceForage:
   - {fileID: 11400000, guid: efec2290bebb34e41a12c3b5e43269b1, type: 2}
