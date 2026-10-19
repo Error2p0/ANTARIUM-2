@@ -39,6 +39,8 @@ namespace Antarium.Content
         [Min(0.01f)] public float buildPower = 1f;
         [Tooltip("Job choice: distance to a construction site is multiplied by this. Lower = preferred.")]
         [Min(0.01f)] public float buildWeight = 0.7f;
+        [Tooltip("Job choice: distance to stock holding an item a machine waits for is multiplied by this. Lower = preferred.")]
+        [Min(0.01f)] public float supplyWeight = 0.9f;
         [Tooltip("Workers that may work on one construction site at a time.")]
         [Min(1)] public int buildersPerSite = 2;
         [Tooltip("Share of the cost returned when a finished building is removed (blueprints always refund fully).")]
@@ -52,11 +54,11 @@ namespace Antarium.Content
         [Min(0f)] public float startingFood = 40f;
 
         [Header("Capacity")]
-        [Tooltip("Per item type, provided by the royal chamber.")]
-        [Min(0)] public int baseItemCapacity = 30;
+        [Tooltip("Items (any type) the royal chamber holds. Food has its own capacity.")]
+        [Min(0)] public int baseItemCapacity = 40;
         [Min(0f)] public float baseFoodCapacity = 100f;
-        [Tooltip("Extra capacity per item type for each storage zone cell.")]
-        [Min(0)] public int storageItemsPerCell = 4;
+        [Tooltip("Items (any type) one storage zone cell holds. The stock view draws up to 8 per cell.")]
+        [Min(0)] public int storageItemsPerCell = 8;
         [Min(0f)] public float storageFoodPerCell = 6f;
 
         [Header("Queen & brood")]
@@ -176,6 +178,8 @@ namespace Antarium.Content
         public Color overlayWorkingColor = new(0.5f, 1f, 0.5f);
         public Color overlayStarvedColor = new(1f, 0.85f, 0.3f);
         public Color overlayIdleAntColor = new(0.45f, 0.7f, 1f);
+        [Tooltip("Brightness of items kept in storage relative to loose items (they sit on the back wall).")]
+        [Range(0.3f, 1f)] public float stockBrightness = 0.8f;
     }
 
     [Serializable]

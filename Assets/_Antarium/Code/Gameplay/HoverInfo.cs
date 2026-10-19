@@ -43,6 +43,7 @@ namespace Antarium.Gameplay
             int id = pointerOverUi ? BuildingSystem.None : sim.Buildings.At(cell);
             if (id >= 0) DescribeBuilding(sim, id);
             else if (tools.Mode == ToolMode.Build && tools.Build.SelectedDef != null) DescribeSelection(sim, cell, tools);
+            else if (!pointerOverUi) DescribeStock(sim, cell);
             return _sb.Length > 0 ? _sb.ToString() : null;
         }
 
@@ -104,6 +105,30 @@ namespace Antarium.Gameplay
                 if (i > 0) _sb.Append("   ");
                 AppendRecipe(_content.Recipes[m.Data.Recipes[i]]);
             }
+        }
+
+        /// <summary>Contents of the storage cell (or the royal chamber) under the cursor.</summary>
+        void DescribeStock(Simulation sim, int2 cell)
+        {
+            if (!sim.World.InBounds(cell.x, cell.y)) return;
+            var inv = sim.Colony.Inventory;
+            var container = inv.ContainerAt(sim.World.Index(cell.x, cell.y));
+            if (container != null) _sb.Append("Storage cell ");
+            else if (sim.Colony.IsRoyalCell(cell) && sim.World[cell.x, cell.y].IsOpen)
+            {
+                container = inv.Royal;
+                _sb.Append("Royal chamber store ");
+            }
+            else return;
+            _sb.Append(container.Total).Append('/').Append(container.Capacity);
+            bool first = true;
+            for (int i = 0; i < container.Counts.Length; i++)
+            {
+                if (container.Counts[i] == 0) continue;
+                _sb.Append(first ? ":  " : ", ").Append(_content.Items[i].DisplayName).Append(' ').Append(container.Counts[i]);
+                first = false;
+            }
+            _sb.Append("\nWhole stock ").Append(inv.Stored).Append('/').Append(inv.Capacity).Append(". Workers fetch from here for machines that need it.");
         }
 
         void DescribeSelection(Simulation sim, int2 cell, ToolController tools)

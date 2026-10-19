@@ -86,6 +86,7 @@ namespace Antarium.Tests
             for (int y = 10; y < Row; y++) Open(x, y);
             for (int y = 11; y < Row; y++) Place(_c.Lift, x, y, new int2(0, -1));
             _colony.StorageCells.Add(_world.Index(x, 10));
+            _colony.Inventory.AddStorageCell(new int2(x, 10), _world.Index(x, 10));
             _b.MarkNetworkDirty();
         }
 
@@ -109,7 +110,7 @@ namespace Antarium.Tests
         public void Belt_BacksUpWhenTheStockIsFullAndResumes()
         {
             _c.Config.colony.baseItemCapacity = 0;
-            _colony.Inventory.SetStorageCells(0);
+            _colony.Inventory.RefreshCapacity();
             BeltRow(40, 45, Row);
             _b.Tick(Dt);
 
@@ -120,7 +121,7 @@ namespace Antarium.Tests
             Assert.IsTrue(_b.Get(_b.At(new int2(45, Row))).Jammed, "the end of the line is jammed");
 
             _c.Config.colony.baseItemCapacity = 100;
-            _colony.Inventory.SetStorageCells(0);
+            _colony.Inventory.RefreshCapacity();
             Run(8f);
             Assert.AreEqual(12, _colony.Inventory.Items[_ore]);
             Assert.IsFalse(_b.Get(_b.At(new int2(45, Row))).Jammed);
@@ -129,7 +130,7 @@ namespace Antarium.Tests
         [Test]
         public void Splitter_SharesItemsBetweenItsOutputs()
         {
-            _colony.Inventory.Items[_bar] = 10;
+            _colony.Inventory.Add(_bar, 10, _colony.QueenCell);
             BeltRow(25, 29, Row);
             Place(_c.Splitter, 30, Row);
             BeltRow(31, 45, Row);
@@ -148,7 +149,7 @@ namespace Antarium.Tests
         [Test]
         public void Filter_SendsTheFilteredItemOneWayAndTheRestOn()
         {
-            _colony.Inventory.Items[_bar] = 10;
+            _colony.Inventory.Add(_bar, 10, _colony.QueenCell);
             BeltRow(25, 29, Row);
             Place(_c.Filter, 30, Row, new int2(0, -1), _bar);
             BeltRow(31, 45, Row);
@@ -163,6 +164,7 @@ namespace Antarium.Tests
             Assert.AreEqual(4, Delivered(new int2(30, 11), _bar), "bars go down");
             Assert.AreEqual(4, Delivered(new int2(45, Row), _ore), "everything else continues");
             Assert.AreEqual(0, Delivered(new int2(30, 11), _ore));
+            Assert.AreEqual(4, _colony.Inventory.ContainerAt(_world.Index(30, 10)).Counts[_bar], "kept in the storage cell at the end of the lift");
         }
 
         [Test]
@@ -240,7 +242,7 @@ namespace Antarium.Tests
             // Splitters cost 2 bars in the test content.
             int splitter = Index(_c.Splitter);
             Assert.AreEqual(PlaceResult.CantAfford, _b.Place(splitter, new int2(33, Row), default));
-            _colony.Inventory.Items[_bar] = 3;
+            _colony.Inventory.Add(_bar, 3, _colony.QueenCell);
             Assert.AreEqual(PlaceResult.Ok, _b.Place(splitter, new int2(33, Row), default));
             Assert.AreEqual(1, _colony.Inventory.Items[_bar]);
             Assert.IsTrue(_b.Remove(new int2(33, Row)));
@@ -369,11 +371,27 @@ namespace Antarium.Tests
         }
 
         [Test]
+        public void Workers_FeedAMachineFromTheStock()
+        {
+            Assert.IsTrue(FindMachineSpot(out int2 origin));
+            _sim.EnqueueBuild(_content.BuildingIndex(_content.Smelter), origin, default);
+            _sim.Tick();
+            _sim.Buildings.CompleteAllBlueprints();
+            ushort ore = _content.Item(_content.Ore);
+            ushort bar = _content.Item(_content.Bar);
+            Assert.AreEqual(0, _sim.Colony.Inventory.Add(ore, 4, _sim.Colony.QueenCell));
+
+            Run(40f);
+            Assert.AreEqual(0, _sim.Colony.Inventory.Items[ore], "workers fetched the stored ore for the smelter");
+            Assert.AreEqual(2, _sim.Colony.Inventory.Items[bar], "and hauled the bars back");
+        }
+
+        [Test]
         public void Carriers_PutDownWhatNothingWillTake()
         {
             ushort ore = _content.Item(_content.Ore);
             _content.Config.colony.baseItemCapacity = 0;
-            _sim.Colony.Inventory.SetStorageCells(0);
+            _sim.Colony.Inventory.RefreshCapacity();
             var ant = _sim.Ants.Ants[0];
             ant.Carry = ore;
             ant.State = AntState.Carrying;

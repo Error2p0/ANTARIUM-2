@@ -24,7 +24,8 @@ namespace Antarium.Gameplay
         readonly Label _alert, _info, _toast;
         readonly Button[] _toolButtons = new Button[4];
         readonly Button _overlayButton;
-        readonly Label _food, _foodRate, _ants, _eggs;
+        readonly Label _food, _foodRate, _ants, _eggs, _storage;
+        readonly VisualElement _storageEntry;
         readonly VisualElement[] _itemEntries;
         readonly Label[] _itemLabels, _itemRates;
         readonly Button[] _buildingButtons;
@@ -61,6 +62,7 @@ namespace Antarium.Gameplay
             _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out _, out _foodRate);
             _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out _, out _);
             _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out _, out _);
+            _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _);
             _itemEntries = new VisualElement[content.Items.Length];
             _itemLabels = new Label[content.Items.Length];
             _itemRates = new Label[content.Items.Length];
@@ -243,6 +245,8 @@ namespace Antarium.Gameplay
             SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.Ants.Count));
             _ants.text = $"Ants {NumberFormat.Format(sim.Ants.Count)}";
             _eggs.text = $"Eggs {colony.Eggs.Count}";
+            _storage.text = $"Storage {NumberFormat.Format(inv.Stored)}/{NumberFormat.Format(inv.Capacity)}";
+            _storageEntry.EnableInClassList("resource--full", inv.Stored >= inv.Capacity);
 
             for (int i = 0; i < _itemLabels.Length; i++)
             {
@@ -251,8 +255,7 @@ namespace Antarium.Gameplay
                 bool show = count > 0 || inv.InTransit[i] > 0;
                 _itemEntries[i].EnableInClassList("hidden", !show);
                 if (!show) continue;
-                _itemLabels[i].text = $"{_content.Items[i].DisplayName} {NumberFormat.Format(count)}/{NumberFormat.Format(inv.ItemCapacity)}";
-                _itemEntries[i].EnableInClassList("resource--full", count >= inv.ItemCapacity);
+                _itemLabels[i].text = $"{_content.Items[i].DisplayName} {NumberFormat.Format(count)}";
                 SetRate(_itemRates[i], inv.IncomePerMinute[i]);
             }
 

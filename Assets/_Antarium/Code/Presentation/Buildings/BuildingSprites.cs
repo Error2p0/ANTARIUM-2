@@ -29,7 +29,10 @@ namespace Antarium.Presentation
         public const int SmelterRect = DotRect + 1;         // 2 frames: idle, working
         public const int GardenRect = SmelterRect + 2;      // 2 frames: idle, working
         public const int GenericRect = GardenRect + 2;      // plain machine block for unknown processors
-        const int RectCount = GenericRect + 1;
+        /// <summary>Small lump for an item kept in storage (tinted per item).</summary>
+        public const int StoredRect = GenericRect + 1;
+        public const int StoredWidth = 3, StoredHeight = 2;
+        const int RectCount = StoredRect + 1;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -63,6 +66,8 @@ namespace Antarium.Presentation
             Rects[ItemRect] = Rect(80, 0, ItemSize, ItemSize);
             Blit(88, 0, new[] { ".ww.", "wwww", "wwww", ".ww." });
             Rects[DotRect] = Rect(88, 0, DotSize, DotSize);
+            Blit(92, 0, new[] { "wwg", "gkk" });
+            Rects[StoredRect] = Rect(92, 0, StoredWidth, StoredHeight);
 
             PaintSmelter(0, 8, working: false);
             PaintSmelter(24, 8, working: true);

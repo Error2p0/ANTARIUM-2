@@ -18,7 +18,9 @@ namespace Antarium.Sim
         public readonly Inventory Inventory;
         public readonly ItemPiles Piles;
         public readonly List<Egg> Eggs = new();
-        public int2 QueenCell;
+        /// <summary>Cells of the royal chamber where its share of the stock is shown, in fill order.</summary>
+        public readonly List<int2> RoyalDisplayCells = new();
+        int2 _queenCell;
         public float EggTimer;
         public float ForageTimer;
         public bool Starving;
@@ -34,16 +36,29 @@ namespace Antarium.Sim
             Piles = new ItemPiles(content.Items.Length);
         }
 
+        public int2 QueenCell
+        {
+            get => _queenCell;
+            set
+            {
+                _queenCell = value;
+                Inventory.SetRoyalCell(value);
+            }
+        }
+
         public float SpeedFactor => Starving ? _config.starvingSpeedFactor : 1f;
 
         /// <summary>Food eaten per minute by the workers and the queen.</summary>
         public float UpkeepPerMinute(int workers) => workers * _config.workerUpkeep + _config.queenUpkeep;
 
         /// <summary>True inside the royal chamber or on a storage zone cell: items delivered here go into the stock.</summary>
-        public bool IsStockCell(int2 c, int worldIndex)
+        public bool IsStockCell(int2 c, int worldIndex) => IsRoyalCell(c) || StorageCells.Contains(worldIndex);
+
+        /// <summary>Within the royal chamber (a square of <c>royalRadius</c> around the queen).</summary>
+        public bool IsRoyalCell(int2 c)
         {
             int2 d = math.abs(c - QueenCell);
-            return (d.x <= _config.royalRadius && d.y <= _config.royalRadius) || StorageCells.Contains(worldIndex);
+            return d.x <= _config.royalRadius && d.y <= _config.royalRadius;
         }
 
         /// <summary>Food upkeep. Starvation slows the colony and stops egg laying; it is never instant death.</summary>

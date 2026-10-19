@@ -56,7 +56,7 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 | **F3** | Show/hide the debug readout (FPS, zoom, seed, the cell under the cursor, light, tool, combo, ant/pile/order counts) |
 | **F6** | Spawn 50 workers in the royal chamber |
 | **F7** | Finish every blueprint immediately |
-| **F8** | Add 20 of every resource and 50 food (may go over capacity) |
+| **F8** | Add up to 20 of every resource (as far as storage has room) and 50 food |
 
 ---
 
@@ -64,15 +64,17 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 - **Resource bar (top):**
   - **Food** current / capacity, with the **net food rate** per minute (food delivered minus what the colony eats; red when negative). **Ants**, **Eggs**.
-  - One entry per resource you own, e.g. *Copper Ore 4/30 +12/min*. Entries appear once you have that item, and turn orange when that item is at capacity. The green number is how many arrived in the stock per minute recently.
+  - **Storage** used / total: how many items (of any type) the royal chamber and your storage cells hold. Turns orange when full.
+  - One entry per resource you own, e.g. *Copper Ore 4 +12/min*. Entries appear once you have that item. The green number is how many arrived in the stock per minute recently.
 - **Alert (under the bar):** shows in red while the colony is starving.
 - **Toolbar (bottom):** Dig / Mine / Storage / Build, and **O Flow** for the overlay. The active tool is outlined in gold; the overlay button turns green while it is on.
 - **Build palette** (above the toolbar, Build tool only): every building with its cost. The cost turns red while you can't afford it.
-- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is.
+- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes), what a storage cell or the royal chamber holds, or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is.
 - **Messages** (above the info panel): short notes when a placement is refused, e.g. *Not enough Copper Ore (3/12)*.
 - **In the world:**
   - Orange **diagonal stripes** are mining orders (also visible over unexplored darkness).
   - A **teal checker** marks storage zones.
+  - **Stacks of small bricks** on the back wall of storage cells, and on the floor of the royal chamber beside the queen, are your stored items: one brick per item, coloured like the item.
   - **Small coloured blobs** are item piles waiting to be hauled.
   - **White ovals** next to the queen are eggs.
   - **Cream silk bands** along a tunnel floor are belts; **brown root rails** in a shaft are lifts. Small coloured dots riding them are items.
@@ -110,11 +112,13 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
   - the **royal chamber** (the area within 4 cells of the queen), or
   - any **storage zone** you painted (Storage tool). It must be painted on open, visible, underground space.
   - Machines that need the item and belts come first (see *How workers use belts and machines*).
-- Everything delivered goes into one shared colony stock, which is what the resource bar shows. Building costs are paid from it.
-- **Capacity:**
-  - The royal chamber holds **30 of each item type** and **100 food**.
-  - **Each storage cell adds +4 per item type and +6 food.**
-  - Workers only pick up what still fits in the stock or in a machine that needs it. When an item type is full, its piles stay where they are until you add storage (or a machine wants them).
+- Delivered items are **kept physically**: each goes into the nearest place with room (the royal chamber or a storage cell), preferring one that already holds the same item, so storage stays sorted. You can see every stored item (see *The screen*). Together they are the colony stock shown in the resource bar; building costs are paid from it.
+- **Capacity** (items of any type):
+  - The royal chamber holds **40 items** and **100 food**.
+  - **Each storage cell holds 8 items and adds +6 food.**
+  - Food is kept as food points, not as items.
+  - Workers only pick up what still fits in the stock or in a machine that needs it. When storage is full, piles stay where they are until you add storage (or a machine wants them).
+- **Erasing** a storage cell moves its items to other storage with room; whatever doesn't fit drops to the floor as piles.
 
 ### Food and the queen
 - **Food sources right now:**
@@ -129,8 +133,9 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 Each idle worker picks the best job it can reach (nearer jobs first):
 1. **Build** a blueprint, if fewer than 2 workers are on it.
 2. **Mine** an order, if there's room at the digging front.
-3. **Haul** an item pile to a drop-off or a machine, if it still fits.
-4. Otherwise it **wanders** near the queen.
+3. **Fetch** an item from storage for a machine that is waiting for it.
+4. **Haul** an item pile to a drop-off or a machine, if it still fits.
+5. Otherwise it **wanders** near the queen.
 
 Workers crawl on floors, walls, ceilings and the back wall of dug tunnels, so they take direct routes through chambers. Outside on the surface they walk along the ground. If the ground under one is dug away in the open sky, it falls.
 
@@ -162,10 +167,12 @@ Workers crawl on floors, walls, ceilings and the back wall of dug tunnels, so th
 ### Machines
 - A machine stores up to **two crafts' worth** of each ingredient (a smelter holds 4 Copper Ore, 4 Iron Ore and 2 Coal) and starts a recipe as soon as it has the ingredients, taking turns between recipes.
 - **Products** go onto a belt or lift next to the machine that leads away from it. With no such belt, products are left as a pile on the machine floor for workers to haul; at **6 waiting products** the machine pauses.
-- Machines get their ingredients from **workers bringing fresh piles** and from **belts**. They do **not** take from the stock: ore already stored stays there (it pays for buildings).
+- Machines get their ingredients from **belts**, from **workers bringing fresh piles**, and from **storage**: when a machine has room for an ingredient that is in stock, a worker walks to the storage cell (or royal chamber) holding it, takes it out and carries it over. Keep ingredients in storage near your machines to keep them busy.
+- Taking items out for machines and paying for buildings use the same stock, so a busy smelter can eat the copper ore you were saving for a building.
 
 ### How workers use belts and machines
 - A worker carrying an item takes it to a **machine that needs it** rather than the stock, unless the machine is more than about **10 times farther** away.
+- Workers **fetch from storage** for machines only as much as the machines still have room for (counting what is already on its way).
 - On the way, a worker drops the item onto the **nearest belt that can deliver it** instead of walking all the way.
 - Mining drops that fall past a belt or lift **land on it** if it can deliver them.
 - A worker carrying something that nothing will take (stock full, no machine needs it) **puts it down** as a pile and goes back to work.
@@ -194,4 +201,4 @@ Workers crawl on floors, walls, ceilings and the back wall of dug tunnels, so th
 
 ## Not in the game yet
 
-Research, other castes, pheromones, enemies, water, day/night, saving and loading, storage chests, and machines fed from the stock. Iron has no use yet. See `docs/TODO.md` for the full list of what's missing.
+Research, other castes, pheromones, enemies, water, day/night, saving and loading, and a way to put stored items onto belts. Iron has no use yet. See `docs/TODO.md` for the full list of what's missing.

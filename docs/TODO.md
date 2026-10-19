@@ -54,12 +54,16 @@
 - [x] Throughput overlay (O): belt flow colours, red jams, machine status tints, idle-worker markers; resource bar income rates
 - [x] UI: Build tool (4) with palette (costs, red when unaffordable), Q/E cycle, R rotate, drag to lay belts/lifts (axis-locked, drag direction = flow), right-drag removes; hover info panel; toasts for refused placements
 - [x] Debug: F7 finishes all blueprints, F8 adds 20 of every item and 50 food
-- [x] 48 EditMode tests (13 new: belts, jams, splitter, filter, machines, placement, removal, build tool drag, workers building and feeding a machine, drops onto belts, dropping undeliverable loads)
+- [x] Physical storage: royal chamber (40) and storage cells (8 each) hold items of any type, deliveries go to the nearest container with room (sorted by type), erased cells move or drop their items, refunds that don't fit drop as piles; every stored item is drawn (stock mesh behind buildings); hover shows a cell's contents; HUD shows Storage used/total
+- [x] Supply job: workers fetch items machines need from the container holding them (per-item supply flow fields, demand = machine room minus items already on the way)
+- [x] 50 EditMode tests (15 new, incl. physical storage and feeding a machine from the stock: belts, jams, splitter, filter, machines, placement, removal, build tool drag, workers building and feeding a machine, drops onto belts, dropping undeliverable loads)
 - Measured in the editor: 6,000 loaded belt cells → belt step ~0.55 ms per tick, full sim tick ~0.8 ms, building render ~0.45 ms per frame.
 
 ## Known limits / follow-ups
 - **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines). Automated checks drive the sim and tools directly; tuning lives in `GameConfig.asset`.
-- Machines are only fed by workers hauling fresh piles and by belts, **not from the stock**: ore already in storage is not smelted. Needs a "fetch from stock" job or an unloader building.
+- Machines and buildings draw from the same stock; there is no way to reserve items for construction or to limit what machines may take.
+- No unloader building yet: stored items reach machines only by workers, never onto belts.
+- Storage cells show at most 8 items each (the display cap matches the default capacity; raising `storageItemsPerCell` stores more than is drawn).
 - A machine runs whichever recipe it can, in turn; there is no per-machine recipe choice yet.
 - Splitters and filters cannot connect directly to each other (put a belt cell between them).
 - The belt step is plain C# (fine at 6,000 cells); move it to Burst when networks get much bigger.
@@ -86,8 +90,8 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Food sources: seeds on the surface, grubs from grub nests, and the Fungus Garden (seeds → fungus). No aphid ranches or leaves as fungus feed yet.
 - Food is a colony-wide stock with upkeep; no per-ant hunger/rest needs.
 - Ores are spent on buildings and smelted into copper and iron, but iron has nothing to be spent on yet, and there is no crusher or other processing [M4+].
-- Storage is one shared pool; no per-item sorting or physical stockpiles shown in storage zones.
-- No buffers / chests, no unloader that puts stock items onto belts, machines are not fed from the stock.
+- Storage cells accept any item; no per-zone item filters yet.
+- No buffers / chests, no unloader that puts stock items onto belts.
 
 **Colony & ants**
 - Only the Worker caste; no miners, haulers, nurses, builders, soldiers, scouts, engineers [M6].

@@ -43,7 +43,9 @@ namespace Antarium.Presentation
         readonly RenderConfig _render;
         readonly BuildingSprites _sprites;
         readonly SpriteMesh _mesh;
+        readonly SpriteMesh _stockMesh;
         readonly NativeArray<Color32> _itemColors;
+        readonly Color32[] _stockColors;
         readonly NativeArray<DefVisual> _defs;
         readonly OverlayColors _colors;
 
@@ -62,7 +64,12 @@ namespace Antarium.Presentation
             _render = render;
             _sprites = new BuildingSprites();
             _mesh = new SpriteMesh("Buildings", spriteMaterial, _sprites.Texture, parent, worldSize, 5);
+            _stockMesh = new SpriteMesh("Stock", spriteMaterial, _sprites.Texture, parent, worldSize, 3);
             _itemColors = ColonyView.ItemColors(content);
+            // Stored goods sit on the back wall: a little darker than loose items so they read as background.
+            _stockColors = new Color32[content.Items.Length];
+            for (int i = 0; i < _stockColors.Length; i++)
+                _stockColors[i] = TerrainView.ToWorking(content.Items[i].color * new Color(render.stockBrightness, render.stockBrightness, render.stockBrightness, 1f));
 
             _defs = new NativeArray<DefVisual>(math.max(1, content.Buildings.Length), Allocator.Persistent);
             for (int i = 0; i < content.Buildings.Length; i++)
@@ -147,6 +154,51 @@ namespace Antarium.Presentation
                 quad += 2;
             }
             _mesh.Apply(quad);
+            RenderStock(sim);
+        }
+
+        /// <summary>
+        /// Every stored item as a small lump on the back wall: up to 8 per storage cell (2 across, 4 high,
+        /// grouped by type), and the royal chamber's share spread over its floor-level cells.
+        /// </summary>
+        void RenderStock(Simulation sim)
+        {
+            const int PerCell = 8;
+            var inv = sim.Colony.Inventory;
+            var royalCells = sim.Colony.RoyalDisplayCells;
+            _stockMesh.EnsureCapacity(math.max(1, inv.Stored));
+            var vertices = _stockMesh.Vertices;
+            var rect = _sprites.Rects[BuildingSprites.StoredRect];
+            var size = new int2(BuildingSprites.StoredWidth, BuildingSprites.StoredHeight);
+            int quad = 0;
+            foreach (var container in inv.Containers)
+            {
+                int k = 0;
+                for (int item = 0; item < container.Counts.Length; item++)
+                {
+                    for (int n = 0; n < container.Counts[item]; n++, k++)
+                    {
+                        int cellIndex = k / PerCell;
+                        int2 cell;
+                        if (container.IsRoyal)
+                        {
+                            if (cellIndex >= royalCells.Count) continue;
+                            cell = royalCells[cellIndex];
+                        }
+                        else
+                        {
+                            if (cellIndex > 0) continue; // a cell holding more than 8 shows 8
+                            cell = container.Cell;
+                        }
+                        int slot = k % PerCell;
+                        float2 px = new float2(cell) * BuildingSprites.Cell + new float2((slot & 1) * 4, (slot >> 1) * 2);
+                        float2 world = px / WorldConstants.PixelsPerUnit;
+                        SpriteQuads.WriteUpright(vertices, quad++, world, size, rect, _stockColors[item],
+                            WorldGrid.CellCenterToWorld(cell));
+                    }
+                }
+            }
+            _stockMesh.Apply(quad);
         }
 
         /// <summary>Building sprite into <paramref name="quad"/>; the filter's item dot into <paramref name="dotQuad"/>.</summary>
@@ -197,6 +249,7 @@ namespace Antarium.Presentation
         public void Dispose()
         {
             _mesh.Dispose();
+            _stockMesh.Dispose();
             _sprites.Dispose();
             if (_itemColors.IsCreated) _itemColors.Dispose();
             if (_defs.IsCreated) _defs.Dispose();

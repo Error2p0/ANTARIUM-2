@@ -22,8 +22,9 @@ namespace Antarium.Sim
     }
 
     /// <summary>
-    /// Shared distance maps over walkable cells: one per destination kind, plus one "consumer" field per
-    /// item that some building consumes (machines needing it, belts that can carry it there). Ants descend
+    /// Shared distance maps over walkable cells: one per destination kind, plus per item that some building
+    /// consumes a "consumer" field (machines needing it, belts that can carry it there) and a "supply" field
+    /// (stock containers holding it). Ants descend
     /// the gradient instead of each computing its own path, so cost does not grow with the number of ants.
     /// All fields live in one array (field-major) so a Burst job can read any of them.
     /// </summary>
@@ -60,6 +61,9 @@ namespace Antarium.Sim
 
         /// <summary>Field index of the consumer field for a consumer slot (see <c>ContentDB.ConsumerSlot</c>).</summary>
         public static int ConsumerField(int slot) => KindCount + slot;
+
+        /// <summary>Field index of the supply field (stock holding the item) for a consumer slot; follows all consumer fields.</summary>
+        public static int SupplyField(int slot, int slotCount) => KindCount + slotCount + slot;
 
         /// <summary>All fields, field-major: field f, cell index i is at f * CellCount + i.</summary>
         public NativeArray<ushort> All => _all;

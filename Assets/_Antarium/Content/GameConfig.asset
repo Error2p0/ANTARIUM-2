@@ -53,6 +53,7 @@ MonoBehaviour:
     overlayWorkingColor: {r: 0.5, g: 1, b: 0.5, a: 1}
     overlayStarvedColor: {r: 1, g: 0.85, b: 0.3, a: 1}
     overlayIdleAntColor: {r: 0.45, g: 0.7, b: 1, a: 1}
+    stockBrightness: 0.8
   camera:
     minZoom: 1
     maxZoom: 8
@@ -71,9 +72,9 @@ MonoBehaviour:
   colony:
     startingWorkers: 6
     startingFood: 40
-    baseItemCapacity: 30
+    baseItemCapacity: 40
     baseFoodCapacity: 100
-    storageItemsPerCell: 4
+    storageItemsPerCell: 8
     storageFoodPerCell: 6
     eggFoodCost: 6
     eggInterval: 6
@@ -102,5 +103,6 @@ MonoBehaviour:
     consumerBias: 0.1
     buildPower: 1
     buildWeight: 0.7
+    supplyWeight: 0.9
     buildersPerSite: 2
     refundFraction: 1

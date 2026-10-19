@@ -103,35 +103,71 @@ namespace Antarium.Tests
         public void Capacity_CountsItemsInTransit()
         {
             using var content = new TestContent();
-            var config = new ColonyConfig { baseItemCapacity = 2, startingFood = 0f, baseFoodCapacity = 3f };
+            var config = new ColonyConfig { baseItemCapacity = 2, storageItemsPerCell = 8, startingFood = 0f, baseFoodCapacity = 3f };
             var inv = new Inventory(content.DB, config);
             ushort ore = content.DB.GetItemIndex(content.Ore);
+            ushort bar = content.DB.GetItemIndex(content.Bar);
             ushort seed = content.DB.GetItemIndex(content.Seed);
 
             Assert.IsTrue(inv.CanAccept(ore));
             inv.BeginTransit(ore);
-            inv.BeginTransit(ore);
-            Assert.IsFalse(inv.CanAccept(ore), "two in transit fill a capacity of 2");
-            Assert.IsTrue(inv.Deliver(ore));
+            inv.BeginTransit(bar);
+            Assert.IsFalse(inv.CanAccept(ore), "two items of any type in transit fill a capacity of 2");
+            Assert.IsTrue(inv.Deliver(ore, default));
             Assert.AreEqual(1, inv.Items[ore]);
+            Assert.AreEqual(1, inv.Royal.Counts[ore], "kept in the royal chamber");
 
             Assert.IsTrue(inv.CanAccept(seed));
             inv.BeginTransit(seed);
             Assert.IsFalse(inv.CanAccept(seed), "food capacity 3, one seed (2) in transit");
-            Assert.IsTrue(inv.Deliver(seed));
+            Assert.IsTrue(inv.Deliver(seed, default));
             Assert.AreEqual(2f, inv.Food, 1e-4f);
 
-            inv.SetStorageCells(10);
-            Assert.AreEqual(2 + 10 * config.storageItemsPerCell, inv.ItemCapacity);
+            for (int i = 0; i < 10; i++) inv.AddStorageCell(new int2(i, 0), i);
+            Assert.AreEqual(2 + 10 * 8, inv.Capacity);
 
-            // Machine demand counts even when the stock is over-full (e.g. after a refund).
-            inv.Items[ore] = inv.ItemCapacity + 50;
+            // Machine demand counts even when the stock is full.
+            Assert.AreEqual(200 - 81, inv.Add(bar, 200, default), "fills up to capacity, returns the rest");
+            Assert.AreEqual(inv.Capacity, inv.Stored);
+            inv.CancelTransit(bar);
             Assert.IsFalse(inv.CanAccept(ore));
             inv.SetConsumerRoom(ore, 2);
             Assert.IsTrue(inv.CanAccept(ore));
             inv.BeginTransit(ore);
             inv.BeginTransit(ore);
             Assert.IsFalse(inv.CanAccept(ore), "two on the way fill the machine's room");
+        }
+
+        [Test]
+        public void Storage_KeepsItemsInCellsSortedByType()
+        {
+            using var content = new TestContent();
+            var inv = new Inventory(content.DB, new ColonyConfig { baseItemCapacity = 0, storageItemsPerCell = 4 });
+            ushort ore = content.DB.GetItemIndex(content.Ore);
+            ushort bar = content.DB.GetItemIndex(content.Bar);
+            for (int x = 0; x < 3; x++) inv.AddStorageCell(new int2(x, 0), x);
+
+            for (int i = 0; i < 3; i++) Assert.IsTrue(inv.Store(ore, new int2(0, 0)));
+            for (int i = 0; i < 3; i++) Assert.IsTrue(inv.Store(bar, new int2(0, 0)));
+            var a = inv.ContainerAt(0);
+            var b = inv.ContainerAt(1);
+            Assert.AreEqual(3, a.Counts[ore], "ore stays together");
+            Assert.AreEqual(0, a.Counts[bar], "bars start a cell of their own rather than mixing");
+            Assert.AreEqual(3, b.Counts[bar]);
+
+            // Erasing a cell moves its items into the remaining room; what does not fit is handed back.
+            Assert.IsTrue(inv.Store(ore, new int2(0, 0)));
+            inv.Add(bar, 2, new int2(2, 0));
+            var evicted = new System.Collections.Generic.List<ushort>();
+            inv.RemoveStorageCell(0, evicted);
+            Assert.AreEqual(8, inv.Capacity);
+            Assert.AreEqual(8, inv.Stored);
+            Assert.AreEqual(1, evicted.Count, "four ore, room for three");
+            Assert.AreEqual(3, inv.Items[ore], "stock counts follow the containers");
+            Assert.AreEqual(5, inv.Items[bar]);
+
+            Assert.IsTrue(inv.TryWithdraw(bar, 1, false));
+            Assert.IsFalse(inv.TryWithdraw(bar, 5, false), "no container there");
         }
 
         [Test]
@@ -144,7 +180,7 @@ namespace Antarium.Tests
             piles.Add(new int2(3, 3), ore, 2);
             Assert.IsFalse(piles.TryTake(new int2(3, 3), inv, out _), "no capacity");
 
-            inv.SetStorageCells(1);
+            inv.AddStorageCell(new int2(5, 5), 0);
             Assert.IsTrue(piles.TryTake(new int2(3, 3), inv, out ushort taken));
             Assert.AreEqual(ore, taken);
             Assert.AreEqual(1, piles.CountAt(new int2(3, 3), ore));

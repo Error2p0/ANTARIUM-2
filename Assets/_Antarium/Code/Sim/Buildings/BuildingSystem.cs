@@ -34,6 +34,7 @@ namespace Antarium.Sim
         readonly List<Machine> _machines = new();
         readonly Stack<int> _freeMachines = new();
         readonly List<int> _order = new();
+        readonly List<ushort> _leftover = new();
         readonly int[] _room;
         bool _networkDirty = true;
         float _rateTimer;
@@ -260,7 +261,9 @@ namespace Antarium.Sim
             var b = All[id];
             var data = _content.Buildings[b.Def];
             bool blueprint = b.State == BuildingState.Blueprint;
-            _colony.Inventory.Refund(data, blueprint ? 1f : _config.refundFraction);
+            _leftover.Clear();
+            _colony.Inventory.Refund(data, blueprint ? 1f : _config.refundFraction, b.Origin, _leftover);
+            foreach (ushort item in _leftover) DropPile(b.Origin, item, 1); // the stock is full
 
             var inv = _colony.Inventory;
             if (!b.Front.IsEmpty) { inv.CancelTransit(b.Front.Item); DropPile(b.Origin, b.Front.Item, 1); }
@@ -463,7 +466,7 @@ namespace Antarium.Sim
                 case BuildingKind.Belt:
                 case BuildingKind.Lift:
                     if (b.Outputs.x >= 0) return Send(b.Outputs.x, item, b.Origin, slot.Pos);
-                    if (b.Sink == SinkKind.Stock && _colony.Inventory.Deliver(item))
+                    if (b.Sink == SinkKind.Stock && _colony.Inventory.Deliver(item, b.Origin))
                     {
                         _events.Publish(new ItemDeliveredEvent(b.Origin, item));
                         return true;
