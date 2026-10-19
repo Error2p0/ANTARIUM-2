@@ -275,6 +275,42 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToolBuild",
+                    "type": "Button",
+                    "id": "d32d8e6d-1b30-495c-8b26-20630c047efb",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Rotate",
+                    "type": "Button",
+                    "id": "8619ea46-3693-42f0-ac0a-fd9a7d99a788",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "NextBuilding",
+                    "type": "Button",
+                    "id": "6004c3fb-8de1-4e59-9d5c-1762ed889103",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "PrevBuilding",
+                    "type": "Button",
+                    "id": "2869050a-dac8-4bf6-8232-670333b90632",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -354,6 +390,50 @@
                     "action": "ToolStorage",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3322f5d7-74ef-4007-a078-c4b91160617a",
+                    "path": "<Keyboard>/4",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToolBuild",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "92ab7122-6506-4116-96d2-a46991cf758f",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Rotate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2413e7e6-3d87-4871-af02-8fdc1b7643e7",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "NextBuilding",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "689b89c5-6bc0-4a67-9f36-e45bbb7f6fa0",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PrevBuilding",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -374,6 +454,24 @@
                     "name": "SpawnAnts",
                     "type": "Button",
                     "id": "cef7e4f7-7024-4ceb-96c5-ccfce0d16f38",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "FinishBuilds",
+                    "type": "Button",
+                    "id": "190e9119-dbaf-4aa3-b62c-91449bed0f16",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "GiveItems",
+                    "type": "Button",
+                    "id": "0c7b5ba1-62dc-4668-a96c-4e8d3a3926be",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -400,6 +498,56 @@
                     "processors": "",
                     "groups": "",
                     "action": "SpawnAnts",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2da94336-97e9-402a-a8c3-35b902db85e9",
+                    "path": "<Keyboard>/f7",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FinishBuilds",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c5758fe4-10e7-4460-ae45-8e9a77829d98",
+                    "path": "<Keyboard>/f8",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "GiveItems",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "View",
+            "id": "bf84ac79-d37c-47ed-9c2f-d46efaa7eb4b",
+            "actions": [
+                {
+                    "name": "Overlay",
+                    "type": "Button",
+                    "id": "21b33845-4b73-478e-ba84-aaf3fd6e819a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "df2873e3-f68e-47bd-ad76-22337e013da7",
+                    "path": "<Keyboard>/o",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Overlay",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -53,7 +53,8 @@ namespace Antarium.Gameplay
                 $"cell {cell.x},{cell.y}   depth {depth}   {under}   light {math.cmax(light):0.00}\n" +
                 $"tool {tools.Mode}   combo x{tools.Dig.ComboMultiplier:0.00} ({tools.Dig.ComboStreak})\n" +
                 $"ants {sim.Ants.Count}   piles {sim.Colony.Piles.Count}   orders {sim.Colony.Designated.Count}   storage {sim.Colony.StorageCells.Count}\n" +
-                "F3 toggle   F6 +50 ants";
+                $"buildings {sim.Buildings.ActiveCount}   blueprints {sim.Buildings.BlueprintCount}   belt cells {sim.Buildings.TransportOrder.Count}\n" +
+                "F3 toggle   F6 +50 ants   F7 finish blueprints   F8 +20 items";
         }
     }
 }

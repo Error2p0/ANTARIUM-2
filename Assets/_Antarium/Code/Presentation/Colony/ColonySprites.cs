@@ -19,10 +19,13 @@ namespace Antarium.Presentation
         const int AtlasWidth = 64, AtlasHeight = 32;
 
         public readonly Texture2D Texture;
-        /// <summary>UV rects (xMin, yMin, xMax, yMax): worker frames 0-3, then egg, pile, carry, queen.</summary>
+        /// <summary>UV rects (xMin, yMin, xMax, yMax): worker frames 0-3, then egg, pile, carry, queen, marker.</summary>
         public NativeArray<float4> Rects;
 
         public const int EggRect = WorkerFrames, PileRect = WorkerFrames + 1, CarryRect = WorkerFrames + 2, QueenRect = WorkerFrames + 3;
+        /// <summary>Small white diamond (tinted) floating over ants, e.g. idle workers in the overlay.</summary>
+        public const int MarkerRect = QueenRect + 1;
+        public const int MarkerSize = 3;
 
         // Side view facing right: gaster (x0-3), waist (x4), thorax (x5-6), neck (x7), head (x8-10), mandible (x11).
         // The body colour carries the silhouette (a dark outline would vanish against dark tunnels):
@@ -48,6 +51,7 @@ namespace Antarium.Presentation
         static readonly string[] Egg = { ".EE.", "EWEE", "EEEE", "ESSE", ".SS." };
         static readonly string[] Pile = { ".wwg..", "wwggg.", "ggggkk", ".kkkk." };
         static readonly string[] Carry = { "wg.", "ggk", ".k." };
+        static readonly string[] Marker = { ".w.", "www", ".w." };
 
         static readonly Color32 Dark = Hex(0x5a1a0c), Mid = Hex(0xb8401e), High = Hex(0xf08048), Leg = Hex(0x4a160a);
         static readonly Color32 EggColor = Hex(0xefe6cf), EggShade = Hex(0xc9bc9c);
@@ -55,7 +59,7 @@ namespace Antarium.Presentation
         public ColonySprites()
         {
             var pixels = new Color32[AtlasWidth * AtlasHeight];
-            Rects = new NativeArray<float4>(QueenRect + 1, Allocator.Persistent);
+            Rects = new NativeArray<float4>(MarkerRect + 1, Allocator.Persistent);
 
             for (int f = 0; f < WorkerFrames; f++)
             {
@@ -73,6 +77,8 @@ namespace Antarium.Presentation
             Rects[PileRect] = Rect(52, 0, PileWidth, PileHeight);
             Blit(pixels, 58, 0, Carry);
             Rects[CarryRect] = Rect(58, 0, CarryWidth, CarryHeight);
+            Blit(pixels, 61, 0, Marker);
+            Rects[MarkerRect] = Rect(61, 0, MarkerSize, MarkerSize);
             PaintQueen(pixels, 0, 8);
             Rects[QueenRect] = Rect(0, 8, QueenWidth, QueenHeight);
 

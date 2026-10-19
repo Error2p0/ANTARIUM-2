@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using Antarium.Content;
 using Antarium.Core;
+using Antarium.Gameplay;
+using Antarium.Presentation;
 using Antarium.Sim;
 using NUnit.Framework;
 using Unity.Mathematics;
@@ -327,6 +330,42 @@ namespace Antarium.Tests
             Assert.AreEqual(2, _sim.Buildings.MachineOf(id).Crafted, "all four ore went into the machine (two crafts)");
             Assert.AreEqual(2, _sim.Colony.Inventory.Items[bar], "the bars were hauled to the stock");
             Assert.AreEqual(0, _sim.Colony.Inventory.Items[ore]);
+        }
+
+        [Test]
+        public void BuildTool_DragLaysABeltAlongTheDragDirection()
+        {
+            var tool = new BuildTool(_content.DB);
+            tool.Select(_content.BuildingIndex(_content.Belt));
+            var ghosts = new List<BuildGhost>();
+            int2 q = _sim.Colony.QueenCell;
+            float2 Cell(int dx, int dy) => new float2(q.x + dx + 0.5f, q.y + dy + 0.5f);
+            for (int dx = -3; dx <= 0; dx++) // make sure the row is dug out (the test nest is narrow)
+            {
+                var c = _sim.World[q.x + dx, q.y];
+                _sim.World[q.x + dx, q.y] = new Cell(c.Material, 0, c.Flags | CellFlags.Revealed);
+            }
+
+            // Press at the queen, drag left three cells (wobbling up a row), release.
+            tool.Update(_sim, true, true, false, Cell(0, 0), ghosts);
+            tool.Update(_sim, true, false, false, Cell(-2, 1), ghosts);
+            tool.Update(_sim, true, false, false, Cell(-3, 0), ghosts);
+            tool.Update(_sim, false, false, false, Cell(-3, 0), ghosts);
+            _sim.Tick();
+
+            for (int dx = 0; dx >= -3; dx--)
+            {
+                int id = _sim.Buildings.At(new int2(q.x + dx, q.y));
+                Assert.GreaterOrEqual(id, 0, $"belt at dx {dx}");
+                Assert.AreEqual(new int2(-1, 0), _sim.Buildings.Get(id).Dir, "flows the way the drag went, including the first cell");
+            }
+            Assert.AreEqual(BuildingSystem.None, _sim.Buildings.At(new int2(q.x - 2, q.y + 1)), "locked to the starting row");
+            Assert.AreEqual(1, ghosts.Count);
+
+            // Right-drag removes.
+            tool.Update(_sim, false, false, true, Cell(-3, 0), ghosts);
+            _sim.Tick();
+            Assert.AreEqual(BuildingSystem.None, _sim.Buildings.At(new int2(q.x - 3, q.y)));
         }
 
         [Test]

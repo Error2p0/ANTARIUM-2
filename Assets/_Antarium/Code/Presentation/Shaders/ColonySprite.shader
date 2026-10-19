@@ -1,7 +1,8 @@
 Shader "Antarium/ColonySprite"
 {
-    // Pixel sprites (ants, queen, eggs, items). Each vertex carries the world point where the sprite samples
-    // the grid light map, so a whole sprite is lit uniformly, like the terrain cell it stands in.
+    // Pixel sprites (ants, queen, eggs, items, buildings). Each vertex carries the world point where the sprite
+    // samples the grid light map, so a whole sprite is lit uniformly, like the terrain cell it stands in.
+    // Vertex alpha below 1 is drawn as an ordered dither on the art-pixel grid (blueprints, placement previews).
     Properties
     {
         [NoScaleOffset] _MainTex("Atlas", 2D) = "white" {}
@@ -48,6 +49,7 @@ Shader "Antarium/ColonySprite"
                 half4 color : COLOR;
                 float2 lightPos : TEXCOORD1;
                 half2 lightingUV : TEXCOORD2;
+                float2 positionWS : TEXCOORD3;
             };
 
             Varyings Vert(Attributes input)
@@ -58,13 +60,17 @@ Shader "Antarium/ColonySprite"
                 o.color = input.color;
                 o.lightPos = input.lightPos;
                 o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
+                o.positionWS = TransformObjectToWorld(input.positionOS).xy;
                 return o;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                half4 c = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * input.color;
-                clip(c.a - 0.5);
+                half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
+                clip(tex.a - 0.5);
+                if (input.color.a < 0.999)
+                    clip(input.color.a - Bayer4((int2)floor(input.positionWS * _AntPixel.x)));
+                half4 c = half4(tex.rgb * input.color.rgb, 1);
 
                 SurfaceData2D surface;
                 InitializeSurfaceData(half3(1, 1, 1), 1, half4(1, 1, 1, 1), surface);

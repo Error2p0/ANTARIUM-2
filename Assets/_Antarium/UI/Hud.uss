@@ -73,11 +73,123 @@
     padding: 4px 6px;
 }
 
-.toolbar {
+.bottom {
     position: absolute;
     left: 0; right: 0; bottom: 10px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.toolbar {
     flex-direction: row;
     justify-content: center;
+}
+
+.palette {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 6px;
+    background-color: rgba(22, 14, 10, 0.88);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+    padding: 4px;
+}
+
+.building {
+    width: 104px;
+    height: 44px;
+    margin: 2px;
+    padding: 2px 4px;
+    background-color: rgb(40, 26, 18);
+    border-width: 2px;
+    border-color: rgb(70, 48, 32);
+    border-radius: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+.building:hover {
+    background-color: rgb(62, 41, 28);
+}
+
+.building--active {
+    border-color: rgb(255, 190, 90);
+    background-color: rgb(86, 54, 30);
+}
+
+.building__swatch {
+    width: 8px;
+    height: 30px;
+    margin-right: 5px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.6);
+}
+
+.building__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.building__name {
+    color: rgb(240, 230, 210);
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.building__cost {
+    color: rgb(190, 175, 150);
+    font-size: 10px;
+    padding: 0;
+    margin: 0;
+    white-space: normal;
+}
+
+.building--poor .building__cost {
+    color: rgb(255, 120, 100);
+}
+
+.info {
+    color: rgb(240, 230, 210);
+    font-size: 12px;
+    background-color: rgba(22, 14, 10, 0.88);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    max-width: 640px;
+    white-space: normal;
+}
+
+.toast {
+    color: rgb(255, 200, 150);
+    font-size: 14px;
+    -unity-font-style: bold;
+    background-color: rgba(40, 14, 6, 0.85);
+    padding: 3px 10px;
+    margin-bottom: 6px;
+}
+
+.tool--toggle {
+    width: 96px;
+}
+
+.tool--on {
+    border-color: rgb(120, 220, 140);
+    background-color: rgb(30, 64, 40);
+}
+
+.resource__rate {
+    color: rgb(150, 220, 140);
+    font-size: 11px;
+    padding: 0;
+    margin-left: 4px;
+}
+
+.resource__rate--negative {
+    color: rgb(255, 130, 100);
 }
 
 .tool {
