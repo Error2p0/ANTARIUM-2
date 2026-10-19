@@ -11,7 +11,9 @@ namespace Antarium.Tests
     {
         public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock;
         public readonly BiomeDef Topsoil, Deep;
-        public readonly ItemDef Ore, Seed;
+        public readonly ItemDef Ore, Seed, Bar;
+        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter;
+        public readonly RecipeDef Smelt;
         public readonly WorldGenSettings WorldGen;
         public readonly GameConfig Config;
         public readonly ContentDB DB;
@@ -23,6 +25,21 @@ namespace Antarium.Tests
             Ore = Make<ItemDef>("ore");
             Seed = Make<ItemDef>("seed");
             Seed.foodValue = 2f;
+            Bar = Make<ItemDef>("bar");
+
+            Smelt = Make<RecipeDef>("smelt");
+            Smelt.inputs.Add(new ItemAmount(Ore, 2));
+            Smelt.outputs.Add(new ItemAmount(Bar, 1));
+            Smelt.duration = 1f;
+            Belt = Building("belt", BuildingKind.Belt, 0);
+            Lift = Building("lift", BuildingKind.Lift, 1);
+            Splitter = Building("splitter", BuildingKind.Splitter, 2);
+            Splitter.cost.Add(new ItemAmount(Bar, 2));
+            Filter = Building("filter", BuildingKind.Filter, 3);
+            Smelter = Building("smelter", BuildingKind.Processor, 4);
+            Smelter.size = new Vector2Int(2, 2);
+            Smelter.recipes.Add(Smelt);
+            Smelter.buildWork = 1f;
 
             Air = Mat("air", 1f, MaterialFlags.Air);
             Grass = Mat("grass", 1f);
@@ -58,8 +75,22 @@ namespace Antarium.Tests
             Config = Make<GameConfig>("config");
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock }, WorldGen, new[] { Ore, Seed });
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock }, WorldGen, new[] { Ore, Seed, Bar }, null,
+                new[] { Smelter, Belt, Lift, Splitter, Filter });
         }
+
+        BuildingDef Building(string id, BuildingKind kind, int order)
+        {
+            var b = Make<BuildingDef>(id);
+            b.kind = kind;
+            b.paletteOrder = order;
+            b.speed = 4f;
+            b.buildWork = 0.2f;
+            return b;
+        }
+
+        public int BuildingIndex(BuildingDef def) => DB.GetBuildingIndex(def);
+        public ushort Item(ItemDef def) => DB.GetItemIndex(def);
 
         TerrainMaterialDef Mat(string id, float hardness, MaterialFlags flags = MaterialFlags.None)
         {

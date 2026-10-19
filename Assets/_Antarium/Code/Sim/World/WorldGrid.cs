@@ -85,6 +85,14 @@ namespace Antarium.Sim
 
         public int Depth(int x, int y) => SurfaceY[math.clamp(x, 0, Width - 1)] - y;
 
+        /// <summary>The open cell a loose item at <paramref name="c"/> falls to (straight down to the first floor).</summary>
+        public int2 FloorBelow(int2 c)
+        {
+            while (c.y > 0 && Cells[Index(c.x, c.y - 1)].IsOpen)
+                c.y--;
+            return c;
+        }
+
         public void MarkChanged(int x, int y, ChunkFlags flags)
         {
             int chunk = (y >> WorldConstants.ChunkShift) * ChunksX + (x >> WorldConstants.ChunkShift);

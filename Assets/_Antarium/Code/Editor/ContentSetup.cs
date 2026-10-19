@@ -7,13 +7,15 @@ using UnityEngine;
 
 namespace Antarium.Editor
 {
-    /// <summary>Creates the default Milestone 1 content and keeps the ContentDatabase in sync.</summary>
+    /// <summary>Creates the default content (terrain, items, buildings, recipes) and keeps the ContentDatabase in sync.</summary>
     public static class ContentSetup
     {
         public const string Root = "Assets/_Antarium/Content";
         public const string MaterialsFolder = Root + "/Materials";
         public const string BiomesFolder = Root + "/Biomes";
         public const string ItemsFolder = Root + "/Items";
+        public const string RecipesFolder = Root + "/Recipes";
+        public const string BuildingsFolder = Root + "/Buildings";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -27,6 +29,8 @@ namespace Antarium.Editor
             EnsureFolder(MaterialsFolder);
             EnsureFolder(BiomesFolder);
             EnsureFolder(ItemsFolder);
+            EnsureFolder(RecipesFolder);
+            EnsureFolder(BuildingsFolder);
 
             var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
             var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
@@ -36,6 +40,9 @@ namespace Antarium.Editor
             var crystalItem = Item("crystal_shard", "Crystal Shard", "#7fd8ff");
             var seedItem = Item("seed", "Seed", "#c8a85a", food: 2f);
             var grubItem = Item("grub", "Grub", "#f0e2c0", food: 5f);
+            var copperBar = Item("copper", "Copper", "#f09a5a");
+            var ironBar = Item("iron", "Iron", "#aeb8c6");
+            var fungusItem = Item("fungus", "Fungus", "#c9a2d8", food: 3f);
 
             var air = Mat("air", "Air", 1f, PixelPattern.Soil, "#000000", "#000000", "#000000", "#000000", 0f, MaterialFlags.Air);
             var grass = Mat("grass", "Grass", 0.8f, PixelPattern.Soil, "#4c7a2e", "#33561f", "#6aa63c", "#2d4a1a", 0.2f, top: "#86c94e");
@@ -79,6 +86,25 @@ namespace Antarium.Editor
             });
             LoadOrCreate<GameConfig>(ConfigPath, _ => { });
 
+            // Milestone 3: transport, machines and their recipes.
+            var smeltCopper = Recipe("smelt_copper", "Smelt copper", 4f, new[] { Amt(copperItem, 2) }, new[] { Amt(copperBar, 1) });
+            var smeltIron = Recipe("smelt_iron", "Smelt iron", 6f, new[] { Amt(ironItem, 2), Amt(coalItem, 1) }, new[] { Amt(ironBar, 1) });
+            var growFungus = Recipe("grow_fungus", "Grow fungus", 10f, new[] { Amt(seedItem, 2) }, new[] { Amt(fungusItem, 3) });
+            Building("silk_belt", "Silk Belt", BuildingKind.Belt, 0, "#efe6cc", 0.3f, speed: 2.5f, cost: new[] { Amt(copperItem, 1) },
+                description: "Carries items left or right. Drag to lay a line; the drag direction sets the flow.");
+            Building("root_lift", "Root Lift", BuildingKind.Lift, 1, "#9a7448", 0.5f, speed: 3f, cost: new[] { Amt(copperItem, 2) },
+                description: "Carries items up or down a shaft.");
+            Building("splitter", "Splitter", BuildingKind.Splitter, 2, "#e6d39a", 1f, speed: 3f, cost: new[] { Amt(copperItem, 3) },
+                description: "Hands items in turn to every belt, lift or machine around it.");
+            Building("filter", "Filter", BuildingKind.Filter, 3, "#7fc3e8", 1.5f, speed: 3f, cost: new[] { Amt(copperBar, 2) },
+                description: "The chosen item leaves in the arrow direction; everything else goes to the other sides. Click it to change the item.");
+            Building("smelter", "Smelter", BuildingKind.Processor, 10, "#b8562c", 8f, size: new Vector2Int(3, 3),
+                cost: new[] { Amt(copperItem, 12) }, recipes: new[] { smeltCopper, smeltIron },
+                description: "2 copper ore -> 1 copper. 2 iron ore + 1 coal -> 1 iron.", art: PlaceholderArt.Kiln);
+            Building("fungus_garden", "Fungus Garden", BuildingKind.Processor, 11, "#9b7cb4", 6f, size: new Vector2Int(4, 2),
+                cost: new[] { Amt(copperItem, 8) }, recipes: new[] { growFungus },
+                description: "2 seeds -> 3 fungus (3 food each). Feed it the seeds your workers forage.", art: PlaceholderArt.Garden);
+
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
             if (database.surfaceForage.Count == 0)
             {
@@ -105,14 +131,22 @@ namespace Antarium.Editor
                 .OrderBy(p => p)
                 .Select(AssetDatabase.LoadAssetAtPath<TerrainMaterialDef>)
                 .ToList();
-            database.items = AssetDatabase.FindAssets("t:" + nameof(ItemDef))
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .OrderBy(p => p)
-                .Select(AssetDatabase.LoadAssetAtPath<ItemDef>)
-                .ToList();
+            database.items = FindAll<ItemDef>();
+            database.recipes = FindAll<RecipeDef>();
+            database.buildings = FindAll<BuildingDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
-            Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items.");
+            Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
+                      $"{database.buildings.Count} buildings, {database.recipes.Count} recipes.");
+        }
+
+        static List<T> FindAll<T>() where T : Object
+        {
+            return AssetDatabase.FindAssets("t:" + typeof(T).Name)
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .OrderBy(p => p)
+                .Select(AssetDatabase.LoadAssetAtPath<T>)
+                .ToList();
         }
 
         static TerrainMaterialDef Mat(string id, string displayName, float hardness, PixelPattern pattern,
@@ -160,6 +194,39 @@ namespace Antarium.Editor
                 i.EditorSetIdentity(id, displayName);
                 i.color = Hex(colorHex);
                 i.foodValue = food;
+            });
+        }
+
+        static ItemAmount Amt(ItemDef item, int count) => new(item, count);
+
+        static RecipeDef Recipe(string id, string displayName, float duration, ItemAmount[] inputs, ItemAmount[] outputs)
+        {
+            return LoadOrCreate<RecipeDef>($"{RecipesFolder}/{id}.asset", r =>
+            {
+                r.EditorSetIdentity(id, displayName);
+                r.duration = duration;
+                r.inputs = inputs.ToList();
+                r.outputs = outputs.ToList();
+            });
+        }
+
+        static BuildingDef Building(string id, string displayName, BuildingKind kind, int order, string colorHex, float work,
+            float speed = 2f, Vector2Int? size = null, ItemAmount[] cost = null, RecipeDef[] recipes = null, string description = null,
+            PlaceholderArt art = PlaceholderArt.Block)
+        {
+            return LoadOrCreate<BuildingDef>($"{BuildingsFolder}/{id}.asset", b =>
+            {
+                b.EditorSetIdentity(id, displayName);
+                b.kind = kind;
+                b.paletteOrder = order;
+                b.color = Hex(colorHex);
+                b.buildWork = work;
+                b.speed = speed;
+                b.size = size ?? Vector2Int.one;
+                b.cost = cost?.ToList() ?? new List<ItemAmount>();
+                b.recipes = recipes?.ToList() ?? new List<RecipeDef>();
+                b.description = description;
+                b.art = art;
             });
         }
 

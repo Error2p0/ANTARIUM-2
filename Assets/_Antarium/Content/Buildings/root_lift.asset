@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: root_lift
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: root_lift
+  displayName: Root Lift
+  kind: 1
+  paletteOrder: 1
+  description: Carries items up or down a shaft.
+  size: {x: 1, y: 1}
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 2
+  foodCost: 0
+  buildWork: 0.5
+  speed: 3
+  recipes: []
+  inputBatches: 2
+  outputLimit: 6
+  color: {r: 0.6039216, g: 0.45490196, b: 0.28235295, a: 1}
+  art: 0

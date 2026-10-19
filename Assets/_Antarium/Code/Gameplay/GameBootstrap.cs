@@ -48,6 +48,9 @@ namespace Antarium.Gameplay
         HudController _hud;
         DebugHud _debugHud;
         ColonyView _colonyView;
+        BuildingView _buildingView;
+        HoverInfo _hoverInfo;
+        bool _overlay;
         float2 _worldSize;
 
         void Awake()
@@ -72,17 +75,22 @@ namespace Antarium.Gameplay
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, _sim.World, _sim.Light, particleMaterial, transform);
 
             _worldSize = new float2(_sim.World.Width, _sim.World.Height) * WorldConstants.CellSize;
-            _colonyView = new ColonyView(_content, spriteMaterial, transform, _worldSize);
+            _buildingView = new BuildingView(_content, config.render, spriteMaterial, transform, _worldSize);
+            _colonyView = new ColonyView(_content, config.render, spriteMaterial, transform, _worldSize);
             _camera = new PixelCamera(worldCamera, config.camera);
             int startX = _sim.World.Width / 2;
             _camera.Position = WorldGrid.CellCenterToWorld(new int2(startX, _sim.World.SurfaceY[startX] - _content.WorldGen.nestDepth / 2));
 
             _input = new GameInput(inputActions);
             _cameraController = new CameraController(_camera, _input);
-            _tools = new ToolController(config.dig);
+            _tools = new ToolController(config.dig, _content, _buildingView.Ghosts);
             _hud = new HudController(hudDocument, _content);
             _hud.ToolClicked += _tools.SetMode;
+            _hud.BuildingClicked += _tools.SelectBuilding;
+            _hud.OverlayClicked += ToggleOverlay;
             _tools.ModeChanged += _hud.SetActiveTool;
+            _tools.Build.SelectionChanged += _hud.SetSelectedBuilding;
+            _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
         }
 
@@ -95,21 +103,39 @@ namespace Antarium.Gameplay
             _camera.Apply(dt, _worldSize);
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
 
-            _tools.Update(_sim, _input, pointerWorld, _hud.IsPointerOverUi(_input.Pointer), dt, now);
+            bool overUi = _hud.IsPointerOverUi(_input.Pointer);
+            _tools.Update(_sim, _input, pointerWorld, overUi, dt, now);
+            if (_input.Overlay.WasPressedThisFrame()) ToggleOverlay();
             if (_input.ToggleHud.WasPressedThisFrame()) _debugHud.Visible = !_debugHud.Visible;
-            if (Debug.isDebugBuild && _input.SpawnAnts.WasPressedThisFrame()) _sim.SpawnWorkers(50);
+            if (Debug.isDebugBuild)
+            {
+                if (_input.SpawnAnts.WasPressedThisFrame()) _sim.SpawnWorkers(50);
+                if (_input.FinishBuilds.WasPressedThisFrame()) _sim.Buildings.CompleteAllBlueprints();
+                if (_input.GiveItems.WasPressedThisFrame()) _sim.GiveResources(20, 50f);
+            }
 
             _sim.Advance(dt);
             _sim.UpdateDerived();
             _terrain.Upload();
-            _colonyView.Render(_sim, _sim.Clock.Alpha);
+            float alpha = _sim.Clock.Alpha;
+            _buildingView.Render(_sim, alpha, Time.time, _overlay);
+            _colonyView.Render(_sim, alpha, _overlay);
 
             var events = _sim.Events;
             _camera.AddTrauma(_feedback.Consume(events));
             _tools.Consume(events, now);
+            _hud.Consume(events, _sim);
             _hud.Update(dt, _sim);
+            _hoverInfo.Update(dt, _sim, WorldGrid.WorldToCell(pointerWorld), _tools, overUi);
+            _hud.SetInfo(_hoverInfo.Text);
             _debugHud.Update(dt, _sim, pointerWorld, _camera.Zoom, _tools);
             events.Flush();
+        }
+
+        void ToggleOverlay()
+        {
+            _overlay = !_overlay;
+            _hud.SetOverlay(_overlay);
         }
 
         void OnDestroy()
@@ -117,6 +143,7 @@ namespace Antarium.Gameplay
             _input?.Dispose();
             _feedback?.Dispose();
             _colonyView?.Dispose();
+            _buildingView?.Dispose();
             _terrain?.Dispose();
             _sim?.Dispose();
             _content?.Dispose();

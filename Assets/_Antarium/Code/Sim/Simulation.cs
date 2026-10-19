@@ -13,7 +13,7 @@ namespace Antarium.Sim
     /// </summary>
     public sealed class Simulation : IDisposable, IAntIntentHandler
     {
-        enum CommandKind : byte { Dig, Designate, Zone }
+        enum CommandKind : byte { Dig, Designate, Zone, Build, Remove, SetFilter }
 
         readonly struct Command
         {
@@ -22,6 +22,10 @@ namespace Antarium.Sim
             public readonly float Radius;
             public readonly float Power;
             public readonly bool Set;
+            public readonly int Def;
+            public readonly int2 Cell;
+            public readonly int2 Dir;
+            public readonly ushort Item;
 
             public Command(CommandKind kind, float2 cellPos, float radius, float power, bool set)
             {
@@ -30,6 +34,23 @@ namespace Antarium.Sim
                 Radius = radius;
                 Power = power;
                 Set = set;
+                Def = 0;
+                Cell = default;
+                Dir = default;
+                Item = 0;
+            }
+
+            public Command(CommandKind kind, int def, int2 cell, int2 dir, ushort item)
+            {
+                Kind = kind;
+                CellPos = default;
+                Radius = 0f;
+                Power = 0f;
+                Set = true;
+                Def = def;
+                Cell = cell;
+                Dir = dir;
+                Item = item;
             }
         }
 
@@ -43,10 +64,12 @@ namespace Antarium.Sim
         public readonly FlowFields Fields;
         public readonly AntSystem Ants;
         public readonly Colony Colony;
+        public readonly BuildingSystem Buildings;
 
         readonly List<Command> _pending = new();
         readonly List<int2> _hatched = new();
         readonly List<int2> _scratchCells = new();
+        readonly List<ushort> _evicted = new();
         NativeList<int2> _broken;
         NativeList<int2> _breachStarts;
         Unity.Mathematics.Random _rng;
@@ -75,8 +98,17 @@ namespace Antarium.Sim
 
             Colony = new Colony(content, config.colony);
             Colony.QueenCell = FindQueenCell();
-            Fields = new FlowFields(World);
-            Ants = new AntSystem(config.worker);
+            FindRoyalDisplayCells();
+            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events);
+            int slots = content.ConsumerSlotCount;
+            Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
+            Ants = new AntSystem(config.worker, config.logistics, content.Items.Length);
+            for (int i = 0; i < content.Items.Length; i++)
+            {
+                int slot = content.ConsumerSlot[i];
+                Ants.ConsumerField[i] = slot >= 0 ? FlowFields.ConsumerField(slot) : -1;
+                Ants.SupplyField[i] = slot >= 0 ? FlowFields.SupplyField(slot, slots) : -1;
+            }
             for (int i = 0; i < config.colony.startingWorkers; i++)
                 Ants.Spawn(RandomRoyalFloorCell(), seed);
             RefreshFields(force: true);
@@ -95,6 +127,15 @@ namespace Antarium.Sim
         public void EnqueueStorageZone(float2 cellPos, float radius, bool set) =>
             _pending.Add(new Command(CommandKind.Zone, cellPos, radius, 0f, set));
 
+        /// <summary>Places a blueprint of building <paramref name="def"/> (index into <c>ContentDB.Buildings</c>) with its bottom-left at <paramref name="origin"/>.</summary>
+        public void EnqueueBuild(int def, int2 origin, int2 dir, ushort filter = 0) =>
+            _pending.Add(new Command(CommandKind.Build, def, origin, dir, filter));
+
+        /// <summary>Removes the building covering <paramref name="cell"/> and refunds it.</summary>
+        public void EnqueueRemove(int2 cell) => _pending.Add(new Command(CommandKind.Remove, 0, cell, default, 0));
+
+        public void EnqueueSetFilter(int2 cell, ushort item) => _pending.Add(new Command(CommandKind.SetFilter, 0, cell, default, item));
+
         /// <summary>Advances the clock and runs the due ticks. Returns the number of ticks run.</summary>
         public int Advance(double deltaTime)
         {
@@ -112,9 +153,15 @@ namespace Antarium.Sim
             _pending.Clear();
 
             UpdateColony(dt);
+            Buildings.Tick(dt);
+            Colony.Inventory.UpdateRates(dt, Config.logistics.rateSmoothing);
             RefreshFields(force: false);
 
-            Ants.Think(World, Fields, dt, Colony.SpeedFactor, Ants.JobChances(_digSlots, _haulSlots));
+            var inventory = Colony.Inventory;
+            for (int i = 0; i < Content.Items.Length; i++)
+                Ants.StockAccepts[i] = inventory.StockAccepts((ushort)i) ? (byte)1 : (byte)0;
+            int supplySlots = Ants.UpdateSupplyNeed(inventory);
+            Ants.Think(World, Fields, dt, Colony.SpeedFactor, Ants.JobChances(_digSlots, _haulSlots, Buildings.BuildSlots, supplySlots));
             Ants.Resolve(this);
             FlushBreaches();
         }
@@ -123,6 +170,16 @@ namespace Antarium.Sim
         public void UpdateDerived()
         {
             Light.UpdateDirty(World, Content.MaterialSim);
+        }
+
+        /// <summary>Debug/cheat: adds up to <paramref name="items"/> of every non-food item (as far as the stock has room) and <paramref name="food"/> food.</summary>
+        public void GiveResources(int items, float food)
+        {
+            var inv = Colony.Inventory;
+            for (int i = 0; i < Content.Items.Length; i++)
+                if (!Content.Items[i].IsFood) inv.Add((ushort)i, items, Colony.QueenCell);
+            inv.Food = math.min(inv.FoodCapacity, inv.Food + food);
+            inv.AcceptanceChanged = true;
         }
 
         /// <summary>Debug/cheat: spawns workers in the royal chamber.</summary>
@@ -141,6 +198,9 @@ namespace Antarium.Sim
                 case CommandKind.Dig: ResolveDig(cmd); break;
                 case CommandKind.Designate: ApplyBrush(cmd, designate: true); break;
                 case CommandKind.Zone: ApplyBrush(cmd, designate: false); break;
+                case CommandKind.Build: Buildings.Place(cmd.Def, cmd.Cell, cmd.Dir, cmd.Item); break;
+                case CommandKind.Remove: Buildings.Remove(cmd.Cell); break;
+                case CommandKind.SetFilter: Buildings.SetFilter(cmd.Cell, cmd.Item); break;
             }
         }
 
@@ -198,12 +258,29 @@ namespace Antarium.Sim
                 var set = designate ? Colony.Designated : Colony.StorageCells;
                 if (cmd.Set) set.Add(index);
                 else set.Remove(index);
-                if (designate) _designationsChanged = true;
-                else _storageChanged = true;
+                if (designate)
+                {
+                    _designationsChanged = true;
+                    continue;
+                }
+                _storageChanged = true;
+                if (cmd.Set) Colony.Inventory.AddStorageCell(new int2(x, y), index);
+                else
+                {
+                    // Items in an erased cell move to other storage; what does not fit drops to the floor.
+                    _evicted.Clear();
+                    Colony.Inventory.RemoveStorageCell(index, _evicted);
+                    var land = World.FloorBelow(new int2(x, y));
+                    foreach (ushort item in _evicted)
+                    {
+                        Colony.Piles.Add(land, item, 1);
+                        Events.Publish(new ItemDroppedEvent(land, item));
+                    }
+                }
             }
 
             if (!designate && _storageChanged)
-                Colony.Inventory.SetStorageCells(Colony.StorageCells.Count);
+                Buildings.MarkNetworkDirty(); // belts ending in a storage zone deliver to the stock
         }
 
         // ---------------------------------------------------------------- terrain
@@ -222,19 +299,25 @@ namespace Antarium.Sim
 
             var mat = Content.MaterialSim[World.Cells[index].Material];
             if (mat.DropItem != ContentDB.NoItem && _rng.NextFloat() < mat.DropChance)
-            {
-                int2 land = DropTarget(c);
-                Colony.Piles.Add(land, mat.DropItem, mat.DropAmount);
-                Events.Publish(new ItemDroppedEvent(land, mat.DropItem));
-            }
+                DropItem(c, mat.DropItem, mat.DropAmount);
         }
 
-        /// <summary>Loose items fall straight down to the first floor.</summary>
-        int2 DropTarget(int2 c)
+        /// <summary>
+        /// Loose items fall straight down to the first floor. A belt or lift on the way catches them if it
+        /// can deliver them; the rest land as a pile.
+        /// </summary>
+        void DropItem(int2 c, ushort item, int count)
         {
-            while (c.y > 0 && World.Cells[World.Index(c.x, c.y - 1)].IsOpen)
-                c.y--;
-            return c;
+            int2 land = World.FloorBelow(c);
+            for (int n = 0; n < count; n++)
+            {
+                bool caught = false;
+                for (int y = c.y; y >= land.y && !caught; y--)
+                    caught = Buildings.TryCatch(new int2(c.x, y), item);
+                if (caught) continue;
+                Colony.Piles.Add(land, item, 1);
+                Events.Publish(new ItemDroppedEvent(land, item));
+            }
         }
 
         void AddBreach(int2 c)
@@ -276,14 +359,23 @@ namespace Antarium.Sim
                     {
                         ant.Carry = item;
                         ant.State = AntState.Carrying;
+                        ant.Dest = CarryDest.Undecided;
                         inventory.BeginTransit(item);
                     }
                     else ant.State = AntState.Idle;
                     break;
                 case IntentKind.Deliver:
-                    if (ant.IsCarrying && inventory.Deliver(ant.Carry))
+                {
+                    // A machine that needs the item first, then the stock, then a belt that can take it.
+                    int2 c = intent.Cell;
+                    ushort carried = ant.Carry;
+                    bool delivered = ant.IsCarrying
+                                     && (Buildings.TryFeed(c, carried)
+                                         || (Colony.IsStockCell(c, World.Index(c.x, c.y)) && inventory.Deliver(carried, c))
+                                         || Buildings.TryLoad(c, carried));
+                    if (delivered)
                     {
-                        Events.Publish(new ItemDeliveredEvent(intent.Cell, ant.Carry));
+                        Events.Publish(new ItemDeliveredEvent(c, carried));
                         ant.Carry = ContentDB.NoItem;
                         ant.State = AntState.Idle;
                     }
@@ -292,6 +384,35 @@ namespace Antarium.Sim
                         ant.State = AntState.Wander;
                         ant.Timer = 3f;
                     }
+                    break;
+                }
+                case IntentKind.Build:
+                    if (Buildings.Work(intent.Cell, intent.Amount) != WorkResult.Working) ant.State = AntState.Idle;
+                    break;
+                case IntentKind.Withdraw:
+                {
+                    int2 c = intent.Cell;
+                    if (!ant.IsCarrying && inventory.TryWithdraw(ant.Want, World.Index(c.x, c.y), Colony.IsRoyalCell(c)))
+                    {
+                        ant.Carry = ant.Want;
+                        ant.State = AntState.Carrying;
+                        ant.Dest = CarryDest.Consumer;
+                        inventory.BeginTransit(ant.Carry);
+                    }
+                    else ant.State = AntState.Idle;
+                    break;
+                }
+                case IntentKind.Drop:
+                    if (ant.IsCarrying)
+                    {
+                        int2 land = World.FloorBelow(intent.Cell);
+                        inventory.CancelTransit(ant.Carry);
+                        Colony.Piles.Add(land, ant.Carry, 1);
+                        Events.Publish(new ItemDroppedEvent(land, ant.Carry));
+                        ant.Carry = ContentDB.NoItem;
+                    }
+                    ant.State = AntState.Wander;
+                    ant.Timer = 2f;
                     break;
             }
         }
@@ -341,8 +462,28 @@ namespace Antarium.Sim
             if (!nav.IsWalkable(new int2(x, y)) || y <= World.SurfaceY[x] - 2) return;
 
             ushort item = Content.SurfaceForage[_rng.NextInt(Content.SurfaceForage.Length)];
-            Colony.Piles.Add(new int2(x, y), item, 1);
-            Events.Publish(new ItemDroppedEvent(new int2(x, y), item));
+            DropItem(new int2(x, y), item, 1);
+        }
+
+        /// <summary>Open cells of the royal chamber where its stock is shown: floor level first, nearest the queen first.</summary>
+        void FindRoyalDisplayCells()
+        {
+            var cells = Colony.RoyalDisplayCells;
+            cells.Clear();
+            int r = Config.colony.royalRadius;
+            var q = Colony.QueenCell;
+            for (int dy = -r; dy <= r; dy++)
+            for (int dx = -r; dx <= r; dx++)
+            {
+                var c = q + new int2(dx, dy);
+                if (!World.InBounds(c.x, c.y)) continue;
+                if (math.abs(dx) <= 1 && dy >= 0 && dy <= 1) continue; // behind the queen's sprite
+                var cell = World[c.x, c.y];
+                if (cell.IsOpen && cell.Material != ContentDB.AirIndex) cells.Add(c);
+            }
+            cells.Sort((a, b) => a.y != b.y ? a.y.CompareTo(b.y)
+                : math.abs(a.x - q.x) != math.abs(b.x - q.x) ? math.abs(a.x - q.x).CompareTo(math.abs(b.x - q.x))
+                : a.x.CompareTo(b.x));
         }
 
         int2 FindQueenCell()
@@ -397,16 +538,36 @@ namespace Antarium.Sim
         {
             if (_terrainChanged) Fields.MarkAllDirty();
             if (_designationsChanged) Fields.MarkDirty(FieldKind.Dig);
-            if (_storageChanged) Fields.MarkDirty(FieldKind.Dropoff);
+            if (_storageChanged || Buildings.DropoffChanged) Fields.MarkDirty(FieldKind.Dropoff);
             if (Colony.Piles.Changed || Colony.Inventory.AcceptanceChanged) Fields.MarkDirty(FieldKind.Items);
+            if (Buildings.BlueprintsChanged) Fields.MarkDirty(FieldKind.Build);
+            ulong locations = Colony.Inventory.LocationsChanged;
+            Colony.Inventory.LocationsChanged = 0;
+            for (int i = 0; i < Content.Items.Length && locations != 0; i++)
+            {
+                int slot = Content.ConsumerSlot[i];
+                if (slot >= 0 && (locations & BuildingSystem.Bit((ushort)i)) != 0)
+                    Fields.MarkDirty(FlowFields.SupplyField(slot, Content.ConsumerSlotCount));
+            }
+            if (Buildings.ConsumersChanged != 0)
+            {
+                for (int i = 0; i < Content.Items.Length; i++)
+                {
+                    int slot = Content.ConsumerSlot[i];
+                    if (slot >= 0 && (Buildings.ConsumersChanged & BuildingSystem.Bit((ushort)i)) != 0)
+                        Fields.MarkDirty(FlowFields.ConsumerField(slot));
+                }
+            }
             _terrainChanged = _designationsChanged = _storageChanged = false;
+            Buildings.DropoffChanged = Buildings.BlueprintsChanged = false;
+            Buildings.ConsumersChanged = 0;
             Colony.Piles.Changed = false;
             Colony.Inventory.AcceptanceChanged = false;
 
             _ticksSinceFieldRefresh++;
             if (!force && _ticksSinceFieldRefresh < Config.colony.fieldRefreshTicks) return;
             bool any = false;
-            for (int i = 0; i < FlowFields.KindCount; i++) any |= Fields.IsDirty((FieldKind)i);
+            for (int i = 0; i < Fields.FieldCount; i++) any |= Fields.IsDirty(i);
             if (!any) return;
             _ticksSinceFieldRefresh = 0;
 
@@ -446,6 +607,36 @@ namespace Antarium.Sim
                 AddRoyalCells(sources, Config.colony.royalRadius);
                 foreach (int index in Colony.StorageCells)
                     sources.Add(GridIndex.ToCell(index, World.ChunksX));
+                Buildings.AddDropoffSources(sources);
+            }
+            if (Fields.IsDirty(FieldKind.Build))
+            {
+                var sources = Fields.Sources(FieldKind.Build);
+                sources.Clear();
+                Buildings.AddBuildSources(sources);
+            }
+            for (int i = 0; i < Content.Items.Length; i++)
+            {
+                int slot = Content.ConsumerSlot[i];
+                if (slot < 0 || !Fields.IsDirty(FlowFields.ConsumerField(slot))) continue;
+                var sources = Fields.Sources(FlowFields.ConsumerField(slot));
+                sources.Clear();
+                Buildings.AddConsumerSources((ushort)i, sources);
+            }
+            for (int i = 0; i < Content.Items.Length; i++)
+            {
+                int slot = Content.ConsumerSlot[i];
+                if (slot < 0) continue;
+                int field = FlowFields.SupplyField(slot, Content.ConsumerSlotCount);
+                if (!Fields.IsDirty(field)) continue;
+                var sources = Fields.Sources(field);
+                sources.Clear();
+                foreach (var container in Colony.Inventory.Containers)
+                {
+                    if (container.Counts[i] == 0) continue;
+                    if (container.IsRoyal) AddRoyalCells(sources, Config.colony.royalRadius);
+                    else sources.Add(container.Cell);
+                }
             }
             if (Fields.IsDirty(FieldKind.Home))
             {
@@ -466,6 +657,7 @@ namespace Antarium.Sim
         public void Dispose()
         {
             Ants.Dispose();
+            Buildings.Dispose();
             Fields.Dispose();
             World.Dispose();
             Light.Dispose();

@@ -17,58 +17,82 @@ namespace Antarium.Sim
         Dropoff,
         /// <summary>Around the queen; idle ants stay close to it.</summary>
         Home,
+        /// <summary>Construction sites (blueprint cells).</summary>
+        Build,
     }
 
     /// <summary>
-    /// Shared distance maps (one per destination kind) over walkable cells. Ants descend the gradient
-    /// instead of each computing its own path, so cost does not grow with the number of ants.
+    /// Shared distance maps over walkable cells: one per destination kind, plus per item that some building
+    /// consumes a "consumer" field (machines needing it, belts that can carry it there) and a "supply" field
+    /// (stock containers holding it). Ants descend
+    /// the gradient instead of each computing its own path, so cost does not grow with the number of ants.
+    /// All fields live in one array (field-major) so a Burst job can read any of them.
     /// </summary>
     public sealed class FlowFields : IDisposable
     {
         public const ushort Unreachable = ushort.MaxValue;
-        public const int KindCount = 4;
+        /// <summary>Number of <see cref="FieldKind"/> fields; consumer fields follow them.</summary>
+        public const int KindCount = 5;
         /// <summary>Distance units per straight step; a diagonal step costs <see cref="DiagonalCost"/> (≈ √2 ratio).</summary>
         public const int StraightCost = 2;
         public const int DiagonalCost = 3;
 
-        readonly NativeArray<ushort>[] _fields = new NativeArray<ushort>[KindCount];
-        readonly NativeList<int2>[] _sources = new NativeList<int2>[KindCount];
-        readonly bool[] _dirty = new bool[KindCount];
+        public readonly int FieldCount;
+        public readonly int CellCount;
 
-        public FlowFields(WorldGrid world)
+        NativeArray<ushort> _all;
+        readonly NativeList<int2>[] _sources;
+        readonly bool[] _dirty;
+
+        public FlowFields(WorldGrid world, int consumerSlots = 0)
         {
-            int count = world.Width * world.Height;
-            for (int i = 0; i < KindCount; i++)
+            CellCount = world.Width * world.Height;
+            FieldCount = KindCount + math.max(0, consumerSlots);
+            _all = new NativeArray<ushort>(CellCount * FieldCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            _sources = new NativeList<int2>[FieldCount];
+            _dirty = new bool[FieldCount];
+            for (int i = 0; i < FieldCount; i++)
             {
-                _fields[i] = new NativeArray<ushort>(count, Allocator.Persistent);
                 _sources[i] = new NativeList<int2>(256, Allocator.Persistent);
                 _dirty[i] = true;
             }
-            for (int i = 0; i < KindCount; i++)
-                Fill(_fields[i], Unreachable);
+            Fill(_all, Unreachable);
         }
 
-        public NativeArray<ushort> this[FieldKind kind] => _fields[(int)kind];
+        /// <summary>Field index of the consumer field for a consumer slot (see <c>ContentDB.ConsumerSlot</c>).</summary>
+        public static int ConsumerField(int slot) => KindCount + slot;
+
+        /// <summary>Field index of the supply field (stock holding the item) for a consumer slot; follows all consumer fields.</summary>
+        public static int SupplyField(int slot, int slotCount) => KindCount + slotCount + slot;
+
+        /// <summary>All fields, field-major: field f, cell index i is at f * CellCount + i.</summary>
+        public NativeArray<ushort> All => _all;
+
+        public NativeArray<ushort> this[FieldKind kind] => Field((int)kind);
+        public NativeArray<ushort> Field(int field) => _all.GetSubArray(field * CellCount, CellCount);
 
         public void MarkDirty(FieldKind kind) => _dirty[(int)kind] = true;
+        public void MarkDirty(int field) => _dirty[field] = true;
 
         public void MarkAllDirty()
         {
-            for (int i = 0; i < KindCount; i++) _dirty[i] = true;
+            for (int i = 0; i < FieldCount; i++) _dirty[i] = true;
         }
 
         public bool IsDirty(FieldKind kind) => _dirty[(int)kind];
+        public bool IsDirty(int field) => _dirty[field];
 
         /// <summary>Source list to refill before <see cref="Rebuild"/>; only used for dirty fields.</summary>
         public NativeList<int2> Sources(FieldKind kind) => _sources[(int)kind];
+        public NativeList<int2> Sources(int field) => _sources[field];
 
         /// <summary>Rebuilds all dirty fields in parallel from their current source lists.</summary>
         public void Rebuild(WorldGrid world)
         {
             var nav = new NavGrid(world);
-            var handles = new NativeArray<JobHandle>(KindCount, Allocator.Temp);
+            var handles = new NativeArray<JobHandle>(FieldCount, Allocator.Temp);
             int scheduled = 0;
-            for (int i = 0; i < KindCount; i++)
+            for (int i = 0; i < FieldCount; i++)
             {
                 if (!_dirty[i]) continue;
                 _dirty[i] = false;
@@ -76,15 +100,17 @@ namespace Antarium.Sim
                 {
                     Nav = nav,
                     Sources = _sources[i].AsArray(),
-                    Distance = _fields[i],
+                    Distance = Field(i),
                 }.Schedule();
             }
             JobHandle.CompleteAll(handles.GetSubArray(0, scheduled));
             handles.Dispose();
         }
 
-        public ushort Get(FieldKind kind, WorldGrid world, int2 cell) =>
-            world.InBounds(cell.x, cell.y) ? _fields[(int)kind][world.Index(cell.x, cell.y)] : Unreachable;
+        public ushort Get(FieldKind kind, WorldGrid world, int2 cell) => Get((int)kind, world, cell);
+
+        public ushort Get(int field, WorldGrid world, int2 cell) =>
+            world.InBounds(cell.x, cell.y) ? _all[field * CellCount + world.Index(cell.x, cell.y)] : Unreachable;
 
         static unsafe void Fill(NativeArray<ushort> array, ushort value)
         {
@@ -93,11 +119,9 @@ namespace Antarium.Sim
 
         public void Dispose()
         {
-            for (int i = 0; i < KindCount; i++)
-            {
-                if (_fields[i].IsCreated) _fields[i].Dispose();
+            if (_all.IsCreated) _all.Dispose();
+            for (int i = 0; i < FieldCount; i++)
                 if (_sources[i].IsCreated) _sources[i].Dispose();
-            }
         }
 
         /// <summary>
@@ -109,7 +133,8 @@ namespace Antarium.Sim
         {
             public NavGrid Nav;
             [ReadOnly] public NativeArray<int2> Sources;
-            public NativeArray<ushort> Distance;
+            // Each job writes its own slice of the shared field array.
+            [NativeDisableContainerSafetyRestriction] public NativeArray<ushort> Distance;
 
             static NativeList<int2> Bucket(int d, NativeList<int2> b0, NativeList<int2> b1, NativeList<int2> b2, NativeList<int2> b3) =>
                 (d & 3) switch { 0 => b0, 1 => b1, 2 => b2, _ => b3 };

@@ -15,6 +15,8 @@ namespace Antarium.Sim
         DigDesignated = 1 << 2,
         /// <summary>Open cell painted as a storage zone.</summary>
         Storage = 1 << 3,
+        /// <summary>Part of a building that workers still have to construct.</summary>
+        Blueprint = 1 << 4,
     }
 
     /// <summary>

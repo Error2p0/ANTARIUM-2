@@ -43,6 +43,17 @@ MonoBehaviour:
     spriteMinLight: 0.85
     miningOrderColor: {r: 1, g: 0.69, b: 0.25, a: 1}
     storageColor: {r: 0.3, g: 0.75, b: 0.85, a: 1}
+    ghostAlpha: 0.55
+    ghostValidColor: {r: 0.55, g: 1, b: 0.6, a: 1}
+    ghostInvalidColor: {r: 1, g: 0.35, b: 0.3, a: 1}
+    overlayIdleColor: {r: 0.35, g: 0.4, b: 0.55, a: 1}
+    overlayFlowColor: {r: 0.4, g: 1, b: 0.45, a: 1}
+    overlayJamColor: {r: 1, g: 0.25, b: 0.2, a: 1}
+    overlayFullRate: 120
+    overlayWorkingColor: {r: 0.5, g: 1, b: 0.5, a: 1}
+    overlayStarvedColor: {r: 1, g: 0.85, b: 0.3, a: 1}
+    overlayIdleAntColor: {r: 0.45, g: 0.7, b: 1, a: 1}
+    stockBrightness: 0.8
   camera:
     minZoom: 1
     maxZoom: 8
@@ -53,6 +64,7 @@ MonoBehaviour:
   feedback:
     particlesPerDamage: 1
     particlesPerBreak: 6
+    maxParticlesPerFrame: 150
     particleSpeed: 4
     particleLifetime: 0.6
     shakePerBreak: 0.06
@@ -60,9 +72,9 @@ MonoBehaviour:
   colony:
     startingWorkers: 6
     startingFood: 40
-    baseItemCapacity: 30
+    baseItemCapacity: 40
     baseFoodCapacity: 100
-    storageItemsPerCell: 4
+    storageItemsPerCell: 8
     storageFoodPerCell: 6
     eggFoodCost: 6
     eggInterval: 6
@@ -82,4 +94,15 @@ MonoBehaviour:
     digPower: 0.5
     digWeight: 1
     haulWeight: 0.8
+    diggersPerFrontierCell: 4
     wanderRadius: 16
+  logistics:
+    itemSpacing: 0.5
+    jamSeconds: 2
+    rateSmoothing: 0.15
+    consumerBias: 0.1
+    buildPower: 1
+    buildWeight: 0.7
+    supplyWeight: 0.9
+    buildersPerSite: 2
+    refundFraction: 1

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Antarium.Content;
+using Antarium.Presentation;
 using Antarium.Core;
 using Antarium.Sim;
 using Unity.Mathematics;
@@ -14,6 +16,8 @@ namespace Antarium.Gameplay
         Mine,
         /// <summary>Paint storage zones (right button erases).</summary>
         Storage,
+        /// <summary>Place buildings from the palette (right button removes).</summary>
+        Build,
     }
 
     /// <summary>Routes pointer input to the active tool. A press that starts over the UI never reaches the world.</summary>
@@ -21,18 +25,24 @@ namespace Antarium.Gameplay
     {
         readonly DigConfig _config;
         readonly DigTool _dig;
+        readonly BuildTool _build;
+        readonly List<BuildGhost> _ghosts;
         bool _strokeBlocked;
         bool _hasLast;
         float2 _lastCellPos;
 
         public ToolMode Mode { get; private set; } = ToolMode.Dig;
         public DigTool Dig => _dig;
+        public BuildTool Build => _build;
         public event Action<ToolMode> ModeChanged;
 
-        public ToolController(DigConfig config)
+        /// <param name="ghosts">Placement previews to draw; filled while the Build tool is active.</param>
+        public ToolController(DigConfig config, ContentDB content, List<BuildGhost> ghosts)
         {
             _config = config;
             _dig = new DigTool(config);
+            _build = new BuildTool(content);
+            _ghosts = ghosts;
         }
 
         public void SetMode(ToolMode mode)
@@ -40,7 +50,16 @@ namespace Antarium.Gameplay
             if (mode == Mode) return;
             Mode = mode;
             _hasLast = false;
+            _build.Cancel();
+            _ghosts.Clear();
             ModeChanged?.Invoke(mode);
+        }
+
+        /// <summary>Selects a building from the palette (and switches to the Build tool).</summary>
+        public void SelectBuilding(int def)
+        {
+            _build.Select(def);
+            SetMode(ToolMode.Build);
         }
 
         public void Update(Simulation sim, GameInput input, float2 pointerWorld, bool pointerOverUi, float dt, double now)
@@ -48,6 +67,13 @@ namespace Antarium.Gameplay
             if (input.ToolDig.WasPressedThisFrame()) SetMode(ToolMode.Dig);
             if (input.ToolMine.WasPressedThisFrame()) SetMode(ToolMode.Mine);
             if (input.ToolStorage.WasPressedThisFrame()) SetMode(ToolMode.Storage);
+            if (input.ToolBuild.WasPressedThisFrame()) SetMode(ToolMode.Build);
+            if (Mode == ToolMode.Build)
+            {
+                if (input.NextBuilding.WasPressedThisFrame()) _build.Cycle(1);
+                if (input.PrevBuilding.WasPressedThisFrame()) _build.Cycle(-1);
+                if (input.Rotate.WasPressedThisFrame()) _build.Rotate();
+            }
 
             bool primary = input.Primary.IsPressed();
             bool secondary = input.Secondary.IsPressed();
@@ -65,6 +91,10 @@ namespace Antarium.Gameplay
                 case ToolMode.Mine:
                 case ToolMode.Storage:
                     Paint(sim, primary, secondary, cellPos);
+                    break;
+                case ToolMode.Build:
+                    _build.Update(sim, primary, input.Primary.WasPressedThisFrame() && !_strokeBlocked, secondary, cellPos, _ghosts);
+                    if (pointerOverUi && !primary && !secondary) _ghosts.Clear();
                     break;
             }
         }

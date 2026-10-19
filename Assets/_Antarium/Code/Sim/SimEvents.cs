@@ -66,4 +66,44 @@ namespace Antarium.Sim
         public readonly int2 Cell;
         public AntHatchedEvent(int2 cell) { Cell = cell; }
     }
+
+    public readonly struct BuildingPlacedEvent
+    {
+        public readonly int Id;
+        public readonly int Def;
+        public readonly int2 Origin;
+        public BuildingPlacedEvent(int id, int def, int2 origin) { Id = id; Def = def; Origin = origin; }
+    }
+
+    public readonly struct BuildingCompletedEvent
+    {
+        public readonly int Id;
+        public readonly int Def;
+        public readonly int2 Origin;
+        public BuildingCompletedEvent(int id, int def, int2 origin) { Id = id; Def = def; Origin = origin; }
+    }
+
+    public readonly struct BuildingRemovedEvent
+    {
+        public readonly int Def;
+        public readonly int2 Origin;
+        public BuildingRemovedEvent(int def, int2 origin) { Def = def; Origin = origin; }
+    }
+
+    /// <summary>A placement command was refused (the HUD explains why).</summary>
+    public readonly struct PlaceFailedEvent
+    {
+        public readonly int Def;
+        public readonly int2 Origin;
+        public readonly PlaceResult Result;
+        public PlaceFailedEvent(int def, int2 origin, PlaceResult result) { Def = def; Origin = origin; Result = result; }
+    }
+
+    /// <summary>A machine finished a craft.</summary>
+    public readonly struct ItemCraftedEvent
+    {
+        public readonly int2 Origin;
+        public readonly ushort Item;
+        public ItemCraftedEvent(int2 origin, ushort item) { Origin = origin; Item = item; }
+    }
 }

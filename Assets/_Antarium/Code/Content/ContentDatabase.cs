@@ -12,6 +12,8 @@ namespace Antarium.Content
     {
         public List<TerrainMaterialDef> materials = new();
         public List<ItemDef> items = new();
+        public List<BuildingDef> buildings = new();
+        public List<RecipeDef> recipes = new();
         public WorldGenSettings worldGen;
         [Tooltip("Food items that appear on the surface over time for workers to forage.")]
         public List<ItemDef> surfaceForage = new();

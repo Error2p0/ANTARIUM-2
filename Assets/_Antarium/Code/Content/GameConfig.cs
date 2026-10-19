@@ -15,6 +15,36 @@ namespace Antarium.Content
         public FeedbackConfig feedback = new();
         public ColonyConfig colony = new();
         public WorkerConfig worker = new();
+        public LogisticsConfig logistics = new();
+    }
+
+    [Serializable]
+    public sealed class LogisticsConfig
+    {
+        [Header("Transport")]
+        [Tooltip("Minimum distance between two items on a belt, in cells. A cell holds at most 1 / spacing items.")]
+        [Range(0.25f, 1f)] public float itemSpacing = 0.5f;
+        [Tooltip("A full belt cell whose front item has not moved for this long is jammed; ants stop loading it.")]
+        [Min(0.1f)] public float jamSeconds = 2f;
+        [Tooltip("Smoothing of the per-belt and per-item rate meters (fraction of the new sample per second).")]
+        [Range(0.01f, 1f)] public float rateSmoothing = 0.15f;
+
+        [Header("Hauling")]
+        [Tooltip("Haulers compare distance to a machine that needs the item, multiplied by this, with distance to the stock. " +
+                 "0.1 = a machine wins unless it is more than 10x farther away than the stock.")]
+        [Range(0.02f, 1f)] public float consumerBias = 0.1f;
+
+        [Header("Construction")]
+        [Tooltip("Build work per second for one worker (a building's buildWork is in seconds of one worker).")]
+        [Min(0.01f)] public float buildPower = 1f;
+        [Tooltip("Job choice: distance to a construction site is multiplied by this. Lower = preferred.")]
+        [Min(0.01f)] public float buildWeight = 0.7f;
+        [Tooltip("Job choice: distance to stock holding an item a machine waits for is multiplied by this. Lower = preferred.")]
+        [Min(0.01f)] public float supplyWeight = 0.9f;
+        [Tooltip("Workers that may work on one construction site at a time.")]
+        [Min(1)] public int buildersPerSite = 2;
+        [Tooltip("Share of the cost returned when a finished building is removed (blueprints always refund fully).")]
+        [Range(0f, 1f)] public float refundFraction = 1f;
     }
 
     [Serializable]
@@ -24,11 +54,11 @@ namespace Antarium.Content
         [Min(0f)] public float startingFood = 40f;
 
         [Header("Capacity")]
-        [Tooltip("Per item type, provided by the royal chamber.")]
-        [Min(0)] public int baseItemCapacity = 30;
+        [Tooltip("Items (any type) the royal chamber holds. Food has its own capacity.")]
+        [Min(0)] public int baseItemCapacity = 40;
         [Min(0f)] public float baseFoodCapacity = 100f;
-        [Tooltip("Extra capacity per item type for each storage zone cell.")]
-        [Min(0)] public int storageItemsPerCell = 4;
+        [Tooltip("Items (any type) one storage zone cell holds. The stock view draws up to 8 per cell.")]
+        [Min(0)] public int storageItemsPerCell = 8;
         [Min(0f)] public float storageFoodPerCell = 6f;
 
         [Header("Queen & brood")]
@@ -133,6 +163,23 @@ namespace Antarium.Content
         public Color miningOrderColor = new(1f, 0.69f, 0.25f);
         [Tooltip("Tint on storage zone cells.")]
         public Color storageColor = new(0.3f, 0.75f, 0.85f);
+
+        [Header("Buildings & overlay")]
+        [Tooltip("Opacity of blueprints and placement previews (dithered).")]
+        [Range(0.1f, 0.9f)] public float ghostAlpha = 0.55f;
+        public Color ghostValidColor = new(0.55f, 1f, 0.6f);
+        public Color ghostInvalidColor = new(1f, 0.35f, 0.3f);
+        [Tooltip("Throughput overlay: belt colour at zero and at high flow, and for jammed belts.")]
+        public Color overlayIdleColor = new(0.35f, 0.4f, 0.55f);
+        public Color overlayFlowColor = new(0.4f, 1f, 0.45f);
+        public Color overlayJamColor = new(1f, 0.25f, 0.2f);
+        [Tooltip("Items per minute shown as full flow colour.")]
+        [Min(1f)] public float overlayFullRate = 120f;
+        public Color overlayWorkingColor = new(0.5f, 1f, 0.5f);
+        public Color overlayStarvedColor = new(1f, 0.85f, 0.3f);
+        public Color overlayIdleAntColor = new(0.45f, 0.7f, 1f);
+        [Tooltip("Brightness of items kept in storage relative to loose items (they sit on the back wall).")]
+        [Range(0.3f, 1f)] public float stockBrightness = 0.8f;
     }
 
     [Serializable]
