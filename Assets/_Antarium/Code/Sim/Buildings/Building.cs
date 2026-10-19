@@ -44,6 +44,8 @@ namespace Antarium.Sim
         NeedsFloor,
         CantAfford,
         UnknownBuilding,
+        /// <summary>Still locked behind research.</summary>
+        Locked,
     }
 
     /// <summary>An item riding a transport cell. <see cref="T"/> runs 0 → 1 along the cell.</summary>

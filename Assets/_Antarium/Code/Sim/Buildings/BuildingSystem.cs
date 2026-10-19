@@ -38,6 +38,7 @@ namespace Antarium.Sim
         readonly int[] _room;
         bool _networkDirty = true;
         float _rateTimer;
+        float _beltSpeed = 1f;
 
         /// <summary>Bit per item index, all items set.</summary>
         public readonly ulong AllItems;
@@ -116,6 +117,7 @@ namespace Antarium.Sim
         {
             rotate = None;
             if (def < 0 || def >= _content.Buildings.Length) return PlaceResult.UnknownBuilding;
+            if (!_colony.BuildingUnlocked[def]) return PlaceResult.Locked;
             var data = _content.Buildings[def];
             var bdef = data.Def;
             var size = new int2(bdef.Footprint.x, bdef.Footprint.y);
@@ -168,9 +170,16 @@ namespace Antarium.Sim
                 return result;
             }
 
-            var data = _content.Buildings[def];
-            var bdef = data.Def;
-            _colony.Inventory.Spend(data);
+            _colony.Inventory.Spend(_content.Buildings[def]);
+            int id = Create(def, origin, dir, filter);
+            _events.Publish(new BuildingPlacedEvent(id, def, origin));
+            return result;
+        }
+
+        /// <summary>Adds a blueprint without paying or checking (placement and loading).</summary>
+        int Create(int def, int2 origin, int2 dir, ushort filter)
+        {
+            var bdef = _content.Buildings[def].Def;
             var size = new int2(bdef.Footprint.x, bdef.Footprint.y);
             int id = _free.Count > 0 ? _free.Pop() : All.Length;
             var b = new Building
@@ -202,8 +211,19 @@ namespace Antarium.Sim
             });
             BlueprintsChanged = true;
             RecountBlueprints();
-            _events.Publish(new BuildingPlacedEvent(id, def, origin));
-            return result;
+            return id;
+        }
+
+        /// <summary>
+        /// Loading a save: recreates a building without paying, as a blueprint with <paramref name="workLeft"/>
+        /// or finished. Returns its id (machine state is restored by the caller through <see cref="MachineOf"/>).
+        /// </summary>
+        internal int Restore(int def, int2 origin, int2 dir, ushort filter, BuildingState state, float workLeft)
+        {
+            int id = Create(def, origin, dir, filter);
+            if (state == BuildingState.Active) Activate(id, notify: false);
+            else Get(id).WorkLeft = math.clamp(workLeft, 0.01f, Get(id).WorkTotal);
+            return id;
         }
 
         /// <summary>Applies construction work to the blueprint covering <paramref name="cell"/>.</summary>
@@ -215,11 +235,11 @@ namespace Antarium.Sim
             if (b.State != BuildingState.Blueprint) return WorkResult.None;
             b.WorkLeft -= amount;
             if (b.WorkLeft > 0f) return WorkResult.Working;
-            Activate(id);
+            Activate(id, notify: true);
             return WorkResult.Completed;
         }
 
-        void Activate(int id)
+        void Activate(int id, bool notify)
         {
             ref var b = ref Get(id);
             b.State = BuildingState.Active;
@@ -242,6 +262,8 @@ namespace Antarium.Sim
             _networkDirty = true;
             BlueprintsChanged = true;
             RecountBlueprints();
+            if (!notify) return;
+            _colony.Stats.Built[b.Def]++;
             _events.Publish(new BuildingCompletedEvent(id, b.Def, b.Origin));
         }
 
@@ -250,7 +272,7 @@ namespace Antarium.Sim
         {
             for (int i = 0; i < All.Length; i++)
                 if (All[i].Alive && All[i].State == BuildingState.Blueprint)
-                    Activate(i);
+                    Activate(i, notify: true);
         }
 
         /// <summary>Removes the building covering <paramref name="cell"/>, refunding its cost. Carried items drop as piles.</summary>
@@ -381,7 +403,7 @@ namespace Antarium.Sim
             return true;
         }
 
-        static float2 SlotPos(in Building b, float t)
+        internal static float2 SlotPos(in Building b, float t)
         {
             float2 center = new float2(b.Origin) + 0.5f;
             return b.Kind == BuildingKind.Belt || b.Kind == BuildingKind.Lift ? center + new float2(b.Dir) * (t - 0.5f) : center;
@@ -392,6 +414,7 @@ namespace Antarium.Sim
         public void Tick(float dt)
         {
             if (_networkDirty) Compile();
+            _beltSpeed = _colony.Mods.Mult(StatKind.BeltSpeed);
 
             for (int i = 0; i < _order.Count; i++)
             {
@@ -422,7 +445,7 @@ namespace Antarium.Sim
         void Step(int id, float dt)
         {
             ref var b = ref Get(id);
-            float dv = _content.Buildings[b.Def].Def.speed * dt;
+            float dv = _content.Buildings[b.Def].Def.speed * _beltSpeed * dt;
             bool emitted = false;
             if (!b.Front.IsEmpty)
             {
@@ -519,6 +542,8 @@ namespace Antarium.Sim
 
         void TickMachines(float dt)
         {
+            float speed = _colony.Mods.Mult(StatKind.MachineSpeed);
+            var stats = _colony.Stats;
             foreach (var m in _machines)
             {
                 if (m == null) continue;
@@ -536,16 +561,22 @@ namespace Antarium.Sim
                     {
                         var recipe = _content.Recipes[m.Recipe];
                         m.Status = MachineStatus.Working;
-                        m.Progress += dt;
+                        m.Progress += dt * speed;
                         if (m.Progress >= recipe.Duration)
                         {
                             for (int i = 0; i < recipe.OutputItems.Length; i++)
-                            for (int n = 0; n < recipe.OutputCounts[i]; n++)
-                                m.Pending.Add(recipe.OutputItems[i]);
+                            {
+                                stats.Crafted[recipe.OutputItems[i]] += recipe.OutputCounts[i];
+                                for (int n = 0; n < recipe.OutputCounts[i]; n++)
+                                    m.Pending.Add(recipe.OutputItems[i]);
+                            }
+                            if (recipe.Knowledge > 0f)
+                                _colony.Inventory.AddKnowledge(recipe.Knowledge * _colony.Mods.Mult(StatKind.KnowledgeGain), studied: true);
                             m.Recipe = -1;
                             m.Progress = 0f;
                             m.Crafted++;
-                            _events.Publish(new ItemCraftedEvent(b.Origin, recipe.OutputItems[0]));
+                            _events.Publish(new ItemCraftedEvent(b.Origin, recipe.OutputItems.Length > 0 ? recipe.OutputItems[0] : ContentDB.NoItem,
+                                recipe.Knowledge));
                             while (m.Pending.Count > 0 && EmitProduct(m, m.Pending[0]))
                                 m.Pending.RemoveAt(0);
                         }

@@ -16,6 +16,13 @@ namespace Antarium.Sim
         readonly ColonyConfig _config;
 
         public readonly Inventory Inventory;
+        /// <summary>Stat modifiers from research.</summary>
+        public readonly Modifiers Mods = new();
+        public readonly ColonyStats Stats;
+        public readonly ProductionMeter Meter;
+        /// <summary>Per building definition / ability: usable (not locked behind research).</summary>
+        public readonly bool[] BuildingUnlocked;
+        public readonly bool[] AbilityUnlocked;
         public readonly ItemPiles Piles;
         public readonly List<Egg> Eggs = new();
         /// <summary>Cells of the royal chamber where its share of the stock is shown, in fill order.</summary>
@@ -32,9 +39,19 @@ namespace Antarium.Sim
         public Colony(ContentDB content, ColonyConfig config)
         {
             _config = config;
-            Inventory = new Inventory(content, config);
+            Stats = new ColonyStats(content.Items.Length, content.Buildings.Length);
+            Meter = new ProductionMeter(content.Items.Length);
+            Inventory = new Inventory(content, config, Mods, Stats, Meter);
             Piles = new ItemPiles(content.Items.Length);
+            BuildingUnlocked = new bool[content.Buildings.Length];
+            for (int i = 0; i < BuildingUnlocked.Length; i++) BuildingUnlocked[i] = !content.BuildingStartsLocked[i];
+            AbilityUnlocked = new bool[content.Abilities.Length];
+            for (int i = 0; i < AbilityUnlocked.Length; i++) AbilityUnlocked[i] = !content.AbilityStartsLocked[i];
         }
+
+        /// <summary>Seconds between eggs while fed.</summary>
+        public float EggInterval => _config.eggInterval / Mods.Mult(StatKind.LayingSpeed);
+        public int MaxEggs => _config.maxEggs + (int)Mods.Flat(StatKind.MaxEggs);
 
         public int2 QueenCell
         {
@@ -72,13 +89,16 @@ namespace Antarium.Sim
         public bool TryLayEgg(float dt, int2 eggCell)
         {
             EggTimer += dt;
-            if (Starving || EggTimer < _config.eggInterval) return false;
-            if (Eggs.Count >= _config.maxEggs || Inventory.Food < _config.eggFoodCost) return false;
+            if (Starving || EggTimer < EggInterval) return false;
+            if (Eggs.Count >= MaxEggs || Inventory.Food < _config.eggFoodCost) return false;
             Inventory.ConsumeFood(_config.eggFoodCost);
             Eggs.Add(new Egg { Cell = eggCell });
             EggTimer = 0f;
             return true;
         }
+
+        /// <summary>Lays an egg right away, free and regardless of the egg limit (Royal Decree).</summary>
+        public void LayEggNow(int2 eggCell) => Eggs.Add(new Egg { Cell = eggCell });
 
         /// <summary>Ages eggs and returns hatched ones into <paramref name="hatched"/>.</summary>
         public void UpdateEggs(float dt, List<int2> hatched)

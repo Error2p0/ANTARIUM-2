@@ -104,6 +104,7 @@ namespace Antarium.Presentation
                     {
                         PlaceholderArt.Kiln => BuildingSprites.SmelterRect,
                         PlaceholderArt.Garden => BuildingSprites.GardenRect,
+                        PlaceholderArt.Archive => BuildingSprites.ArchiveRect,
                         _ => BuildingSprites.GenericRect,
                     };
                     v.Frames = def.art == PlaceholderArt.Block ? 1 : 2;

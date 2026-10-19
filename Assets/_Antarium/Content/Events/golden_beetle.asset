@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbf57506b5f478d488301ba0931b1b62, type: 3}
+  m_Name: golden_beetle
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.RandomEventDef
+  id: golden_beetle
+  displayName: Golden Beetle
+  kind: 2
+  description: A golden beetle is wandering your tunnels. Click it before it leaves!
+  weight: 1
+  minDepth: 0
+  duration: 45
+  radius: 3
+  count: 1
+  materials: []
+  rewardKnowledge: 8
+  rewardFood: 20
+  rewards:
+  - item: {fileID: 11400000, guid: 1556088c0f9216946bf4cf46fe978a9c, type: 2}
+    count: 2

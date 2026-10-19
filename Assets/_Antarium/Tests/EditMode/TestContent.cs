@@ -9,11 +9,16 @@ namespace Antarium.Tests
     /// <summary>In-memory content for tests: a small world with dirt over stone, a glow crystal and bedrock.</summary>
     public sealed class TestContent : IDisposable
     {
-        public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock;
+        public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor;
         public readonly BiomeDef Topsoil, Deep;
         public readonly ItemDef Ore, Seed, Bar;
-        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter;
-        public readonly RecipeDef Smelt;
+        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab;
+        public readonly RecipeDef Smelt, Study;
+        public readonly ResearchDef FastBelts, LabResearch, SeismicResearch;
+        public readonly AbilityDef Frenzy, Seismic, Decree;
+        public readonly ContractDef DigIntro, DeliverOre;
+        public readonly RandomEventDef MeteorEvent, VeinEvent, BeetleEvent, TrappedEvent;
+        public readonly ProgressionContent Progression;
         public readonly WorldGenSettings WorldGen;
         public readonly GameConfig Config;
         public readonly ContentDB DB;
@@ -40,6 +45,13 @@ namespace Antarium.Tests
             Smelter.size = new Vector2Int(2, 2);
             Smelter.recipes.Add(Smelt);
             Smelter.buildWork = 1f;
+            Study = Make<RecipeDef>("study");
+            Study.inputs.Add(new ItemAmount(Ore, 1));
+            Study.knowledge = 3f;
+            Study.duration = 1f;
+            Lab = Building("lab", BuildingKind.Processor, 5);
+            Lab.size = new Vector2Int(2, 2);
+            Lab.recipes.Add(Study);
 
             Air = Mat("air", 1f, MaterialFlags.Air);
             Grass = Mat("grass", 1f);
@@ -50,6 +62,78 @@ namespace Antarium.Tests
             Crystal.emissionColor = Color.white;
             Crystal.emissionStrength = 1f;
             Bedrock = Mat("bedrock", 1f, MaterialFlags.Indestructible);
+            Meteor = Mat("meteor", 2f);
+            Meteor.drop = Bar;
+
+            // Progression: three research nodes, three abilities, two contracts, one event of each kind.
+            Frenzy = Make<AbilityDef>("frenzy");
+            Frenzy.kind = AbilityKind.Frenzy;
+            Frenzy.cooldown = 30f;
+            Frenzy.duration = 5f;
+            Frenzy.magnitude = 0.75f;
+            Seismic = Make<AbilityDef>("seismic");
+            Seismic.kind = AbilityKind.SeismicSense;
+            Seismic.order = 1;
+            Seismic.radius = 10f;
+            Decree = Make<AbilityDef>("decree");
+            Decree.kind = AbilityKind.RoyalDecree;
+            Decree.order = 2;
+            Decree.count = 3;
+
+            FastBelts = Make<ResearchDef>("fast_belts");
+            FastBelts.knowledgeCost = 5f;
+            FastBelts.effects.Add(ResearchEffect.Add(StatKind.BeltSpeed, 1f));
+            LabResearch = Make<ResearchDef>("lab_research");
+            LabResearch.treePosition = new Vector2Int(1, 0);
+            LabResearch.knowledgeCost = 5f;
+            LabResearch.cost.Add(new ItemAmount(Bar, 1));
+            LabResearch.prerequisites.Add(FastBelts);
+            LabResearch.effects.Add(ResearchEffect.Unlock(Lab));
+            SeismicResearch = Make<ResearchDef>("seismic_research");
+            SeismicResearch.treePosition = new Vector2Int(0, 1);
+            SeismicResearch.knowledgeCost = 1f;
+            SeismicResearch.effects.Add(ResearchEffect.Unlock(Seismic));
+
+            DigIntro = Make<ContractDef>("dig_intro");
+            DigIntro.kind = ContractKind.DigCells;
+            DigIntro.amount = 5;
+            DigIntro.introOrder = 1;
+            DigIntro.repeatable = false;
+            DigIntro.rewardKnowledge = 2f;
+            DeliverOre = Make<ContractDef>("deliver_ore");
+            DeliverOre.kind = ContractKind.Deliver;
+            DeliverOre.item = Ore;
+            DeliverOre.amount = 3;
+            DeliverOre.growth = 1f;
+            DeliverOre.rewardKnowledge = 4f;
+            DeliverOre.rewards.Add(new ItemAmount(Bar, 1));
+
+            MeteorEvent = Make<RandomEventDef>("meteor");
+            MeteorEvent.kind = RandomEventKind.Meteorite;
+            MeteorEvent.radius = 2f;
+            MeteorEvent.materials.Add(Meteor);
+            VeinEvent = Make<RandomEventDef>("vein");
+            VeinEvent.kind = RandomEventKind.RichVein;
+            VeinEvent.radius = 2.5f;
+            VeinEvent.materials.Add(Crystal);
+            BeetleEvent = Make<RandomEventDef>("beetle");
+            BeetleEvent.kind = RandomEventKind.GoldenBeetle;
+            BeetleEvent.duration = 30f;
+            BeetleEvent.rewardKnowledge = 5f;
+            BeetleEvent.rewards.Add(new ItemAmount(Bar, 2));
+            TrappedEvent = Make<RandomEventDef>("trapped");
+            TrappedEvent.kind = RandomEventKind.TrappedAnts;
+            TrappedEvent.duration = 60f;
+            TrappedEvent.radius = 4f;
+            TrappedEvent.count = 3;
+
+            Progression = new ProgressionContent
+            {
+                Research = new[] { LabResearch, FastBelts, SeismicResearch },
+                Abilities = new[] { Decree, Frenzy, Seismic },
+                Contracts = new[] { DeliverOre, DigIntro },
+                Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent },
+            };
 
             Topsoil = Make<BiomeDef>("topsoil");
             Topsoil.thickness = 30;
@@ -73,11 +157,17 @@ namespace Antarium.Tests
             WorldGen.nestRadius = new Vector2(4, 2);
 
             Config = Make<GameConfig>("config");
+            Config.progression.firstEventDelay = 1e9f; // events only when a test triggers them
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock }, WorldGen, new[] { Ore, Seed, Bar }, null,
-                new[] { Smelter, Belt, Lift, Splitter, Filter });
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor }, WorldGen, new[] { Ore, Seed, Bar }, null,
+                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab }, Progression);
         }
+
+        /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
+        public ContentDB BuildReordered() =>
+            ContentDB.Build(new[] { Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen, new[] { Bar, Seed, Ore }, null,
+                new[] { Lab, Filter, Splitter, Lift, Belt, Smelter }, Progression);
 
         BuildingDef Building(string id, BuildingKind kind, int order)
         {

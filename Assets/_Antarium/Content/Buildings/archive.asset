@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: archive
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: archive
+  displayName: Archive
+  kind: 4
+  paletteOrder: 12
+  description: 'Studies finds into Knowledge for research: copper 1, crystal shard 4, amber 5, fossil 6, star fragment 12.'
+  size: {x: 3, y: 2}
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 10
+  foodCost: 0
+  buildWork: 10
+  speed: 2
+  recipes:
+  - {fileID: 11400000, guid: 5c8dd0aae88726d4088fadf4620996f4, type: 2}
+  - {fileID: 11400000, guid: f635c3a42f374834ebb54b8d17ef936d, type: 2}
+  - {fileID: 11400000, guid: f4eaaf4b7a31694448db257b916d414d, type: 2}
+  - {fileID: 11400000, guid: e7463089474993c43af21a67a8ef8f7b, type: 2}
+  - {fileID: 11400000, guid: fad94d7d39622c341af739bb5a837b17, type: 2}
+  inputBatches: 2
+  outputLimit: 6
+  color: {r: 0.7882353, g: 0.69803923, b: 0.4862745, a: 1}
+  art: 3

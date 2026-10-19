@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: royal_vault
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: royal_vault
+  displayName: Royal Vault
+  description: The royal chamber holds 40 more items and the colony 60 more food.
+  treePosition: {x: 1, y: 3}
+  knowledgeCost: 16
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 10
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: b0f84b6080064594cabe79376f3f2197, type: 2}
+  effects:
+  - kind: 0
+    stat: 6
+    value: 40
+    building: {fileID: 0}
+    ability: {fileID: 0}
+  - kind: 0
+    stat: 7
+    value: 60
+    building: {fileID: 0}
+    ability: {fileID: 0}

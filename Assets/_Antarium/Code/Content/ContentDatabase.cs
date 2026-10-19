@@ -14,6 +14,10 @@ namespace Antarium.Content
         public List<ItemDef> items = new();
         public List<BuildingDef> buildings = new();
         public List<RecipeDef> recipes = new();
+        public List<ResearchDef> research = new();
+        public List<AbilityDef> abilities = new();
+        public List<ContractDef> contracts = new();
+        public List<RandomEventDef> events = new();
         public WorldGenSettings worldGen;
         [Tooltip("Food items that appear on the surface over time for workers to forage.")]
         public List<ItemDef> surfaceForage = new();

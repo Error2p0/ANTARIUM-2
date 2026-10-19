@@ -99,11 +99,62 @@ namespace Antarium.Sim
         public PlaceFailedEvent(int def, int2 origin, PlaceResult result) { Def = def; Origin = origin; Result = result; }
     }
 
-    /// <summary>A machine finished a craft.</summary>
+    /// <summary>A machine finished a craft. <see cref="Item"/> is the first product (NoItem if it only made knowledge).</summary>
     public readonly struct ItemCraftedEvent
     {
         public readonly int2 Origin;
         public readonly ushort Item;
-        public ItemCraftedEvent(int2 origin, ushort item) { Origin = origin; Item = item; }
+        public readonly float Knowledge;
+        public ItemCraftedEvent(int2 origin, ushort item, float knowledge) { Origin = origin; Item = item; Knowledge = knowledge; }
+    }
+
+    /// <summary>A research node was completed (by the player; not when loading a save).</summary>
+    public readonly struct ResearchCompletedEvent
+    {
+        public readonly int Research;
+        public ResearchCompletedEvent(int research) { Research = research; }
+    }
+
+    /// <summary>The player tried to research something and was refused.</summary>
+    public readonly struct ResearchFailedEvent
+    {
+        public readonly int Research;
+        public readonly ResearchResult Result;
+        public ResearchFailedEvent(int research, ResearchResult result) { Research = research; Result = result; }
+    }
+
+    /// <summary>A contract reward was claimed.</summary>
+    public readonly struct ContractClaimedEvent
+    {
+        public readonly int Contract;
+        public ContractClaimedEvent(int contract) { Contract = contract; }
+    }
+
+    /// <summary>An active ability was used at <see cref="Cell"/>. <see cref="Amount"/>: cells revealed / eggs laid.</summary>
+    public readonly struct AbilityUsedEvent
+    {
+        public readonly int Ability;
+        public readonly int2 Cell;
+        public readonly int Amount;
+        public AbilityUsedEvent(int ability, int2 cell, int amount) { Ability = ability; Cell = cell; Amount = amount; }
+    }
+
+    public readonly struct AbilityFailedEvent
+    {
+        public readonly int Ability;
+        public readonly AbilityResult Result;
+        public AbilityFailedEvent(int ability, AbilityResult result) { Ability = ability; Result = result; }
+    }
+
+    public enum RandomEventPhase : byte { Started, Won, Lost }
+
+    /// <summary>A random event started, or ended in the player's favour or not.</summary>
+    public readonly struct RandomEventEvent
+    {
+        public readonly int Event;
+        public readonly int Id;
+        public readonly RandomEventPhase Phase;
+        public readonly int2 Cell;
+        public RandomEventEvent(int ev, int id, RandomEventPhase phase, int2 cell) { Event = ev; Id = id; Phase = phase; Cell = cell; }
     }
 }

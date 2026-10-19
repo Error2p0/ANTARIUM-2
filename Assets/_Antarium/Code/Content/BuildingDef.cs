@@ -23,6 +23,7 @@ namespace Antarium.Content
         Block,
         Kiln,
         Garden,
+        Archive,
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>

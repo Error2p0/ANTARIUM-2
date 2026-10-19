@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbf57506b5f478d488301ba0931b1b62, type: 3}
+  m_Name: rich_vein
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.RandomEventDef
+  id: rich_vein
+  displayName: Rich Vein
+  kind: 1
+  description: The ground shifted and exposed a rich vein next to your tunnels. Order it mined!
+  weight: 1.2
+  minDepth: 0
+  duration: 0
+  radius: 3.5
+  count: 1
+  materials:
+  - {fileID: 11400000, guid: 3aa5218b3da2b9140bcdaea56effc376, type: 2}
+  - {fileID: 11400000, guid: 0dd4bfd0cec15104e972dc28786bc7eb, type: 2}
+  - {fileID: 11400000, guid: e12ff2a46eae3f34db7af9d29bb1f675, type: 2}
+  rewardKnowledge: 0
+  rewardFood: 0
+  rewards: []

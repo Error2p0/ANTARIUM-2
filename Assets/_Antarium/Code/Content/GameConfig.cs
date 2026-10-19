@@ -16,6 +16,41 @@ namespace Antarium.Content
         public ColonyConfig colony = new();
         public WorkerConfig worker = new();
         public LogisticsConfig logistics = new();
+        public ProgressionConfig progression = new();
+        public SaveConfig save = new();
+    }
+
+    [Serializable]
+    public sealed class ProgressionConfig
+    {
+        [Header("Contracts")]
+        [Min(1)] public int contractSlots = 3;
+
+        [Header("Random events")]
+        [Tooltip("Seconds into a new colony before the first random event.")]
+        [Min(0f)] public float firstEventDelay = 150f;
+        [Min(1f)] public float eventIntervalMin = 180f;
+        [Min(1f)] public float eventIntervalMax = 360f;
+        [Tooltip("No new event starts while this many are waiting for the player.")]
+        [Min(1)] public int maxActiveEvents = 2;
+        [Tooltip("Golden beetle walking speed, cells per second.")]
+        [Min(0.1f)] public float critterSpeed = 2.2f;
+        [Tooltip("How close (cells) a click must be to catch a critter.")]
+        [Min(0.5f)] public float catchRadius = 1.5f;
+    }
+
+    [Serializable]
+    public sealed class SaveConfig
+    {
+        [Tooltip("Seconds between autosaves. 0 = off (still saves on quit).")]
+        [Min(0f)] public float autosaveSeconds = 120f;
+
+        [Header("Offline progress")]
+        [Tooltip("Share of the recent production rates earned while the game is closed.")]
+        [Range(0f, 1f)] public float offlineEfficiency = 0.5f;
+        [Min(0f)] public float offlineMaxHours = 8f;
+        [Tooltip("Shorter absences are ignored (no summary).")]
+        [Min(0f)] public float offlineMinSeconds = 60f;
     }
 
     [Serializable]

@@ -42,6 +42,9 @@ namespace Antarium.Sim
     {
         readonly ContentDB _content;
         readonly ColonyConfig _config;
+        readonly Modifiers _mods;
+        readonly ColonyStats _stats;
+        readonly ProductionMeter _meter;
         readonly Dictionary<int, int> _containerAt = new();
 
         /// <summary>Total stored per item over all containers. Read only: change the stock through Store/Add/Take.</summary>
@@ -52,6 +55,8 @@ namespace Antarium.Sim
         /// <summary>Royal chamber first, then one per storage cell.</summary>
         public readonly List<StockContainer> Containers = new();
         public float Food;
+        /// <summary>Research currency: from studying in the Archive, contracts and events.</summary>
+        public float Knowledge;
         public int Capacity { get; private set; }
         public int Stored { get; private set; }
         public float FoodCapacity { get; private set; }
@@ -70,10 +75,17 @@ namespace Antarium.Sim
         /// <summary>Bit per item whose set of containers holding it changed (supply flow fields must be rebuilt).</summary>
         public ulong LocationsChanged = ulong.MaxValue;
 
+        /// <summary>A stand-alone stock without research or stats (tests, tools).</summary>
         public Inventory(ContentDB content, ColonyConfig config)
+            : this(content, config, new Modifiers(), new ColonyStats(content.Items.Length, content.Buildings.Length), new ProductionMeter(content.Items.Length)) { }
+
+        public Inventory(ContentDB content, ColonyConfig config, Modifiers mods, ColonyStats stats, ProductionMeter meter)
         {
             _content = content;
             _config = config;
+            _mods = mods;
+            _stats = stats;
+            _meter = meter;
             int n = content.Items.Length;
             Items = new int[n];
             InTransit = new int[n];
@@ -87,17 +99,18 @@ namespace Antarium.Sim
 
         public void SetRoyalCell(int2 cell) => Royal.Cell = cell;
 
-        /// <summary>Re-reads capacities from the config (royal chamber, per storage cell, food).</summary>
+        /// <summary>Re-reads capacities from the config and research (royal chamber, per storage cell, food).</summary>
         public void RefreshCapacity()
         {
             int total = 0;
+            int royal = _config.baseItemCapacity + (int)_mods.Flat(StatKind.RoyalCapacity);
             foreach (var c in Containers)
             {
-                c.Capacity = c.IsRoyal ? _config.baseItemCapacity : _config.storageItemsPerCell;
+                c.Capacity = c.IsRoyal ? royal : _config.storageItemsPerCell;
                 total += c.Capacity;
             }
             Capacity = total;
-            FoodCapacity = _config.baseFoodCapacity + StorageCells * _config.storageFoodPerCell;
+            FoodCapacity = _config.baseFoodCapacity + _mods.Flat(StatKind.FoodCapacity) + StorageCells * _config.storageFoodPerCell;
             AcceptanceChanged = true;
         }
 
@@ -235,8 +248,18 @@ namespace Antarium.Sim
         public bool TryWithdraw(ushort item, int worldIndex, bool inRoyalChamber)
         {
             var c = ContainerAt(worldIndex);
-            if (c != null && c.Counts[item] > 0) return Take(c, item);
-            return inRoyalChamber && Take(Royal, item);
+            bool taken = c != null && c.Counts[item] > 0 ? Take(c, item) : inRoyalChamber && Take(Royal, item);
+            if (taken) _meter.AddItem(item, -1f);
+            return taken;
+        }
+
+        /// <summary>Adds knowledge. <paramref name="studied"/> = produced by the colony (counts toward offline rates).</summary>
+        public void AddKnowledge(float amount, bool studied)
+        {
+            if (amount <= 0f) return;
+            Knowledge += amount;
+            _stats.KnowledgeEarned += amount;
+            if (studied) _meter.AddKnowledge(amount);
         }
 
         // ---------------------------------------------------------------- demand and acceptance
@@ -301,10 +324,13 @@ namespace Antarium.Sim
                 if (Food + def.foodValue > FoodCapacity + 1e-3f) return false;
                 Food += def.foodValue;
                 _foodDelivered += def.foodValue;
+                _meter.AddFood(def.foodValue);
             }
             else if (!Store(item, at)) return false;
+            else _meter.AddItem(item, 1f);
             InTransit[item] = Math.Max(0, InTransit[item] - 1);
             _delivered[item]++;
+            _stats.Delivered[item]++;
             if (!CanAccept(item)) AcceptanceChanged = true; // just filled up: stop hauling this type
             return true;
         }
@@ -353,6 +379,35 @@ namespace Antarium.Sim
                 for (int n = 0; n < missing; n++) leftover.Add(item);
             }
             Food = Math.Min(FoodCapacity, Food + building.Def.foodCost * fraction);
+            AcceptanceChanged = true;
+        }
+
+        // ---------------------------------------------------------------- save / load
+
+        /// <summary>Empties every container and removes all storage cells (before loading a save).</summary>
+        internal void ResetForLoad()
+        {
+            for (int i = Containers.Count - 1; i >= 1; i--) Containers.RemoveAt(i);
+            _containerAt.Clear();
+            Array.Clear(Royal.Counts, 0, Royal.Counts.Length);
+            Royal.Total = 0;
+            Array.Clear(Items, 0, Items.Length);
+            Array.Clear(InTransit, 0, InTransit.Length);
+            Stored = 0;
+            LocationsChanged = ulong.MaxValue;
+            RefreshCapacity();
+        }
+
+        /// <summary>Puts <paramref name="count"/> items straight into a container, ignoring its capacity (loading a save).</summary>
+        internal void RestoreCount(StockContainer container, ushort item, int count)
+        {
+            if (count > 0) Put(container, item, count);
+        }
+
+        /// <summary>Recomputed after loading: items carried by ants or riding belts.</summary>
+        internal void SetInTransit(int[] counts)
+        {
+            Array.Copy(counts, InTransit, Math.Min(counts.Length, InTransit.Length));
             AcceptanceChanged = true;
         }
 

@@ -16,6 +16,10 @@ namespace Antarium.Editor
         public const string ItemsFolder = Root + "/Items";
         public const string RecipesFolder = Root + "/Recipes";
         public const string BuildingsFolder = Root + "/Buildings";
+        public const string ResearchFolder = Root + "/Research";
+        public const string AbilitiesFolder = Root + "/Abilities";
+        public const string ContractsFolder = Root + "/Contracts";
+        public const string EventsFolder = Root + "/Events";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -31,6 +35,10 @@ namespace Antarium.Editor
             EnsureFolder(ItemsFolder);
             EnsureFolder(RecipesFolder);
             EnsureFolder(BuildingsFolder);
+            EnsureFolder(ResearchFolder);
+            EnsureFolder(AbilitiesFolder);
+            EnsureFolder(ContractsFolder);
+            EnsureFolder(EventsFolder);
 
             var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
             var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
@@ -101,9 +109,12 @@ namespace Antarium.Editor
             Building("smelter", "Smelter", BuildingKind.Processor, 10, "#b8562c", 8f, size: new Vector2Int(3, 3),
                 cost: new[] { Amt(copperItem, 12) }, recipes: new[] { smeltCopper, smeltIron },
                 description: "2 copper ore -> 1 copper. 2 iron ore + 1 coal -> 1 iron.", art: PlaceholderArt.Kiln);
-            Building("fungus_garden", "Fungus Garden", BuildingKind.Processor, 11, "#9b7cb4", 6f, size: new Vector2Int(4, 2),
+            var fungusGarden = Building("fungus_garden", "Fungus Garden", BuildingKind.Processor, 11, "#9b7cb4", 6f, size: new Vector2Int(4, 2),
                 cost: new[] { Amt(copperItem, 8) }, recipes: new[] { growFungus },
                 description: "2 seeds -> 3 fungus (3 food each). Feed it the seeds your workers forage.", art: PlaceholderArt.Garden);
+
+            CreateProgression(copperItem, ironItem, coalItem, amberItem, fossilItem, crystalItem, seedItem, grubItem, copperBar, ironBar,
+                copper, iron, coal, fungusGarden);
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
             if (database.surfaceForage.Count == 0)
@@ -114,6 +125,203 @@ namespace Antarium.Editor
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;
+        }
+
+        /// <summary>Milestone 4: knowledge (Archive), research tree, abilities, contracts and random events.</summary>
+        static void CreateProgression(ItemDef copperOre, ItemDef ironOre, ItemDef coal, ItemDef amber, ItemDef fossil, ItemDef crystal,
+            ItemDef seed, ItemDef grub, ItemDef copper, ItemDef iron, TerrainMaterialDef copperMat, TerrainMaterialDef ironMat,
+            TerrainMaterialDef coalMat, BuildingDef fungusGarden)
+        {
+            var star = Item("star_fragment", "Star Fragment", "#b9a7ff");
+            var meteorite = Mat("meteorite", "Meteorite", 6f, PixelPattern.Crystal, "#3b3446", "#26212e", "#8a7fa0", "#b9a7ff", 0.6f,
+                value: 15, emission: "#9d8cff", emissionStrength: 0.35f, glow: 0.35f);
+            EnsureDrop(meteorite, star);
+
+            var studyCopper = Recipe("study_copper", "Study metalwork", 8f, new[] { Amt(copper, 1) }, new ItemAmount[0], knowledge: 1f);
+            var studyCrystal = Recipe("study_crystal", "Study a crystal shard", 6f, new[] { Amt(crystal, 1) }, new ItemAmount[0], knowledge: 4f);
+            var studyAmber = Recipe("study_amber", "Study amber", 8f, new[] { Amt(amber, 1) }, new ItemAmount[0], knowledge: 5f);
+            var studyFossil = Recipe("study_fossil", "Study a fossil", 8f, new[] { Amt(fossil, 1) }, new ItemAmount[0], knowledge: 6f);
+            var studyStar = Recipe("study_star", "Study a star fragment", 10f, new[] { Amt(star, 1) }, new ItemAmount[0], knowledge: 12f);
+            var archive = Building("archive", "Archive", BuildingKind.Processor, 12, "#c9b27c", 10f, size: new Vector2Int(3, 2),
+                cost: new[] { Amt(copperOre, 10) }, recipes: new[] { studyCopper, studyCrystal, studyAmber, studyFossil, studyStar },
+                description: "Studies finds into Knowledge for research: copper 1, crystal shard 4, amber 5, fossil 6, star fragment 12.",
+                art: PlaceholderArt.Archive);
+            var splitter = AssetDatabase.LoadAssetAtPath<BuildingDef>($"{BuildingsFolder}/splitter.asset");
+            var filter = AssetDatabase.LoadAssetAtPath<BuildingDef>($"{BuildingsFolder}/filter.asset");
+
+            // Abilities.
+            var frenzy = Ability("frenzy", "Frenzy", AbilityKind.Frenzy, 0, "#ff9a3c", 120f,
+                "All workers move, dig and build 75% faster for 20 seconds.", duration: 20f, magnitude: 0.75f);
+            var seismic = Ability("seismic_sense", "Seismic Sense", AbilityKind.SeismicSense, 1, "#7fd8ff", 90f,
+                "Reveals every ore, grub nest and crystal within 24 cells of the cursor, even in unexplored darkness.", radius: 24f);
+            var decree = Ability("royal_decree", "Royal Decree", AbilityKind.RoyalDecree, 2, "#f0d060", 240f,
+                "The queen lays 4 eggs at once, free of food.", count: 4);
+
+            // Research tree: columns are tiers, rows are branches (brood, digging, logistics, colony).
+            var fungiculture = Research("fungiculture", "Fungiculture", 0, 0, 8f, "Unlocks the Fungus Garden: seeds become fungus worth more food.",
+                effects: new[] { ResearchEffect.Unlock(fungusGarden) });
+            var mandibles = Research("strong_mandibles", "Strong Mandibles", 0, 1, 10f, "Workers and you dig 25% faster.",
+                cost: new[] { Amt(copperOre, 6) },
+                effects: new[] { ResearchEffect.Add(StatKind.WorkerDig, 0.25f), ResearchEffect.Add(StatKind.PlayerDig, 0.25f) });
+            var routing = Research("silk_routing", "Silk Routing", 0, 2, 12f, "Unlocks the Splitter and the Filter.",
+                cost: new[] { Amt(copper, 4) },
+                effects: new[] { ResearchEffect.Unlock(splitter), ResearchEffect.Unlock(filter) });
+            var seismicNode = Research("seismic_sense", "Seismic Sense", 0, 3, 12f, "Unlocks the Seismic Sense ability (X).",
+                effects: new[] { ResearchEffect.Unlock(seismic) });
+
+            var jelly = Research("royal_jelly", "Royal Jelly", 1, 0, 20f, "The queen lays 25% faster and up to 2 more eggs wait at once.",
+                foodCost: 20f, prerequisites: new[] { fungiculture },
+                effects: new[] { ResearchEffect.Add(StatKind.LayingSpeed, 0.25f), ResearchEffect.Add(StatKind.MaxEggs, 2f) });
+            var legs = Research("quick_legs", "Quick Legs", 1, 1, 20f, "Workers walk 15% faster.", prerequisites: new[] { mandibles },
+                effects: new[] { ResearchEffect.Add(StatKind.WorkerSpeed, 0.15f) });
+            var weaving = Research("silk_weaving", "Silk Weaving", 1, 2, 20f, "Belts and lifts move items 35% faster.",
+                cost: new[] { Amt(copper, 6) }, prerequisites: new[] { routing },
+                effects: new[] { ResearchEffect.Add(StatKind.BeltSpeed, 0.35f) });
+            var vault = Research("royal_vault", "Royal Vault", 1, 3, 16f, "The royal chamber holds 40 more items and the colony 60 more food.",
+                cost: new[] { Amt(copperOre, 10) }, prerequisites: new[] { mandibles },
+                effects: new[] { ResearchEffect.Add(StatKind.RoyalCapacity, 40f), ResearchEffect.Add(StatKind.FoodCapacity, 60f) });
+
+            var decreeNode = Research("royal_decree", "Royal Decree", 2, 0, 35f, "Unlocks the Royal Decree ability (C).",
+                foodCost: 40f, prerequisites: new[] { jelly }, effects: new[] { ResearchEffect.Unlock(decree) });
+            var ironJaws = Research("iron_mandibles", "Iron Mandibles", 2, 1, 40f, "Workers dig 40% faster and build 30% faster.",
+                cost: new[] { Amt(iron, 8) }, prerequisites: new[] { legs },
+                effects: new[] { ResearchEffect.Add(StatKind.WorkerDig, 0.4f), ResearchEffect.Add(StatKind.BuildSpeed, 0.3f) });
+            var kilns = Research("hot_kilns", "Hot Kilns", 2, 2, 35f, "Machines work 30% faster.",
+                cost: new[] { Amt(iron, 6), Amt(coal, 6) }, prerequisites: new[] { weaving },
+                effects: new[] { ResearchEffect.Add(StatKind.MachineSpeed, 0.3f) });
+            var trails = Research("foraging_trails", "Foraging Trails", 2, 3, 25f, "Seeds appear on the surface 50% more often.",
+                prerequisites: new[] { vault }, effects: new[] { ResearchEffect.Add(StatKind.ForageRate, 0.5f) });
+
+            Research("dormancy", "Dormancy", 3, 0, 50f, "While the game is closed the colony earns 25% more (75% instead of 50%), for up to 4 more hours.",
+                prerequisites: new[] { decreeNode },
+                effects: new[] { ResearchEffect.Add(StatKind.OfflineEfficiency, 0.25f), ResearchEffect.Add(StatKind.OfflineHours, 4f) });
+            Research("ancient_script", "Ancient Script", 3, 1, 40f, "Studying in the Archive gives 50% more knowledge.",
+                cost: new[] { Amt(fossil, 2) }, prerequisites: new[] { ironJaws },
+                effects: new[] { ResearchEffect.Add(StatKind.KnowledgeGain, 0.5f) });
+            Research("contract_network", "Contract Network", 3, 2, 45f, "One more contract on the board.",
+                cost: new[] { Amt(copper, 10) }, prerequisites: new[] { kilns },
+                effects: new[] { ResearchEffect.Add(StatKind.ContractSlots, 1f) });
+            Research("instinct", "Instinct", 3, 3, 40f, "Abilities recharge 25% faster.", prerequisites: new[] { trails, seismicNode },
+                effects: new[] { ResearchEffect.Add(StatKind.AbilityRecharge, 0.25f) });
+
+            // Contracts: a short intro chain, then repeatables.
+            var smelter = AssetDatabase.LoadAssetAtPath<BuildingDef>($"{BuildingsFolder}/smelter.asset");
+            Contract("intro_dig", "Breaking Ground", ContractKind.DigCells, 40, intro: 1, knowledge: 4f, food: 10f,
+                description: "Dig out 40 cells: yourself (1) or with mining orders (2).");
+            Contract("intro_copper", "First Stockpile", ContractKind.Deliver, 10, intro: 2, item: copperOre, knowledge: 5f,
+                description: "Bring 10 copper ore into the stock.");
+            Contract("intro_depth", "Going Deeper", ContractKind.ReachDepth, 40, intro: 3, knowledge: 6f, food: 15f,
+                description: "Dig a cell 40 deep.");
+            Contract("intro_smelter", "Fire in the Hole", ContractKind.Build, 1, intro: 4, building: smelter, knowledge: 6f,
+                rewards: new[] { Amt(copperOre, 6) }, description: "Build a Smelter (4).");
+            Contract("intro_brood", "A Growing Brood", ContractKind.HatchAnts, 10, intro: 5, knowledge: 8f, food: 20f,
+                description: "Hatch 10 new workers.");
+            Contract("intro_archive", "Keepers of Knowledge", ContractKind.Build, 1, intro: 6, building: archive, knowledge: 10f,
+                description: "Build an Archive and study your finds for research (T).");
+
+            Contract("deliver_copper_ore", "Copper Haul", ContractKind.Deliver, 30, item: copperOre, knowledge: 6f, growth: 0.35f);
+            Contract("deliver_grubs", "Grub Feast", ContractKind.Deliver, 8, item: grub, knowledge: 5f, food: 10f, growth: 0.3f);
+            Contract("deliver_seeds", "Seed Gathering", ContractKind.Deliver, 15, item: seed, knowledge: 4f, growth: 0.3f, weight: 0.8f);
+            Contract("craft_copper", "Copper Smithing", ContractKind.Craft, 10, item: copper, knowledge: 8f, growth: 0.3f, building: null);
+            Contract("dig_cells", "Tunnel Works", ContractKind.DigCells, 150, knowledge: 5f, food: 15f, growth: 0.3f);
+            Contract("dig_deeper", "Delve", ContractKind.DigDeeper, 30, knowledge: 6f, growth: 0.2f, weight: 1.2f);
+            Contract("hatch_ants", "Brood Boom", ContractKind.HatchAnts, 15, knowledge: 8f, food: 20f, growth: 0.3f);
+            Contract("deliver_iron_ore", "Iron Haul", ContractKind.Deliver, 15, item: ironOre, knowledge: 8f, growth: 0.3f, minDepth: 110);
+            Contract("craft_iron", "Ironworks", ContractKind.Craft, 6, item: iron, knowledge: 12f, growth: 0.3f, minDepth: 110);
+            Contract("deliver_coal", "Coal Run", ContractKind.Deliver, 10, item: coal, knowledge: 8f, growth: 0.3f, minDepth: 290);
+            Contract("deliver_fossils", "Bone Collectors", ContractKind.Deliver, 3, item: fossil, knowledge: 15f, growth: 0.25f, minDepth: 290);
+
+            // Random events.
+            RandomEvent("meteorite_strike", "Meteorite Strike", RandomEventKind.Meteorite, 1f,
+                "A meteorite crashed near the nest. Dig it out for star fragments (study them in the Archive).",
+                radius: 2.5f, materials: new[] { meteorite });
+            RandomEvent("rich_vein", "Rich Vein", RandomEventKind.RichVein, 1.2f,
+                "The ground shifted and exposed a rich vein next to your tunnels. Order it mined!",
+                radius: 3.5f, materials: new[] { copperMat, ironMat, coalMat });
+            RandomEvent("golden_beetle", "Golden Beetle", RandomEventKind.GoldenBeetle, 1f,
+                "A golden beetle is wandering your tunnels. Click it before it leaves!",
+                duration: 45f, knowledge: 8f, food: 20f, rewards: new[] { Amt(amber, 2) });
+            RandomEvent("trapped_ants", "Trapped Ants", RandomEventKind.TrappedAnts, 0.8f,
+                "A cave-in trapped a group of ants nearby. Dig them out before their air runs out!",
+                duration: 150f, radius: 6f, count: 5, minDepth: 10);
+        }
+
+        static AbilityDef Ability(string id, string displayName, AbilityKind kind, int order, string colorHex, float cooldown, string description,
+            float duration = 0f, float magnitude = 0f, float radius = 1f, int count = 1)
+        {
+            return LoadOrCreate<AbilityDef>($"{AbilitiesFolder}/{id}.asset", a =>
+            {
+                a.EditorSetIdentity(id, displayName);
+                a.kind = kind;
+                a.order = order;
+                a.color = Hex(colorHex);
+                a.cooldown = cooldown;
+                a.description = description;
+                a.duration = duration;
+                a.magnitude = magnitude;
+                a.radius = radius;
+                a.count = count;
+            });
+        }
+
+        static ResearchDef Research(string id, string displayName, int column, int row, float knowledge, string description,
+            ItemAmount[] cost = null, float foodCost = 0f, ResearchDef[] prerequisites = null, ResearchEffect[] effects = null)
+        {
+            return LoadOrCreate<ResearchDef>($"{ResearchFolder}/{id}.asset", r =>
+            {
+                r.EditorSetIdentity(id, displayName);
+                r.treePosition = new Vector2Int(column, row);
+                r.knowledgeCost = knowledge;
+                r.description = description;
+                r.cost = cost?.ToList() ?? new List<ItemAmount>();
+                r.foodCost = foodCost;
+                r.prerequisites = prerequisites?.ToList() ?? new List<ResearchDef>();
+                r.effects = effects?.ToList() ?? new List<ResearchEffect>();
+            });
+        }
+
+        static ContractDef Contract(string id, string displayName, ContractKind kind, int amount, int intro = 0, ItemDef item = null,
+            BuildingDef building = null, float knowledge = 0f, float food = 0f, ItemAmount[] rewards = null, float growth = 0.3f,
+            float weight = 1f, int minDepth = 0, string description = null)
+        {
+            return LoadOrCreate<ContractDef>($"{ContractsFolder}/{id}.asset", c =>
+            {
+                c.EditorSetIdentity(id, displayName);
+                c.kind = kind;
+                c.amount = amount;
+                c.introOrder = intro;
+                c.repeatable = intro == 0;
+                c.item = item;
+                c.building = building;
+                c.rewardKnowledge = knowledge;
+                c.rewardFood = food;
+                c.rewards = rewards?.ToList() ?? new List<ItemAmount>();
+                c.growth = growth;
+                c.weight = weight;
+                c.minDepth = minDepth;
+                c.description = description;
+            });
+        }
+
+        static RandomEventDef RandomEvent(string id, string displayName, RandomEventKind kind, float weight, string description,
+            float duration = 0f, float radius = 3f, int count = 1, int minDepth = 0, TerrainMaterialDef[] materials = null,
+            float knowledge = 0f, float food = 0f, ItemAmount[] rewards = null)
+        {
+            return LoadOrCreate<RandomEventDef>($"{EventsFolder}/{id}.asset", e =>
+            {
+                e.EditorSetIdentity(id, displayName);
+                e.kind = kind;
+                e.weight = weight;
+                e.description = description;
+                e.duration = duration;
+                e.radius = radius;
+                e.count = count;
+                e.minDepth = minDepth;
+                e.materials = materials?.ToList() ?? new List<TerrainMaterialDef>();
+                e.rewardKnowledge = knowledge;
+                e.rewardFood = food;
+                e.rewards = rewards?.ToList() ?? new List<ItemAmount>();
+            });
         }
 
         /// <summary>Collects every TerrainMaterialDef in the project into the ContentDatabase.</summary>
@@ -134,10 +342,15 @@ namespace Antarium.Editor
             database.items = FindAll<ItemDef>();
             database.recipes = FindAll<RecipeDef>();
             database.buildings = FindAll<BuildingDef>();
+            database.research = FindAll<ResearchDef>();
+            database.abilities = FindAll<AbilityDef>();
+            database.contracts = FindAll<ContractDef>();
+            database.events = FindAll<RandomEventDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
-                      $"{database.buildings.Count} buildings, {database.recipes.Count} recipes.");
+                      $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
+                      $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events.");
         }
 
         static List<T> FindAll<T>() where T : Object
@@ -199,12 +412,13 @@ namespace Antarium.Editor
 
         static ItemAmount Amt(ItemDef item, int count) => new(item, count);
 
-        static RecipeDef Recipe(string id, string displayName, float duration, ItemAmount[] inputs, ItemAmount[] outputs)
+        static RecipeDef Recipe(string id, string displayName, float duration, ItemAmount[] inputs, ItemAmount[] outputs, float knowledge = 0f)
         {
             return LoadOrCreate<RecipeDef>($"{RecipesFolder}/{id}.asset", r =>
             {
                 r.EditorSetIdentity(id, displayName);
                 r.duration = duration;
+                r.knowledge = knowledge;
                 r.inputs = inputs.ToList();
                 r.outputs = outputs.ToList();
             });
