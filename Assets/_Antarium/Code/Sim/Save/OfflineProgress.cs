@@ -29,9 +29,9 @@ namespace Antarium.Sim
 
     /// <summary>
     /// Offline progress: instead of running the full ant simulation, replays the colony's recent production
-    /// rates (<see cref="ProductionMeter"/>) for the time away, in one-minute steps, at the offline
-    /// efficiency and up to the offline cap. Items only arrive while storage has room; the colony eats; the
-    /// queen keeps laying while there is food, and the eggs hatch into workers.
+    /// rates (<see cref="ProductionMeter"/>) for the time away, in one-minute steps, up to the offline cap.
+    /// The colony runs at the offline efficiency as a whole: it earns and eats at that pace. Items only arrive
+    /// while storage has room; the queen keeps laying while there is food to spare, and the eggs hatch.
     /// </summary>
     public static class OfflineProgress
     {
@@ -102,15 +102,16 @@ namespace Antarium.Sim
                     }
                 }
 
-                float upkeep = colony.UpkeepPerMinute(sim.Ants.Count) * minutes;
-                inv.Food = math.clamp(inv.Food + foodRate * minutes - upkeep, 0f, inv.FoodCapacity);
+                float upkeepPerMinute = colony.UpkeepPerMinute(sim.Ants.Count) * eff;
+                inv.Food = math.clamp(inv.Food + (foodRate - upkeepPerMinute) * minutes, 0f, inv.FoodCapacity);
                 if (inv.Food <= 0f) report.Starved = true;
                 inv.AddKnowledge(knowledgeRate * minutes, studied: false);
 
                 // The queen lays at the offline efficiency while fed; eggs hatch within the step.
                 eggs += step / colony.EggInterval * eff;
                 int laid = 0;
-                while (eggs >= 1f && inv.Food >= eggCost)
+                float reserve = upkeepPerMinute * cfg.offlineFoodReserveMinutes;
+                while (eggs >= 1f && inv.Food - eggCost >= reserve)
                 {
                     inv.Food -= eggCost;
                     eggs -= 1f;

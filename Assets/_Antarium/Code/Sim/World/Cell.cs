@@ -17,6 +17,8 @@ namespace Antarium.Sim
         Storage = 1 << 3,
         /// <summary>Part of a building that workers still have to construct.</summary>
         Blueprint = 1 << 4,
+        /// <summary>Found by Seismic Sense or a rich vein: drawn with a faint glow so it can be spotted in the dark.</summary>
+        Scanned = 1 << 5,
     }
 
     /// <summary>

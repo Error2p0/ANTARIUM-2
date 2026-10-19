@@ -402,7 +402,7 @@ namespace Antarium.Sim
                     if (math.length(new float2(x, y) * new float2(1f, 1.3f)) > radius || !IsPlainSolid(p)) continue;
                     var cl = world[p.x, p.y];
                     cl.Material = ore;
-                    cl.Flags |= CellFlags.Revealed;
+                    cl.Flags |= CellFlags.Revealed | CellFlags.Scanned;
                     _sim.EditCell(p, cl);
                     converted++;
                 }

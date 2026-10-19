@@ -10,12 +10,12 @@ You are the mind of an ant colony. You start with a queen and a handful of worke
 
 The fun comes from three layers stacked on top of each other:
 
-- 🟡 **Active play** — you personally dig, click, use abilities, react to events, and fight threats. It feels juicy and responsive. *(Click-to-dig with combo and debris done; abilities, events, combat not yet.)*
+- 🟡 **Active play** — you personally dig, click, use abilities, react to events, and fight threats. It feels juicy and responsive. *(Click-to-dig with combo and debris, three abilities and four random events done; combat not yet.)*
 - 🟡 **Automation** — you design tunnels, conveyors, lifts and production chains so the colony runs itself. Watching resources flow to the queen should be satisfying, like Factorio in an ant farm. *(Ants mine, haul and build; silk belts, root lifts, splitters, filters, a smelter and a fungus garden exist. Longer chains, buffers and pheromone routing not yet.)*
-- **Incremental progression** — numbers still go up, but through *unlocks, new mechanics, new biomes and prestige*, not just "+10% mining speed".
+- 🟡 **Incremental progression** — numbers still go up, but through *unlocks, new mechanics, new biomes and prestige*, not just "+10% mining speed". *(Research tree v1 with unlocks and stat upgrades, contracts, offline progress done; new biomes and prestige later.)*
 
 Design pillars:
-1. **Always something to do** — a new goal is always visible on screen.
+1. ✅ **Always something to do** — a new goal is always visible on screen. *(The contract board.)*
 2. 🟡 **Watchable** — the colony is alive; hundreds of ants climbing walls, carrying things, reacting. *(Climbing, carrying, foraging, eggs done; reactions and more behaviours to come.)*
 3. **Depth = discovery** — every layer down introduces new materials, mechanics and dangers.
 4. **Automate what you've mastered** — anything you did by hand early becomes automatable later.
@@ -26,7 +26,7 @@ Design pillars:
 
 ### 2.1 Core loop
 🟡 Dig → discover resources → haul them (ants, then conveyors) → process them in chambers → feed the Queen and build/research → get more ants, castes and tech → dig deeper → hit a wall → **prestige** (Nuptial Flight) → start a new colony stronger and with new options.
-*(Built so far: dig → discover → ants and belts haul → smelt / grow → feed the queen and build → more ants. Research, castes and prestige come later.)*
+*(Built so far: dig → discover → ants and belts haul → smelt / grow / study → feed the queen, build and research → more ants. Castes and prestige come later.)*
 
 ### 2.2 The world (side cross-section)
 - ✅ Procedurally generated from a seed, wide horizontally (1024 cells), deep vertically (1536 cells), with a **surface** at the top (grass and sky).
@@ -91,8 +91,8 @@ The player paints pheromone fields onto the map: *Dig*, *Gather*, *Haul to*, *De
 
 ### 2.7 Chambers and buildings
 🟡 Dig out a space, designate it as a chamber type. Chamber size and decoration affect efficiency. *(Royal chamber (fixed) and Storage zones done; machines are placed as buildings on a dug-out floor; size/decoration bonuses not yet.)*
-Examples: Royal Chamber ✅, Brood Nursery, Storage ✅, Fungus Farm (food) ✅ *(as the Fungus Garden, fed with seeds instead of leaves)*, Aphid Ranch (honeydew), Crusher, Smelter ✅ *(coal is an ingredient; heat from magma not yet)*, Crystal Resonator, Research Lab ("Archive"), Barracks, Fossil Museum (collection bonuses), Pheromone Emitter.
-🟡 Production chains should grow from simple (dirt → nothing; copper ore → copper) to multi-step (iron ore + coal heat → iron → reinforced conveyors). *(Copper ore → copper and iron ore + coal → iron done; nothing consumes iron yet.)*
+Examples: Royal Chamber ✅, Brood Nursery, Storage ✅, Fungus Farm (food) ✅ *(as the Fungus Garden, fed with seeds instead of leaves)*, Aphid Ranch (honeydew), Crusher, Smelter ✅ *(coal is an ingredient; heat from magma not yet)*, Crystal Resonator, Research Lab ✅ *(the Archive: studies finds into knowledge)*, Barracks, Fossil Museum (collection bonuses), Pheromone Emitter.
+🟡 Production chains should grow from simple (dirt → nothing; copper ore → copper) to multi-step (iron ore + coal heat → iron → reinforced conveyors). *(Copper ore → copper → knowledge, iron ore + coal → iron done; iron and coal are spent on research; reinforced conveyors not yet.)*
 
 ### 2.8 Surface
 - Day/night cycle and weather (rain floods upper tunnels, drought reduces food).
@@ -107,13 +107,22 @@ Examples: Royal Chamber ✅, Brood Nursery, Storage ✅, Fungus Farm (food) ✅ 
 
 ### 2.10 Active incremental layer
 - ✅ **Click/hold to dig** with combo multipliers and satisfying feedback (debris, screen shake).
-- **Active abilities** with cooldowns (e.g. *Frenzy* — all ants work faster; *Pheromone Burst*; *Earthquake* — reveals ore in radius; *Royal Decree* — queen lays a burst of eggs).
-- **Random events** that reward attention: rich ore vein exposed, trapped ant rescue, a wandering beetle carrying loot, meteorite strike on the surface, golden aphid.
-- **Contracts / goals**: a rotating list of objectives ("Deliver 500 iron to the Queen", "Reach depth 200") with rewards. There must always be a next goal.
-- **Offline progress** (calculated on load, with a summary screen), since this is an incremental game on Steam.
+- 🟡 **Active abilities** with cooldowns (e.g. *Frenzy* — all ants work faster; *Pheromone Burst*; *Earthquake* — reveals ore in radius; *Royal Decree* — queen lays a burst of eggs). *(Frenzy, Seismic Sense (the "Earthquake") and Royal Decree done; Pheromone Burst comes with pheromones.)*
+- 🟡 **Random events** that reward attention: rich ore vein exposed, trapped ant rescue, a wandering beetle carrying loot, meteorite strike on the surface, golden aphid. *(The first four done; the golden aphid needs aphids.)*
+- ✅ **Contracts / goals**: a rotating list of objectives ("Deliver 500 iron to the Queen", "Reach depth 200") with rewards. There must always be a next goal.
+- ✅ **Offline progress** (calculated on load, with a summary screen), since this is an incremental game on Steam.
+
+### 2.10.1 Incremental layer (as built in Milestone 4) ✅
+- **Knowledge** is a colony resource (like food, not an item). It comes from the **Archive** (a machine whose recipes output knowledge instead of items: copper 1, crystal shard 4, amber 5, fossil 6, star fragment 12), from contract rewards and from the golden beetle. *(Changed: no separate "knowledge from ruins" yet; the Archive is a placed building, not a chamber type.)*
+- **Research tree v1** (16 nodes in 4 tiers, `ResearchDef`): paid once with knowledge plus items / food from the stock, instant. Effects are data: **unlock a building** (Fungus Garden, Splitter, Filter now start locked), **unlock an ability**, or **add to a colony stat** (`StatKind`: worker speed / digging, player digging, build speed, belt speed, machine speed, royal capacity, food capacity, laying speed, max eggs, forage rate, offline efficiency / hours, contract slots, knowledge gain, ability recharge). Systems read the totals from one `Modifiers` table. Iron and coal get their first use here.
+- **Contracts** (`ContractDef`): kinds deliver item, make item, reach depth, dig deeper, hatch ants, build a building, dig cells; measured against lifetime colony stats from the moment the contract appears. A short **intro chain** (one at a time, in order) teaches the basics; the other slots draw **repeatable** contracts at random by weight, gated by depth / research / unlocked buildings, each repeat ~30% bigger with bigger rewards. Finished contracts wait for **Claim** (rewards: knowledge, food, items).
+- **Abilities** (`AbilityDef`, hotkeys Z / X / C, cast at the cursor): **Frenzy** (+75% worker move / dig / build for 20 s, 120 s cooldown), **Seismic Sense** (reveals ore, grub nests and crystals in a 24-cell radius through the fog; found cells glow faintly; 90 s), **Royal Decree** (4 free eggs at once; 240 s). Abilities can cost food.
+- **Random events** (`RandomEventDef`): every 3–6 minutes (first after 2.5), weighted, gated by depth, at most 2 waiting. **Meteorite** (crater and a lump of meteorite rock near the nest; it drops star fragments), **Rich vein** (an ore blob by depth layer next to the tunnels, revealed), **Golden beetle** (a critter wandering the tunnels for 45 s; click it for knowledge, food and amber), **Trapped ants** (5 ants in a sealed pocket near the tunnels; connect it to the nest within 150 s or they are lost). Event cards on the HUD with a timer and a Go button.
+- **Saving** (see 3.5) and **offline progress**: on start the saved colony continues; the time since the save (≥ 1 min, capped at 8 h) is replayed in one-minute steps from the colony's **recent net production** (a rolling 5-minute record of stock change per item, food delivered and knowledge studied) at **50% efficiency** (both income and upkeep). Storage limits what arrives; the queen keeps laying while 10 minutes of upkeep stay in store; waiting eggs hatch; ability cooldowns and event timers run. A "Welcome back" panel summarises it. *(Decision: a rate replay instead of a coarse simulation keeps it cheap and predictable; it ignores that mining orders may run out or machines may run dry.)*
+- **Esc menu** pauses the game (resume, save, load, new colony, save and quit).
 
 ### 2.11 Research
-A tech tree in the Archive. Research uses resources + "knowledge" (from fossils, amber, ruins). Unlocks buildings, conveyor tiers, castes, abilities, QoL automation (e.g. auto-designate ore veins).
+🟡 A tech tree in the Archive. Research uses resources + "knowledge" (from fossils, amber, ruins). Unlocks buildings, conveyor tiers, castes, abilities, QoL automation (e.g. auto-designate ore veins). *(v1 done, see 2.10.1: unlocks buildings and abilities and raises colony stats; conveyor tiers, castes and QoL automation come with those features.)*
 
 ### 2.12 Prestige: Nuptial Flight
 When progress slows, the queen sends winged princesses on a **Nuptial Flight** to found a new colony. You reset the world (new seed, possibly new world modifiers) and keep **Genetic Memory** points to spend on a permanent tree (starting bonuses, new starting castes, auto-unlocks of early automation, new biome variants). Later prestiges unlock new mechanics, not just bigger multipliers.
@@ -163,13 +172,17 @@ The original used Unity Tilemaps and they were a headache (no proper shadows, ha
 - ✅ **Items on conveyors**: simulated as data (up to two item slots per transport cell, not physics objects), stepped downstream-first so lines move without gaps, and rendered by a Burst job into one mesh with the buildings. *(The belt step is plain C# for now: ~0.55 ms per tick for 6,000 loaded belt cells in the editor.)*
 
 ### 3.4 Data-driven content
-🟡 All materials, ores, castes, buildings, recipes, research nodes, events, biomes and upgrades are **ScriptableObjects** (or JSON) so I can add content without touching code. Build a simple pattern for IDs and lookups. *(Pattern done: stable string ids → dense runtime indices in `ContentDB`. Materials, items, biomes, buildings, recipes, world gen and tuning are ScriptableObjects; castes, research, events, upgrades come with their features.)*
+🟡 All materials, ores, castes, buildings, recipes, research nodes, events, biomes and upgrades are **ScriptableObjects** (or JSON) so I can add content without touching code. Build a simple pattern for IDs and lookups. *(Pattern done: stable string ids → dense runtime indices in `ContentDB`. Materials, items, biomes, buildings, recipes, research, abilities, contracts, random events, world gen and tuning are ScriptableObjects; castes and prestige upgrades come with their features.)*
 
-### 3.5 Saving
+### 3.5 Saving ✅
 Versioned save format (binary or compressed JSON) including the full world grid, ants, buildings, conveyors, research and prestige. Autosave. Save migration support from day one. Offline progress computed from the save timestamp using a simplified rate-based simulation (not full ant sim).
+- *As built:* binary. An uncompressed **header** (magic `ANT2`, format version, save time UTC, seed, play time, ant count, depth: readable without loading) followed by a **deflate-compressed body of tagged sections** (`IDS`, `SIM`, `COLN`, `ANTS`, `BLDG`, `PROG`, `WRLD`), each with its own version byte. Unknown sections are skipped and missing ones keep defaults; `SaveGame.Migrate` upgrades older format versions. Newer saves are refused with a clear message.
+- **Content is stored by id**: an id table per content kind maps saved indices to the current ones, so adding or reordering content never breaks saves; content that no longer exists is dropped (unknown materials become the first biome's base material).
+- The world grid is stored as **planes** (material, density, flags), which compress well: a fresh 1024×1536 world is ~270 KB. Derived state (light, flow fields, belt network, items in transit) is rebuilt on load.
+- **Autosave** every 2 minutes and on quit; the main thread only copies the state (~1.5 ms), compression and writing run on a worker thread (~120 ms). Writes go to a temp file that replaces the save, keeping the previous one as a **backup** that loads if the main file is damaged. One slot for now.
 
 ### 3.6 UI
-🟡 **Unity UI Toolkit** for all menus, panels and HUD (decided). World-space feedback such as number pops and item icons is drawn by the game's own instanced renderer, not the UI system. UI uses a pixel font and pixel-art 9-slices with integer scaling to match the art direction. Needed: resource bar ✅ (with income rates), build menu ✅ (palette), designation tools ✅ (Dig / Mine / Storage / Build), pheromone tools, queen panel, research tree, contracts list, overlays (flow ✅, light, pheromones, ore scan), tooltips 🟡 (hover info panel), offline summary, settings. Big number formatting (K, M, B... and scientific option) ✅. *(Pixel font and 9-slices not yet; default font for now.)*
+🟡 **Unity UI Toolkit** for all menus, panels and HUD (decided). World-space feedback such as number pops and item icons is drawn by the game's own instanced renderer, not the UI system. UI uses a pixel font and pixel-art 9-slices with integer scaling to match the art direction. Needed: resource bar ✅ (with income rates), build menu ✅ (palette), designation tools ✅ (Dig / Mine / Storage / Build), ability bar ✅, pheromone tools, queen panel, research tree ✅, contracts list ✅, random event cards ✅, overlays (flow ✅, light, pheromones, ore scan 🟡 (Seismic Sense glow)), tooltips 🟡 (hover info panel), offline summary ✅, pause menu ✅, settings. Big number formatting (K, M, B... and scientific option) ✅. *(Pixel font and 9-slices not yet; default font for now.)*
 
 ### 3.7 Steam
 Leave hooks for Steamworks (achievements, cloud saves, stats) behind an interface, but don't integrate the SDK until I ask.
@@ -183,7 +196,7 @@ Each milestone must be playable and committed before the next.
 1. ✅ **Foundation** — project setup, chunked world grid, procedural generation of a few layers, pixel-art terrain renderer (GPU pixel marching squares), pixel-perfect camera (pan/integer zoom), click-to-dig with particles, 2D lighting + darkness/fog of war. *Goal: digging already feels good and looks good.* *(ShadowCaster2D deferred, see 3.2.)*
 2. ✅ **Living colony** — ants, climbing movement, flow-field navigation, job system (dig/haul), queen + eggs + workers, storage zones, basic resources. *Goal: watch ants carry ore to the queen.*
 3. ✅ **Automation** — conveyors, lifts, splitters/filters, first processing chambers and recipes, throughput overlay. *(Buffers/chests and unloading stock onto belts moved to later, see TODO.)*
-4. **Incremental layer** — contracts, active abilities, random events, research tree v1, offline progress, save/load.
+4. ✅ **Incremental layer** — contracts, active abilities, random events, research tree v1, offline progress, save/load. *(Queen evolution tree and the golden aphid / pheromone burst wait for their features.)*
 5. **Depth & danger** — more biomes, fluids, hazards, enemies, soldiers, defense.
 6. **Pheromones & castes** — pheromone painting/emitters, remaining castes, ant possession mode.
 7. **Prestige** — Nuptial Flight, Genetic Memory tree, world modifiers.

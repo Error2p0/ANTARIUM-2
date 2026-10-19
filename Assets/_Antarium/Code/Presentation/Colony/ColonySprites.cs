@@ -26,6 +26,9 @@ namespace Antarium.Presentation
         /// <summary>Small white diamond (tinted) floating over ants, e.g. idle workers in the overlay.</summary>
         public const int MarkerRect = QueenRect + 1;
         public const int MarkerSize = 3;
+        /// <summary>Golden beetle, 2 walk frames.</summary>
+        public const int BeetleRect = MarkerRect + 1;
+        public const int BeetleWidth = 10, BeetleHeight = 6;
 
         // Side view facing right: gaster (x0-3), waist (x4), thorax (x5-6), neck (x7), head (x8-10), mandible (x11).
         // The body colour carries the silhouette (a dark outline would vanish against dark tunnels):
@@ -52,6 +55,8 @@ namespace Antarium.Presentation
         static readonly string[] Pile = { ".wwg..", "wwggg.", "ggggkk", ".kkkk." };
         static readonly string[] Carry = { "wg.", "ggk", ".k." };
         static readonly string[] Marker = { ".w.", "www", ".w." };
+        static readonly string[] BeetleBody = { "...YYYY...", "..YOOOOOB.", ".OOOOOOOBB", ".oOOOOOOBB", "..oooooo.." };
+        static readonly string[] BeetleLegs = { ".l.l..l.l.", "..l.ll.l.." };
 
         static readonly Color32 Dark = Hex(0x5a1a0c), Mid = Hex(0xb8401e), High = Hex(0xf08048), Leg = Hex(0x4a160a);
         static readonly Color32 EggColor = Hex(0xefe6cf), EggShade = Hex(0xc9bc9c);
@@ -59,7 +64,7 @@ namespace Antarium.Presentation
         public ColonySprites()
         {
             var pixels = new Color32[AtlasWidth * AtlasHeight];
-            Rects = new NativeArray<float4>(MarkerRect + 1, Allocator.Persistent);
+            Rects = new NativeArray<float4>(BeetleRect + 2, Allocator.Persistent);
 
             for (int f = 0; f < WorkerFrames; f++)
             {
@@ -81,6 +86,15 @@ namespace Antarium.Presentation
             Rects[MarkerRect] = Rect(61, 0, MarkerSize, MarkerSize);
             PaintQueen(pixels, 0, 8);
             Rects[QueenRect] = Rect(0, 8, QueenWidth, QueenHeight);
+            for (int f = 0; f < 2; f++)
+            {
+                var rows = new string[BeetleHeight];
+                BeetleBody.CopyTo(rows, 0);
+                rows[5] = BeetleLegs[f];
+                int ox = 24 + f * BeetleWidth;
+                Blit(pixels, ox, 8, rows);
+                Rects[BeetleRect + f] = Rect(ox, 8, BeetleWidth, BeetleHeight);
+            }
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -122,6 +136,12 @@ namespace Antarium.Presentation
                 case 'E': c = EggColor; return true;
                 case 'S': c = EggShade; return true;
                 case 'W': c = new Color32(255, 250, 240, 255); return true;
+                // Golden beetle.
+                case 'Y': c = Hex(0xfff0a0); return true;
+                case 'O': c = Hex(0xf0c040); return true;
+                case 'o': c = Hex(0xb08020); return true;
+                case 'B': c = Hex(0x5a3a10); return true;
+                case 'l': c = Hex(0x4a2a08); return true;
                 // Greyscale for item blobs (tinted by item colour).
                 case 'w': c = new Color32(255, 255, 255, 255); return true;
                 case 'g': c = new Color32(190, 190, 190, 255); return true;

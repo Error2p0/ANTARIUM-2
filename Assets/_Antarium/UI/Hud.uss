@@ -213,3 +213,375 @@
     border-color: rgb(255, 190, 90);
     background-color: rgb(86, 54, 30);
 }
+
+/* ---------------------------------------------------------------- Milestone 4: side panels, abilities, modals */
+
+.panel {
+    background-color: rgba(22, 14, 10, 0.9);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+    padding: 6px 8px;
+}
+
+.panel__title {
+    color: rgb(255, 210, 140);
+    font-size: 13px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.side {
+    position: absolute;
+    top: 64px;
+    width: 250px;
+    flex-direction: column;
+}
+
+.side--left {
+    left: 8px;
+    top: 150px;
+}
+
+.side--right {
+    right: 8px;
+}
+
+/* Contracts */
+.contract {
+    margin-bottom: 5px;
+    padding: 4px 6px;
+    background-color: rgb(40, 26, 18);
+    border-width: 1px;
+    border-color: rgb(70, 48, 32);
+}
+
+.contract--done {
+    border-color: rgb(255, 200, 90);
+    background-color: rgb(70, 48, 22);
+}
+
+.contract__title {
+    color: rgb(240, 230, 210);
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.contract__text {
+    color: rgb(200, 185, 160);
+    font-size: 11px;
+    padding: 0;
+    margin: 1px 0 0 0;
+    white-space: normal;
+}
+
+.contract__reward {
+    color: rgb(190, 170, 255);
+    font-size: 11px;
+    padding: 0;
+    margin: 1px 0 0 0;
+    white-space: normal;
+}
+
+.bar {
+    height: 5px;
+    margin-top: 3px;
+    background-color: rgb(24, 16, 12);
+}
+
+.bar__fill {
+    height: 100%;
+    width: 0;
+    background-color: rgb(150, 210, 110);
+}
+
+.claim {
+    height: 22px;
+    margin: 4px 0 0 0;
+    background-color: rgb(110, 80, 30);
+    color: rgb(255, 235, 190);
+    border-width: 1px;
+    border-color: rgb(255, 200, 90);
+    border-radius: 0;
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+
+.claim:hover {
+    background-color: rgb(150, 110, 40);
+}
+
+/* Random events */
+.event {
+    margin-bottom: 5px;
+    padding: 4px 6px;
+    background-color: rgba(30, 22, 44, 0.92);
+    border-width: 2px;
+    border-color: rgb(150, 120, 220);
+}
+
+.event--won {
+    border-color: rgb(120, 220, 140);
+}
+
+.event--lost {
+    border-color: rgb(200, 90, 80);
+}
+
+.event__row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 3px;
+}
+
+.event__timer {
+    color: rgb(255, 210, 140);
+    font-size: 12px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+    padding: 0;
+    margin: 0;
+}
+
+.small-button {
+    height: 20px;
+    margin: 0 0 0 4px;
+    padding: 0 6px;
+    background-color: rgb(52, 40, 70);
+    color: rgb(235, 225, 255);
+    border-width: 1px;
+    border-color: rgb(150, 120, 220);
+    border-radius: 0;
+    font-size: 11px;
+}
+
+.small-button:hover {
+    background-color: rgb(80, 62, 108);
+}
+
+/* Abilities: a column at the bottom right */
+.abilities {
+    position: absolute;
+    right: 8px;
+    bottom: 10px;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.tool--ability {
+    width: 190px;
+    margin: 3px 0 0 0;
+    border-left-width: 5px;
+    -unity-text-align: middle-left;
+    padding-left: 8px;
+}
+
+.tool--cooling {
+    color: rgb(140, 125, 110);
+}
+
+.tool--running {
+    background-color: rgb(90, 50, 20);
+    border-color: rgb(255, 160, 70);
+}
+
+.tool--targeting {
+    border-color: rgb(127, 216, 255);
+    background-color: rgb(24, 56, 72);
+}
+
+.resource--knowledge .resource__label {
+    color: rgb(205, 190, 255);
+}
+
+.building--locked {
+    opacity: 0.55;
+}
+
+.building--locked .building__cost {
+    color: rgb(190, 170, 255);
+}
+
+/* Modal layer: menu, research, welcome back */
+.modal {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background-color: rgba(8, 5, 4, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog {
+    min-width: 320px;
+    max-width: 560px;
+    padding: 12px 16px;
+}
+
+.dialog__title {
+    color: rgb(255, 210, 140);
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+    padding: 0;
+}
+
+.dialog__text {
+    color: rgb(230, 220, 200);
+    font-size: 13px;
+    white-space: normal;
+    padding: 0;
+    margin: 2px 0;
+}
+
+.dialog__note {
+    color: rgb(170, 155, 135);
+    font-size: 11px;
+    white-space: normal;
+    padding: 0;
+    margin: 6px 0 2px 0;
+}
+
+.menu-button {
+    height: 32px;
+    margin: 3px 0;
+    background-color: rgb(40, 26, 18);
+    color: rgb(240, 230, 210);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+    border-radius: 0;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.menu-button:hover {
+    background-color: rgb(62, 41, 28);
+}
+
+.menu-button--warn {
+    border-color: rgb(220, 110, 80);
+    color: rgb(255, 170, 140);
+}
+
+/* Research tree */
+.research {
+    width: 860px;
+    max-width: 96%;
+    padding: 10px 12px;
+}
+
+.research__header {
+    flex-direction: row;
+    align-items: center;
+}
+
+.research__knowledge {
+    color: rgb(205, 190, 255);
+    font-size: 14px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+    -unity-text-align: middle-right;
+    margin-right: 10px;
+}
+
+.research__columns {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 6px;
+}
+
+.research__column {
+    flex-direction: column;
+    width: 24%;
+}
+
+.research__tier {
+    color: rgb(170, 155, 135);
+    font-size: 11px;
+    -unity-text-align: middle-center;
+    margin-bottom: 2px;
+}
+
+.node {
+    height: 52px;
+    margin: 3px 0;
+    padding: 2px 6px;
+    background-color: rgb(34, 24, 18);
+    border-width: 2px;
+    border-color: rgb(60, 44, 32);
+    border-radius: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.node__name {
+    color: rgb(160, 145, 125);
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.node__cost {
+    color: rgb(130, 118, 100);
+    font-size: 10px;
+    padding: 0;
+    margin: 0;
+    white-space: normal;
+}
+
+.node--available {
+    border-color: rgb(120, 100, 180);
+    background-color: rgb(40, 30, 50);
+}
+
+.node--available .node__name {
+    color: rgb(230, 220, 255);
+}
+
+.node--available .node__cost {
+    color: rgb(255, 140, 120);
+}
+
+.node--affordable {
+    border-color: rgb(205, 190, 255);
+    background-color: rgb(56, 42, 84);
+}
+
+.node--affordable .node__cost {
+    color: rgb(205, 190, 255);
+}
+
+.node--affordable:hover {
+    background-color: rgb(76, 58, 112);
+}
+
+.node--done {
+    border-color: rgb(120, 200, 120);
+    background-color: rgb(30, 52, 32);
+}
+
+.node--done .node__name {
+    color: rgb(190, 240, 190);
+}
+
+.node--done .node__cost {
+    color: rgb(140, 200, 140);
+}
+
+.node-spacer {
+    height: 52px;
+    margin: 3px 0;
+}
+
+.research__detail {
+    color: rgb(230, 220, 200);
+    font-size: 12px;
+    white-space: normal;
+    margin-top: 8px;
+    min-height: 48px;
+    padding: 4px 6px;
+    background-color: rgb(30, 20, 14);
+}

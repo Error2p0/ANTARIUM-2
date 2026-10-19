@@ -40,6 +40,11 @@ namespace Antarium.Gameplay
         string Build(Simulation sim, int2 cell, ToolController tools, bool pointerOverUi)
         {
             _sb.Clear();
+            if (!pointerOverUi && sim.RandomEvents.CritterAt(new float2(cell) + 0.5f) >= 0)
+            {
+                _sb.Append("Golden beetle! Click it to catch it before it leaves.");
+                return _sb.ToString();
+            }
             int id = pointerOverUi ? BuildingSystem.None : sim.Buildings.At(cell);
             if (id >= 0) DescribeBuilding(sim, id);
             else if (tools.Mode == ToolMode.Build && tools.Build.SelectedDef != null) DescribeSelection(sim, cell, tools);
@@ -155,6 +160,11 @@ namespace Antarium.Gameplay
             {
                 if (i > 0) _sb.Append(" + ");
                 _sb.Append(recipe.OutputCounts[i]).Append(' ').Append(_content.Items[recipe.OutputItems[i]].DisplayName);
+            }
+            if (recipe.Knowledge > 0f)
+            {
+                if (recipe.OutputItems.Length > 0) _sb.Append(" + ");
+                _sb.Append(recipe.Knowledge.ToString("0.#")).Append(" Knowledge");
             }
             _sb.Append(" (").Append(recipe.Duration.ToString("0.#")).Append("s)");
         }

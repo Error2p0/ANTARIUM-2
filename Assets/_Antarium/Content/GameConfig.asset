@@ -68,6 +68,8 @@ MonoBehaviour:
     particleSpeed: 4
     particleLifetime: 0.6
     shakePerBreak: 0.06
+    seismicShake: 0.5
+    meteoriteShake: 0.8
     maxShakePerHit: 0.25
   colony:
     startingWorkers: 6
@@ -106,3 +108,17 @@ MonoBehaviour:
     supplyWeight: 0.9
     buildersPerSite: 2
     refundFraction: 1
+  progression:
+    contractSlots: 3
+    firstEventDelay: 150
+    eventIntervalMin: 180
+    eventIntervalMax: 360
+    maxActiveEvents: 2
+    critterSpeed: 2.2
+    catchRadius: 1.5
+  save:
+    autosaveSeconds: 120
+    offlineEfficiency: 0.5
+    offlineMaxHours: 8
+    offlineMinSeconds: 60
+    offlineFoodReserveMinutes: 10

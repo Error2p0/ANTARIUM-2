@@ -51,6 +51,8 @@ namespace Antarium.Content
         [Min(0f)] public float offlineMaxHours = 8f;
         [Tooltip("Shorter absences are ignored (no summary).")]
         [Min(0f)] public float offlineMinSeconds = 60f;
+        [Tooltip("While away the queen only lays when this many minutes of upkeep stay in store afterwards.")]
+        [Min(0f)] public float offlineFoodReserveMinutes = 10f;
     }
 
     [Serializable]
@@ -240,6 +242,9 @@ namespace Antarium.Content
         [Min(0f)] public float particleSpeed = 4f;
         [Min(0f)] public float particleLifetime = 0.6f;
         [Min(0f)] public float shakePerBreak = 0.06f;
+        [Tooltip("Camera shake when Seismic Sense is used / a meteorite lands.")]
+        [Min(0f)] public float seismicShake = 0.5f;
+        [Min(0f)] public float meteoriteShake = 0.8f;
         [Min(0f)] public float maxShakePerHit = 0.25f;
     }
 }

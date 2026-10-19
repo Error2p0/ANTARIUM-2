@@ -553,8 +553,8 @@ namespace Antarium.Sim
                 if (!World.InBounds(x, y) || math.distancesq(new float2(x, y), new float2(center)) > radius * radius) continue;
                 int i = World.Index(x, y);
                 var cell = World.Cells[i];
-                if (cell.IsOpen || cell.IsRevealed || Content.MaterialSim[cell.Material].DropItem == ContentDB.NoItem) continue;
-                cell.Flags |= CellFlags.Revealed;
+                if (cell.IsOpen || (cell.Flags & CellFlags.Scanned) != 0 || Content.MaterialSim[cell.Material].DropItem == ContentDB.NoItem) continue;
+                cell.Flags |= CellFlags.Revealed | CellFlags.Scanned;
                 World.Cells[i] = cell;
                 World.MarkChanged(x, y, ChunkFlags.TerrainUpload);
                 revealed++;

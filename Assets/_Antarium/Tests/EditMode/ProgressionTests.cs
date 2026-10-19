@@ -253,7 +253,7 @@ namespace Antarium.Tests
             {
                 if (x * x + y * y > 100) continue;
                 var cell = Sim.World[target.x + x, target.y + y];
-                if (cell.Material == stone && !cell.IsRevealed) hidden++;
+                if (cell.Material == stone && (cell.Flags & CellFlags.Scanned) == 0) hidden++;
             }
             Assert.Greater(hidden, 100, "test setup: hidden stone around the target");
 
@@ -264,6 +264,7 @@ namespace Antarium.Tests
             foreach (var e in Sim.Events.Read<AbilityUsedEvent>()) revealed = e.Amount;
             Assert.AreEqual(hidden, revealed);
             Assert.IsTrue(Sim.World[target.x, target.y].IsRevealed);
+            Assert.AreNotEqual(CellFlags.None, Sim.World[target.x, target.y].Flags & CellFlags.Scanned, "marked so it glows");
         }
 
         [Test]
@@ -401,8 +402,10 @@ namespace Antarium.Tests
             Assert.IsTrue(report.WasCapped);
             Assert.Greater(report.Hatched, 20);
             Assert.AreEqual(ants + report.Hatched, Sim.Ants.Count);
-            // 30 food/min feeds the queen plus (30 - 1.5) / 0.25 = 114 workers at most.
-            Assert.LessOrEqual(Sim.Ants.Count, 120, "upkeep limits growth");
+            // While away the colony eats at the offline pace too: 30 food/min feeds 0.5 * (1.5 + 0.25 * W),
+            // so at most 234 workers.
+            Assert.LessOrEqual(Sim.Ants.Count, 240, "upkeep limits growth");
+            Assert.Greater(Inv.Food, 0f, "the queen keeps a reserve");
         }
 
         [Test]

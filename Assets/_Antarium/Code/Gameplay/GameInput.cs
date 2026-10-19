@@ -24,6 +24,13 @@ namespace Antarium.Gameplay
         public readonly InputAction NextBuilding;
         public readonly InputAction PrevBuilding;
         public readonly InputAction Overlay;
+        public readonly InputAction Research;
+        /// <summary>Z / X / C: the abilities in bar order.</summary>
+        public readonly InputAction[] Abilities;
+        public readonly InputAction Menu;
+        public readonly InputAction QuickSave;
+        public readonly InputAction QuickLoad;
+        public readonly InputAction TriggerEvent;
         public readonly InputAction ToggleHud;
         public readonly InputAction SpawnAnts;
         public readonly InputAction FinishBuilds;
@@ -47,6 +54,17 @@ namespace Antarium.Gameplay
             NextBuilding = asset.FindAction("Tools/NextBuilding", true);
             PrevBuilding = asset.FindAction("Tools/PrevBuilding", true);
             Overlay = asset.FindAction("View/Overlay", true);
+            Research = asset.FindAction("View/Research", true);
+            Abilities = new[]
+            {
+                asset.FindAction("Tools/Ability1", true),
+                asset.FindAction("Tools/Ability2", true),
+                asset.FindAction("Tools/Ability3", true),
+            };
+            Menu = asset.FindAction("System/Menu", true);
+            QuickSave = asset.FindAction("System/QuickSave", true);
+            QuickLoad = asset.FindAction("System/QuickLoad", true);
+            TriggerEvent = asset.FindAction("Debug/TriggerEvent", true);
             ToggleHud = asset.FindAction("Debug/ToggleHud", true);
             SpawnAnts = asset.FindAction("Debug/SpawnAnts", true);
             FinishBuilds = asset.FindAction("Debug/FinishBuilds", true);
