@@ -78,6 +78,7 @@ struct Neighborhood
 // Cell flag bits (must match Antarium.Sim.CellFlags).
 #define ANT_FLAG_DIG_DESIGNATED 4u
 #define ANT_FLAG_STORAGE 8u
+#define ANT_FLAG_SCANNED 32u
 
 float4 _AntOverlay; // rgb = mining order colour
 float4 _AntStorageColor;
@@ -265,6 +266,10 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
             c = lerp(c, _AntOverlay.rgb, 0.75);
             s.glow = 0.15;
         }
+
+        // Found by Seismic Sense / a rich vein: a faint glow so it stands out in unlit rock.
+        if ((n.flags[4] & ANT_FLAG_SCANNED) != 0)
+            s.glow = max(s.glow, 0.3);
 
         s.albedo = c;
         s.glow = max(s.glow, mat.params.y);

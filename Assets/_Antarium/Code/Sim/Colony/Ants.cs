@@ -93,7 +93,8 @@ namespace Antarium.Sim
         readonly LogisticsConfig _logistics;
         public NativeList<Ant> Ants;
         NativeQueue<AntIntent> _intents;
-        uint _spawnCounter;
+        /// <summary>Seeds each new ant's random stream (saved, so loaded games keep diverging the same way).</summary>
+        internal uint SpawnCounter;
 
         /// <summary>Per item: 1 if the stock has room for it right now (refreshed every tick).</summary>
         public NativeArray<byte> StockAccepts;
@@ -152,7 +153,7 @@ namespace Antarium.Sim
         public void Spawn(int2 cell, uint seed)
         {
             float2 pos = new float2(cell) + 0.5f;
-            var rng = new Unity.Mathematics.Random(math.hash(new uint2(seed, ++_spawnCounter)) | 1u);
+            var rng = new Unity.Mathematics.Random(math.hash(new uint2(seed, ++SpawnCounter)) | 1u);
             Ants.Add(new Ant
             {
                 Cell = cell,
@@ -166,6 +167,20 @@ namespace Antarium.Sim
                 PrevPos = pos,
                 Pos = pos,
             });
+        }
+
+        /// <summary>Removes every ant standing in the rectangle [<paramref name="min"/>, <paramref name="max"/>]. Returns how many.</summary>
+        public int RemoveInside(int2 min, int2 max)
+        {
+            int removed = 0;
+            for (int i = Ants.Length - 1; i >= 0; i--)
+            {
+                var c = Ants[i].Cell;
+                if (math.any(c < min) || math.any(c > max)) continue;
+                Ants.RemoveAtSwapBack(i);
+                removed++;
+            }
+            return removed;
         }
 
         /// <summary>
@@ -195,8 +210,11 @@ namespace Antarium.Sim
                 math.saturate((buildSlots - building) / denom), math.saturate(supplySlots / denom));
         }
 
-        /// <summary>Runs the think/move job. Results are applied by <see cref="Resolve"/>.</summary>
-        public void Think(WorldGrid world, FlowFields fields, float dt, float speedFactor, float4 jobChances)
+        /// <summary>
+        /// Runs the think/move job. Results are applied by <see cref="Resolve"/>. The factors scale the
+        /// configured walking speed, dig power and build power (starvation, research, Frenzy).
+        /// </summary>
+        public void Think(WorldGrid world, FlowFields fields, float dt, float moveFactor, float digFactor, float buildFactor, float4 jobChances)
         {
             _intents.Clear();
             if (Ants.Length == 0) return;
@@ -212,10 +230,10 @@ namespace Antarium.Sim
                 SupplyNeed = SupplyNeed,
                 Intents = _intents.AsParallelWriter(),
                 Dt = dt,
-                MoveSpeed = _config.moveSpeed * speedFactor,
+                MoveSpeed = _config.moveSpeed * moveFactor,
                 FallSpeed = _config.fallSpeed,
-                DigPower = _config.digPower * speedFactor,
-                BuildPower = _logistics.buildPower * speedFactor,
+                DigPower = _config.digPower * digFactor,
+                BuildPower = _logistics.buildPower * buildFactor,
                 DigWeight = _config.digWeight,
                 HaulWeight = _config.haulWeight,
                 BuildWeight = _logistics.buildWeight,

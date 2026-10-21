@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: royal_decree
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: royal_decree
+  displayName: Royal Decree
+  description: Unlocks the Royal Decree ability (C).
+  treePosition: {x: 2, y: 0}
+  knowledgeCost: 35
+  cost: []
+  foodCost: 40
+  prerequisites:
+  - {fileID: 11400000, guid: 9225adea3d2d65c4192cde543be90100, type: 2}
+  effects:
+  - kind: 2
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 11400000, guid: f06ba760e628d724b814c7d9ced8603f, type: 2}

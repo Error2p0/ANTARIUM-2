@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: ancient_script
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: ancient_script
+  displayName: Ancient Script
+  description: Studying in the Archive gives 50% more knowledge.
+  treePosition: {x: 3, y: 1}
+  knowledgeCost: 40
+  cost:
+  - item: {fileID: 11400000, guid: 1214da5b82e5ae54095e70eb5c1d0b63, type: 2}
+    count: 2
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 89e9cf2c3e615434f848431fcb2124b0, type: 2}
+  effects:
+  - kind: 0
+    stat: 14
+    value: 0.5
+    building: {fileID: 0}
+    ability: {fileID: 0}

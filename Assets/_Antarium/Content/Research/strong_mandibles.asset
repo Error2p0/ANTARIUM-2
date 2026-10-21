@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: strong_mandibles
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: strong_mandibles
+  displayName: Strong Mandibles
+  description: Workers and you dig 25% faster.
+  treePosition: {x: 0, y: 1}
+  knowledgeCost: 10
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 6
+  foodCost: 0
+  prerequisites: []
+  effects:
+  - kind: 0
+    stat: 1
+    value: 0.25
+    building: {fileID: 0}
+    ability: {fileID: 0}
+  - kind: 0
+    stat: 2
+    value: 0.25
+    building: {fileID: 0}
+    ability: {fileID: 0}

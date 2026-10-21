@@ -23,6 +23,8 @@ namespace Antarium.Presentation
         readonly SpriteMesh _mesh;
         readonly NativeArray<Color32> _itemColors;
         readonly Color32 _idleTint;
+        static readonly Color32 SparkleTint = new(255, 230, 120, 255);
+        static readonly Color32 AlertTint = new(255, 150, 70, 255);
 
         public ColonyView(ContentDB content, RenderConfig render, Material spriteMaterial, Transform parent, float2 worldSize)
         {
@@ -42,11 +44,12 @@ namespace Antarium.Presentation
         }
 
         /// <param name="overlay">Throughput overlay: idle workers get a marker above them.</param>
-        public void Render(Simulation sim, float alpha, bool overlay)
+        public void Render(Simulation sim, float alpha, bool overlay, float time)
         {
             var colony = sim.Colony;
+            var events = sim.RandomEvents;
             int antCount = sim.Ants.Count;
-            int quads = antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count;
+            int quads = antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count;
             _mesh.EnsureCapacity(quads);
             var vertices = _mesh.Vertices;
 
@@ -73,6 +76,40 @@ namespace Antarium.Presentation
             {
                 var pile = colony.Piles[i];
                 WriteOnFloor(vertices, pile.Cell, ColonySprites.PileWidth, ColonySprites.PileHeight, rects[ColonySprites.PileRect], _itemColors[pile.Item], quad++);
+            }
+
+            // Random events: the golden beetle (with a blinking sparkle so it can be spotted) and a marker over trapped ants.
+            bool blink = ((int)(time * 4f) & 1) == 0;
+            var nav = new NavGrid(sim.World);
+            foreach (var c in events.Critters)
+            {
+                float2 cellPos = math.lerp(c.PrevPos, c.Pos, alpha);
+                int2 cell = (int2)math.floor(cellPos);
+                int2 up = nav.TouchesSolid(cell) ? nav.SurfaceUp(cell) : new int2(0, 1);
+                int2 forward = new int2(up.y, -up.x);
+                int along = math.dot(c.Heading, forward);
+                int facing = along != 0 ? (int)math.sign(along) : 1;
+                float2 world = cellPos * WorldConstants.CellSize;
+                float2 center = SpriteQuads.OnSurface(world, up, ColonySprites.BeetleHeight);
+                int frame = c.IsMoving ? (int)(c.WalkPhase * 4f) & 1 : 0;
+                SpriteQuads.WriteQuad(vertices, quad++, center, new int2(ColonySprites.BeetleWidth, ColonySprites.BeetleHeight), up, facing,
+                    rects[ColonySprites.BeetleRect + frame], white, world);
+                if (blink)
+                {
+                    float2 sparkle = center + new float2(up) * (6f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(vertices, quad++, sparkle, new int2(ColonySprites.MarkerSize), up, 1, rects[ColonySprites.MarkerRect], SparkleTint, world);
+                }
+                else SpriteQuads.WriteEmpty(vertices, quad++);
+            }
+            foreach (var e in events.Active)
+            {
+                if (e.Kind != RandomEventKind.TrappedAnts || !blink)
+                {
+                    SpriteQuads.WriteEmpty(vertices, quad++);
+                    continue;
+                }
+                float2 above = WorldGrid.CellCenterToWorld(e.Cell + new int2(0, 2));
+                SpriteQuads.WriteQuad(vertices, quad++, above, new int2(ColonySprites.MarkerSize), new int2(0, 1), 1, rects[ColonySprites.MarkerRect], AlertTint, above);
             }
             _mesh.Apply(quads);
         }

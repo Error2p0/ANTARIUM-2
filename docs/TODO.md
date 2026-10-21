@@ -59,8 +59,23 @@
 - [x] 50 EditMode tests (15 new, incl. physical storage and feeding a machine from the stock: belts, jams, splitter, filter, machines, placement, removal, build tool drag, workers building and feeding a machine, drops onto belts, dropping undeliverable loads)
 - Measured in the editor: 6,000 loaded belt cells → belt step ~0.55 ms per tick, full sim tick ~0.8 ms, building render ~0.45 ms per frame.
 
+## Milestone 4 — Incremental layer ✅
+- [x] Content: `ResearchDef` (stat effects via `StatKind`, building / ability unlocks), `AbilityDef`, `ContractDef`, `RandomEventDef`, recipe knowledge output; baked into `ContentDB` with id lookups; buildings / abilities named by research start locked
+- [x] Sim: `Modifiers` (stat totals read by ants, belts, machines, capacity, eggs, forage, offline, contracts, abilities), `ColonyStats` (lifetime counters), `ProductionMeter` (rolling 5-minute net production), knowledge in the inventory
+- [x] Research tree v1 (16 nodes, 4 tiers), Archive building (studies copper / crystal / amber / fossil / star fragment into knowledge), iron and coal spent on research
+- [x] Contracts: intro chain (6) + 11 repeatables that grow; claim for rewards; board of 3 slots (+1 by research)
+- [x] Abilities: Frenzy, Seismic Sense (scanned ore glows: `CellFlags.Scanned`), Royal Decree; cooldowns, cast at the cursor (Z / X / C) or from the bar
+- [x] Random events: meteorite (crater + lump of meteorite → star fragments), rich vein, golden beetle (critter, click to catch), trapped ants (pocket, rescue in time)
+- [x] Save / load: versioned, sectioned, deflate-compressed binary; content by id; world as planes; header readable alone; backup file; autosave in the background; save on quit; F5 / F9; migrations hook
+- [x] Offline progress: rate replay at 50% for up to 8 h (research raises both), storage-limited, upkeep, eggs with a food reserve; Welcome back panel
+- [x] UI: contracts panel, event cards with Go, ability column, research tree panel with hover details, Esc menu (pauses), welcome back, Knowledge in the resource bar, locked buildings in the palette, toasts for research / abilities / contracts / events; golden beetle sprite with sparkle, trapped-ants marker, Archive sprite
+- [x] Debug: F8 also gives 50 knowledge, F10 starts a random event; F3 shows knowledge, research and the next event timer
+- [x] 71 EditMode tests (21 new: research, locks, studying, contracts, abilities, all four events, offline progress, save round trip, id remapping, damaged / newer saves)
+- Measured in the editor: save capture on the main thread ~1.5 ms, background compress + write ~120 ms, load ~170 ms (incl. rebuilding views); a young 1024×1536 world saves to ~270 KB. 65 ants with mining orders: ~0.11 ms per sim tick.
+
 ## Known limits / follow-ups
-- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines). Automated checks drive the sim and tools directly; tuning lives in `GameConfig.asset`.
+- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- Progression balance is first-pass (research costs, contract sizes and rewards, event timing, ability cooldowns, offline efficiency).
 - Machines and buildings draw from the same stock; there is no way to reserve items for construction or to limit what machines may take.
 - No unloader building yet: stored items reach machines only by workers, never onto belts.
 - Storage cells show at most 8 items each (the display cap matches the default capacity; raising `storageItemsPerCell` stores more than is drawn).
@@ -68,7 +83,14 @@
 - Splitters and filters cannot connect directly to each other (put a belt cell between them).
 - The belt step is plain C# (fine at 6,000 cells); move it to Burst when networks get much bigger.
 - The flow overlay shows colours only; exact rates are in the hover panel. No numbers drawn in the world.
-- Iron has no use yet; copper is only used for filters. Spending them comes with research / more buildings (M4).
+- Offline progress replays the last 5 minutes of net production: it does not notice mining orders running out or machines running dry, and more workers hatched offline do not raise income. Fine at 50%; revisit if players exploit it.
+- One save slot (+ backup); no slot picker, no Steam cloud yet. The save folder depends on Player Settings → Company Name (still `DefaultCompany`): set it before the first public build, since changing it later orphans saves.
+- Research is bought instantly (no research time, no Archive requirement); there is no respec. The tree has no lines between nodes; prerequisites show in the hover text.
+- Contracts can't be skipped or rerolled. Contract progress counts everything after a contract appears, including offline deliveries.
+- Random events only start while the game runs; meteorites always land near the nest. The golden beetle can't be caught with a gamepad unless the pointer is moved onto it.
+- Royal Decree eggs may share a floor cell (drawn on top of each other).
+- Seismic Sense has no radius preview while aiming.
+- Iron and coal are only spent on research for now; no iron buildings / reinforced belts yet.
 - Belts need no floor (they can be strung across a chamber). Machines need a flat floor; if it is dug away later the machine keeps floating.
 - Placeholder sprites for buildings are generated in code (`BuildingSprites`).
 - Ants following the same flow field walk in single file and overlap ("conga line"). Add small per-ant lateral offsets or lane jitter when it starts to matter.
@@ -80,8 +102,8 @@
 - Light falloff and fog use Bayer dithering; tune `lightBands` if it reads too noisy.
 - Sky has no day/night yet (GDD 2.8).
 
-## Next: Milestone 4 — Incremental layer
-Contracts, active abilities, random events, research tree v1, offline progress, save/load.
+## Next: Milestone 5 — Depth & danger
+More biomes, fluids, hazards, enemies, soldiers, defense.
 
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
@@ -89,7 +111,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 **Food & economy**
 - Food sources: seeds on the surface, grubs from grub nests, and the Fungus Garden (seeds → fungus). No aphid ranches or leaves as fungus feed yet.
 - Food is a colony-wide stock with upkeep; no per-ant hunger/rest needs.
-- Ores are spent on buildings and smelted into copper and iron, but iron has nothing to be spent on yet, and there is no crusher or other processing [M4+].
+- Ores are spent on buildings and smelted into copper and iron; iron and coal are spent on research. No crusher, iron buildings or other processing yet.
 - Storage cells accept any item; no per-zone item filters yet.
 - No buffers / chests, no unloader that puts stock items onto belts.
 
@@ -109,9 +131,9 @@ Things the current build is still missing, grouped by area. Many are planned for
 - No roots, underground lakes or other cave features beyond open caverns.
 
 **Gameplay layers**
-- No contracts/goals, active abilities, random events [M4].
-- No research tree [M4].
-- No save/load, autosave or offline progress [M4].
+- Abilities: no Pheromone Burst (needs pheromones [M6]). Events: no golden aphid (needs aphids), no surface threats.
+- Research v1 only: no conveyor tiers, caste unlocks or QoL automation (auto-designate veins); no queen evolution tree.
+- One save slot; no settings menu, no Steam cloud saves.
 - No enemies, combat or defense [M5].
 - No pheromones [M6].
 - No prestige (Nuptial Flight) [M7].
@@ -120,8 +142,8 @@ Things the current build is still missing, grouped by area. Many are planned for
 - All art is placeholder generated in code (ant/queen/egg sprites, terrain textures).
 - No audio.
 - No pixel font or pixel-art UI skin; default font.
-- No queen panel, research UI, settings menu, offline summary. Tooltips are limited to the hover info panel.
-- Only the flow overlay; no light, pheromone or ore-scan overlays.
+- No queen panel or settings menu. Tooltips are limited to the hover info panel (and research hover details).
+- Only the flow overlay and the Seismic Sense glow; no light, pheromone or full ore-scan overlays.
 - ShadowCaster2D and dynamic lights not used yet (deferred until glow ants / possession).
 - No number pops when items are delivered or crafted.
 - Buildings have no sounds or particles (smelter smoke, garden spores).

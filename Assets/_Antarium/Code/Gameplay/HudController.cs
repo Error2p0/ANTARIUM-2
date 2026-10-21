@@ -29,7 +29,22 @@ namespace Antarium.Gameplay
         readonly VisualElement[] _itemEntries;
         readonly Label[] _itemLabels, _itemRates;
         readonly Button[] _buildingButtons;
+        readonly Label[] _buildingCosts;
+        readonly bool[] _buildingLockShown;
         readonly StringBuilder _sb = new();
+        readonly Label _knowledge, _knowledgeRate;
+        readonly VisualElement _modal;
+        readonly Button _researchButton;
+        /// <summary>Per building: name of the research that unlocks it (null if it starts unlocked).</summary>
+        readonly string[] _unlockedBy;
+
+        public ContractsPanel Contracts { get; }
+        public EventFeed EventFeed { get; }
+        public AbilityBar Abilities { get; }
+        public ResearchPanel Research { get; }
+        public MenuDialog Menu { get; }
+        public WelcomeBackDialog WelcomeBack { get; }
+        public event Action ResearchToggled;
         float _timer;
         float _toastTimer;
 
@@ -38,7 +53,7 @@ namespace Antarium.Gameplay
         public event Action<int> BuildingClicked;
         public event Action OverlayClicked;
 
-        public HudController(UIDocument document, ContentDB content)
+        public HudController(UIDocument document, ContentDB content, float autosaveSeconds)
         {
             _document = document;
             _content = content;
@@ -53,7 +68,12 @@ namespace Antarium.Gameplay
             _palette = root.Q<VisualElement>("build-palette");
             DebugLabel = root.Q<Label>("debug");
             var toolbar = root.Q<VisualElement>("toolbar");
-            if (_resources == null || toolbar == null || _palette == null || _info == null || _toast == null)
+            var contracts = root.Q<VisualElement>("contracts");
+            var events = root.Q<VisualElement>("events");
+            var abilities = root.Q<VisualElement>("abilities");
+            _modal = root.Q<VisualElement>("modal");
+            if (_resources == null || toolbar == null || _palette == null || _info == null || _toast == null
+                || contracts == null || events == null || abilities == null || _modal == null)
             {
                 Debug.LogError("HUD layout is missing elements; assign Hud.uxml to the UIDocument.");
                 return;
@@ -63,6 +83,8 @@ namespace Antarium.Gameplay
             _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out _, out _);
             _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out _, out _);
             _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _);
+            _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate);
+            knowledgeEntry.AddToClassList("resource--knowledge");
             _itemEntries = new VisualElement[content.Items.Length];
             _itemLabels = new Label[content.Items.Length];
             _itemRates = new Label[content.Items.Length];
@@ -77,14 +99,30 @@ namespace Antarium.Gameplay
             AddTool(toolbar, ToolMode.Mine, "2  Mine");
             AddTool(toolbar, ToolMode.Storage, "3  Storage");
             AddTool(toolbar, ToolMode.Build, "4  Build");
+            _researchButton = new Button(() => ResearchToggled?.Invoke()) { text = "T  Research", focusable = false };
+            _researchButton.AddToClassList("tool");
+            _researchButton.AddToClassList("tool--toggle");
+            toolbar.Add(_researchButton);
             _overlayButton = new Button(() => OverlayClicked?.Invoke()) { text = "O  Flow", focusable = false };
             _overlayButton.AddToClassList("tool");
             _overlayButton.AddToClassList("tool--toggle");
             toolbar.Add(_overlayButton);
+            Abilities = new AbilityBar(abilities, content);
 
+            _unlockedBy = new string[content.Buildings.Length];
+            foreach (var r in content.Research)
+                foreach (int b in r.UnlockBuildings) _unlockedBy[b] = r.Def.DisplayName;
             _buildingButtons = new Button[content.Buildings.Length];
+            _buildingCosts = new Label[content.Buildings.Length];
+            _buildingLockShown = new bool[content.Buildings.Length];
             for (int i = 0; i < content.Buildings.Length; i++)
                 _buildingButtons[i] = AddBuilding(i);
+
+            Contracts = new ContractsPanel(contracts, content);
+            EventFeed = new EventFeed(events, content);
+            Research = new ResearchPanel(content);
+            Menu = new MenuDialog(autosaveSeconds);
+            WelcomeBack = new WelcomeBackDialog(content);
             SetActiveTool(ToolMode.Dig);
             SetSelectedBuilding(0);
         }
@@ -130,6 +168,7 @@ namespace Antarium.Gameplay
             name.AddToClassList("building__name");
             var cost = new Label(CostText(_content.Buildings[index])) { pickingMode = PickingMode.Ignore };
             cost.AddToClassList("building__cost");
+            _buildingCosts[index] = cost;
             text.Add(name);
             text.Add(cost);
             swatch.pickingMode = PickingMode.Ignore;
@@ -171,6 +210,34 @@ namespace Antarium.Gameplay
 
         public void SetOverlay(bool on) => _overlayButton?.EnableInClassList("tool--on", on);
 
+        // ---------------------------------------------------------------- modal layer (menu, research, welcome back)
+
+        public bool ModalOpen => _modal != null && !_modal.ClassListContains("hidden");
+
+        public bool IsShowing(VisualElement panel) => panel != null && ModalOpen && panel.parent == _modal;
+
+        public void ShowModal(VisualElement panel)
+        {
+            if (_modal == null || panel == null) return;
+            _modal.Clear();
+            _modal.Add(panel);
+            _modal.RemoveFromClassList("hidden");
+        }
+
+        public void HideModal()
+        {
+            if (_modal == null) return;
+            _modal.Clear();
+            _modal.AddToClassList("hidden");
+        }
+
+        /// <summary>A new colony or a loaded save: show its own event cards, close dialogs.</summary>
+        public void ResetSession(Simulation sim)
+        {
+            EventFeed?.Reset(sim);
+            HideModal();
+        }
+
         /// <summary>Hover / selection details; null hides the panel.</summary>
         public void SetInfo(string text)
         {
@@ -196,11 +263,59 @@ namespace Antarium.Gameplay
             return panel.Pick(panelPos) != null;
         }
 
-        /// <summary>Turns refused placements into a toast.</summary>
+        /// <summary>Turns refused placements, research, abilities, contracts and random events into toasts and cards.</summary>
         public void Consume(EventBus events, Simulation sim)
         {
+            if (_resources == null) return;
             var failed = events.Read<PlaceFailedEvent>();
             if (failed.Length > 0) ShowToast(PlaceMessage(failed[failed.Length - 1].Result, failed[failed.Length - 1].Def, sim));
+
+            foreach (var e in events.Read<ResearchCompletedEvent>())
+            {
+                var data = _content.Research[e.Research];
+                _sb.Clear().Append("Researched ").Append(data.Def.DisplayName).Append('.');
+                foreach (int b in data.UnlockBuildings) _sb.Append(' ').Append(_content.Buildings[b].Def.DisplayName).Append(" unlocked (4).");
+                foreach (int a in data.UnlockAbilities) _sb.Append(' ').Append(_content.Abilities[a].DisplayName).Append(" unlocked.");
+                ShowToast(_sb.ToString());
+            }
+            foreach (var e in events.Read<ResearchFailedEvent>())
+            {
+                if (e.Research < 0 || e.Research >= _content.Research.Length) continue;
+                string name = _content.Research[e.Research].Def.DisplayName;
+                ShowToast(e.Result switch
+                {
+                    ResearchResult.NeedsPrerequisites => $"{name} needs the research before it first.",
+                    ResearchResult.CantAfford => $"Not enough for {name} yet.",
+                    _ => $"{name} is already researched.",
+                });
+            }
+            foreach (var e in events.Read<AbilityUsedEvent>())
+            {
+                var def = _content.Abilities[e.Ability];
+                ShowToast(def.kind switch
+                {
+                    AbilityKind.Frenzy => $"Frenzy! Workers are {Mathf.RoundToInt(def.magnitude * 100f)}% faster for {Mathf.RoundToInt(def.duration)} seconds.",
+                    AbilityKind.SeismicSense => e.Amount > 0 ? $"Seismic Sense revealed {e.Amount} hidden finds." : "Seismic Sense found nothing new here.",
+                    AbilityKind.RoyalDecree => $"Royal Decree: the queen laid {e.Amount} eggs.",
+                    _ => def.DisplayName,
+                });
+            }
+            foreach (var e in events.Read<AbilityFailedEvent>())
+            {
+                string name = e.Ability >= 0 && e.Ability < _content.Abilities.Length ? _content.Abilities[e.Ability].DisplayName : "That ability";
+                ShowToast(e.Result switch
+                {
+                    AbilityResult.Locked => $"{name} is locked: unlock it with research (T).",
+                    AbilityResult.Cooling => $"{name} is still recharging ({HudText.Duration(sim.Abilities.Cooldown[e.Ability])}).",
+                    AbilityResult.CantAfford => $"Not enough food for {name}.",
+                    AbilityResult.NoEffect => $"{name} has no effect right now.",
+                    _ => "Can't use that.",
+                });
+            }
+            foreach (var e in events.Read<ContractClaimedEvent>())
+                ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
+            string eventToast = EventFeed.Consume(events);
+            if (eventToast != null) ShowToast(eventToast);
         }
 
         public string PlaceMessage(PlaceResult result, int def, Simulation sim)
@@ -214,6 +329,8 @@ namespace Antarium.Gameplay
                 case PlaceResult.Occupied: return "Something is already built there.";
                 case PlaceResult.NeedsFloor: return "Machines need a flat, solid floor under their whole width.";
                 case PlaceResult.OutOfBounds: return "That is outside the world.";
+                case PlaceResult.Locked:
+                    return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first (T)." : "Locked.";
                 case PlaceResult.CantAfford:
                 {
                     if (data == null) return "Not enough resources.";
@@ -227,7 +344,9 @@ namespace Antarium.Gameplay
             }
         }
 
-        public void Update(float dt, Simulation sim)
+        /// <param name="targeting">Ability waiting for a click in the world, or -1.</param>
+        /// <param name="menuStatus">Line shown in the Esc menu (seed, play time, last save).</param>
+        public void Update(float dt, Simulation sim, int targeting, string menuStatus)
         {
             if (_resources == null) return;
             if (_toastTimer > 0f)
@@ -247,6 +366,16 @@ namespace Antarium.Gameplay
             _eggs.text = $"Eggs {colony.Eggs.Count}";
             _storage.text = $"Storage {NumberFormat.Format(inv.Stored)}/{NumberFormat.Format(inv.Capacity)}";
             _storageEntry.EnableInClassList("resource--full", inv.Stored >= inv.Capacity);
+            _knowledge.text = $"Knowledge {NumberFormat.Format(inv.Knowledge)}";
+            SetRate(_knowledgeRate, colony.Meter.KnowledgePerMinute);
+
+            Contracts.Refresh(sim);
+            EventFeed.Update(RefreshInterval, sim);
+            Abilities.Refresh(sim, targeting);
+            bool researchOpen = IsShowing(Research.Root);
+            _researchButton.EnableInClassList("tool--on", researchOpen);
+            if (researchOpen) Research.Refresh(sim);
+            if (IsShowing(Menu.Root)) Menu.Update(RefreshInterval, menuStatus);
 
             for (int i = 0; i < _itemLabels.Length; i++)
             {
@@ -260,7 +389,14 @@ namespace Antarium.Gameplay
             }
 
             for (int i = 0; i < _buildingButtons.Length; i++)
-                _buildingButtons[i].EnableInClassList("building--poor", !inv.CanAfford(_content.Buildings[i]));
+            {
+                bool locked = !colony.BuildingUnlocked[i];
+                _buildingButtons[i].EnableInClassList("building--poor", !locked && !inv.CanAfford(_content.Buildings[i]));
+                _buildingButtons[i].EnableInClassList("building--locked", locked);
+                if (locked == _buildingLockShown[i]) continue;
+                _buildingLockShown[i] = locked;
+                _buildingCosts[i].text = locked ? "Research: " + (_unlockedBy[i] ?? "?") : CostText(_content.Buildings[i]);
+            }
 
             bool starving = colony.Starving;
             _alert.EnableInClassList("hidden", !starving);

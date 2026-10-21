@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: foraging_trails
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: foraging_trails
+  displayName: Foraging Trails
+  description: Seeds appear on the surface 50% more often.
+  treePosition: {x: 2, y: 3}
+  knowledgeCost: 25
+  cost: []
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: cea0e7041b75ecb4ca4c6595329b11da, type: 2}
+  effects:
+  - kind: 0
+    stat: 10
+    value: 0.5
+    building: {fileID: 0}
+    ability: {fileID: 0}

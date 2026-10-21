@@ -25,5 +25,7 @@ namespace Antarium.Content
         public List<ItemAmount> outputs = new();
         [Tooltip("Seconds per craft.")]
         [Min(0.1f)] public float duration = 5f;
+        [Tooltip("Knowledge added to the colony per craft (studying). A recipe needs outputs or knowledge.")]
+        [Min(0f)] public float knowledge;
     }
 }

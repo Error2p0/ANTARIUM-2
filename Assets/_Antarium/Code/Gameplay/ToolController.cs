@@ -24,6 +24,7 @@ namespace Antarium.Gameplay
     public sealed class ToolController
     {
         readonly DigConfig _config;
+        readonly ContentDB _content;
         readonly DigTool _dig;
         readonly BuildTool _build;
         readonly List<BuildGhost> _ghosts;
@@ -35,11 +36,14 @@ namespace Antarium.Gameplay
         public DigTool Dig => _dig;
         public BuildTool Build => _build;
         public event Action<ToolMode> ModeChanged;
+        /// <summary>Ability waiting for the player to click where to use it, or -1.</summary>
+        public int TargetingAbility { get; private set; } = -1;
 
         /// <param name="ghosts">Placement previews to draw; filled while the Build tool is active.</param>
         public ToolController(DigConfig config, ContentDB content, List<BuildGhost> ghosts)
         {
             _config = config;
+            _content = content;
             _dig = new DigTool(config);
             _build = new BuildTool(content);
             _ghosts = ghosts;
@@ -53,6 +57,29 @@ namespace Antarium.Gameplay
             _build.Cancel();
             _ghosts.Clear();
             ModeChanged?.Invoke(mode);
+        }
+
+        /// <summary>
+        /// Ability bar click: abilities that act on a place (Seismic Sense) wait for a click in the world;
+        /// the others are used right away.
+        /// </summary>
+        public void ClickAbility(Simulation sim, int ability, int2 cursorCell)
+        {
+            if (ability < 0 || ability >= _content.Abilities.Length) return;
+            if (_content.Abilities[ability].kind == AbilityKind.SeismicSense)
+            {
+                TargetingAbility = TargetingAbility == ability ? -1 : ability;
+                return;
+            }
+            sim.EnqueueAbility(ability, cursorCell);
+        }
+
+        /// <summary>Cancels ability targeting. Returns true if there was something to cancel (Esc).</summary>
+        public bool CancelTargeting()
+        {
+            if (TargetingAbility < 0) return false;
+            TargetingAbility = -1;
+            return true;
         }
 
         /// <summary>Selects a building from the palette (and switches to the Build tool).</summary>
@@ -75,14 +102,38 @@ namespace Antarium.Gameplay
                 if (input.Rotate.WasPressedThisFrame()) _build.Rotate();
             }
 
+            float2 cellPos = WorldGrid.WorldToCellSpace(pointerWorld);
+            int2 cursorCell = (int2)math.floor(cellPos);
+            for (int i = 0; i < input.Abilities.Length && i < _content.Abilities.Length; i++)
+            {
+                if (!input.Abilities[i].WasPressedThisFrame()) continue;
+                TargetingAbility = -1;
+                sim.EnqueueAbility(i, cursorCell); // hotkeys act at the cursor right away
+            }
+
             bool primary = input.Primary.IsPressed();
             bool secondary = input.Secondary.IsPressed();
             bool pressed = input.Primary.WasPressedThisFrame() || input.Secondary.WasPressedThisFrame();
             if (pressed) _strokeBlocked = pointerOverUi;
             if (!primary && !secondary) _strokeBlocked = false;
+
+            if (pressed && !pointerOverUi)
+            {
+                // A click aimed at an ability target, or at a critter, is not a tool stroke.
+                if (TargetingAbility >= 0)
+                {
+                    if (input.Primary.WasPressedThisFrame()) sim.EnqueueAbility(TargetingAbility, cursorCell);
+                    TargetingAbility = -1;
+                    _strokeBlocked = true;
+                }
+                else if (input.Primary.WasPressedThisFrame() && sim.RandomEvents.CritterAt(cellPos) >= 0)
+                {
+                    sim.EnqueueCatch(cellPos);
+                    _strokeBlocked = true;
+                }
+            }
             if (_strokeBlocked) { primary = secondary = false; }
 
-            float2 cellPos = WorldGrid.WorldToCellSpace(pointerWorld);
             switch (Mode)
             {
                 case ToolMode.Dig:

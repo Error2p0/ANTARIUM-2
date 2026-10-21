@@ -30,6 +30,8 @@ namespace Antarium.Content
         public ushort[] OutputItems;
         public int[] OutputCounts;
         public float Duration;
+        /// <summary>Knowledge added per craft.</summary>
+        public float Knowledge;
     }
 
     /// <summary>Baked building: dense cost and recipe indices.</summary>
@@ -45,6 +47,50 @@ namespace Antarium.Content
         public int[] InputCaps;
         /// <summary>Bit per item index: items this building accepts as input.</summary>
         public ulong InputMask;
+    }
+
+    /// <summary>Content of the incremental layer (research, abilities, contracts, random events).</summary>
+    public sealed class ProgressionContent
+    {
+        public IReadOnlyList<ResearchDef> Research;
+        public IReadOnlyList<AbilityDef> Abilities;
+        public IReadOnlyList<ContractDef> Contracts;
+        public IReadOnlyList<RandomEventDef> Events;
+    }
+
+    /// <summary>Baked research node: dense indices.</summary>
+    public sealed class ResearchData
+    {
+        public ResearchDef Def;
+        /// <summary>Indices into <see cref="ContentDB.Research"/>.</summary>
+        public int[] Prerequisites;
+        public ushort[] CostItems;
+        public int[] CostCounts;
+        /// <summary>Stat effects only; unlocks are in <see cref="UnlockBuildings"/> / <see cref="UnlockAbilities"/>.</summary>
+        public ResearchEffect[] Stats;
+        public int[] UnlockBuildings;
+        public int[] UnlockAbilities;
+    }
+
+    public sealed class ContractData
+    {
+        public ContractDef Def;
+        /// <summary>Item for Deliver / Craft, else <see cref="ContentDB.NoItem"/>.</summary>
+        public ushort Item;
+        /// <summary>Building for Build, else -1.</summary>
+        public int Building;
+        /// <summary>Research that must be done first, else -1.</summary>
+        public int Requires;
+        public ushort[] RewardItems;
+        public int[] RewardCounts;
+    }
+
+    public sealed class RandomEventData
+    {
+        public RandomEventDef Def;
+        public ushort[] Materials;
+        public ushort[] RewardItems;
+        public int[] RewardCounts;
     }
 
     /// <summary>
@@ -71,12 +117,27 @@ namespace Antarium.Content
         public readonly int[] ConsumerSlot;
         public readonly int ConsumerSlotCount;
 
+        /// <summary>Research nodes ordered by tree position.</summary>
+        public readonly ResearchData[] Research;
+        /// <summary>Abilities in bar order.</summary>
+        public readonly AbilityDef[] Abilities;
+        public readonly ContractData[] Contracts;
+        public readonly RandomEventData[] Events;
+        /// <summary>Per building / ability: true if some research unlocks it (it starts locked).</summary>
+        public readonly bool[] BuildingStartsLocked;
+        public readonly bool[] AbilityStartsLocked;
+
         readonly Dictionary<string, ushort> _materialIndex = new();
         readonly Dictionary<string, ushort> _itemIndex = new();
         readonly Dictionary<string, int> _buildingIndex = new();
+        readonly Dictionary<string, int> _recipeIndex = new();
+        readonly Dictionary<string, int> _researchIndex = new();
+        readonly Dictionary<string, int> _abilityIndex = new();
+        readonly Dictionary<string, int> _contractIndex = new();
+        readonly Dictionary<string, int> _eventIndex = new();
 
         ContentDB(TerrainMaterialDef[] materials, ItemDef[] items, IReadOnlyList<ItemDef> forage, WorldGenSettings worldGen,
-            IReadOnlyList<BuildingDef> buildings)
+            IReadOnlyList<BuildingDef> buildings, ProgressionContent progression)
         {
             Materials = materials;
             Items = items;
@@ -111,6 +172,133 @@ namespace Antarium.Content
             foreach (var b in Buildings)
             foreach (ushort item in b.InputItems)
                 if (ConsumerSlot[item] < 0) ConsumerSlot[item] = ConsumerSlotCount++;
+            for (int i = 0; i < Recipes.Length; i++)
+                _recipeIndex[Recipes[i].Def.Id] = i;
+
+            progression ??= new ProgressionContent();
+            Abilities = Sorted(progression.Abilities, "ability", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
+            for (int i = 0; i < Abilities.Length; i++) _abilityIndex.Add(Abilities[i].Id, i);
+            BuildingStartsLocked = new bool[Buildings.Length];
+            AbilityStartsLocked = new bool[Abilities.Length];
+            Research = BakeResearch(progression.Research);
+            Contracts = BakeContracts(progression.Contracts);
+            Events = BakeEvents(progression.Events);
+        }
+
+        static T[] Sorted<T>(IReadOnlyList<T> defs, string what, Comparison<T> order) where T : ContentDef
+        {
+            var list = new List<T>();
+            var ids = new HashSet<string>();
+            if (defs != null)
+            {
+                foreach (var def in defs)
+                {
+                    if (def == null) throw new ArgumentException($"The {what} list contains an empty entry.");
+                    if (!ids.Add(def.Id)) throw new ArgumentException($"Duplicate {what} id '{def.Id}'.");
+                    list.Add(def);
+                }
+            }
+            list.Sort(order);
+            return list.ToArray();
+        }
+
+        ResearchData[] BakeResearch(IReadOnlyList<ResearchDef> defs)
+        {
+            var sorted = Sorted(defs, "research", (a, b) =>
+                a.treePosition.x != b.treePosition.x ? a.treePosition.x.CompareTo(b.treePosition.x)
+                : a.treePosition.y != b.treePosition.y ? a.treePosition.y.CompareTo(b.treePosition.y)
+                : string.CompareOrdinal(a.Id, b.Id));
+            for (int i = 0; i < sorted.Length; i++) _researchIndex.Add(sorted[i].Id, i);
+
+            var result = new ResearchData[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                var data = new ResearchData { Def = def };
+                Amounts(def.cost, $"research '{def.Id}' cost", out data.CostItems, out data.CostCounts);
+                var prereqs = new List<int>();
+                foreach (var p in def.prerequisites)
+                {
+                    if (p == null) continue;
+                    if (!_researchIndex.TryGetValue(p.Id, out int pi))
+                        throw new ArgumentException($"Research '{def.Id}' needs '{p.Id}', which is not registered.");
+                    prereqs.Add(pi);
+                }
+                data.Prerequisites = prereqs.ToArray();
+
+                var stats = new List<ResearchEffect>();
+                var buildings = new List<int>();
+                var abilities = new List<int>();
+                foreach (var e in def.effects)
+                {
+                    switch (e.kind)
+                    {
+                        case ResearchEffectKind.Stat: stats.Add(e); break;
+                        case ResearchEffectKind.UnlockBuilding:
+                        {
+                            int b = GetBuildingIndex(e.building);
+                            buildings.Add(b);
+                            BuildingStartsLocked[b] = true;
+                            break;
+                        }
+                        case ResearchEffectKind.UnlockAbility:
+                        {
+                            if (e.ability == null || !_abilityIndex.TryGetValue(e.ability.Id, out int a))
+                                throw new ArgumentException($"Research '{def.Id}' unlocks an ability that is not registered.");
+                            abilities.Add(a);
+                            AbilityStartsLocked[a] = true;
+                            break;
+                        }
+                    }
+                }
+                data.Stats = stats.ToArray();
+                data.UnlockBuildings = buildings.ToArray();
+                data.UnlockAbilities = abilities.ToArray();
+                result[i] = data;
+            }
+            return result;
+        }
+
+        ContractData[] BakeContracts(IReadOnlyList<ContractDef> defs)
+        {
+            var sorted = Sorted(defs, "contract", (a, b) => a.introOrder != b.introOrder ? a.introOrder.CompareTo(b.introOrder) : string.CompareOrdinal(a.Id, b.Id));
+            var result = new ContractData[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                _contractIndex.Add(def.Id, i);
+                var data = new ContractData { Def = def, Item = NoItem, Building = -1, Requires = -1 };
+                if (def.kind == ContractKind.Deliver || def.kind == ContractKind.Craft)
+                {
+                    if (def.item == null) throw new ArgumentException($"Contract '{def.Id}' needs an item.");
+                    data.Item = GetItemIndex(def.item);
+                }
+                if (def.kind == ContractKind.Build) data.Building = GetBuildingIndex(def.building);
+                if (def.requires != null && !_researchIndex.TryGetValue(def.requires.Id, out data.Requires))
+                    throw new ArgumentException($"Contract '{def.Id}' requires research '{def.requires.Id}', which is not registered.");
+                Amounts(def.rewards, $"contract '{def.Id}' rewards", out data.RewardItems, out data.RewardCounts);
+                result[i] = data;
+            }
+            return result;
+        }
+
+        RandomEventData[] BakeEvents(IReadOnlyList<RandomEventDef> defs)
+        {
+            var sorted = Sorted(defs, "event", (a, b) => string.CompareOrdinal(a.Id, b.Id));
+            var result = new RandomEventData[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                _eventIndex.Add(def.Id, i);
+                var data = new RandomEventData { Def = def, Materials = new ushort[def.materials.Count] };
+                for (int k = 0; k < def.materials.Count; k++)
+                    data.Materials[k] = GetMaterialIndex(def.materials[k]);
+                if ((def.kind == RandomEventKind.Meteorite || def.kind == RandomEventKind.RichVein) && data.Materials.Length == 0)
+                    throw new ArgumentException($"Event '{def.Id}' needs at least one material.");
+                Amounts(def.rewards, $"event '{def.Id}' rewards", out data.RewardItems, out data.RewardCounts);
+                result[i] = data;
+            }
+            return result;
         }
 
         void BakeBuildings(IReadOnlyList<BuildingDef> defs, out BuildingData[] buildings, out RecipeData[] recipes)
@@ -178,10 +366,10 @@ namespace Antarium.Content
 
         RecipeData BakeRecipe(RecipeDef def)
         {
-            var data = new RecipeData { Def = def, Duration = math.max(0.1f, def.duration) };
+            var data = new RecipeData { Def = def, Duration = math.max(0.1f, def.duration), Knowledge = math.max(0f, def.knowledge) };
             Amounts(def.inputs, $"recipe '{def.Id}' inputs", out data.InputItems, out data.InputCounts);
             Amounts(def.outputs, $"recipe '{def.Id}' outputs", out data.OutputItems, out data.OutputCounts);
-            if (data.OutputItems.Length == 0) throw new ArgumentException($"Recipe '{def.Id}' has no outputs.");
+            if (data.OutputItems.Length == 0 && data.Knowledge <= 0f) throw new ArgumentException($"Recipe '{def.Id}' has no outputs.");
             return data;
         }
 
@@ -201,11 +389,19 @@ namespace Antarium.Content
         public static ContentDB Build(ContentDatabase database)
         {
             if (database == null) throw new ArgumentNullException(nameof(database));
-            return Build(database.materials, database.worldGen, database.items, database.surfaceForage, database.buildings);
+            return Build(database.materials, database.worldGen, database.items, database.surfaceForage, database.buildings,
+                new ProgressionContent
+                {
+                    Research = database.research,
+                    Abilities = database.abilities,
+                    Contracts = database.contracts,
+                    Events = database.events,
+                });
         }
 
         public static ContentDB Build(IReadOnlyList<TerrainMaterialDef> materials, WorldGenSettings worldGen,
-            IReadOnlyList<ItemDef> items = null, IReadOnlyList<ItemDef> surfaceForage = null, IReadOnlyList<BuildingDef> buildings = null)
+            IReadOnlyList<ItemDef> items = null, IReadOnlyList<ItemDef> surfaceForage = null, IReadOnlyList<BuildingDef> buildings = null,
+            ProgressionContent progression = null)
         {
             if (materials == null) throw new ArgumentNullException(nameof(materials));
             if (worldGen == null) throw new ArgumentException("ContentDatabase has no WorldGenSettings.");
@@ -242,7 +438,7 @@ namespace Antarium.Content
             }
             if (itemList.Count > MaxItems) throw new ArgumentException($"Too many items (max {MaxItems}).");
 
-            var db = new ContentDB(ordered.ToArray(), itemList.ToArray(), surfaceForage, worldGen, buildings);
+            var db = new ContentDB(ordered.ToArray(), itemList.ToArray(), surfaceForage, worldGen, buildings, progression);
             db.ValidateWorldGen();
             return db;
         }
@@ -250,6 +446,24 @@ namespace Antarium.Content
         public bool TryGetMaterialIndex(string id, out ushort index) => _materialIndex.TryGetValue(id, out index);
         public bool TryGetItemIndex(string id, out ushort index) => _itemIndex.TryGetValue(id, out index);
         public bool TryGetBuildingIndex(string id, out int index) => _buildingIndex.TryGetValue(id, out index);
+        public bool TryGetRecipeIndex(string id, out int index) => _recipeIndex.TryGetValue(id, out index);
+        public bool TryGetResearchIndex(string id, out int index) => _researchIndex.TryGetValue(id, out index);
+        public bool TryGetAbilityIndex(string id, out int index) => _abilityIndex.TryGetValue(id, out index);
+        public bool TryGetContractIndex(string id, out int index) => _contractIndex.TryGetValue(id, out index);
+        public bool TryGetEventIndex(string id, out int index) => _eventIndex.TryGetValue(id, out index);
+
+        /// <summary>Index of the biome (top to bottom) at <paramref name="depth"/> cells below the surface, ignoring border warp.</summary>
+        public int BiomeAtDepth(int depth)
+        {
+            var biomes = WorldGen.biomes;
+            int top = 0;
+            for (int i = 0; i < biomes.Count - 1; i++)
+            {
+                top += biomes[i].thickness;
+                if (depth < top) return i;
+            }
+            return math.max(0, biomes.Count - 1);
+        }
 
         public int GetBuildingIndex(BuildingDef def)
         {

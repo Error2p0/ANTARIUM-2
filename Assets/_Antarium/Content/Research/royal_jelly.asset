@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: royal_jelly
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: royal_jelly
+  displayName: Royal Jelly
+  description: The queen lays 25% faster and up to 2 more eggs wait at once.
+  treePosition: {x: 1, y: 0}
+  knowledgeCost: 20
+  cost: []
+  foodCost: 20
+  prerequisites:
+  - {fileID: 11400000, guid: 4bdbb0c6f379f4944a0e98c9064d8db7, type: 2}
+  effects:
+  - kind: 0
+    stat: 8
+    value: 0.25
+    building: {fileID: 0}
+    ability: {fileID: 0}
+  - kind: 0
+    stat: 9
+    value: 2
+    building: {fileID: 0}
+    ability: {fileID: 0}

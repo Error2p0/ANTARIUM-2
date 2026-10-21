@@ -16,6 +16,7 @@ namespace Antarium.Presentation
         public const int ItemSize = 3, DotSize = 4;
         public const int SmelterWidth = 24, SmelterHeight = 24;
         public const int GardenWidth = 32, GardenHeight = 16;
+        public const int ArchiveWidth = 24, ArchiveHeight = 16;
 
         const int AtlasWidth = 128, AtlasHeight = 64;
 
@@ -32,7 +33,8 @@ namespace Antarium.Presentation
         /// <summary>Small lump for an item kept in storage (tinted per item).</summary>
         public const int StoredRect = GenericRect + 1;
         public const int StoredWidth = 3, StoredHeight = 2;
-        const int RectCount = StoredRect + 1;
+        public const int ArchiveRect = StoredRect + 1;      // 2 frames: idle, working
+        const int RectCount = ArchiveRect + 2;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -44,6 +46,9 @@ namespace Antarium.Presentation
         static readonly Color32 Mouth = Hex(0x2a1610), Fire = Hex(0xffb040), FireHot = Hex(0xfff0a0), Ember = Hex(0xe0602a);
         static readonly Color32 Soil = Hex(0x4a321f), SoilHigh = Hex(0x6b4a2f), Stem = Hex(0xefe2d0), Cap = Hex(0xb98ad0), CapDark = Hex(0x7d5596), CapSpot = Hex(0xf6ecff);
         static readonly Color32 White = new(255, 255, 255, 255), Grey = new(190, 190, 190, 255), DarkGrey = new(120, 120, 120, 255);
+        static readonly Color32 Wood = Hex(0x6b4a2c), WoodHigh = Hex(0x93693f), WoodDark = Hex(0x3e2a19), Bone = Hex(0xe8dcc0), BoneShade = Hex(0xb8a888);
+        static readonly Color32 AmberLump = Hex(0xe39b2b), BookRed = Hex(0x8a3b2e), BookBlue = Hex(0x2e5a8a), BookGreen = Hex(0x5a7a2e), Page = Hex(0xf4ecd8);
+        static readonly Color32 Flame = Hex(0xffc040), FlameHot = Hex(0xfff4b0), Wax = Hex(0xefe6cc);
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
@@ -79,6 +84,10 @@ namespace Antarium.Presentation
             Rects[GardenRect + 1] = Rect(80, 8, GardenWidth, GardenHeight);
             PaintGeneric(112, 8);
             Rects[GenericRect] = Rect(112, 8, 16, 16);
+            PaintArchive(0, 32, working: false);
+            PaintArchive(24, 32, working: true);
+            Rects[ArchiveRect] = Rect(0, 32, ArchiveWidth, ArchiveHeight);
+            Rects[ArchiveRect + 1] = Rect(24, 32, ArchiveWidth, ArchiveHeight);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -197,6 +206,59 @@ namespace Antarium.Presentation
                 Mushroom(8, 1, 1);
                 Mushroom(17, 1, 1);
                 Mushroom(25, 1, 1);
+            }
+        }
+
+        /// <summary>Wooden shelves with fossils, amber and books; a candle burns while it studies.</summary>
+        void PaintArchive(int ox, int oy, bool working)
+        {
+            for (int y = 0; y < ArchiveHeight; y++)
+            {
+                Set(ox, oy + y, WoodDark);
+                Set(ox + 1, oy + y, Wood);
+                Set(ox + ArchiveWidth - 2, oy + y, Wood);
+                Set(ox + ArchiveWidth - 1, oy + y, WoodDark);
+            }
+            for (int x = 0; x < ArchiveWidth; x++)
+            {
+                Set(ox + x, oy, WoodDark);
+                Set(ox + x, oy + 1, Wood);
+                Set(ox + x, oy + 8, WoodHigh);
+                Set(ox + x, oy + 7, Wood);
+                Set(ox + x, oy + 15, WoodDark);
+                Set(ox + x, oy + 14, WoodHigh);
+            }
+            // Lower shelf: a fossil bone and amber lumps.
+            for (int x = 3; x < 10; x++) Set(ox + x, oy + 3, Bone);
+            Set(ox + 2, oy + 2, Bone); Set(ox + 2, oy + 4, Bone); Set(ox + 10, oy + 2, Bone); Set(ox + 10, oy + 4, Bone);
+            for (int x = 4; x < 9; x++) Set(ox + x, oy + 2, BoneShade);
+            for (int y = 2; y < 5; y++)
+            for (int x = 13; x < 16; x++)
+                Set(ox + x, oy + y, (x + y) % 3 == 0 ? FlameHot : AmberLump);
+            Set(ox + 18, oy + 2, AmberLump); Set(ox + 19, oy + 2, AmberLump); Set(ox + 18, oy + 3, AmberLump);
+            // Upper shelf: books, an open page and the candle.
+            Color32[] books = { BookRed, BookBlue, BookGreen, BookRed, BookBlue };
+            for (int b = 0; b < books.Length; b++)
+            {
+                int height = 4 + b % 2;
+                for (int y = 9; y < 9 + height; y++)
+                {
+                    Set(ox + 3 + b * 2, oy + y, books[b]);
+                    Set(ox + 4 + b * 2, oy + y, y == 9 + height - 1 ? Page : books[b]);
+                }
+            }
+            for (int x = 15; x < 21; x++)
+            {
+                Set(ox + x, oy + 9, Page);
+                Set(ox + x, oy + 10, x == 17 || x == 18 ? BoneShade : Page);
+            }
+            Set(ox + 19, oy + 11, Wax);
+            Set(ox + 19, oy + 12, Wax);
+            if (working)
+            {
+                Set(ox + 19, oy + 13, Flame);
+                Set(ox + 19, oy + 14, FlameHot);
+                Set(ox + 16, oy + 10, FlameHot);
             }
         }
 
