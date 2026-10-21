@@ -9,8 +9,8 @@ using UnityEngine.Rendering;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Mirrors the world grid and light map to GPU buffers (one 1024-cell range per dirty chunk) and
-    /// draws the whole world as a single quad with the per-pixel terrain shader. No meshes per chunk.
+    /// Mirrors the world grid, fluid plane and light map to GPU buffers (one 1024-cell range per dirty chunk)
+    /// and draws the whole world as a single quad with the per-pixel terrain shader. No meshes per chunk.
     /// </summary>
     public sealed class TerrainView : IDisposable
     {
@@ -37,11 +37,20 @@ namespace Antarium.Presentation
         static readonly int OverlayId = Shader.PropertyToID("_AntOverlay");
         static readonly int SpriteMinLightId = Shader.PropertyToID("_AntSpriteMinLight");
         static readonly int StorageColorId = Shader.PropertyToID("_AntStorageColor");
+        static readonly int FluidId = Shader.PropertyToID("_AntFluid");
+        static readonly int WaterId = Shader.PropertyToID("_AntWater");
+        static readonly int WaterSurfaceId = Shader.PropertyToID("_AntWaterSurface");
+        static readonly int LavaId = Shader.PropertyToID("_AntLava");
+        static readonly int LavaHotId = Shader.PropertyToID("_AntLavaHot");
+        static readonly int GasId = Shader.PropertyToID("_AntGas");
+        static readonly int TimeId = Shader.PropertyToID("_AntTime");
 
         readonly WorldGrid _world;
         readonly LightSystem _light;
         readonly GraphicsBuffer _cellBuffer;
         readonly GraphicsBuffer _lightBuffer;
+        /// <summary>Two cells per uint (each: level | kind &lt;&lt; 8), the fluid plane reinterpreted.</summary>
+        readonly GraphicsBuffer _fluidBuffer;
         readonly GraphicsBuffer _materialBuffer;
         readonly Texture2DArray _materialTextures;
         readonly GameObject _quad;
@@ -54,6 +63,7 @@ namespace Antarium.Presentation
             int count = world.Width * world.Height;
             _cellBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, sizeof(uint)) { name = "AntCells" };
             _lightBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, sizeof(uint)) { name = "AntLight" };
+            _fluidBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count / 2, sizeof(uint)) { name = "AntFluid" };
 
             // Colours are authored in sRGB; buffers are raw floats, so convert to the working colour space here.
             var materials = content.Materials;
@@ -91,6 +101,12 @@ namespace Antarium.Presentation
         {
             Shader.SetGlobalBuffer(CellsId, _cellBuffer);
             Shader.SetGlobalBuffer(LightId, _lightBuffer);
+            Shader.SetGlobalBuffer(FluidId, _fluidBuffer);
+            Shader.SetGlobalColor(WaterId, ToWorkingAlpha(render.waterColor));
+            Shader.SetGlobalColor(WaterSurfaceId, ToWorkingAlpha(render.waterSurfaceColor));
+            Shader.SetGlobalColor(LavaId, ToWorkingAlpha(render.lavaColor));
+            Shader.SetGlobalColor(LavaHotId, ToWorkingAlpha(render.lavaHotColor));
+            Shader.SetGlobalColor(GasId, ToWorkingAlpha(render.gasColor));
             Shader.SetGlobalBuffer(MaterialsId, _materialBuffer);
             Shader.SetGlobalTexture(MaterialTexId, _materialTextures);
             Shader.SetGlobalVector(WorldId, new Vector4(_world.Width, _world.Height, _world.ChunksX, 0f));
@@ -106,24 +122,39 @@ namespace Antarium.Presentation
             Shader.SetGlobalVector(SkyRangeId, new Vector4(horizon, _world.Height * WorldConstants.CellSize, 0f, 0f));
         }
 
-        /// <summary>Uploads chunks whose cells or light changed since the last call.</summary>
+        /// <summary>Uploads chunks whose cells, fluid or light changed since the last call.</summary>
         public int Upload()
         {
+            const ChunkFlags any = ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload;
+            Shader.SetGlobalFloat(TimeId, Time.time);
             int uploaded = 0;
             var chunks = _world.Chunks;
+            var fluid = _world.Fluid.Reinterpret<uint>(UnsafeFluidSize);
             for (int i = 0; i < chunks.Length; i++)
             {
                 var flags = chunks[i];
-                if ((flags & (ChunkFlags.TerrainUpload | ChunkFlags.LightUpload)) == 0) continue;
+                if ((flags & any) == 0) continue;
                 int start = i * WorldConstants.ChunkCellCount;
                 if ((flags & ChunkFlags.TerrainUpload) != 0)
                     _cellBuffer.SetData(_world.Cells, start, start, WorldConstants.ChunkCellCount);
                 if ((flags & ChunkFlags.LightUpload) != 0)
                     _lightBuffer.SetData(_light.Light, start, start, WorldConstants.ChunkCellCount);
-                chunks[i] = flags & ~(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload);
+                if ((flags & ChunkFlags.FluidUpload) != 0)
+                    _fluidBuffer.SetData(fluid, start / 2, start / 2, WorldConstants.ChunkCellCount / 2);
+                chunks[i] = flags & ~any;
                 uploaded++;
             }
             return uploaded;
+        }
+
+        /// <summary>Size of <see cref="FluidCell"/> in bytes (two of them pack into one GPU uint).</summary>
+        const int UnsafeFluidSize = 2;
+
+        static Color ToWorkingAlpha(Color c)
+        {
+            var w = ToWorking(new Color(c.r, c.g, c.b, 1f));
+            w.a = c.a;
+            return w;
         }
 
         static bool IsLinear => QualitySettings.activeColorSpace == ColorSpace.Linear;
@@ -146,6 +177,7 @@ namespace Antarium.Presentation
         {
             _cellBuffer?.Release();
             _lightBuffer?.Release();
+            _fluidBuffer?.Release();
             _materialBuffer?.Release();
             if (_materialTextures != null) UnityEngine.Object.Destroy(_materialTextures);
             if (_mesh != null) UnityEngine.Object.Destroy(_mesh);

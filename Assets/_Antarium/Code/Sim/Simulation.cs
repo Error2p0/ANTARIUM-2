@@ -301,10 +301,14 @@ namespace Antarium.Sim
         public void SetCell(int2 c, Cell cell) => EditCell(c, cell);
 
         /// <summary>Debug/cheat: spawns workers in the royal chamber.</summary>
-        public void SpawnWorkers(int count)
+        public void SpawnWorkers(int count) => SpawnAnts(count, AntCaste.Worker);
+
+        /// <summary>Spawns ants of a caste on the royal chamber floor (offline hatching, debug).</summary>
+        public void SpawnAnts(int count, AntCaste caste)
         {
             for (int i = 0; i < count; i++)
-                Ants.Spawn(RandomRoyalFloorCell(), Seed);
+                Ants.Spawn(RandomRoyalFloorCell(), Seed, caste);
+            Soldiers = Ants.CountCaste(AntCaste.Soldier);
         }
 
         // ---------------------------------------------------------------- commands

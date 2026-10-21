@@ -34,7 +34,11 @@ namespace Antarium.Presentation
         public const int StoredRect = GenericRect + 1;
         public const int StoredWidth = 3, StoredHeight = 2;
         public const int ArchiveRect = StoredRect + 1;      // 2 frames: idle, working
-        const int RectCount = ArchiveRect + 2;
+        public const int GateRect = ArchiveRect + 2;
+        public const int TrapRect = GateRect + 1;           // 2 frames: armed, sprung
+        public const int GuardPostRect = TrapRect + 2;
+        public const int WallRect = GuardPostRect + 1;
+        const int RectCount = WallRect + 1;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -49,6 +53,8 @@ namespace Antarium.Presentation
         static readonly Color32 Wood = Hex(0x6b4a2c), WoodHigh = Hex(0x93693f), WoodDark = Hex(0x3e2a19), Bone = Hex(0xe8dcc0), BoneShade = Hex(0xb8a888);
         static readonly Color32 AmberLump = Hex(0xe39b2b), BookRed = Hex(0x8a3b2e), BookBlue = Hex(0x2e5a8a), BookGreen = Hex(0x5a7a2e), Page = Hex(0xf4ecd8);
         static readonly Color32 Flame = Hex(0xffc040), FlameHot = Hex(0xfff4b0), Wax = Hex(0xefe6cc);
+        static readonly Color32 Resin = Hex(0xc8902a), ResinDark = Hex(0x7a5218), ResinHigh = Hex(0xf0c060), Tooth = Hex(0xf0e8d8);
+        static readonly Color32 Banner = Hex(0xc03a2a), BannerHigh = Hex(0xe8644a), Earth = Hex(0x5e4128), EarthHigh = Hex(0x7d583a), EarthDark = Hex(0x3e2a19);
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
@@ -88,6 +94,18 @@ namespace Antarium.Presentation
             PaintArchive(24, 32, working: true);
             Rects[ArchiveRect] = Rect(0, 32, ArchiveWidth, ArchiveHeight);
             Rects[ArchiveRect + 1] = Rect(24, 32, ArchiveWidth, ArchiveHeight);
+
+            // Defense: resin gate lattice, a toothed resin trap (armed / sprung), a guard banner, a packed-earth block.
+            Blit(48, 24, new[] { "QHHHHHHQ", "QRQRQRQQ", "QRQRQRQQ", "QHHHHHHQ", "QRQRQRQQ", "QRQRQRQQ", "QHHHHHHQ", "QQQQQQQQ" });
+            Rects[GateRect] = Rect(48, 24, Cell, Cell);
+            Blit(56, 24, new[] { "........", "........", "........", "........", ".T....T.", "TT....TT", "RTR..RTR", "QRRRRRRQ" });
+            Rects[TrapRect] = Rect(56, 24, Cell, Cell);
+            Blit(64, 24, new[] { "........", "........", "........", "........", "........", "...TT...", "RRTTTTRR", "QRRRRRRQ" });
+            Rects[TrapRect + 1] = Rect(64, 24, Cell, Cell);
+            Blit(72, 24, new[] { ".pBBBB..", ".pBbBBB.", ".pBBBB..", ".p......", ".p......", ".p......", ".p......", "ppp....." });
+            Rects[GuardPostRect] = Rect(72, 24, Cell, Cell);
+            Blit(80, 24, new[] { "EEEEEEEE", "EeeEeeeE", "eeeeEeee", "eEeeeeEe", "eeeEeeee", "eeeeeEee", "EeeeeeeE", "oooooooo" });
+            Rects[WallRect] = Rect(80, 24, Cell, Cell);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -289,6 +307,16 @@ namespace Antarium.Presentation
                         case 'w': c = White; break;
                         case 'g': c = Grey; break;
                         case 'k': c = DarkGrey; break;
+                        case 'R': c = Resin; break;
+                        case 'Q': c = ResinDark; break;
+                        case 'H': c = ResinHigh; break;
+                        case 'T': c = Tooth; break;
+                        case 'B': c = Banner; break;
+                        case 'b': c = BannerHigh; break;
+                        case 'p': c = Wood; break;
+                        case 'e': c = Earth; break;
+                        case 'E': c = EarthHigh; break;
+                        case 'o': c = EarthDark; break;
                         default: continue;
                     }
                     Set(ox + x, y, c);

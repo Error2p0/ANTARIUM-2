@@ -322,6 +322,12 @@
     border-color: rgb(150, 120, 220);
 }
 
+/* Raids: red until they end */
+.event--danger {
+    border-color: rgb(230, 90, 70);
+    background-color: rgba(48, 16, 12, 0.92);
+}
+
 .event--won {
     border-color: rgb(120, 220, 140);
 }
@@ -359,6 +365,25 @@
 
 .small-button:hover {
     background-color: rgb(80, 62, 108);
+}
+
+/* Soldier share, at the end of the toolbar */
+.soldiers {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 4px;
+    background-color: rgba(22, 14, 10, 0.88);
+    border-width: 2px;
+    border-color: rgb(140, 50, 36);
+}
+
+.soldiers__label {
+    color: rgb(240, 230, 210);
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin: 0 0 0 6px;
+    padding: 0;
 }
 
 /* Abilities: a column at the bottom right */
@@ -466,7 +491,7 @@
 
 /* Research tree */
 .research {
-    width: 860px;
+    width: 1180px;
     max-width: 96%;
     padding: 10px 12px;
 }
@@ -493,7 +518,7 @@
 
 .research__column {
     flex-direction: column;
-    width: 24%;
+    width: 16%;
 }
 
 .research__tier {

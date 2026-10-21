@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b491f796b38c2b544a1f7b2a2bda34bf, type: 3}
+  m_Name: fire_beetle
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.EnemyDef
+  id: fire_beetle
+  displayName: Fire Beetle
+  description: An armoured beetle of the magma zone that walks through lava.
+  behavior: 0
+  health: 160
+  damage: 15
+  attackInterval: 1.2
+  speed: 1.8
+  aggroRadius: 10
+  lavaImmune: 1
+  swims: 0
+  gasImmune: 1
+  foodPerSecond: 1
+  carryFood: 10
+  drops:
+  - item: {fileID: 11400000, guid: 46e585dd1cd0c7f488b78039ca242271, type: 2}
+    count: 3
+  - item: {fileID: 11400000, guid: a524d9ef1e3446941a0495ef34926701, type: 2}
+    count: 1
+  knowledge: 8
+  art: 4

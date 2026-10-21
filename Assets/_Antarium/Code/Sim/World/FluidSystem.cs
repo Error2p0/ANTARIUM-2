@@ -26,6 +26,8 @@ namespace Antarium.Sim
     /// (moves every few steps and heaps up); where it meets water it turns into
     /// <see cref="ContentDB.FluidReactionMaterial"/> (the simulation does that from <see cref="Reactions"/>).
     /// Thin water films and gas evaporate once they reach explored tunnels; untouched pockets stay forever.
+    /// While playing, chunks the player has not revealed at all are left asleep: hidden lakes finish settling
+    /// when the colony digs close (world generation settles everything).
     /// </summary>
     public sealed class FluidSystem : IDisposable
     {
@@ -95,7 +97,7 @@ namespace Antarium.Sim
             int steps = 0;
             for (; steps < maxSteps; steps++)
             {
-                Step();
+                Step(includeHidden: true);
                 for (int i = 0; i < _reactions.Length; i++) SolidifyRaw(_reactions[i]);
                 if (_active.Length == 0) break;
             }
@@ -117,8 +119,8 @@ namespace Antarium.Sim
         public ushort ReactionMaterial => _reactionMaterial;
         public void SetReactionMaterial(ushort material) => _reactionMaterial = material;
 
-        /// <summary>Advances all awake chunks by one step.</summary>
-        public FluidStepResult Step()
+        /// <summary>Advances all awake chunks by one step (chunks without any revealed cell sleep unless <paramref name="includeHidden"/>).</summary>
+        public FluidStepResult Step(bool includeHidden = false)
         {
             _active.Clear();
             for (int i = 0; i < _awake.Length; i++)
@@ -158,6 +160,7 @@ namespace Antarium.Sim
                 GasDecayChance = (uint)(math.saturate(_config.gasDecayChance) * 65535f),
                 SteamLoss = _config.steamLoss,
                 AwakeSteps = (byte)math.clamp(_config.awakeSteps, 1, 255),
+                SkipHidden = !includeHidden,
             }.Run();
             return new FluidStepResult { Changed = _counters[0], NavChanged = _counters[1] > 0, Reactions = _reactions.Length };
         }
@@ -241,6 +244,7 @@ namespace Antarium.Sim
             public uint GasDecayChance;
             public int SteamLoss;
             public byte AwakeSteps;
+            public bool SkipHidden;
 
             const int Full = FluidCell.Full;
 
@@ -257,6 +261,11 @@ namespace Antarium.Sim
                     int ox = (chunk % ChunksX) << WorldConstants.ChunkShift;
                     int oy = (chunk / ChunksX) << WorldConstants.ChunkShift;
                     int baseIndex = chunk << WorldConstants.ChunkCellShift;
+                    if (SkipHidden && !AnyRevealed(baseIndex))
+                    {
+                        Awake[chunk] = 0;
+                        continue;
+                    }
                     for (int ly = 0; ly < WorldConstants.ChunkSize; ly++)
                     {
                         // Alternate the sweep direction per row and step so nothing drifts one way.
@@ -292,6 +301,13 @@ namespace Antarium.Sim
 
             /// <param name="minDiff">Smallest level difference that still flows sideways.</param>
             /// <param name="thickness">Sideways flow is divided by this (lava creeps).</param>
+            bool AnyRevealed(int baseIndex)
+            {
+                for (int i = 0; i < WorldConstants.ChunkCellCount; i++)
+                    if ((Cells[baseIndex + i].Flags & CellFlags.Revealed) != 0) return true;
+                return false;
+            }
+
             void UpdateLiquid(int i, int x, int y, FluidCell f, int minDiff, int thickness, bool leftToRight)
             {
                 int level = f.Level;

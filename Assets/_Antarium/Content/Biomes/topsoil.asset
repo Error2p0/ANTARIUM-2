@@ -32,5 +32,17 @@ MonoBehaviour:
     threshold: 0.78
     minDepth: 6
     maxDepth: 0
+  - material: {fileID: 11400000, guid: 66f14a2537721424ca1b11819648d02d, type: 2}
+    scale: 0.06
+    threshold: 0.62
+    minDepth: 8
+    maxDepth: 0
   caveScale: 0.028
   caveThreshold: 0.62
+  rooms: 0
+  roomSize: {x: 14, y: 9}
+  roomChance: 0.55
+  fluidPockets: []
+  creatures: []
+  caveCellsPerCreature: 150
+  maxCreaturesPerCave: 4

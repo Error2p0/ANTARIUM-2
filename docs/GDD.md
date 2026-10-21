@@ -10,14 +10,14 @@ You are the mind of an ant colony. You start with a queen and a handful of worke
 
 The fun comes from three layers stacked on top of each other:
 
-- 🟡 **Active play** — you personally dig, click, use abilities, react to events, and fight threats. It feels juicy and responsive. *(Click-to-dig with combo and debris, three abilities and four random events done; combat not yet.)*
+- 🟡 **Active play** — you personally dig, click, use abilities, react to events, and fight threats. It feels juicy and responsive. *(Click-to-dig with combo and debris, three abilities, four random events, raids and cave creatures done; you defend with soldiers, gates and traps, but don't fight in person yet: that comes with ant possession.)*
 - 🟡 **Automation** — you design tunnels, conveyors, lifts and production chains so the colony runs itself. Watching resources flow to the queen should be satisfying, like Factorio in an ant farm. *(Ants mine, haul and build; silk belts, root lifts, splitters, filters, a smelter and a fungus garden exist. Longer chains, buffers and pheromone routing not yet.)*
 - 🟡 **Incremental progression** — numbers still go up, but through *unlocks, new mechanics, new biomes and prestige*, not just "+10% mining speed". *(Research tree v1 with unlocks and stat upgrades, contracts, offline progress done; new biomes and prestige later.)*
 
 Design pillars:
 1. ✅ **Always something to do** — a new goal is always visible on screen. *(The contract board.)*
 2. 🟡 **Watchable** — the colony is alive; hundreds of ants climbing walls, carrying things, reacting. *(Climbing, carrying, foraging, eggs done; reactions and more behaviours to come.)*
-3. **Depth = discovery** — every layer down introduces new materials, mechanics and dangers.
+3. ✅ **Depth = discovery** — every layer down introduces new materials, mechanics and dangers. *(Seven biomes: water, sand, gas, lava, ruins and a creature per deep layer.)*
 4. **Automate what you've mastered** — anything you did by hand early becomes automatable later.
 
 ---
@@ -31,23 +31,23 @@ Design pillars:
 ### 2.2 The world (side cross-section)
 - ✅ Procedurally generated from a seed, wide horizontally (1024 cells), deep vertically (1536 cells), with a **surface** at the top (grass and sky).
   - Day/night and weather are not done yet (see 2.8).
-- 🟡 **Depth layers / biomes**, each with its own materials, hazards, enemies and visual palette. Example progression:
-  1. ✅ Topsoil & roots — dirt, pebbles, grubs, copper *(roots as a feature not yet)*
-  2. 🟡 Clay & groundwater — clay, iron ✅; water pockets that can flood tunnels (needs fluids)
-  3. 🟡 Stone strata — hard rock, coal, fossils, amber ✅; amber's ancient bugs as research/collectibles not yet
-  4. Crystal caverns — crystals that emit light, resonance mechanics *(glow crystals already appear rarely in the stone strata)*
-  5. Fungal depths — giant fungi, spores, a hostile underground species
-  6. Magma zone — heat (powers smelting), gas pockets, lava
-  7. Ancient ruins — remains of a lost ant civilization; story, relics, endgame tech
-- 🟡 Materials have hardness, value, and special properties (light-emitting, flammable, conductive, unstable). *(Hardness, value, light emission work; flammable/conductive/unstable are flags without behaviour yet.)*
-- 🟡 **Cave features**: natural caverns ✅; underground lakes, gas pockets, collapsing sand, roots not yet.
-- **Fluids**: simple cellular water (and later lava) that flows into tunnels. Flooding is a hazard, and later a resource (water wheels / irrigation for fungus farms).
+- ✅ **Depth layers / biomes**, each with its own materials, hazards, enemies and visual palette (details in 2.9.1):
+  1. ✅ Topsoil & roots — dirt, pebbles, grubs, copper, sand *(roots as a feature not yet)*
+  2. ✅ Clay & groundwater — clay, iron, sand, water pockets that flood tunnels
+  3. ✅ Stone strata — hard rock, coal, fossils, amber, centipedes *(amber's ancient bugs as research/collectibles not yet)*
+  4. 🟡 Crystal caverns — big caves full of light-emitting crystals, lakes, cave spiders *(resonance mechanics not yet)*
+  5. ✅ Fungal depths — glowing giant fungi (food), spore gas pockets, swarms of fungal mites (the hostile underground species)
+  6. 🟡 Magma zone — basalt, obsidian, lava lakes, gas pockets, fire beetles *(heat powering smelting not yet)*
+  7. 🟡 Ancient ruins — rooms of a lost ant civilization, relics (knowledge), ruin guardians *(story and endgame tech not yet)*
+- 🟡 Materials have hardness, value, and special properties (light-emitting, flammable, conductive, unstable). *(Hardness, value, light emission and unstable (sand collapses) work; flammable/conductive are flags without behaviour yet.)*
+- 🟡 **Cave features**: natural caverns ✅, underground lakes ✅, gas pockets ✅, lava lakes ✅, collapsing sand ✅, ruin rooms ✅; roots not yet.
+- 🟡 **Fluids**: cellular water, lava and gas that flow into tunnels. Flooding is a hazard ✅, and later a resource (water wheels / irrigation for fungus farms, magma heat) — not yet.
 - ✅ **Fog of war / darkness**: unexplored areas are dark; breaking into a hidden cave reveals it. Light matters (see 3.2).
 
 ### 2.3 Ants and castes
 - ✅ Ants are individual agents that **climb walls and ceilings** — they crawl on any surface of a dug tunnel, including the back wall (like an ant farm), so they take direct routes through chambers. Above ground they must touch the ground.
-- 🟡 Castes unlocked over time: **Worker** (dig/haul) ✅, **Miner** (fast digging, hard materials), **Hauler** (carries more), **Nurse** (brood care), **Builder** (constructs chambers/conveyors), **Soldier** (defense), **Scout** (explores, reveals map, finds events), **Engineer** (maintains machines), plus late castes (e.g. glow ants that carry light, heat-resistant ants for magma).
-- Ants have simple **needs** (food, rest) and gain **XP/levels** in their job. Optional: small randomized traits ("Strong", "Lazy", "Lucky"). *(Today food is a colony-wide upkeep, not a per-ant need.)*
+- 🟡 Castes unlocked over time: **Worker** (dig/haul) ✅, **Miner** (fast digging, hard materials), **Hauler** (carries more), **Nurse** (brood care), **Builder** (constructs chambers/conveyors), **Soldier** (defense) ✅, **Scout** (explores, reveals map, finds events), **Engineer** (maintains machines), plus late castes (e.g. glow ants that carry light, heat-resistant ants for magma).
+- 🟡 Ants have simple **needs** (food, rest) and gain **XP/levels** in their job. Optional: small randomized traits ("Strong", "Lazy", "Lucky"). *(Every ant has hit points and regenerates; food is a colony-wide upkeep, not a per-ant need; no XP or traits yet.)*
 - 🟡 **Job system** with priorities. The player gives orders mainly through **designations** (dig here, build this) and **pheromone painting** (see 2.6), not by micromanaging individuals. *(Mining orders, storage zones, blueprints, dig/haul/build jobs with weights and openings done; player-facing priorities and pheromones not yet.)*
 - The player can **possess** any ant (click to take control) for direct active play: run, dig, carry, fight. This is the main "active" mode and should feel good to control.
 
@@ -97,13 +97,32 @@ Examples: Royal Chamber ✅, Brood Nursery, Storage ✅, Fungus Farm (food) ✅ 
 ### 2.8 Surface
 - Day/night cycle and weather (rain floods upper tunnels, drought reduces food).
 - 🟡 **Foraging expeditions** to the surface for food ✅ (seeds), leaves (fungus feed) and other forage not yet.
-- Surface threats: birds, spiders, rival ant colonies.
+- 🟡 Surface threats: birds, spiders, rival ant colonies. *(Raids by a rival termite mound done; birds and surface spiders not yet.)*
 
 ### 2.9 Threats and combat
-- Raids from rival colonies, termites, centipedes, beetles; deep layers have their own creatures.
-- Defense: soldier ants, gates, traps, chokepoint design. Threats escalate with depth and colony size.
-- Hazards: cave-ins in unstable materials, flooding, gas, heat.
-- Losing ants is a setback, not a disaster. The tone is cozy-but-challenging.
+- ✅ Raids from rival colonies, termites, centipedes, beetles; deep layers have their own creatures.
+- ✅ Defense: soldier ants, gates, traps, chokepoint design. Threats escalate with depth and colony size.
+- 🟡 Hazards: cave-ins in unstable materials ✅, flooding ✅, gas ✅, lava ✅; heat not yet.
+- ✅ Losing ants is a setback, not a disaster. The tone is cozy-but-challenging.
+
+### 2.9.1 Depth & danger (as built in Milestone 5) ✅
+- **Biomes** (depth below the surface, borders warped by noise): topsoil 0–110, clay 110–290, stone strata 290–690, **crystal caverns** 690–870 (quartzite, big caves, dense glow crystals, water), **fungal depths** 870–1050 (soft mycelium, glowing giant fungus that drops 2 fungus, spore gas, water), **magma zone** 1050–1250 (basalt, obsidian, glowing magma rock, lava lakes, gas), **ancient ruins** to the bottom (ruin brick in a grid of rooms with doors and hatches instead of noise caves, relics, glow crystals). **Sand** (unstable, soft) appears in the topsoil and clay. Biome extras are data on `BiomeDef`: fluid pockets, a ruin-room grid, and creature lists.
+- **Fluids** (`FluidSystem`): water, lava and gas, one kind and a level 0–255 per open cell. A Burst cellular automaton runs 10 times a second over awake chunks only, bottom to top with alternating sweep direction. Water falls, then spreads sideways (half / thirds of the difference); lava does the same every 4th step, only above a difference of 24 and at half the rate, so it heaps up and creeps; gas rises and spreads under ceilings. Water films of 8/255 or less evaporate and gas thins out, but only in explored tunnels (untouched pockets stay). Where lava meets water the lava cell turns into **obsidian** and the water loses 96/255 as steam. Chunks sleep 12 steps after their last change and wake when terrain near them opens; chunks the player has not revealed at all sleep while playing (hidden lakes finish settling when the colony gets close). World generation fills cave regions by noise per biome, drops liquids to the floor / gas to the ceiling per column, then runs up to 400 steps so lakes start settled. *(Decision: a separate 2-byte fluid plane next to the 4-byte cells (both mirrored to the GPU) rather than widening the cell; no pressure, so water does not rise in U-bends.)*
+- **Hazards**: water or gas at 50% or more and any lava **block ant paths** (flow fields avoid them; field rebuilds for moving fluid are throttled to once a second). An ant caught inside swims (55% speed) to the dry neighbour nearest home, else up (down out of gas). Damage per second: drowning 6 (deep water), lava 40, gas 4 (from 19% density). **Cave-ins**: when a cell is dug out, unstable cells above it fall one cell per fluid step, sliding diagonally off piles; they never fall into buildings, blueprints, storage or the royal chamber; whoever they land on takes 25 damage and is pushed up; fallen sand is ordered for mining automatically.
+- **Health**: workers 40 HP, soldiers 150 HP; ants regenerate 2 HP/s after 6 s without damage. Dead ants drop what they carried.
+- **Enemies** (`EnemyDef`, `EnemySystem`): **cave creatures** appear when the colony breaks into a cave (one per N cave cells of that biome, capped per cave, at least 8 cells from the breach), wait dormant until an ant comes within their aggro radius, then hunt along an "ants" flow field and wander near home when they lose their prey. **Raids** (`ThreatConfig`): after 12 minutes and with at least 20 ants, every 7–10 minutes a rival termite raid arrives on the surface 60–100 cells from the nest after a 30 s warning; size 3 + 0.08 per ant + 2 per biome reached below the first, at most 40. Raiders walk to the royal chamber, eat 1 food/s each (the queen stops laying meanwhile) and leave along an exit field once they have eaten 8 or the food is gone. A raid where every raider dies before eating is **repelled** (+10 knowledge). Enemies bite the ant next to them; every ant next to an enemy bites back (workers 3, soldiers 14 damage per second). Killed enemies drop chitin (deep ones also obsidian or relics) and knowledge.
+  | Enemy | Where | HP | Bite | Notes |
+  |---|---|---|---|---|
+  | Termite Raider | raids | 22 | 5 / 1 s | eats food, leaves when full |
+  | Centipede | stone strata | 60 | 8 / 1 s | |
+  | Cave Spider | crystal caverns | 55 | 10 / 0.8 s | fast, aggro 16 |
+  | Fungal Mite | fungal depths | 14 | 3 / 0.7 s | swarms (up to 8 per cave), gas-proof |
+  | Fire Beetle | magma zone | 160 | 15 / 1.2 s | walks through lava |
+  | Ruin Guardian | ancient ruins | 320 | 24 / 1.5 s | drops a relic |
+- **Soldiers**: research *Soldier Caste* unlocks them; the player sets the **soldier share** (0–50% in 10% steps, default 20%) and the queen lays a soldier egg (15 food) whenever soldiers (hatched and in eggs) are below that share. Soldiers eat 0.6 food/min, never take jobs, go after any enemy within 60 cells (path distance), bite when next to one, and otherwise wait around the nearest **Guard Post** (or the queen).
+- **Defense buildings** (single cells, `BuildingKind` Gate / Trap / GuardPost / Wall): **Earth Wall** (free, from the start) is built like a blueprint and then turns its cell into solid packed earth (seal floods, gas, caves; mine it to reopen). **Resin Gate**: ants pass, enemies must break it (150 HP, mends 1 HP/s); a broken gate turns back into a blueprint that workers rebuild for free. **Resin Trap** (on a floor): the first enemy stepping on it takes 30 damage and is held 4 s; re-arms after 8 s. **Guard Post**: rally point for idle soldiers.
+- **Research tiers 5–6**: Soldier Caste, Fortification (gate, trap), Air Sacs (half hazard damage), Hardened Carapace (+50% ant HP), Venom Glands (+50% bite), Obsidian Plating (gates ×2 HP, traps ×2 damage). New stats `AntHealth`, `AntAttack`, `HazardResistance`, `DefenseStrength`; new research effect *unlock caste*. Contracts: defeat enemies (new kind), deliver chitin, crystal shards, obsidian, relics. The Archive studies a relic for 25 knowledge.
+- **Offline**: no raids, creatures or hazards happen while the game is closed; eggs keep their caste and new eggs follow the soldier share.
 
 ### 2.10 Active incremental layer
 - ✅ **Click/hold to dig** with combo multipliers and satisfying feedback (debris, screen shake).
@@ -128,7 +147,7 @@ Examples: Royal Chamber ✅, Brood Nursery, Storage ✅, Fungus Farm (food) ✅ 
 When progress slows, the queen sends winged princesses on a **Nuptial Flight** to found a new colony. You reset the world (new seed, possibly new world modifiers) and keep **Genetic Memory** points to spend on a permanent tree (starting bonuses, new starting castes, auto-unlocks of early automation, new biome variants). Later prestiges unlock new mechanics, not just bigger multipliers.
 
 ### 2.13 Juice and feel
-🟡 Particles when digging (material-colored debris) ✅, screen shake ✅ (on digging; cave-ins don't exist yet), number pops, chunky sounds, ants' little legs animating ✅, items visibly carried ✅. Ambient sound by depth. The world should feel physical.
+🟡 Particles when digging (material-colored debris) ✅, screen shake ✅ (digging, cave-ins, broken gates), number pops, chunky sounds, ants' little legs animating ✅, items visibly carried ✅, hurt flashes, health bars and death debris ✅. Ambient sound by depth. The world should feel physical.
 
 ---
 
@@ -143,7 +162,7 @@ When progress slows, the queen sends winged princesses on a **Nuptial Flight** t
 ### 3.1 No Tilemaps ✅
 The original used Unity Tilemaps and they were a headache (no proper shadows, hard to make look good). **Do not use Tilemaps.** Instead:
 
-- ✅ **World data**: a chunked grid (32×32 cells per chunk, chunk-major so a chunk is one contiguous range) of 4-byte cells: material, density (dig progress), flags (revealed, explored, mining order, storage). Fluid level comes with fluids. This is the single source of truth.
+- ✅ **World data**: a chunked grid (32×32 cells per chunk, chunk-major so a chunk is one contiguous range) of 4-byte cells: material, density (dig progress), flags (revealed, explored, mining order, storage, blueprint, scanned). This is the single source of truth. *(Fluid lives in a parallel 2-byte plane (level, kind) with the same indexing, uploaded per dirty chunk like the cells.)*
   - A cell is either solid (density eroding from 255 down to 128) or fully dug (0). There is no half-open state.
 - ✅ **Terrain rendering: GPU per-pixel "pixel marching squares".** *(Changed from per-chunk procedural meshes because of the pixel-art direction: smooth mesh contours would cut through art pixels.)*
   - Cell data and the light map are mirrored into GPU structured buffers. Only dirty chunks are uploaded, one 1024-cell range each, so digging never re-uploads the whole world.
@@ -156,7 +175,7 @@ The original used Unity Tilemaps and they were a headache (no proper shadows, ha
 
 ### 3.2 Lighting and shadows
 - ✅ URP **2D Renderer** with `Light2D` (a global light provides the minimum ambient).
-- ✅ **Primary darkness comes from a grid light map**: light propagates from the surface (sky light) and from light sources (crystals now; glow ants, torches/fungi later) using a Burst flood fill (8-way, RGB), sampled by the terrain and sprite shaders. Light is quantized into a few bands per pixel to match the pixel-art look. Updates are exact and local around changes.
+- ✅ **Primary darkness comes from a grid light map**: light propagates from the surface (sky light) and from light sources (crystals, giant fungi, magma rock and lava now; glow ants and torches later) using a Burst flood fill (8-way, RGB), sampled by the terrain and sprite shaders. Light is quantized into a few bands per pixel to match the pixel-art look. Updates are exact and local around changes.
 - **ShadowCaster2D only near the camera.** *(Changed from per-chunk everywhere: underground, solid terrain is already dark via the light map, so thousands of casters would cost a lot for almost no visible gain.)* Shadow shapes are generated in code from the cell grid only for chunks that are both in view and inside the radius of a dynamic `Light2D`, and are pooled. *(Deferred until the first dynamic light exists.)*
 - Dynamic `Light2D`s add local light (possessed ant, glow ants, abilities, explosions) on top of the light map.
 - ✅ Fog of war: unrevealed cells rendered black (a "revealed" bit in the cell flags).
@@ -168,21 +187,23 @@ The original used Unity Tilemaps and they were a headache (no proper shadows, ha
 - ✅ **Ant update**: a parallel Burst job moves ants and decides, emitting *intents* for anything touching shared state (dig damage, pickup, delivery); a serial pass applies intents in ant order, so results are deterministic.
 - ✅ **Navigation**: ants crawl through dug cells (floor, walls, ceiling and back wall) and, above ground, along the ground. **Flow fields** (distance maps with octile costs: straight 2, diagonal 3) per destination kind: mining front, haulable items, drop-off (royal chamber + storage + belts leading there), home, construction sites, plus per item that a machine uses a "consumer" field (machines needing it, belts feeding them) and a "supply" field (storage holding it). All fields share one array so the Burst ant job can read any of them. Rebuilt in parallel jobs at most every few ticks when something changed. A* for one-off paths is not needed yet.
 - **Pheromones**: float grid fields per pheromone type with diffusion/decay, updated in jobs.
-- **Fluids**: simple cellular automaton, updated at a lower rate, only in active regions.
+- ✅ **Fluids**: simple cellular automaton, updated at a lower rate (10 Hz), only in awake (and revealed) chunks; one single-threaded Burst job so results are deterministic. *(See 2.9.1.)*
+- ✅ **Enemies**: a plain C# list stepped serially (tens to a few hundred); they read the shared flow fields (home for raiders, an "ants" field while any creature hunts, an exit field while raiders leave), and a per-tick cell → ant hash finds who is next to whom. Soldiers read an "enemies" field (rebuilt while enemies move) and a "guard" field. *(Measured: 1,000 ants 0.09 ms per tick; with 30 cave spiders, 60 soldiers and a 40-termite raid 0.24 ms.)*
 - ✅ **Items on conveyors**: simulated as data (up to two item slots per transport cell, not physics objects), stepped downstream-first so lines move without gaps, and rendered by a Burst job into one mesh with the buildings. *(The belt step is plain C# for now: ~0.55 ms per tick for 6,000 loaded belt cells in the editor.)*
 
 ### 3.4 Data-driven content
-🟡 All materials, ores, castes, buildings, recipes, research nodes, events, biomes and upgrades are **ScriptableObjects** (or JSON) so I can add content without touching code. Build a simple pattern for IDs and lookups. *(Pattern done: stable string ids → dense runtime indices in `ContentDB`. Materials, items, biomes, buildings, recipes, research, abilities, contracts, random events, world gen and tuning are ScriptableObjects; castes and prestige upgrades come with their features.)*
+🟡 All materials, ores, castes, buildings, recipes, research nodes, events, biomes and upgrades are **ScriptableObjects** (or JSON) so I can add content without touching code. Build a simple pattern for IDs and lookups. *(Pattern done: stable string ids → dense runtime indices in `ContentDB`. Materials, items, biomes, buildings, recipes, research, abilities, contracts, random events, enemies, world gen and tuning are ScriptableObjects; castes are an enum with their numbers in `GameConfig.combat` until M6 adds more of them; prestige upgrades come with their feature.)*
 
 ### 3.5 Saving ✅
 Versioned save format (binary or compressed JSON) including the full world grid, ants, buildings, conveyors, research and prestige. Autosave. Save migration support from day one. Offline progress computed from the save timestamp using a simplified rate-based simulation (not full ant sim).
-- *As built:* binary. An uncompressed **header** (magic `ANT2`, format version, save time UTC, seed, play time, ant count, depth: readable without loading) followed by a **deflate-compressed body of tagged sections** (`IDS`, `SIM`, `COLN`, `ANTS`, `BLDG`, `PROG`, `WRLD`), each with its own version byte. Unknown sections are skipped and missing ones keep defaults; `SaveGame.Migrate` upgrades older format versions. Newer saves are refused with a clear message.
+- *As built:* binary. An uncompressed **header** (magic `ANT2`, format version, save time UTC, seed, play time, ant count, depth: readable without loading) followed by a **deflate-compressed body of tagged sections** (`IDS`, `SIM`, `COLN`, `ANTS`, `BLDG`, `PROG`, `WRLD`, `FLUD`, `THRT`), each with its own version byte. Unknown sections are skipped and missing ones keep defaults; `SaveGame.Migrate` upgrades older format versions. Newer saves are refused with a clear message.
+- *Format 2 (Milestone 5):* readers take each section's version: `IDS` 2 adds enemy ids, `COLN` 2 egg castes, the soldier share and threat statistics, `ANTS` 2 caste and health, `BLDG` 2 gate health and trap timers; new `FLUD` (fluid level and kind planes) and `THRT` (raid timer and state, enemies). Format 1 saves load with defaults (full health, workers, no fluid).
 - **Content is stored by id**: an id table per content kind maps saved indices to the current ones, so adding or reordering content never breaks saves; content that no longer exists is dropped (unknown materials become the first biome's base material).
 - The world grid is stored as **planes** (material, density, flags), which compress well: a fresh 1024×1536 world is ~270 KB. Derived state (light, flow fields, belt network, items in transit) is rebuilt on load.
 - **Autosave** every 2 minutes and on quit; the main thread only copies the state (~1.5 ms), compression and writing run on a worker thread (~120 ms). Writes go to a temp file that replaces the save, keeping the previous one as a **backup** that loads if the main file is damaged. One slot for now.
 
 ### 3.6 UI
-🟡 **Unity UI Toolkit** for all menus, panels and HUD (decided). World-space feedback such as number pops and item icons is drawn by the game's own instanced renderer, not the UI system. UI uses a pixel font and pixel-art 9-slices with integer scaling to match the art direction. Needed: resource bar ✅ (with income rates), build menu ✅ (palette), designation tools ✅ (Dig / Mine / Storage / Build), ability bar ✅, pheromone tools, queen panel, research tree ✅, contracts list ✅, random event cards ✅, overlays (flow ✅, light, pheromones, ore scan 🟡 (Seismic Sense glow)), tooltips 🟡 (hover info panel), offline summary ✅, pause menu ✅, settings. Big number formatting (K, M, B... and scientific option) ✅. *(Pixel font and 9-slices not yet; default font for now.)*
+🟡 **Unity UI Toolkit** for all menus, panels and HUD (decided). World-space feedback such as number pops and item icons is drawn by the game's own instanced renderer, not the UI system. UI uses a pixel font and pixel-art 9-slices with integer scaling to match the art direction. Needed: resource bar ✅ (with income rates), build menu ✅ (palette), designation tools ✅ (Dig / Mine / Storage / Build), ability bar ✅, pheromone tools, queen panel, research tree ✅, contracts list ✅, event cards ✅ (random events, raid warnings and raids, creatures found), soldier share ✅, overlays (flow ✅, light, pheromones, ore scan 🟡 (Seismic Sense glow)), tooltips 🟡 (hover info panel: buildings, storage, enemies, fluids), offline summary ✅, pause menu ✅, settings. Big number formatting (K, M, B... and scientific option) ✅. *(Pixel font and 9-slices not yet; default font for now.)*
 
 ### 3.7 Steam
 Leave hooks for Steamworks (achievements, cloud saves, stats) behind an interface, but don't integrate the SDK until I ask.
@@ -197,7 +218,7 @@ Each milestone must be playable and committed before the next.
 2. ✅ **Living colony** — ants, climbing movement, flow-field navigation, job system (dig/haul), queen + eggs + workers, storage zones, basic resources. *Goal: watch ants carry ore to the queen.*
 3. ✅ **Automation** — conveyors, lifts, splitters/filters, first processing chambers and recipes, throughput overlay. *(Buffers/chests and unloading stock onto belts moved to later, see TODO.)*
 4. ✅ **Incremental layer** — contracts, active abilities, random events, research tree v1, offline progress, save/load. *(Queen evolution tree and the golden aphid / pheromone burst wait for their features.)*
-5. **Depth & danger** — more biomes, fluids, hazards, enemies, soldiers, defense.
+5. ✅ **Depth & danger** — more biomes, fluids, hazards, enemies, soldiers, defense. *(Fluids are a hazard only so far: water wheels, irrigation and magma heat wait for later; crystal resonance and ruin story too.)*
 6. **Pheromones & castes** — pheromone painting/emitters, remaining castes, ant possession mode.
 7. **Prestige** — Nuptial Flight, Genetic Memory tree, world modifiers.
 8. **Polish** — audio, juice, UI polish, balancing tools, settings, Steam hooks.

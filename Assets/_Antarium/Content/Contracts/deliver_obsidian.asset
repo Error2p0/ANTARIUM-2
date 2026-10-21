@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c323df54987554b9a84d957c19353a, type: 3}
+  m_Name: deliver_obsidian
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ContractDef
+  id: deliver_obsidian
+  displayName: Volcanic Glass
+  description: 
+  kind: 0
+  item: {fileID: 11400000, guid: a524d9ef1e3446941a0495ef34926701, type: 2}
+  building: {fileID: 0}
+  amount: 8
+  introOrder: 0
+  repeatable: 1
+  growth: 0.3
+  weight: 1
+  minDepth: 1050
+  requires: {fileID: 0}
+  rewardKnowledge: 18
+  rewardFood: 0
+  rewards: []

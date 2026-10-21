@@ -37,6 +37,9 @@ namespace Antarium.Gameplay
         readonly Button _researchButton;
         /// <summary>Per building: name of the research that unlocks it (null if it starts unlocked).</summary>
         readonly string[] _unlockedBy;
+        readonly VisualElement _soldiers;
+        readonly Label _soldierShare;
+        float _caveInToastCooldown;
 
         public ContractsPanel Contracts { get; }
         public EventFeed EventFeed { get; }
@@ -52,6 +55,8 @@ namespace Antarium.Gameplay
         public event Action<ToolMode> ToolClicked;
         public event Action<int> BuildingClicked;
         public event Action OverlayClicked;
+        /// <summary>The soldier share buttons: -1 or +1 step.</summary>
+        public event Action<int> SoldierShareStep;
 
         public HudController(UIDocument document, ContentDB content, float autosaveSeconds)
         {
@@ -107,6 +112,21 @@ namespace Antarium.Gameplay
             _overlayButton.AddToClassList("tool");
             _overlayButton.AddToClassList("tool--toggle");
             toolbar.Add(_overlayButton);
+
+            // Soldier share (shown once soldiers are researched): - 20% +
+            _soldiers = new VisualElement();
+            _soldiers.AddToClassList("soldiers");
+            _soldiers.AddToClassList("hidden");
+            var less = new Button(() => SoldierShareStep?.Invoke(-1)) { text = "-", focusable = false };
+            less.AddToClassList("small-button");
+            _soldierShare = new Label { pickingMode = PickingMode.Ignore };
+            _soldierShare.AddToClassList("soldiers__label");
+            var more = new Button(() => SoldierShareStep?.Invoke(1)) { text = "+", focusable = false };
+            more.AddToClassList("small-button");
+            _soldiers.Add(less);
+            _soldiers.Add(_soldierShare);
+            _soldiers.Add(more);
+            toolbar.Add(_soldiers);
             Abilities = new AbilityBar(abilities, content);
 
             _unlockedBy = new string[content.Buildings.Length];
@@ -276,6 +296,7 @@ namespace Antarium.Gameplay
                 _sb.Clear().Append("Researched ").Append(data.Def.DisplayName).Append('.');
                 foreach (int b in data.UnlockBuildings) _sb.Append(' ').Append(_content.Buildings[b].Def.DisplayName).Append(" unlocked (4).");
                 foreach (int a in data.UnlockAbilities) _sb.Append(' ').Append(_content.Abilities[a].DisplayName).Append(" unlocked.");
+                if (data.UnlockCastes.Length > 0) _sb.Append(" The queen now lays soldiers: set their share next to the toolbar.");
                 ShowToast(_sb.ToString());
             }
             foreach (var e in events.Read<ResearchFailedEvent>())
@@ -314,8 +335,46 @@ namespace Antarium.Gameplay
             }
             foreach (var e in events.Read<ContractClaimedEvent>())
                 ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
+            if (events.Read<GateBrokenEvent>().Length > 0) ShowToast("Enemies broke a gate! Workers will repair it once it is safe.");
+            if (events.Read<CaveInEvent>().Length > 0 && _caveInToastCooldown <= 0f)
+            {
+                ShowToast("Cave-in! Fallen sand is marked for digging.");
+                _caveInToastCooldown = 15f;
+            }
+            string deaths = DeathToast(events.Read<AntDiedEvent>());
+            if (deaths != null) ShowToast(deaths);
             string eventToast = EventFeed.Consume(events);
             if (eventToast != null) ShowToast(eventToast);
+        }
+
+        /// <summary>"A worker drowned." / "3 ants were killed by Cave Spiders." for this frame's deaths, or null.</summary>
+        string DeathToast(ReadOnlySpan<AntDiedEvent> deaths)
+        {
+            if (deaths.Length == 0) return null;
+            var first = deaths[0];
+            int same = 0;
+            bool mixedCaste = false;
+            foreach (var d in deaths)
+            {
+                if (d.Cause != first.Cause || d.Killer != first.Killer) continue;
+                same++;
+                mixedCaste |= d.Caste != first.Caste;
+            }
+            string who = mixedCaste ? "ant" : first.Caste == AntCaste.Soldier ? "soldier" : "worker";
+            string subject = same == 1 ? "A " + who : $"{same} {who}s";
+            string verb = same == 1 ? "was" : "were";
+            string text = first.Cause switch
+            {
+                DeathCause.Drowned => $"{subject} drowned.",
+                DeathCause.Burned => $"{subject} burned in lava.",
+                DeathCause.Gassed => $"{subject} choked on gas.",
+                DeathCause.Crushed => $"{subject} {verb} buried by a cave-in.",
+                DeathCause.Killed when first.Killer >= 0 && first.Killer < _content.Enemies.Length =>
+                    $"{subject} {verb} killed by {(same == 1 ? HudText.Plural(1, _content.Enemies[first.Killer].Def.DisplayName) : "enemies")}.",
+                _ => $"{subject} died.",
+            };
+            if (deaths.Length > same) text += $" ({deaths.Length - same} more lost.)";
+            return text;
         }
 
         public string PlaceMessage(PlaceResult result, int def, Simulation sim)
@@ -324,10 +383,14 @@ namespace Antarium.Gameplay
             switch (result)
             {
                 case PlaceResult.Hidden: return "You can only build where you can see.";
+                case PlaceResult.Flooded: return "Can't build in water, gas or lava.";
+                case PlaceResult.Protected: return "Walls can't go into the royal chamber or a storage zone.";
                 case PlaceResult.NotOpen:
-                    return data != null && !data.Def.IsTransport ? "Machines need dug-out space underground." : "Belts need dug-out space or the ground surface.";
+                    if (data != null && data.Def.kind == BuildingKind.Processor) return "Machines need dug-out space underground.";
+                    return data != null && data.Def.IsDefense ? "Needs open space ants can walk on." : "Belts need dug-out space or the ground surface.";
                 case PlaceResult.Occupied: return "Something is already built there.";
-                case PlaceResult.NeedsFloor: return "Machines need a flat, solid floor under their whole width.";
+                case PlaceResult.NeedsFloor:
+                    return data != null && data.Def.kind == BuildingKind.Trap ? "Traps need a solid floor under them." : "Machines need a flat, solid floor under their whole width.";
                 case PlaceResult.OutOfBounds: return "That is outside the world.";
                 case PlaceResult.Locked:
                     return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first (T)." : "Locked.";
@@ -354,6 +417,7 @@ namespace Antarium.Gameplay
                 _toastTimer -= dt;
                 if (_toastTimer <= 0f) _toast.AddToClassList("hidden");
             }
+            if (_caveInToastCooldown > 0f) _caveInToastCooldown -= dt;
             _timer -= dt;
             if (_timer > 0f) return;
             _timer = RefreshInterval;
@@ -362,7 +426,11 @@ namespace Antarium.Gameplay
             var inv = colony.Inventory;
             _food.text = $"Food {NumberFormat.Format(inv.Food)}/{NumberFormat.Format(inv.FoodCapacity)}";
             SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.Workers, sim.Soldiers));
-            _ants.text = $"Ants {NumberFormat.Format(sim.Ants.Count)}";
+            _ants.text = sim.Soldiers > 0
+                ? $"Ants {NumberFormat.Format(sim.Ants.Count)} ({NumberFormat.Format(sim.Soldiers)} soldiers)"
+                : $"Ants {NumberFormat.Format(sim.Ants.Count)}";
+            _soldiers.EnableInClassList("hidden", !colony.SoldiersUnlocked);
+            if (colony.SoldiersUnlocked) _soldierShare.text = $"Soldiers {Mathf.RoundToInt(colony.SoldierShare * 100f)}%";
             _eggs.text = $"Eggs {colony.Eggs.Count}";
             _storage.text = $"Storage {NumberFormat.Format(inv.Stored)}/{NumberFormat.Format(inv.Capacity)}";
             _storageEntry.EnableInClassList("resource--full", inv.Stored >= inv.Capacity);
@@ -398,9 +466,15 @@ namespace Antarium.Gameplay
                 _buildingCosts[i].text = locked ? "Research: " + (_unlockedBy[i] ?? "?") : CostText(_content.Buildings[i]);
             }
 
-            bool starving = colony.Starving;
-            _alert.EnableInClassList("hidden", !starving);
-            if (starving) _alert.text = "The colony is starving: work is slowed and the queen stopped laying.";
+            _sb.Clear();
+            if (colony.QueenDisturbed) _sb.Append("Raiders are in the royal chamber! They eat your food and the queen stopped laying.");
+            if (colony.Starving)
+            {
+                if (_sb.Length > 0) _sb.Append('\n');
+                _sb.Append("The colony is starving: work is slowed and the queen stopped laying.");
+            }
+            _alert.EnableInClassList("hidden", _sb.Length == 0);
+            if (_sb.Length > 0) _alert.text = _sb.ToString();
         }
 
         static void SetRate(Label label, float perMinute)

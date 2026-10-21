@@ -9,8 +9,9 @@ namespace Antarium.Gameplay
 {
     /// <summary>
     /// Places buildings from the palette. Belts and lifts are laid by dragging (locked to their axis; the
-    /// drag direction sets the flow), everything else is placed with a click. Clicking a placed filter with
-    /// the filter selected changes its item. Holding the right button removes buildings.
+    /// drag direction sets the flow); walls and gates are painted by dragging; everything else is placed with a
+    /// click. Clicking a placed filter with the filter selected changes its item. Holding the right button
+    /// removes buildings.
     /// </summary>
     public sealed class BuildTool
     {
@@ -103,7 +104,8 @@ namespace Antarium.Gameplay
                     FilterItem = next;
                     _strokeOnFilter = true;
                 }
-                else if (!def.IsTransport || def.kind == BuildingKind.Splitter || def.kind == BuildingKind.Filter)
+                else if (def.kind != BuildingKind.Wall && def.kind != BuildingKind.Gate
+                         && (!def.IsTransport || def.kind == BuildingKind.Splitter || def.kind == BuildingKind.Filter))
                 {
                     sim.EnqueueBuild(Selected, OriginFor(cell), Dir, FilterItem);
                 }
@@ -111,6 +113,22 @@ namespace Antarium.Gameplay
             if (!primary) _stroke = false;
 
             bool line = def.kind == BuildingKind.Belt || def.kind == BuildingKind.Lift;
+            bool paint = def.kind == BuildingKind.Wall || def.kind == BuildingKind.Gate;
+            if (_stroke && paint)
+            {
+                // Every cell between the previous and the current pointer cell, so a fast drag leaves no gaps.
+                if (!_hasLast)
+                {
+                    sim.EnqueueBuild(Selected, cell, Dir, FilterItem);
+                    _last = cell;
+                    _hasLast = true;
+                }
+                while (!cell.Equals(_last))
+                {
+                    _last += (int2)math.sign(cell - _last);
+                    sim.EnqueueBuild(Selected, _last, Dir, FilterItem);
+                }
+            }
             if (_stroke && line && !_strokeOnFilter)
             {
                 // Lock the line to its axis so a slightly wobbly drag stays on one row / column.

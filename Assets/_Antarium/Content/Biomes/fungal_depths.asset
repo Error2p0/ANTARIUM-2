@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d5d53a365767843a61fb80a74fb41d, type: 3}
+  m_Name: fungal_depths
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BiomeDef
+  id: fungal_depths
+  displayName: Fungal Depths
+  thickness: 180
+  baseMaterial: {fileID: 11400000, guid: 0b43954aa077f434589ed99ddf3754c4, type: 2}
+  deposits:
+  - material: {fileID: 11400000, guid: 892af230d67e18b4592901faccd4e5f3, type: 2}
+    scale: 0.09
+    threshold: 0.55
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: e12ff2a46eae3f34db7af9d29bb1f675, type: 2}
+    scale: 0.11
+    threshold: 0.72
+    minDepth: 0
+    maxDepth: 0
+  caveScale: 0.024
+  caveThreshold: 0.45
+  rooms: 0
+  roomSize: {x: 14, y: 9}
+  roomChance: 0.55
+  fluidPockets:
+  - kind: 3
+    scale: 0.035
+    threshold: 0.3
+  - kind: 1
+    scale: 0.05
+    threshold: 0.6
+  creatures:
+  - {fileID: 11400000, guid: 174ecbe6ae15e4b46b03b37eeb750060, type: 2}
+  caveCellsPerCreature: 60
+  maxCreaturesPerCave: 8

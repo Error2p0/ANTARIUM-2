@@ -63,6 +63,22 @@ namespace Antarium.Tests
         }
 
         [Test]
+        public void Offline_HatchesSoldiersByShare()
+        {
+            Unlock(C.SoldierResearch);
+            Sim.EnqueueSoldierShare(0.5f);
+            Sim.Tick();
+            Inv.Food = 100f;
+            C.Config.colony.eggInterval = 6f;
+            int before = Sim.Ants.Count;
+            var report = OfflineProgress.Apply(Sim, 600.0);
+            Assert.Greater(report.Hatched, 0);
+            Assert.AreEqual(before + report.Hatched, Sim.Ants.Count);
+            Assert.Greater(Sim.Soldiers, 0, "some offline eggs were soldiers");
+            Assert.LessOrEqual(Sim.Soldiers, (Sim.Ants.Count + 1) / 2 + 1, "about half at most");
+        }
+
+        [Test]
         public void Creatures_AppearWhenTheColonyBreaksIntoTheirCave()
         {
             using var content = new TestContent(4, 4, caves: false, creatures: true);

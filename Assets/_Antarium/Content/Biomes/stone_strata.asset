@@ -44,3 +44,14 @@ MonoBehaviour:
     maxDepth: 0
   caveScale: 0.018
   caveThreshold: 0.5
+  rooms: 0
+  roomSize: {x: 14, y: 9}
+  roomChance: 0.55
+  fluidPockets:
+  - kind: 1
+    scale: 0.04
+    threshold: 0.55
+  creatures:
+  - {fileID: 11400000, guid: 577cf16d6bb94514db422cba1c1f96cd, type: 2}
+  caveCellsPerCreature: 220
+  maxCreaturesPerCave: 3

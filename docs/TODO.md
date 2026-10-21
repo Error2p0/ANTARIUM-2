@@ -73,8 +73,34 @@
 - [x] 71 EditMode tests (21 new: research, locks, studying, contracts, abilities, all four events, offline progress, save round trip, id remapping, damaged / newer saves)
 - Measured in the editor: save capture on the main thread ~1.5 ms, background compress + write ~120 ms, load ~170 ms (incl. rebuilding views); a young 1024×1536 world saves to ~270 KB. 65 ants with mining orders: ~0.11 ms per sim tick.
 
+## Milestone 5 — Depth & danger ✅
+- [x] Content: `EnemyDef` (behaviour, combat, hazard immunities, raider appetite, loot, placeholder art), `BiomeDef` fluid pockets / ruin rooms / creature lists, defense `BuildingKind`s (Gate, Trap, GuardPost, Wall with a fill material), `AntCaste` and the *unlock caste* research effect, stats `AntHealth` / `AntAttack` / `HazardResistance` / `DefenseStrength`, contract kind *defeat enemies*, `GameConfig` sections `fluids`, `combat`, `threats`; baked into `ContentDB` (enemies, raiders, biome creatures)
+- [x] Four new biomes (crystal caverns, fungal depths, magma zone, ancient ruins) with 10 new materials (sand, quartzite, mycelium, giant fungus, basalt, obsidian, magma rock, ruin brick, relic, packed earth) and new pixel patterns (sand, brick, mycelium); sand in the topsoil and clay, lakes in the clay / stone / caverns / fungal depths, gas and lava pockets, ruin rooms
+- [x] Fluids: separate 2-byte fluid plane; Burst cellular automaton for water, lava (thick, creeps) and gas (rises), awake chunks only (hidden chunks sleep while playing); lava + water → obsidian; evaporation / thinning in explored tunnels; settled at world generation (pockets dropped to floors / ceilings first); fluid in the terrain shader (water with a surface row, churning self-lit lava, dithered gas); lava lights the light map
+- [x] Hazards: deep water / dense gas / lava block paths; ants swim out; drowning, burning, choking; cave-ins of sand (supported by buildings, storage, blueprints, the royal chamber), fallen sand ordered for mining; cells turning solid push fluid up and ants, enemies and piles out
+- [x] Ant health and regeneration; deaths drop carried items; death toasts and particles
+- [x] Enemies: cave creatures spawn when a cave is breached (per biome, dormant until ants come close, hunt along an ants field, leash home); escalating termite raids from the surface with a warning, eating in the royal chamber (queen stops laying), leaving along an exit field; combat both ways; loot (chitin, obsidian, relics) and knowledge; repelled raids pay knowledge
+- [x] Soldiers: research unlock, soldier share setting (HUD), soldier eggs, hunting within range, guard posts / queen when idle; offline progress hatches by caste
+- [x] Defense buildings: Earth Wall (drag to paint; becomes solid packed earth), Resin Gate (blocks enemies, mends, broken → free rebuild), Resin Trap (damage + hold, re-arm), Guard Post; their sprites; gate damage tint
+- [x] Research tiers 5–6 (6 nodes), 5 contracts, Archive studies relics
+- [x] Rendering: soldier walk cycle and six enemy sprites (own palettes), health bars, hurt flashes; HUD soldier share, ants (soldiers) count, raid and creature cards, raider alert, toasts (deaths, cave-ins, broken gates), hover info for enemies, fluids, gates and traps; research tree with six tiers
+- [x] Save format 2: versioned sections, `FLUD` and `THRT`; format 1 saves load (checked with the M4 save)
+- [x] Debug: F11 starts a raid; F3 shows soldiers, enemies, raid timer and size, awake fluid chunks, ants lost
+- [x] 93 EditMode tests (22 new: fluid falling / levelling / sleeping, gas rising, lava creeping and turning to obsidian, paths and deep water, displacement, world-gen pockets and ruin rooms, swimming out, drowning, sand collapse / supports / burial, walls, soldier share and eggs, offline soldiers, creatures on breach, soldiers vs creature with loot, creature kills, raids eating and leaving, gates holding until broken, traps, save round trip of the new state)
+- Measured in the editor: a new 1024×1536 world generates in ~25 ms and settles its fluids in ~0.6 s; 1,000 ants 0.09 ms per tick (worst 0.6 ms); with 30 cave spiders, 60 soldiers and a 40-termite raid 0.24 ms per tick (worst 1.2 ms).
+
 ## Known limits / follow-ups
-- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: the soldier share buttons, painting walls and gates, raid / creature cards and Go). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- Combat and hazard balance is first-pass (enemy stats, raid timing and size, soldier cost, damage per second, lake / gas / lava amounts, sand amounts).
+- Fluids have no pressure: water does not rise through U-bends, and a lake surface can keep a slope of one level (of 255) per cell. Hidden lakes only settle once the colony has revealed part of their chunk, so a freshly breached lake may still be levelling.
+- Ants only know "blocked or not" for fluid: they route around deep water, dense gas and lava but walk through shallow water and thin gas (which hurts).
+- Fluids are only a hazard: no pumps, water wheels, irrigation, or magma heat for smelting yet. Gates do not hold back fluids (walls do).
+- Sand only collapses when a cell below it is dug out; sand left hanging over open caves by world generation stays until disturbed.
+- Workers never flee; they keep working next to enemies and bite back weakly. Soldiers can't be ordered individually (share + guard posts only; *Defend* pheromones come with M6).
+- Enemies don't dig and never leave their cave's surroundings (cave creatures) or the path to the queen (raiders). Raiders come along the surface and take the shortest way in.
+- No raids, creatures or hazards while the game is closed (offline progress only replays production).
+- Rebuilding a broken gate counts as building one for *Build* contracts.
+- Ruin rooms are a regular grid; no story, artefacts or endgame tech yet. Crystal resonance is not in.
 - Progression balance is first-pass (research costs, contract sizes and rewards, event timing, ability cooldowns, offline efficiency).
 - Machines and buildings draw from the same stock; there is no way to reserve items for construction or to limit what machines may take.
 - No unloader building yet: stored items reach machines only by workers, never onto belts.
@@ -102,8 +128,8 @@
 - Light falloff and fog use Bayer dithering; tune `lightBands` if it reads too noisy.
 - Sky has no day/night yet (GDD 2.8).
 
-## Next: Milestone 5 — Depth & danger
-More biomes, fluids, hazards, enemies, soldiers, defense.
+## Next: Milestone 6 — Pheromones & castes
+Pheromone painting / emitters, the remaining castes, ant possession mode.
 
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
@@ -116,7 +142,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - No buffers / chests, no unloader that puts stock items onto belts.
 
 **Colony & ants**
-- Only the Worker caste; no miners, haulers, nurses, builders, soldiers, scouts, engineers [M6].
+- Workers and soldiers only; no miners, haulers, nurses, builders, scouts, engineers [M6].
 - Eggs hatch where they are laid; no nurses carrying brood, no brood chambers [M6].
 - No player-facing job priorities (weights are only in `GameConfig.worker`).
 - No ant XP/levels or traits.
@@ -124,17 +150,17 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Ants on the same route walk in single file and overlap.
 
 **World**
-- Only 3 of the 7 planned biomes (topsoil, clay, stone); no crystal caverns, fungal depths, magma, ruins [M5].
-- No fluids (water/lava), flooding, gas, cave-ins or unstable materials [M5].
-- Material flags *Flammable*, *Conductive*, *Unstable* have no behaviour yet.
+- All 7 planned biomes exist; crystal resonance, magma heat for smelting and the ruins' story / endgame tech are not in yet.
+- Fluids are a hazard only: no pumps, water wheels, irrigation or other uses; no fluid pressure.
+- Material flags *Flammable* and *Conductive* have no behaviour yet (*Unstable* = sand collapses).
 - No day/night cycle or weather (GDD 2.8).
 - No roots, underground lakes or other cave features beyond open caverns.
 
 **Gameplay layers**
-- Abilities: no Pheromone Burst (needs pheromones [M6]). Events: no golden aphid (needs aphids), no surface threats.
+- Abilities: no Pheromone Burst (needs pheromones [M6]). Events: no golden aphid (needs aphids).
 - Research v1 only: no conveyor tiers, caste unlocks or QoL automation (auto-designate veins); no queen evolution tree.
 - One save slot; no settings menu, no Steam cloud saves.
-- No enemies, combat or defense [M5].
+- Threats: termite raids and one cave creature per deep biome; no birds, surface spiders or rival ant colonies, no enemies that dig, no direct fighting by the player (possession [M6]).
 - No pheromones [M6].
 - No prestige (Nuptial Flight) [M7].
 

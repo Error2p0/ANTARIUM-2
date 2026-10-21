@@ -31,6 +31,7 @@ namespace Antarium.Gameplay
         public readonly InputAction QuickSave;
         public readonly InputAction QuickLoad;
         public readonly InputAction TriggerEvent;
+        public readonly InputAction TriggerRaid;
         public readonly InputAction ToggleHud;
         public readonly InputAction SpawnAnts;
         public readonly InputAction FinishBuilds;
@@ -65,6 +66,7 @@ namespace Antarium.Gameplay
             QuickSave = asset.FindAction("System/QuickSave", true);
             QuickLoad = asset.FindAction("System/QuickLoad", true);
             TriggerEvent = asset.FindAction("Debug/TriggerEvent", true);
+            TriggerRaid = asset.FindAction("Debug/TriggerRaid", true);
             ToggleHud = asset.FindAction("Debug/ToggleHud", true);
             SpawnAnts = asset.FindAction("Debug/SpawnAnts", true);
             FinishBuilds = asset.FindAction("Debug/FinishBuilds", true);

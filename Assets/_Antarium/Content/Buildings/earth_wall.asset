@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: earth_wall
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: earth_wall
+  displayName: Earth Wall
+  kind: 8
+  paletteOrder: 4
+  description: 'Workers pack the cell back into solid earth: seal off floods, gas and caves. Mine it to open it again.'
+  size: {x: 1, y: 1}
+  cost: []
+  foodCost: 0
+  buildWork: 1.5
+  speed: 2
+  recipes: []
+  inputBatches: 2
+  outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 11400000, guid: 2ff2069541c958f4e82e8f23ee1ea491, type: 2}
+  color: {r: 0.49019608, g: 0.34509805, b: 0.22745098, a: 1}
+  art: 7

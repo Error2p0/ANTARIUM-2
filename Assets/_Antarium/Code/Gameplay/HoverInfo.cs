@@ -45,11 +45,65 @@ namespace Antarium.Gameplay
                 _sb.Append("Golden beetle! Click it to catch it before it leaves.");
                 return _sb.ToString();
             }
+            int enemy = pointerOverUi ? -1 : sim.Enemies.EnemyAt(new float2(cell) + 0.5f, 1.2f);
+            if (enemy >= 0 && IsVisible(sim, cell))
+            {
+                DescribeEnemy(sim, enemy);
+                return _sb.ToString();
+            }
             int id = pointerOverUi ? BuildingSystem.None : sim.Buildings.At(cell);
             if (id >= 0) DescribeBuilding(sim, id);
             else if (tools.Mode == ToolMode.Build && tools.Build.SelectedDef != null) DescribeSelection(sim, cell, tools);
-            else if (!pointerOverUi) DescribeStock(sim, cell);
+            else if (!pointerOverUi)
+            {
+                DescribeStock(sim, cell);
+                if (_sb.Length == 0) DescribeFluid(sim, cell);
+            }
             return _sb.Length > 0 ? _sb.ToString() : null;
+        }
+
+        static bool IsVisible(Simulation sim, int2 cell) => sim.World.InBounds(cell.x, cell.y) && sim.World[cell.x, cell.y].IsRevealed;
+
+        void DescribeEnemy(Simulation sim, int index)
+        {
+            var e = sim.Enemies.Enemies[index];
+            var def = _content.Enemies[e.Def].Def;
+            _sb.Append(def.DisplayName).Append("  ").Append(math.max(1, (int)math.ceil(e.Health))).Append('/').Append((int)def.health).Append(" HP  -  ");
+            _sb.Append(e.State switch
+            {
+                EnemyState.Dormant => "lurking",
+                EnemyState.Wander => "wandering",
+                EnemyState.Hunt => "hunting ants",
+                EnemyState.Raid => "raiding the colony",
+                _ => "leaving with stolen food",
+            });
+            if (e.Held > 0f) _sb.Append(", stuck in a trap");
+            if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
+            _sb.Append("\nBites for ").Append(def.damage.ToString("0")).Append(". Soldiers (and workers, weakly) fight back.");
+        }
+
+        void DescribeFluid(Simulation sim, int2 cell)
+        {
+            if (!IsVisible(sim, cell) || !sim.World[cell.x, cell.y].IsOpen) return;
+            var f = sim.World.Fluid[sim.World.Index(cell.x, cell.y)];
+            if (f.Level == 0) return;
+            int percent = (int)math.round(f.Level * 100f / FluidCell.Full);
+            bool deep = f.Level >= sim.World.DeepFluid;
+            switch (f.Kind)
+            {
+                case FluidKind.Water:
+                    _sb.Append("Water ").Append(percent).Append('%');
+                    _sb.Append(deep ? "  -  too deep to walk: ants avoid it and drown if caught inside." : "  -  shallow; it slowly dries up in your tunnels.");
+                    _sb.Append("\nDig a pit below it to drain it, or seal it off with an Earth Wall.");
+                    break;
+                case FluidKind.Lava:
+                    _sb.Append("Lava  -  burns ants and blocks their paths. Where it meets water it turns into obsidian.");
+                    break;
+                case FluidKind.Gas:
+                    _sb.Append("Spore gas ").Append(percent).Append('%');
+                    _sb.Append(deep ? "  -  too thick to walk through; it hurts ants inside." : "  -  hurts ants; it thins out over time in your tunnels.");
+                    break;
+            }
         }
 
         void DescribeBuilding(Simulation sim, int id)
@@ -63,6 +117,21 @@ namespace Antarium.Gameplay
                 float progress = b.WorkTotal > 0f ? 1f - b.WorkLeft / b.WorkTotal : 0f;
                 _sb.Append("  -  under construction ").Append((int)(progress * 100f)).Append("%. Workers will build it.");
                 return;
+            }
+
+            switch (b.Kind)
+            {
+                case BuildingKind.Gate:
+                    _sb.Append("  -  ").Append((int)math.ceil(b.Health)).Append('/').Append((int)buildings.GateMaxHealth(b.Def))
+                        .Append(" HP\nAnts walk through; enemies have to break it first. It mends slowly; broken gates are rebuilt for free.");
+                    return;
+                case BuildingKind.Trap:
+                    _sb.Append(b.Rearm > 0f ? $"  -  re-arming ({b.Rearm:0}s)" : "  -  armed")
+                        .Append("\nHurts and holds the first enemy that steps on it.");
+                    return;
+                case BuildingKind.GuardPost:
+                    _sb.Append("\nIdle soldiers wait at the nearest guard post and defend the area around it.");
+                    return;
             }
 
             if (b.IsTransport)

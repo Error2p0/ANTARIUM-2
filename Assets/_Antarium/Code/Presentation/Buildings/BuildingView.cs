@@ -37,6 +37,8 @@ namespace Antarium.Presentation
             public int Rect;
             public int Frames;
             public float Speed;
+            /// <summary>Gates: hit points when intact (damage tints them).</summary>
+            public float MaxHealth;
         }
 
         readonly ContentDB _content;
@@ -92,13 +94,20 @@ namespace Antarium.Presentation
         static DefVisual Visual(BuildingDef def)
         {
             var size = def.Footprint;
-            var v = new DefVisual { Kind = def.kind, Frames = 1, Speed = def.speed, SizePx = new int2(size.x, size.y) * BuildingSprites.Cell };
+            var v = new DefVisual
+            {
+                Kind = def.kind, Frames = 1, Speed = def.speed, SizePx = new int2(size.x, size.y) * BuildingSprites.Cell, MaxHealth = def.maxHealth,
+            };
             switch (def.kind)
             {
                 case BuildingKind.Belt: v.Rect = BuildingSprites.BeltRect; v.Frames = BuildingSprites.AnimFrames; break;
                 case BuildingKind.Lift: v.Rect = BuildingSprites.LiftRect; v.Frames = BuildingSprites.AnimFrames; break;
                 case BuildingKind.Splitter: v.Rect = BuildingSprites.SplitterRect; break;
                 case BuildingKind.Filter: v.Rect = BuildingSprites.FilterRect; break;
+                case BuildingKind.Gate: v.Rect = BuildingSprites.GateRect; break;
+                case BuildingKind.Trap: v.Rect = BuildingSprites.TrapRect; v.Frames = 2; break;
+                case BuildingKind.GuardPost: v.Rect = BuildingSprites.GuardPostRect; break;
+                case BuildingKind.Wall: v.Rect = BuildingSprites.WallRect; break;
                 default:
                     v.Rect = def.art switch
                     {
@@ -225,7 +234,13 @@ namespace Antarium.Presentation
                     break;
                 }
                 case BuildingKind.Splitter:
+                case BuildingKind.Gate:
+                case BuildingKind.GuardPost:
+                case BuildingKind.Wall:
                     SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect], color, light);
+                    break;
+                case BuildingKind.Trap:
+                    SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect + (b.Rearm > 0f ? 1 : 0)], color, light);
                     break;
                 case BuildingKind.Filter:
                 {
@@ -292,6 +307,13 @@ namespace Antarium.Presentation
                     float progress = b.WorkTotal > 0f ? 1f - b.WorkLeft / b.WorkTotal : 0f;
                     return new Color32(255, 255, 255, (byte)math.round(math.lerp(0.3f, 0.85f, progress) * 255f));
                 }
+                if (b.Kind == BuildingKind.Gate)
+                {
+                    // A battered gate darkens toward red.
+                    float hurt = 1f - math.saturate(b.Health / math.max(1f, Defs[b.Def].MaxHealth));
+                    return Lerp(new Color32(255, 255, 255, 255), new Color32(255, 110, 90, 255), hurt);
+                }
+                if (b.Kind > BuildingKind.Processor) return new Color32(255, 255, 255, 255);
                 if (!Overlay) return new Color32(255, 255, 255, 255);
                 if (b.Kind == BuildingKind.Processor)
                     return b.Status == MachineStatus.Working ? Colors.Working : b.Status == MachineStatus.Idle ? Colors.Starved : Colors.Jam;

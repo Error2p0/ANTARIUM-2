@@ -94,6 +94,10 @@ namespace Antarium.Sim
         public bool RaidIncoming => RaidWarned;
         public float SecondsToRaid => RaidTimer;
         public int2 RaidCell => RaidSpawn;
+        /// <summary>Raids started so far (the next one gets this + 1 as its id).</summary>
+        public int RaidsStarted => RaidCount;
+        /// <summary>Id of the raid in progress, 0 = none.</summary>
+        public int ActiveRaid => RaidActive;
 
         public EnemySystem(ContentDB content, GameConfig config, Simulation sim, uint seed)
         {

@@ -88,10 +88,14 @@ namespace Antarium.Gameplay
             _hud.BuildingClicked += def => _tools?.SelectBuilding(def);
             _hud.OverlayClicked += ToggleOverlay;
             _hud.ResearchToggled += ToggleResearch;
+            _hud.SoldierShareStep += step =>
+            {
+                if (_sim != null) _sim.EnqueueSoldierShare(_sim.Colony.SoldierShare + step * _sim.Colony.SoldierShareStep);
+            };
             if (_hud.Contracts != null)
             {
                 _hud.Contracts.ClaimClicked += slot => _sim?.EnqueueClaim(slot);
-                _hud.EventFeed.GoClicked += (id, cell) => { if (_sim != null) LookAt(EventFeed.CurrentCell(_sim, id, cell)); };
+                _hud.EventFeed.GoClicked += cell => { if (_sim != null) LookAt(cell); };
                 _hud.Abilities.Clicked += ability => { if (_sim != null) _tools.ClickAbility(_sim, ability, _pointerCell); };
                 _hud.Research.ResearchClicked += node => _sim?.EnqueueResearch(node);
                 _hud.Research.CloseClicked += _hud.HideModal;
@@ -251,6 +255,7 @@ namespace Antarium.Gameplay
                     _sim.Colony.Inventory.AddKnowledge(50f, studied: false);
                 }
                 if (_input.TriggerEvent.WasPressedThisFrame()) _sim.EnqueueTriggerEvent(-1);
+                if (_input.TriggerRaid.WasPressedThisFrame()) _sim.EnqueueTriggerRaid();
             }
 
             if (!paused) _sim.Advance(dt);
@@ -301,6 +306,9 @@ namespace Antarium.Gameplay
             foreach (var e in events.Read<RandomEventEvent>())
                 if (e.Phase == RandomEventPhase.Started && _content.Events[e.Event].Def.kind == RandomEventKind.Meteorite)
                     trauma += config.feedback.meteoriteShake;
+            int caveIns = events.Read<CaveInEvent>().Length;
+            if (caveIns > 0) trauma += Mathf.Min(config.feedback.maxShakePerHit, caveIns * config.feedback.caveInShake);
+            if (events.Read<GateBrokenEvent>().Length > 0) trauma += config.feedback.maxShakePerHit;
             return trauma;
         }
 

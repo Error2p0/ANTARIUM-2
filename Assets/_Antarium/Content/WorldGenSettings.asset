@@ -26,10 +26,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 45945662f98807044ba0a950bc89ce4a, type: 2}
   - {fileID: 11400000, guid: 6dd87aa3e609aa848bd80e10513cee77, type: 2}
   - {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+  - {fileID: 11400000, guid: e34003af733857549a27adcfc89a230d, type: 2}
+  - {fileID: 11400000, guid: bbdd45a9d3d3da6439706d3305f9878d, type: 2}
+  - {fileID: 11400000, guid: c8d83ae3be2ca6247a25fd543867015a, type: 2}
+  - {fileID: 11400000, guid: b3eeca26cf81ea4499940dbcea578f82, type: 2}
   biomeWarpAmplitude: 10
   biomeWarpFrequency: 0.02
   caveMinDepth: 24
   caveFadeDepth: 24
+  fluidReactionMaterial: {fileID: 11400000, guid: 750aeb7a41d0c48468897ab834ec9fa8, type: 2}
   nestDepth: 14
   nestRadius: {x: 7, y: 3.5}
   shaftHalfWidth: 1

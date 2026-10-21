@@ -65,11 +65,12 @@ namespace Antarium.Sim
             float food0 = inv.Food, knowledge0 = inv.Knowledge;
             float eggCost = sim.Config.colony.eggFoodCost;
 
-            // Eggs that were waiting have hatched by now.
+            // Eggs that were waiting have hatched by now (each into its own caste).
             int waiting = colony.Eggs.Count;
+            foreach (var egg in colony.Eggs) sim.SpawnAnts(1, egg.Caste);
             colony.Eggs.Clear();
-            sim.SpawnWorkers(waiting);
             report.Hatched += waiting;
+            int soldiers = sim.Ants.CountCaste(AntCaste.Soldier);
 
             float eggs = 0f;
             double left = report.CreditedSeconds;
@@ -102,27 +103,27 @@ namespace Antarium.Sim
                     }
                 }
 
-                float upkeepPerMinute = colony.UpkeepPerMinute(sim.Workers, sim.Soldiers) * eff;
+                float upkeepPerMinute = colony.UpkeepPerMinute(sim.Ants.Count - soldiers, soldiers) * eff;
                 inv.Food = math.clamp(inv.Food + (foodRate - upkeepPerMinute) * minutes, 0f, inv.FoodCapacity);
                 if (inv.Food <= 0f) report.Starved = true;
                 inv.AddKnowledge(knowledgeRate * minutes, studied: false);
 
                 // The queen lays at the offline efficiency while fed; eggs hatch within the step.
                 eggs += step / colony.EggInterval * eff;
-                int laid = 0;
                 float reserve = upkeepPerMinute * cfg.offlineFoodReserveMinutes;
-                while (eggs >= 1f && inv.Food - eggCost >= reserve)
+                while (eggs >= 1f)
                 {
-                    inv.Food -= eggCost;
+                    // Soldiers keep their share of the colony, as while playing.
+                    var caste = colony.NextCaste(sim.Ants.Count, soldiers);
+                    float cost = caste == AntCaste.Soldier ? sim.Config.combat.soldierEggFoodCost : eggCost;
+                    if (inv.Food - cost < reserve) break;
+                    inv.Food -= cost;
                     eggs -= 1f;
-                    laid++;
+                    sim.SpawnAnts(1, caste);
+                    if (caste == AntCaste.Soldier) soldiers++;
+                    report.Hatched++;
                 }
                 eggs = Math.Min(eggs, 1f); // no saving up while hungry
-                if (laid > 0)
-                {
-                    sim.SpawnWorkers(laid);
-                    report.Hatched += laid;
-                }
             }
 
             colony.Stats.AntsHatched += report.Hatched;

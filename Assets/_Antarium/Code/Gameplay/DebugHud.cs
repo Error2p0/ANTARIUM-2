@@ -55,7 +55,8 @@ namespace Antarium.Gameplay
                 $"ants {sim.Ants.Count}   piles {sim.Colony.Piles.Count}   orders {sim.Colony.Designated.Count}   storage {sim.Colony.StorageCells.Count}\n" +
                 $"buildings {sim.Buildings.ActiveCount}   blueprints {sim.Buildings.BlueprintCount}   belt cells {sim.Buildings.TransportOrder.Count}\n" +
                 $"knowledge {sim.Colony.Inventory.Knowledge:0.0}   research {sim.Research.DoneCount}/{sim.Content.Research.Length}   next event {sim.RandomEvents.SecondsToNext:0}s\n" +
-                "F3 toggle   F6 +50 ants   F7 finish blueprints   F8 +20 items, food, knowledge   F10 random event";
+                $"soldiers {sim.Soldiers}   enemies {sim.Enemies.Count}   raid in {sim.Enemies.SecondsToRaid:0}s (size {sim.Enemies.NextRaidSize()})   fluid chunks {sim.Fluids.ActiveChunks}   lost {sim.Colony.Stats.AntsLost}\n" +
+                "F3 toggle   F6 +50 ants   F7 finish blueprints   F8 +20 items, food, knowledge   F10 random event   F11 raid";
         }
     }
 }

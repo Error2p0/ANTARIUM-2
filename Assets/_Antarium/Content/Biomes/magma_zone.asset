@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d5d53a365767843a61fb80a74fb41d, type: 3}
+  m_Name: magma_zone
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BiomeDef
+  id: magma_zone
+  displayName: Magma Zone
+  thickness: 200
+  baseMaterial: {fileID: 11400000, guid: 9bd4accdced9fcb4d9025bcc75f7ab28, type: 2}
+  deposits:
+  - material: {fileID: 11400000, guid: 750aeb7a41d0c48468897ab834ec9fa8, type: 2}
+    scale: 0.1
+    threshold: 0.68
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 0dd4bfd0cec15104e972dc28786bc7eb, type: 2}
+    scale: 0.12
+    threshold: 0.74
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: ef989ba752059ef4d858f7dcfc131ac5, type: 2}
+    scale: 0.08
+    threshold: 0.68
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: e12ff2a46eae3f34db7af9d29bb1f675, type: 2}
+    scale: 0.12
+    threshold: 0.8
+    minDepth: 0
+    maxDepth: 0
+  caveScale: 0.022
+  caveThreshold: 0.48
+  rooms: 0
+  roomSize: {x: 14, y: 9}
+  roomChance: 0.55
+  fluidPockets:
+  - kind: 2
+    scale: 0.03
+    threshold: 0.05
+  - kind: 3
+    scale: 0.05
+    threshold: 0.6
+  creatures:
+  - {fileID: 11400000, guid: f6821cc51c3c81f4495c1c52eebfd05f, type: 2}
+  caveCellsPerCreature: 220
+  maxCreaturesPerCave: 3

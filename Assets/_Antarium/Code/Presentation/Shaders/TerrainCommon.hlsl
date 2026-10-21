@@ -83,6 +83,29 @@ struct Neighborhood
 float4 _AntOverlay; // rgb = mining order colour
 float4 _AntStorageColor;
 
+// Fluid plane: two cells per uint, each 16 bits = level (8) | kind (8). Kind: 1 water, 2 lava, 3 gas.
+StructuredBuffer<uint> _AntFluid;
+float4 _AntWater;        // rgb tint, a = cover
+float4 _AntWaterSurface;
+float4 _AntLava;
+float4 _AntLavaHot;
+float4 _AntGas;          // rgb tint, a = cover at full density
+float _AntTime;
+
+#define ANT_FLUID_WATER 1u
+#define ANT_FLUID_LAVA 2u
+#define ANT_FLUID_GAS 3u
+
+uint FluidWord(int2 c)
+{
+    int i = CellIndex(c);
+    uint w = _AntFluid[i >> 1];
+    return (i & 1) != 0 ? (w >> 16) : (w & 0xFFFFu);
+}
+
+uint FluidKindOf(uint f) { return (f >> 8) & 0xFFu; }
+float FluidLevelOf(uint f) { return (f & 0xFFu) / 255.0; }
+
 Neighborhood LoadNeighborhood(int2 origin)
 {
     Neighborhood n;
@@ -220,11 +243,54 @@ struct TerrainSurface
 {
     float3 albedo;
     float glow;      // self illumination
-    bool unlit;      // sky: output albedo directly
+    bool unlit;      // sky and lava: output albedo directly
     bool hidden;     // fog of war
     bool fogOrder;   // hidden, but shows a mining-order stripe
     float3 normalWS;
 };
+
+// Fluid over an open pixel. Liquids fill a cell from the bottom up to their level (full when the same liquid
+// is above), with a bright surface row; lava is self-lit and churns; gas is a dithered haze.
+void ApplyFluid(inout TerrainSurface s, Neighborhood n, PixelInfo p)
+{
+    int2 c = (int2)floor(p.cellPos);
+    uint f = FluidWord(c);
+    if (FluidKindOf(f) == 0u && n.density[4] >= 0.5)
+    {
+        // An open-looking rim pixel of a solid cell: take the fluid of the open neighbour it leans toward.
+        float2 fr = frac(p.cellPos);
+        uint side = FluidWord(c + int2(fr.x < 0.5 ? -1 : 1, 0));
+        f = FluidKindOf(side) != 0u ? side : FluidWord(c + int2(0, 1));
+    }
+    uint kind = FluidKindOf(f);
+    float level = FluidLevelOf(f);
+    if (kind == 0u || level <= 0.0) return;
+
+    if (kind == ANT_FLUID_GAS)
+    {
+        if (Bayer4(p.px + int2((int)(_AntTime * 2.0), 0)) < level * _AntGas.a * 1.6)
+            s.albedo = lerp(s.albedo, _AntGas.rgb, 0.55);
+        return;
+    }
+
+    uint above = FluidWord(c + int2(0, 1));
+    bool full = FluidKindOf(above) == kind && FluidLevelOf(above) > 0.0;
+    float top = full ? 1.0 : max(level, p.step);
+    float local = frac(p.cellPos.y);
+    if (local > top) return;
+    bool surface = !full && local > top - p.step;
+
+    if (kind == ANT_FLUID_WATER)
+    {
+        s.albedo = surface ? _AntWaterSurface.rgb : lerp(s.albedo, _AntWater.rgb, _AntWater.a);
+    }
+    else
+    {
+        float churn = ValueNoise4(p.px + int2((int)(_AntTime * 5.0), (int)(_AntTime * 3.0)));
+        s.albedo = surface || churn > 0.62 ? _AntLavaHot.rgb : _AntLava.rgb;
+        s.unlit = true;
+    }
+}
 
 TerrainSurface EvaluateTerrain(float2 positionWS)
 {
@@ -234,8 +300,11 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
     float st = p.step;
 
     bool solid = IsSolid(n, p.cellPos, p.px);
+    s.albedo = 0;
     s.glow = 0;
     s.unlit = false;
+    s.hidden = false;
+    s.fogOrder = false;
     s.normalWS = float3(0, 0, -1);
 
     if (solid)
@@ -287,6 +356,7 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
             t = floor(t * 8.0 + Bayer4(p.px)) / 8.0;
             s.albedo = lerp(_AntSkyHorizon.rgb, _AntSkyTop.rgb, t);
             s.unlit = true;
+            ApplyFluid(s, n, p);
         }
         else
         {
@@ -300,6 +370,7 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
             // Storage zone: checker tint on the background wall.
             if ((n.flags[4] & ANT_FLAG_STORAGE) != 0 && ((p.px.x ^ p.px.y) & 2) == 0)
                 s.albedo = lerp(s.albedo, _AntStorageColor.rgb, 0.35);
+            ApplyFluid(s, n, p);
         }
     }
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Antarium.Content;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -5,22 +7,26 @@ using UnityEngine;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Placeholder pixel-art atlas generated in code until real art exists: worker walk cycle, queen, egg
-    /// and item blobs. Item blobs are greyscale and tinted per item through vertex colour.
+    /// Placeholder pixel-art atlas generated in code until real art exists: worker and soldier walk cycles,
+    /// queen, egg, item blobs, the golden beetle and the enemies. Item blobs are greyscale and tinted per item
+    /// through vertex colour.
     /// </summary>
     public sealed class ColonySprites : System.IDisposable
     {
         public const int WorkerWidth = 12, WorkerHeight = 7, WorkerFrames = 4;
+        public const int SoldierWidth = 14, SoldierHeight = 8;
         public const int QueenWidth = 24, QueenHeight = 12;
         public const int EggWidth = 4, EggHeight = 5;
         public const int PileWidth = 6, PileHeight = 4;
         public const int CarryWidth = 3, CarryHeight = 3;
 
-        const int AtlasWidth = 64, AtlasHeight = 32;
+        const int AtlasWidth = 128, AtlasHeight = 64;
 
         public readonly Texture2D Texture;
-        /// <summary>UV rects (xMin, yMin, xMax, yMax): worker frames 0-3, then egg, pile, carry, queen, marker.</summary>
+        /// <summary>UV rects (xMin, yMin, xMax, yMax); see the *Rect constants.</summary>
         public NativeArray<float4> Rects;
+        /// <summary>Per <see cref="EnemyArt"/>: sprite size in pixels (both frames share it).</summary>
+        public readonly int2[] EnemySize;
 
         public const int EggRect = WorkerFrames, PileRect = WorkerFrames + 1, CarryRect = WorkerFrames + 2, QueenRect = WorkerFrames + 3;
         /// <summary>Small white diamond (tinted) floating over ants, e.g. idle workers in the overlay.</summary>
@@ -29,6 +35,14 @@ namespace Antarium.Presentation
         /// <summary>Golden beetle, 2 walk frames.</summary>
         public const int BeetleRect = MarkerRect + 1;
         public const int BeetleWidth = 10, BeetleHeight = 6;
+        /// <summary>Soldier walk cycle, 4 frames.</summary>
+        public const int SoldierRect = BeetleRect + 2;
+        /// <summary>One white pixel (stretched and tinted for health bars).</summary>
+        public const int PixelRect = SoldierRect + WorkerFrames;
+        /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
+        public const int EnemyRect = PixelRect + 1;
+        public const int EnemyArtCount = 6;
+        const int RectCount = EnemyRect + EnemyArtCount * 2;
 
         // Side view facing right: gaster (x0-3), waist (x4), thorax (x5-6), neck (x7), head (x8-10), mandible (x11).
         // The body colour carries the silhouette (a dark outline would vanish against dark tunnels):
@@ -51,6 +65,25 @@ namespace Antarium.Presentation
             new[] { "....LL..L...", "...L..L...L." },
         };
 
+        // Soldier: darker, with a big square head and heavy mandibles.
+        static readonly string[] SoldierBody =
+        {
+            "..........L...",
+            ".hh......hhL..",
+            "hmmm.hh.hmmmm.",
+            "mmmmLmmLmmmmmK",
+            ".dmd.dd.dmmmK.",
+            ".........dd...",
+        };
+
+        static readonly string[][] SoldierLegs =
+        {
+            new[] { "....L.L.L.....", "...L..L..L...." },
+            new[] { ".....LL.L.....", "....L.L...L..." },
+            new[] { "....L.L.L.....", "....L.L..L...." },
+            new[] { "....LL..L.....", "...L..L...L..." },
+        };
+
         static readonly string[] Egg = { ".EE.", "EWEE", "EEEE", "ESSE", ".SS." };
         static readonly string[] Pile = { ".wwg..", "wwggg.", "ggggkk", ".kkkk." };
         static readonly string[] Carry = { "wg.", "ggk", ".k." };
@@ -58,13 +91,55 @@ namespace Antarium.Presentation
         static readonly string[] BeetleBody = { "...YYYY...", "..YOOOOOB.", ".OOOOOOOBB", ".oOOOOOOBB", "..oooooo.." };
         static readonly string[] BeetleLegs = { ".l.l..l.l.", "..l.ll.l.." };
 
+        // Enemies, two frames each (only the leg rows differ). Facing right.
+        static readonly string[][] Termite =
+        {
+            new[] { "........c..", ".tttttttHH.", "tTTTTTTTHHc", ".ttttttHHH.", ".r.r.r.r...", "..r.r.r.r.." },
+            new[] { "........c..", ".tttttttHH.", "tTTTTTTTHHc", ".ttttttHHH.", "..r.r.r.r..", ".r.r.r.r..." },
+        };
+        static readonly string[][] Centipede =
+        {
+            new[] { "..............aa", ".ssssssssssssHH.", "sSsSsSsSsSsSsHHH", ".ssssssssssssHH.", "r.r.r.r.r.r.r.r.", "................" },
+            new[] { "..............aa", ".ssssssssssssHH.", "sSsSsSsSsSsSsHHH", ".ssssssssssssHH.", ".r.r.r.r.r.r.r.r", "................" },
+        };
+        static readonly string[][] Spider =
+        {
+            new[] { "...pppp....", "..pPPPPp...", ".pPPPPPPpE.", "vpPPPPPPpEv", "v.vpppppv.v", "v.v.v.v.v.v", "..........." },
+            new[] { "...pppp....", "..pPPPPp...", ".pPPPPPPpE.", ".pPPPPPPpE.", "vvvpppppvvv", ".v.v...v.v.", "v.......v.." },
+        };
+        static readonly string[][] Mite =
+        {
+            new[] { ".mmmm.", "mMMMMm", "mMMMMe", ".mmmm.", "i.ii.i" },
+            new[] { ".mmmm.", "mMMMMm", "mMMMMe", ".mmmm.", ".i..i." },
+        };
+        static readonly string[][] FireBeetle =
+        {
+            new[] { "...KKKKK....", "..KOKOKOKK..", ".KKKKKKKKKHH", ".kkkkkkkkkHH", "..kkkkkkkk..", ".j.j..j.j...", "..j.jj.j...." },
+            new[] { "...KKKKK....", "..KOKOKOKK..", ".KKKKKKKKKHH", ".kkkkkkkkkHH", "..kkkkkkkk..", "..j.jj.j....", ".j.j..j.j..." },
+        };
+        static readonly string[][] Guardian =
+        {
+            new[]
+            {
+                "....GGGGGG....", "...GggggggGG..", "...GgCCgggggG.", "...GgCCggggG..", "..GGGGGGGGGG..", ".GgggggggggggG",
+                "Gg.ggggggggg.G", "Gg.gggggggggGg", "...gggggggg...", "...gg....gg...", "...gg....gg...", "..ggg....ggg..",
+            },
+            new[]
+            {
+                "....GGGGGG....", "...GggggggGG..", "...GgCCgggggG.", "...GgCCggggG..", "..GGGGGGGGGG..", ".GgggggggggggG",
+                "Gg.ggggggggg.G", "Gg.gggggggggGg", "...gggggggg...", "....gg..gg....", "...ggg..ggg...", "..............",
+            },
+        };
+
         static readonly Color32 Dark = Hex(0x5a1a0c), Mid = Hex(0xb8401e), High = Hex(0xf08048), Leg = Hex(0x4a160a);
+        static readonly Color32 SoldierDark = Hex(0x3a0c06), SoldierMid = Hex(0x862612), SoldierHigh = Hex(0xc05a2a), Mandible = Hex(0xe0b050);
         static readonly Color32 EggColor = Hex(0xefe6cf), EggShade = Hex(0xc9bc9c);
 
         public ColonySprites()
         {
             var pixels = new Color32[AtlasWidth * AtlasHeight];
-            Rects = new NativeArray<float4>(BeetleRect + 2, Allocator.Persistent);
+            Rects = new NativeArray<float4>(RectCount, Allocator.Persistent);
+            EnemySize = new int2[EnemyArtCount];
 
             for (int f = 0; f < WorkerFrames; f++)
             {
@@ -75,6 +150,14 @@ namespace Antarium.Presentation
                 rows[6] = WorkerLegs[f][1];
                 Blit(pixels, ox, 0, rows);
                 Rects[f] = Rect(ox, 0, WorkerWidth, WorkerHeight);
+
+                int sx = f * SoldierWidth;
+                var srows = new string[SoldierHeight];
+                SoldierBody.CopyTo(srows, 0);
+                srows[6] = SoldierLegs[f][0];
+                srows[7] = SoldierLegs[f][1];
+                Blit(pixels, sx, 20, srows);
+                Rects[SoldierRect + f] = Rect(sx, 20, SoldierWidth, SoldierHeight);
             }
             Blit(pixels, 48, 0, Egg);
             Rects[EggRect] = Rect(48, 0, EggWidth, EggHeight);
@@ -95,6 +178,33 @@ namespace Antarium.Presentation
                 Blit(pixels, ox, 8, rows);
                 Rects[BeetleRect + f] = Rect(ox, 8, BeetleWidth, BeetleHeight);
             }
+            pixels[(AtlasHeight - 1) * AtlasWidth + AtlasWidth - 1] = new Color32(255, 255, 255, 255);
+            Rects[PixelRect] = Rect(AtlasWidth - 1, AtlasHeight - 1, 1, 1);
+
+            AddEnemy(pixels, EnemyArt.Termite, Termite, 64, 0, new Dictionary<char, Color32>
+            {
+                ['t'] = Hex(0xd8ccb0), ['T'] = Hex(0xf0e6cc), ['H'] = Hex(0xb0602a), ['c'] = Hex(0x5a2a10), ['r'] = Hex(0x8a6a4a),
+            });
+            AddEnemy(pixels, EnemyArt.Mite, Mite, 88, 0, new Dictionary<char, Color32>
+            {
+                ['m'] = Hex(0xb06a8a), ['M'] = Hex(0xe8a8c8), ['e'] = Hex(0x2a0a1a), ['i'] = Hex(0x6a3a5a),
+            });
+            AddEnemy(pixels, EnemyArt.Centipede, Centipede, 64, 8, new Dictionary<char, Color32>
+            {
+                ['s'] = Hex(0x8a3a1a), ['S'] = Hex(0xd0782e), ['H'] = Hex(0x5a2010), ['a'] = Hex(0x3a1a0a), ['r'] = Hex(0x6a2a10),
+            });
+            AddEnemy(pixels, EnemyArt.Spider, Spider, 96, 8, new Dictionary<char, Color32>
+            {
+                ['p'] = Hex(0x3e2c52), ['P'] = Hex(0x74529a), ['E'] = Hex(0xff4848), ['v'] = Hex(0x2a1a3a),
+            });
+            AddEnemy(pixels, EnemyArt.FireBeetle, FireBeetle, 64, 16, new Dictionary<char, Color32>
+            {
+                ['K'] = Hex(0x2e2824), ['O'] = Hex(0xff8a24), ['k'] = Hex(0x16120f), ['H'] = Hex(0x3e342c), ['j'] = Hex(0x1c1612),
+            });
+            AddEnemy(pixels, EnemyArt.Guardian, Guardian, 0, 30, new Dictionary<char, Color32>
+            {
+                ['G'] = Hex(0x6a6878), ['g'] = Hex(0x8e8ca0), ['C'] = Hex(0x70f0ff),
+            });
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -104,6 +214,24 @@ namespace Antarium.Presentation
             };
             Texture.SetPixels32(pixels);
             Texture.Apply(false, false); // small; kept readable for debugging
+        }
+
+        /// <summary>Two frames of an enemy side by side at (ox, oy), drawn with the enemy's own palette.</summary>
+        void AddEnemy(Color32[] pixels, EnemyArt art, string[][] frames, int ox, int oy, Dictionary<char, Color32> palette)
+        {
+            int w = frames[0][0].Length, h = frames[0].Length;
+            EnemySize[(int)art] = new int2(w, h);
+            for (int f = 0; f < 2; f++)
+            {
+                var rows = frames[f];
+                for (int r = 0; r < h; r++)
+                {
+                    int y = oy + (h - 1 - r);
+                    for (int x = 0; x < rows[r].Length; x++)
+                        if (palette.TryGetValue(rows[r][x], out var c)) pixels[y * AtlasWidth + ox + f * w + x] = c;
+                }
+                Rects[EnemyRect + (int)art * 2 + f] = Rect(ox + f * w, oy, w, h);
+            }
         }
 
         static float4 Rect(int x, int y, int w, int h) =>
@@ -136,6 +264,11 @@ namespace Antarium.Presentation
                 case 'E': c = EggColor; return true;
                 case 'S': c = EggShade; return true;
                 case 'W': c = new Color32(255, 250, 240, 255); return true;
+                // Soldier.
+                case 'd': c = SoldierDark; return true;
+                case 'm': c = SoldierMid; return true;
+                case 'h': c = SoldierHigh; return true;
+                case 'K': c = Mandible; return true;
                 // Golden beetle.
                 case 'Y': c = Hex(0xfff0a0); return true;
                 case 'O': c = Hex(0xf0c040); return true;
