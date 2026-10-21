@@ -17,6 +17,9 @@ namespace Antarium.Sim
         public int ContractsCompleted;
         public int EventsWon;
         public double KnowledgeEarned;
+        public long EnemiesKilled;
+        public long AntsLost;
+        public int RaidsRepelled;
 
         public ColonyStats(int items, int buildings)
         {

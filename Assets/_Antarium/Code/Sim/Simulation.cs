@@ -11,9 +11,9 @@ namespace Antarium.Sim
     /// Owns the simulation state and runs it on a fixed tick. Input arrives as commands that are applied
     /// at the start of the next tick; results leave as events on <see cref="Events"/>.
     /// </summary>
-    public sealed class Simulation : IDisposable, IAntIntentHandler
+    public sealed partial class Simulation : IDisposable, IAntIntentHandler
     {
-        enum CommandKind : byte { Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent }
+        enum CommandKind : byte { Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, SoldierShare, TriggerRaid }
 
         readonly struct Command
         {
@@ -69,16 +69,23 @@ namespace Antarium.Sim
         public readonly AbilitySystem Abilities;
         public readonly ContractSystem Contracts;
         public readonly RandomEventSystem RandomEvents;
+        public readonly FluidSystem Fluids;
+        public readonly EnemySystem Enemies;
+
+        /// <summary>Soldiers alive (counted once per tick).</summary>
+        public int Soldiers { get; private set; }
+        public int Workers => Ants.Count - Soldiers;
 
         /// <summary>Seconds of simulated time in this colony (saved).</summary>
         public double PlayTime { get; internal set; }
 
         readonly List<Command> _pending = new();
-        readonly List<int2> _hatched = new();
+        readonly List<Egg> _hatched = new();
         readonly List<int2> _scratchCells = new();
         readonly List<ushort> _evicted = new();
         NativeList<int2> _broken;
         NativeList<int2> _breachStarts;
+        NativeList<int2> _discovered;
         Unity.Mathematics.Random _rng;
         bool _terrainChanged;
         bool _designationsChanged;
@@ -104,20 +111,30 @@ namespace Antarium.Sim
 
             bool fresh = loadedWorld == null;
             World = loadedWorld ?? WorldGenerator.Create(content, seed);
-            if (fresh) Reveal.Initial(World, content.MaterialSim, config.dig.revealRadius);
+            Fluids = new FluidSystem(World, config.fluids);
+            Fluids.SetReactionMaterial(content.FluidReactionMaterial != ContentDB.AirIndex
+                ? content.FluidReactionMaterial : content.GetMaterialIndex(content.WorldGen.biomes[0].baseMaterial));
+            if (fresh)
+            {
+                Fluids.Settle(config.fluids.settleSteps);
+                Reveal.Initial(World, content.MaterialSim, config.dig.revealRadius);
+            }
             Light = new LightSystem(World, config.light);
+            var lava = config.fluids.lavaLight;
+            Light.LavaEmission = new float3(lava.r, lava.g, lava.b) * config.fluids.lavaLightStrength;
             Light.RecomputeAll(World, content.MaterialSim);
 
             _broken = new NativeList<int2>(64, Allocator.Persistent);
             _breachStarts = new NativeList<int2>(16, Allocator.Persistent);
+            _discovered = new NativeList<int2>(256, Allocator.Persistent);
 
-            Colony = new Colony(content, config.colony);
+            Colony = new Colony(content, config.colony, config.combat);
             Colony.QueenCell = FindQueenCell();
             FindRoyalDisplayCells();
-            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events);
+            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat);
             int slots = content.ConsumerSlotCount;
             Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
-            Ants = new AntSystem(config.worker, config.logistics, content.Items.Length);
+            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length);
             for (int i = 0; i < content.Items.Length; i++)
             {
                 int slot = content.ConsumerSlot[i];
@@ -128,6 +145,7 @@ namespace Antarium.Sim
             Abilities = new AbilitySystem(content, Colony);
             Contracts = new ContractSystem(content, config.progression, this, seed);
             RandomEvents = new RandomEventSystem(content, config.progression, this, seed);
+            Enemies = new EnemySystem(content, config, this, seed);
             if (!fresh) return;
 
             for (int i = 0; i < config.colony.startingWorkers; i++)
@@ -170,7 +188,9 @@ namespace Antarium.Sim
             _terrainChanged = _designationsChanged = _storageChanged = true;
             Fields.MarkAllDirty();
             RefreshFields(force: true);
-            World.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload);
+            World.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload);
+            Fluids.WakeAllWithFluid();
+            Soldiers = Ants.CountCaste(AntCaste.Soldier);
             Contracts.Tick();
         }
 
@@ -211,6 +231,12 @@ namespace Antarium.Sim
         /// <summary>Debug: starts random event <paramref name="index"/> now (-1 = a random one).</summary>
         public void EnqueueTriggerEvent(int index) => _pending.Add(new Command(CommandKind.TriggerEvent, index, default, default, 0));
 
+        /// <summary>Sets the share of soldier eggs (0..1, snapped to the configured step).</summary>
+        public void EnqueueSoldierShare(float share) => _pending.Add(new Command(CommandKind.SoldierShare, default, 0f, share, true));
+
+        /// <summary>Debug: a raid arrives now.</summary>
+        public void EnqueueTriggerRaid() => _pending.Add(new Command(CommandKind.TriggerRaid, 0, default, default, 0));
+
         /// <summary>Advances the clock and runs the due ticks. Returns the number of ticks run.</summary>
         public int Advance(double deltaTime)
         {
@@ -233,6 +259,7 @@ namespace Antarium.Sim
             Buildings.Tick(dt);
             Colony.Inventory.UpdateRates(dt, Config.logistics.rateSmoothing);
             Colony.Meter.Update(dt);
+            StepHazards(dt);
             RefreshFields(force: false);
 
             var inventory = Colony.Inventory;
@@ -241,10 +268,15 @@ namespace Antarium.Sim
             int supplySlots = Ants.UpdateSupplyNeed(inventory);
             var mods = Colony.Mods;
             float work = Colony.SpeedFactor * Abilities.WorkFactor;
+            Ants.HealthMultiplier = mods.Mult(StatKind.AntHealth);
             Ants.Think(World, Fields, dt, work * mods.Mult(StatKind.WorkerSpeed), work * mods.Mult(StatKind.WorkerDig),
-                work * mods.Mult(StatKind.BuildSpeed), Ants.JobChances(_digSlots, _haulSlots, Buildings.BuildSlots, supplySlots));
+                work * mods.Mult(StatKind.BuildSpeed), Ants.JobChances(_digSlots, _haulSlots, Buildings.BuildSlots, supplySlots),
+                mods.Mult(StatKind.HazardResistance));
             Ants.Resolve(this);
+            ProcessCompletedWalls();
             FlushBreaches();
+            Enemies.Tick(dt);
+            RemoveDeadAnts();
             RandomEvents.Tick(dt);
             Contracts.Tick();
         }
@@ -264,6 +296,9 @@ namespace Antarium.Sim
             inv.Food = math.min(inv.FoodCapacity, inv.Food + food);
             inv.AcceptanceChanged = true;
         }
+
+        /// <summary>Debug / tests: replaces a cell (terrain is re-uploaded, relit and re-routed).</summary>
+        public void SetCell(int2 c, Cell cell) => EditCell(c, cell);
 
         /// <summary>Debug/cheat: spawns workers in the royal chamber.</summary>
         public void SpawnWorkers(int count)
@@ -288,6 +323,8 @@ namespace Antarium.Sim
                 case CommandKind.Ability: UseAbility(cmd.Def, cmd.Cell); break;
                 case CommandKind.Claim: Contracts.Claim(cmd.Def); break;
                 case CommandKind.Catch: RandomEvents.Catch(cmd.CellPos); break;
+                case CommandKind.SoldierShare: Colony.SetSoldierShare(cmd.Power); break;
+                case CommandKind.TriggerRaid: Enemies.TriggerRaid(); break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -361,22 +398,24 @@ namespace Antarium.Sim
                 }
                 _storageChanged = true;
                 if (cmd.Set) Colony.Inventory.AddStorageCell(new int2(x, y), index);
-                else
-                {
-                    // Items in an erased cell move to other storage; what does not fit drops to the floor.
-                    _evicted.Clear();
-                    Colony.Inventory.RemoveStorageCell(index, _evicted);
-                    var land = World.FloorBelow(new int2(x, y));
-                    foreach (ushort item in _evicted)
-                    {
-                        Colony.Piles.Add(land, item, 1);
-                        Events.Publish(new ItemDroppedEvent(land, item));
-                    }
-                }
+                else EvictStorage(new int2(x, y), index);
             }
 
             if (!designate && _storageChanged)
                 Buildings.MarkNetworkDirty(); // belts ending in a storage zone deliver to the stock
+        }
+
+        /// <summary>Items in an erased storage cell move to other storage; what does not fit drops to the floor.</summary>
+        void EvictStorage(int2 c, int index)
+        {
+            _evicted.Clear();
+            Colony.Inventory.RemoveStorageCell(index, _evicted);
+            var land = World.FloorBelow(c);
+            foreach (ushort item in _evicted)
+            {
+                Colony.Piles.Add(land, item, 1);
+                Events.Publish(new ItemDroppedEvent(land, item));
+            }
         }
 
         // ---------------------------------------------------------------- terrain
@@ -391,6 +430,8 @@ namespace Antarium.Sim
             if (Colony.Designated.Remove(index)) _designationsChanged = true;
 
             Reveal.Around(World, c, Config.dig.revealRadius);
+            Fluids.Wake(c);
+            CheckUnstableAbove(c);
             AddBreach(c + new int2(1, 0));
             AddBreach(c + new int2(-1, 0));
             AddBreach(c + new int2(0, 1));
@@ -428,9 +469,14 @@ namespace Antarium.Sim
         int FlushBreaches()
         {
             if (_breachStarts.Length == 0) return 0;
-            int discovered = Reveal.Flood(World, _breachStarts.AsArray(), Config.dig.revealRadius, Config.dig.caveRevealLimit);
+            _discovered.Clear();
+            int discovered = Reveal.Flood(World, _breachStarts.AsArray(), Config.dig.revealRadius, Config.dig.caveRevealLimit, _discovered);
+            if (discovered > 0)
+            {
+                _terrainChanged = true;
+                Enemies.OnCaveDiscovered(_discovered, _breachStarts.AsArray());
+            }
             _breachStarts.Clear();
-            if (discovered > 0) _terrainChanged = true;
             return discovered;
         }
 
@@ -599,6 +645,7 @@ namespace Antarium.Sim
             World.Cells[World.Index(c.x, c.y)] = cell;
             World.MarkChanged(c.x, c.y, ChunkFlags.TerrainUpload | ChunkFlags.LightRecompute);
             _terrainChanged = true;
+            Fluids.Wake(c);
         }
 
         /// <summary>Ants inside cells that just became solid climb up to the first open cell.</summary>
@@ -622,18 +669,20 @@ namespace Antarium.Sim
 
         void UpdateColony(float dt)
         {
-            Colony.UpdateUpkeep(Ants.Count, dt);
+            Soldiers = Ants.CountCaste(AntCaste.Soldier);
+            Colony.UpdateUpkeep(Ants.Count - Soldiers, Soldiers, dt);
+            Colony.QueenDisturbed = Enemies.RaidersInChamber;
 
-            if (TryFindEggCell(out int2 eggCell) && Colony.TryLayEgg(dt, eggCell))
+            if (TryFindEggCell(out int2 eggCell) && Colony.TryLayEgg(dt, eggCell, Ants.Count, Soldiers))
                 Events.Publish(new EggLaidEvent(eggCell));
 
             _hatched.Clear();
             Colony.UpdateEggs(dt, _hatched);
-            foreach (var cell in _hatched)
+            foreach (var egg in _hatched)
             {
-                Ants.Spawn(cell, Seed);
+                Ants.Spawn(egg.Cell, Seed, egg.Caste);
                 Colony.Stats.AntsHatched++;
-                Events.Publish(new AntHatchedEvent(cell));
+                Events.Publish(new AntHatchedEvent(egg.Cell));
             }
 
             UpdateForage(dt);
@@ -744,6 +793,15 @@ namespace Antarium.Sim
             if (_storageChanged || Buildings.DropoffChanged) Fields.MarkDirty(FieldKind.Dropoff);
             if (Colony.Piles.Changed || Colony.Inventory.AcceptanceChanged) Fields.MarkDirty(FieldKind.Items);
             if (Buildings.BlueprintsChanged) Fields.MarkDirty(FieldKind.Build);
+            if (Buildings.GuardsChanged) Fields.MarkDirty(FieldKind.Guard);
+            // Moving targets: rebuilt at the refresh rate while anyone needs them.
+            if (Enemies.Changed && Soldiers > 0)
+            {
+                Fields.MarkDirty(FieldKind.Enemies);
+                Enemies.Changed = false;
+            }
+            if (Enemies.AnyHunting) Fields.MarkDirty(FieldKind.Ants);
+            if (Enemies.AnyLeaving) Fields.MarkDirty(FieldKind.Exit);
             ulong locations = Colony.Inventory.LocationsChanged;
             Colony.Inventory.LocationsChanged = 0;
             for (int i = 0; i < Content.Items.Length && locations != 0; i++)
@@ -762,7 +820,7 @@ namespace Antarium.Sim
                 }
             }
             _terrainChanged = _designationsChanged = _storageChanged = false;
-            Buildings.DropoffChanged = Buildings.BlueprintsChanged = false;
+            Buildings.DropoffChanged = Buildings.BlueprintsChanged = Buildings.GuardsChanged = false;
             Buildings.ConsumersChanged = 0;
             Colony.Piles.Changed = false;
             Colony.Inventory.AcceptanceChanged = false;
@@ -847,6 +905,31 @@ namespace Antarium.Sim
                 sources.Clear();
                 AddRoyalCells(sources, 2);
             }
+            if (Fields.IsDirty(FieldKind.Enemies))
+            {
+                var sources = Fields.Sources(FieldKind.Enemies);
+                sources.Clear();
+                Enemies.AddEnemySources(sources);
+            }
+            if (Fields.IsDirty(FieldKind.Guard))
+            {
+                var sources = Fields.Sources(FieldKind.Guard);
+                sources.Clear();
+                Buildings.AddGuardSources(sources);
+            }
+            if (Fields.IsDirty(FieldKind.Ants))
+            {
+                var sources = Fields.Sources(FieldKind.Ants);
+                sources.Clear();
+                foreach (var a in Ants.Ants)
+                    if (!a.IsDead) sources.Add(a.Cell);
+            }
+            if (Fields.IsDirty(FieldKind.Exit))
+            {
+                var sources = Fields.Sources(FieldKind.Exit);
+                sources.Clear();
+                if (Enemies.AnyLeaving) sources.Add(Enemies.RaidCell);
+            }
             Fields.Rebuild(World);
         }
 
@@ -869,10 +952,13 @@ namespace Antarium.Sim
             Ants.Dispose();
             Buildings.Dispose();
             Fields.Dispose();
+            Fluids.Dispose();
+            Enemies.Dispose();
             World.Dispose();
             Light.Dispose();
             if (_broken.IsCreated) _broken.Dispose();
             if (_breachStarts.IsCreated) _breachStarts.Dispose();
+            if (_discovered.IsCreated) _discovered.Dispose();
         }
     }
 }

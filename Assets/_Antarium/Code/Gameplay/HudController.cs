@@ -361,7 +361,7 @@ namespace Antarium.Gameplay
             var colony = sim.Colony;
             var inv = colony.Inventory;
             _food.text = $"Food {NumberFormat.Format(inv.Food)}/{NumberFormat.Format(inv.FoodCapacity)}";
-            SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.Ants.Count));
+            SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.Workers, sim.Soldiers));
             _ants.text = $"Ants {NumberFormat.Format(sim.Ants.Count)}";
             _eggs.text = $"Eggs {colony.Eggs.Count}";
             _storage.text = $"Storage {NumberFormat.Format(inv.Stored)}/{NumberFormat.Format(inv.Capacity)}";

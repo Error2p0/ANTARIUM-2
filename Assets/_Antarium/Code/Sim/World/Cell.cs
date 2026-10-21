@@ -47,4 +47,26 @@ namespace Antarium.Sim
         public bool IsOpen => Density < OpenThreshold;
         public bool IsRevealed => (Flags & CellFlags.Revealed) != 0;
     }
+
+    /// <summary>
+    /// Fluid in one cell (2 bytes, a separate plane next to <see cref="Cell"/>, mirrored to the GPU). Only open
+    /// cells hold fluid; one kind per cell.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FluidCell
+    {
+        public const byte Full = 255;
+
+        public byte Level;
+        public Antarium.Content.FluidKind Kind;
+
+        public FluidCell(Antarium.Content.FluidKind kind, byte level)
+        {
+            Kind = level == 0 ? Antarium.Content.FluidKind.None : kind;
+            Level = level;
+        }
+
+        public bool IsEmpty => Level == 0;
+        public static FluidCell Empty => default;
+    }
 }

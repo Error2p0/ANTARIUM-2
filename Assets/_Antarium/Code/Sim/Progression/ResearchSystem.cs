@@ -101,6 +101,8 @@ namespace Antarium.Sim
             foreach (var e in data.Stats) _colony.Mods.Add(e.stat, e.value);
             foreach (int b in data.UnlockBuildings) _colony.BuildingUnlocked[b] = true;
             foreach (int a in data.UnlockAbilities) _colony.AbilityUnlocked[a] = true;
+            foreach (var caste in data.UnlockCastes)
+                if (caste == AntCaste.Soldier) _colony.UnlockSoldiers();
             _colony.Inventory.RefreshCapacity();
         }
     }

@@ -18,6 +18,8 @@ namespace Antarium.Content
         Build,
         /// <summary>Dig out any cells (workers and the player).</summary>
         DigCells,
+        /// <summary>Defeat this many enemies (creatures and raiders).</summary>
+        KillEnemies,
     }
 
     /// <summary>

@@ -21,6 +21,25 @@ namespace Antarium.Sim
         Building,
         /// <summary>Walking to the stock to fetch <see cref="Ant.Want"/> for a machine.</summary>
         SeekSupply,
+        /// <summary>Soldier: closing in on an enemy.</summary>
+        Hunting,
+        /// <summary>Soldier: next to an enemy, biting.</summary>
+        Fighting,
+        /// <summary>Caught in deep water, dense gas or lava: getting out.</summary>
+        Swimming,
+        /// <summary>Killed this tick; removed by the simulation.</summary>
+        Dead,
+    }
+
+    public enum DeathCause : byte
+    {
+        None,
+        Drowned,
+        Burned,
+        Gassed,
+        Crushed,
+        /// <summary>Killed by an enemy (<see cref="Ant.Killer"/>).</summary>
+        Killed,
     }
 
     /// <summary>Where a carrying worker decided to take its load.</summary>
@@ -33,9 +52,17 @@ namespace Antarium.Sim
         Consumer,
     }
 
-    /// <summary>One worker. Plain data; all ants live in one native list and are updated by Burst jobs.</summary>
+    /// <summary>One ant (worker or soldier). Plain data; all ants live in one native list and are updated by Burst jobs.</summary>
     public struct Ant
     {
+        public AntCaste Caste;
+        public float Health;
+        /// <summary>Seconds since the ant was last hurt (regeneration, hurt flash).</summary>
+        public float SinceHurt;
+        public DeathCause Cause;
+        /// <summary>Enemy definition that killed the ant, or -1.</summary>
+        public short Killer;
+
         /// <summary>Cell the ant is in, or is moving into.</summary>
         public int2 Cell;
         /// <summary>Cell the current step started from. Equal to <see cref="Cell"/> when not moving.</summary>
@@ -60,6 +87,8 @@ namespace Antarium.Sim
 
         public bool IsMoving => !From.Equals(Cell);
         public bool IsCarrying => Carry != ContentDB.NoItem;
+        public bool IsSoldier => Caste == AntCaste.Soldier;
+        public bool IsDead => State == AntState.Dead;
     }
 
     public enum IntentKind : byte
@@ -91,6 +120,10 @@ namespace Antarium.Sim
     {
         readonly WorkerConfig _config;
         readonly LogisticsConfig _logistics;
+        readonly CombatConfig _combat;
+        readonly FluidConfig _fluids;
+        /// <summary>Research multiplier on every ant's hit points (set by the simulation each tick).</summary>
+        public float HealthMultiplier = 1f;
         public NativeList<Ant> Ants;
         NativeQueue<AntIntent> _intents;
         /// <summary>Seeds each new ant's random stream (saved, so loaded games keep diverging the same way).</summary>
@@ -105,10 +138,12 @@ namespace Antarium.Sim
         /// <summary>Per item: how many more units machines want fetched from the stock (see <see cref="UpdateSupplyNeed"/>).</summary>
         public NativeArray<int> SupplyNeed;
 
-        public AntSystem(WorkerConfig config, LogisticsConfig logistics, int itemCount)
+        public AntSystem(WorkerConfig config, LogisticsConfig logistics, CombatConfig combat, FluidConfig fluids, int itemCount)
         {
             _config = config;
             _logistics = logistics;
+            _combat = combat;
+            _fluids = fluids;
             Ants = new NativeList<Ant>(64, Allocator.Persistent);
             _intents = new NativeQueue<AntIntent>(Allocator.Persistent);
             StockAccepts = new NativeArray<byte>(System.Math.Max(1, itemCount), Allocator.Persistent);
@@ -150,12 +185,28 @@ namespace Antarium.Sim
 
         public int Count => Ants.Length;
 
-        public void Spawn(int2 cell, uint seed)
+        /// <summary>Full hit points of a caste (research included).</summary>
+        public float MaxHealth(AntCaste caste) =>
+            (caste == AntCaste.Soldier ? _combat.soldierHealth : _combat.workerHealth) * HealthMultiplier;
+
+        public int CountCaste(AntCaste caste)
+        {
+            int n = 0;
+            for (int i = 0; i < Ants.Length; i++)
+                if (Ants[i].Caste == caste) n++;
+            return n;
+        }
+
+        public void Spawn(int2 cell, uint seed, AntCaste caste = AntCaste.Worker)
         {
             float2 pos = new float2(cell) + 0.5f;
             var rng = new Unity.Mathematics.Random(math.hash(new uint2(seed, ++SpawnCounter)) | 1u);
             Ants.Add(new Ant
             {
+                Caste = caste,
+                Health = MaxHealth(caste),
+                SinceHurt = 1000f,
+                Killer = -1,
                 Cell = cell,
                 From = cell,
                 StepLength = 1f,
@@ -192,6 +243,7 @@ namespace Antarium.Sim
             int idle = 0, digging = 0, hauling = 0, building = 0, supplying = 0;
             for (int i = 0; i < Ants.Length; i++)
             {
+                if (Ants[i].IsSoldier) continue;
                 switch (Ants[i].State)
                 {
                     case AntState.Idle:
@@ -214,10 +266,12 @@ namespace Antarium.Sim
         /// Runs the think/move job. Results are applied by <see cref="Resolve"/>. The factors scale the
         /// configured walking speed, dig power and build power (starvation, research, Frenzy).
         /// </summary>
-        public void Think(WorldGrid world, FlowFields fields, float dt, float moveFactor, float digFactor, float buildFactor, float4 jobChances)
+        public void Think(WorldGrid world, FlowFields fields, float dt, float moveFactor, float digFactor, float buildFactor, float4 jobChances,
+            float hazardResistance = 1f)
         {
             _intents.Clear();
             if (Ants.Length == 0) return;
+            float resist = 1f / math.max(0.01f, hazardResistance);
             new ThinkJob
             {
                 Ants = Ants.AsArray(),
@@ -244,6 +298,17 @@ namespace Antarium.Sim
                 HaulChance = jobChances.y,
                 BuildChance = jobChances.z,
                 SupplyChance = jobChances.w,
+                WorkerMaxHealth = MaxHealth(AntCaste.Worker),
+                SoldierMaxHealth = MaxHealth(AntCaste.Soldier),
+                RegenPerSecond = _combat.regenPerSecond,
+                RegenDelay = _combat.regenDelay,
+                DrownDamage = _combat.drownDamage * resist,
+                LavaDamage = _combat.lavaDamage * resist,
+                GasDamage = _combat.gasDamage * resist,
+                GasHarmLevel = (byte)math.clamp(_fluids.gasHarmLevel, 1, 255),
+                SwimFactor = _combat.swimSpeedFactor,
+                SoldierRange = (int)(_combat.soldierRange * FlowFields.StraightCost),
+                GuardRadius = (int)(_combat.guardRadius * FlowFields.StraightCost),
             }.Schedule(Ants.Length, 32).Complete();
         }
 
@@ -307,6 +372,18 @@ namespace Antarium.Sim
             public float HaulChance;
             public float BuildChance;
             public float SupplyChance;
+            public float WorkerMaxHealth;
+            public float SoldierMaxHealth;
+            public float RegenPerSecond;
+            public float RegenDelay;
+            public float DrownDamage;
+            public float LavaDamage;
+            public float GasDamage;
+            public byte GasHarmLevel;
+            public float SwimFactor;
+            /// <summary>Soldiers: enemy field distance (field units) they react to / stay within of their post.</summary>
+            public int SoldierRange;
+            public int GuardRadius;
 
             const ushort Unreachable = FlowFields.Unreachable;
             const int DigField = (int)FieldKind.Dig;
@@ -314,17 +391,41 @@ namespace Antarium.Sim
             const int DropoffField = (int)FieldKind.Dropoff;
             const int HomeField = (int)FieldKind.Home;
             const int BuildField = (int)FieldKind.Build;
+            const int EnemyField = (int)FieldKind.Enemies;
+            const int GuardField = (int)FieldKind.Guard;
 
             ushort F(int field, int cellIndex) => Fields[field * CellCount + cellIndex];
 
             public void Execute(int index)
             {
                 var a = Ants[index];
+                if (a.IsDead) return;
                 a.PrevPos = a.Pos;
+
+                // Hazards where the ant is; regeneration after a while without damage.
+                float damage = Hazard(a.Cell, out var cause);
+                if (damage > 0f)
+                {
+                    a.Health -= damage * Dt;
+                    a.SinceHurt = 0f;
+                    if (a.Health <= 0f)
+                    {
+                        a.State = AntState.Dead;
+                        a.Cause = cause;
+                        Ants[index] = a;
+                        return;
+                    }
+                }
+                else
+                {
+                    a.SinceHurt += Dt;
+                    float max = a.IsSoldier ? SoldierMaxHealth : WorkerMaxHealth;
+                    if (a.SinceHurt >= RegenDelay && a.Health < max) a.Health = math.min(max, a.Health + RegenPerSecond * Dt);
+                }
 
                 if (a.IsMoving)
                 {
-                    float speed = a.State == AntState.Falling ? FallSpeed : MoveSpeed;
+                    float speed = a.State == AntState.Falling ? FallSpeed : a.State == AntState.Swimming ? MoveSpeed * SwimFactor : MoveSpeed;
                     a.Progress += speed * Dt / a.StepLength;
                     a.WalkPhase += speed * Dt;
                     if (a.Progress >= 1f)
@@ -341,9 +442,71 @@ namespace Antarium.Sim
                 Ants[index] = a;
             }
 
+            float Hazard(int2 c, out DeathCause cause)
+            {
+                cause = DeathCause.None;
+                var f = Nav.FluidAt(c);
+                if (f.Level == 0) return 0f;
+                switch (f.Kind)
+                {
+                    case FluidKind.Lava: cause = DeathCause.Burned; return LavaDamage;
+                    case FluidKind.Water when f.Level >= Nav.DeepFluid: cause = DeathCause.Drowned; return DrownDamage;
+                    case FluidKind.Gas when f.Level >= GasHarmLevel: cause = DeathCause.Gassed; return GasDamage;
+                }
+                return 0f;
+            }
+
+            /// <summary>
+            /// Caught in deep water, dense gas or lava: step to the dry neighbour closest to home, otherwise swim
+            /// up (down out of gas, which rises), otherwise anywhere open.
+            /// </summary>
+            void Swim(ref Ant a)
+            {
+                a.State = AntState.Swimming;
+                int2 c = a.Cell;
+                int2 best = c;
+                ushort bestHome = Unreachable;
+                bool found = false;
+                for (int i = 0; i < NavGrid.DirectionCount; i++)
+                {
+                    int2 d = NavGrid.Direction(i);
+                    if (!Nav.CanMove(c, d)) continue;
+                    ushort h = F(HomeField, Nav.Index(c + d));
+                    if (found && h >= bestHome) continue;
+                    found = true;
+                    bestHome = h;
+                    best = c + d;
+                }
+                if (found)
+                {
+                    StartStep(ref a, best);
+                    return;
+                }
+                int2 pref = Nav.FluidAt(c).Kind == FluidKind.Gas ? new int2(0, -1) : new int2(0, 1);
+                if (Nav.CanSwim(c, pref))
+                {
+                    StartStep(ref a, c + pref);
+                    return;
+                }
+                int start = a.Rng.NextInt(NavGrid.DirectionCount);
+                for (int k = 0; k < NavGrid.DirectionCount; k++)
+                {
+                    int2 d = NavGrid.Direction((start + k) % NavGrid.DirectionCount);
+                    if (d.y == -pref.y || !Nav.CanSwim(c, d)) continue;
+                    StartStep(ref a, c + d);
+                    return;
+                }
+            }
+
             void Decide(ref Ant a, int index)
             {
                 int2 c = a.Cell;
+                if (Nav.IsFlooded(c))
+                {
+                    Swim(ref a);
+                    return;
+                }
+                if (a.State == AntState.Swimming) a.State = AntState.Idle;
                 if (!Nav.IsWalkable(c))
                 {
                     int2 below = c + new int2(0, -1);
@@ -359,6 +522,11 @@ namespace Antarium.Sim
                 if (a.State == AntState.Falling) a.State = AntState.Idle;
 
                 int ci = Nav.Index(c);
+                if (a.IsSoldier)
+                {
+                    DecideSoldier(ref a, ci);
+                    return;
+                }
                 switch (a.State)
                 {
                     case AntState.Idle:
@@ -477,6 +645,38 @@ namespace Antarium.Sim
                         break;
                     }
                 }
+            }
+
+            /// <summary>
+            /// Soldiers: go after enemies within range (bite when next to one); otherwise wait around the nearest
+            /// guard post, or near the queen if there is none.
+            /// </summary>
+            void DecideSoldier(ref Ant a, int ci)
+            {
+                ushort e = F(EnemyField, ci);
+                if (e != Unreachable && e <= SoldierRange)
+                {
+                    if (e <= FlowFields.DiagonalCost)
+                    {
+                        a.State = AntState.Fighting;
+                        a.WalkPhase += Dt * 6f;
+                        return;
+                    }
+                    a.State = AntState.Hunting;
+                    if (!StepDown(ref a, EnemyField, e)) a.State = AntState.Fighting;
+                    return;
+                }
+                if (a.State == AntState.Hunting || a.State == AntState.Fighting) a.State = AntState.Idle;
+
+                int field = GuardField;
+                ushort g = F(GuardField, ci);
+                if (g == Unreachable)
+                {
+                    field = HomeField;
+                    g = F(HomeField, ci);
+                }
+                if (g != Unreachable && g > GuardRadius) StepDown(ref a, field, g);
+                else if (a.Rng.NextFloat() < 0.05f) RandomStep(ref a);
             }
 
             void ChooseJob(ref Ant a, int ci)

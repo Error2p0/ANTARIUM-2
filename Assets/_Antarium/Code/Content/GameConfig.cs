@@ -18,6 +18,115 @@ namespace Antarium.Content
         public LogisticsConfig logistics = new();
         public ProgressionConfig progression = new();
         public SaveConfig save = new();
+        public FluidConfig fluids = new();
+        public CombatConfig combat = new();
+        public ThreatConfig threats = new();
+    }
+
+    [Serializable]
+    public sealed class FluidConfig
+    {
+        [Tooltip("Fluids update once every N simulation ticks (2 = 10 times a second).")]
+        [Min(1)] public int ticksPerStep = 2;
+        [Tooltip("Water or gas at or above this level (of 255) blocks ant paths; deep water drowns.")]
+        [Range(1, 255)] public int deepLevel = 128;
+        [Tooltip("Gas at or above this level hurts ants inside it.")]
+        [Range(1, 255)] public int gasHarmLevel = 48;
+        [Tooltip("Lava moves only every N fluid steps (it is thick).")]
+        [Min(1)] public int lavaStepEvery = 4;
+        [Tooltip("Lava only spreads sideways where the level difference is at least this (it heaps up).")]
+        [Range(2, 128)] public int lavaMinDiff = 24;
+        [Tooltip("Lava's sideways flow is divided by this (it creeps).")]
+        [Range(1, 8)] public int lavaThickness = 2;
+        [Tooltip("Water films this thin (or thinner) evaporate over time in explored tunnels.")]
+        [Range(0, 64)] public int evaporateBelow = 8;
+        [Range(0f, 1f)] public float evaporateChance = 0.06f;
+        [Tooltip("Chance per step that gas in explored tunnels thins by one level.")]
+        [Range(0f, 1f)] public float gasDecayChance = 0.35f;
+        [Tooltip("Water lost as steam where water and lava meet (and the lava turns to obsidian).")]
+        [Range(0, 255)] public int steamLoss = 96;
+        [Tooltip("Fluid steps a chunk stays awake after its last change.")]
+        [Min(1)] public int awakeSteps = 12;
+        [Tooltip("Fluid steps run during world generation so lakes start settled.")]
+        [Min(0)] public int settleSteps = 400;
+        [Tooltip("Ant paths are rebuilt for moving fluids (and falling sand) at most this often, in seconds.")]
+        [Min(0.05f)] public float pathRefreshSeconds = 1f;
+        [Tooltip("Colour of the light lava gives off.")]
+        [ColorUsage(false)] public Color lavaLight = new(1f, 0.5f, 0.15f);
+        [Tooltip("Light emitted by lava, as a fraction of the maximum light level.")]
+        [Range(0f, 1f)] public float lavaLightStrength = 0.75f;
+    }
+
+    [Serializable]
+    public sealed class CombatConfig
+    {
+        [Header("Ants")]
+        [Min(1f)] public float workerHealth = 40f;
+        [Min(1f)] public float soldierHealth = 150f;
+        [Tooltip("Hit points regained per second after a while without damage.")]
+        [Min(0f)] public float regenPerSecond = 2f;
+        [Min(0f)] public float regenDelay = 6f;
+        [Tooltip("Damage per second an ant deals to an enemy next to it.")]
+        [Min(0f)] public float workerAttack = 3f;
+        [Min(0f)] public float soldierAttack = 14f;
+
+        [Header("Hazards (damage per second)")]
+        [Min(0f)] public float drownDamage = 6f;
+        [Min(0f)] public float lavaDamage = 40f;
+        [Min(0f)] public float gasDamage = 4f;
+        [Tooltip("Damage (once) to an ant buried by falling sand.")]
+        [Min(0f)] public float caveInDamage = 25f;
+        [Tooltip("Ants swim at this share of their walking speed.")]
+        [Range(0.1f, 1f)] public float swimSpeedFactor = 0.55f;
+
+        [Header("Soldiers")]
+        [Tooltip("Food for a soldier egg (worker eggs use colony.eggFoodCost).")]
+        [Min(0f)] public float soldierEggFoodCost = 15f;
+        [Tooltip("Food per minute per soldier.")]
+        [Min(0f)] public float soldierUpkeep = 0.6f;
+        [Tooltip("Soldiers go after enemies within this path distance (cells).")]
+        [Min(1f)] public float soldierRange = 60f;
+        [Tooltip("Idle soldiers stay within this many cells of their guard post.")]
+        [Min(1f)] public float guardRadius = 3f;
+        [Tooltip("Step of the soldier share the player can set (0.1 = 0%, 10%, 20%...).")]
+        [Range(0.05f, 0.5f)] public float soldierShareStep = 0.1f;
+        [Range(0f, 1f)] public float maxSoldierShare = 0.5f;
+        [Tooltip("Soldier share set when soldiers are unlocked.")]
+        [Range(0f, 1f)] public float defaultSoldierShare = 0.2f;
+
+        [Header("Defense")]
+        [Tooltip("Hit points an intact gate mends per second.")]
+        [Min(0f)] public float gateRegenPerSecond = 1f;
+    }
+
+    [Serializable]
+    public sealed class ThreatConfig
+    {
+        [Header("Cave creatures")]
+        [Tooltip("Creatures spawn at least this far (cells) from where the colony broke into their cave.")]
+        [Min(0)] public int minSpawnDistance = 8;
+        [Tooltip("Awake cave creatures without prey wander within this many cells of where they spawned.")]
+        [Min(1)] public int leashRadius = 12;
+
+        [Header("Raids")]
+        [Tooltip("No raids before this many seconds into a colony.")]
+        [Min(0f)] public float firstRaidSeconds = 720f;
+        [Tooltip("No raids while the colony has fewer ants than this.")]
+        [Min(0)] public int raidMinAnts = 20;
+        [Min(1f)] public float raidIntervalMin = 420f;
+        [Min(1f)] public float raidIntervalMax = 600f;
+        [Tooltip("Seconds of warning before raiders arrive.")]
+        [Min(0f)] public float raidWarningSeconds = 30f;
+        [Min(1)] public int raidBaseSize = 3;
+        [Tooltip("Extra raiders per ant in the colony.")]
+        [Min(0f)] public float raidPerAnt = 0.08f;
+        [Tooltip("Extra raiders per biome the colony has reached below the first.")]
+        [Min(0f)] public float raidPerBiome = 2f;
+        [Min(1)] public int raidMaxSize = 40;
+        [Tooltip("Raiders arrive on the surface this far (cells) from the nest.")]
+        public Vector2Int raidDistance = new(60, 100);
+        [Tooltip("Knowledge for beating a raid (every raider killed or chased off).")]
+        [Min(0f)] public float raidKnowledge = 10f;
     }
 
     [Serializable]
@@ -217,6 +326,22 @@ namespace Antarium.Content
         public Color overlayIdleAntColor = new(0.45f, 0.7f, 1f);
         [Tooltip("Brightness of items kept in storage relative to loose items (they sit on the back wall).")]
         [Range(0.3f, 1f)] public float stockBrightness = 0.8f;
+
+        [Header("Fluids")]
+        [Tooltip("Water tint; alpha = how strongly it covers the wall behind it.")]
+        public Color waterColor = new(0.22f, 0.48f, 0.9f, 0.62f);
+        public Color waterSurfaceColor = new(0.62f, 0.85f, 1f, 1f);
+        public Color lavaColor = new(0.95f, 0.36f, 0.08f, 1f);
+        public Color lavaHotColor = new(1f, 0.85f, 0.35f, 1f);
+        [Tooltip("Gas tint; alpha = cover at full density.")]
+        public Color gasColor = new(0.62f, 0.85f, 0.3f, 0.55f);
+
+        [Header("Combat")]
+        public Color healthBarColor = new(0.45f, 0.95f, 0.4f);
+        public Color healthBarBackColor = new(0.15f, 0.05f, 0.05f);
+        public Color enemyHealthBarColor = new(1f, 0.35f, 0.25f);
+        [Tooltip("Sprites flash this colour for a moment when hurt.")]
+        public Color hurtFlashColor = new(1f, 0.45f, 0.4f);
     }
 
     [Serializable]
@@ -242,6 +367,10 @@ namespace Antarium.Content
         [Min(0f)] public float particleSpeed = 4f;
         [Min(0f)] public float particleLifetime = 0.6f;
         [Min(0f)] public float shakePerBreak = 0.06f;
+        [Tooltip("Camera shake per cell of sand that falls (cave-ins); a frame adds at most maxShakePerHit.")]
+        [Min(0f)] public float caveInShake = 0.08f;
+        [Tooltip("Particles when an ant or enemy dies.")]
+        [Min(0)] public int particlesPerDeath = 8;
         [Tooltip("Camera shake when Seismic Sense is used / a meteorite lands.")]
         [Min(0f)] public float seismicShake = 0.5f;
         [Min(0f)] public float meteoriteShake = 0.8f;

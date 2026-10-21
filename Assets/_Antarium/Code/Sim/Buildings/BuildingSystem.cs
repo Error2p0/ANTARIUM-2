@@ -15,7 +15,8 @@ namespace Antarium.Sim
     /// filters route items to their neighbours. Every transport cell knows which items can reach a sink
     /// from it (<see cref="Building.Mask"/>), so items are only loaded where they can be delivered.
     /// Machines run recipes from their input buffers and push products onto an output belt or leave them
-    /// as a pile for workers.
+    /// as a pile for workers. Defense buildings (gates, traps, guard posts, walls) are single cells that
+    /// never carry items.
     /// </summary>
     public sealed class BuildingSystem : IDisposable
     {
@@ -23,6 +24,7 @@ namespace Antarium.Sim
 
         readonly ContentDB _content;
         readonly LogisticsConfig _config;
+        readonly CombatConfig _combat;
         readonly WorldGrid _world;
         readonly Colony _colony;
         readonly EventBus _events;
@@ -48,15 +50,21 @@ namespace Antarium.Sim
         public bool DropoffChanged = true;
         /// <summary>Bit per item whose consumer field must be rebuilt.</summary>
         public ulong ConsumersChanged = ulong.MaxValue;
+        /// <summary>Guard posts were built or removed (the guard field must be rebuilt).</summary>
+        public bool GuardsChanged = true;
+        /// <summary>Walls finished this tick: the simulation turns their cells solid and removes them.</summary>
+        public readonly List<int> CompletedWalls = new();
 
         public int BlueprintCount { get; private set; }
         public int BuildSlots { get; private set; }
         public int ActiveCount { get; private set; }
 
-        public BuildingSystem(ContentDB content, LogisticsConfig config, WorldGrid world, Colony colony, EventBus events)
+        public BuildingSystem(ContentDB content, LogisticsConfig config, WorldGrid world, Colony colony, EventBus events,
+            CombatConfig combat = null)
         {
             _content = content;
             _config = config;
+            _combat = combat ?? new CombatConfig();
             _world = world;
             _colony = colony;
             _events = events;
@@ -124,26 +132,31 @@ namespace Antarium.Sim
             int2 nd = NormalizeDir(bdef.kind, dir);
             var nav = new NavGrid(_world);
 
+            bool machine = bdef.kind == BuildingKind.Processor;
             for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
                 var c = origin + new int2(x, y);
                 if (!_world.InBounds(c.x, c.y)) return PlaceResult.OutOfBounds;
-                var cell = _world.Cells[_world.Index(c.x, c.y)];
+                int index = _world.Index(c.x, c.y);
+                var cell = _world.Cells[index];
                 if (!cell.IsRevealed) return PlaceResult.Hidden;
-                if (bdef.IsTransport ? !nav.IsWalkable(c) : !cell.IsOpen || cell.Material == ContentDB.AirIndex)
+                if (cell.IsOpen && nav.IsFlooded(c)) return PlaceResult.Flooded;
+                if (machine ? !cell.IsOpen || cell.Material == ContentDB.AirIndex : !nav.IsWalkable(c))
                     return PlaceResult.NotOpen;
                 int existing = At(c);
                 if (existing >= 0)
                 {
                     var e = All[existing];
-                    if (!bdef.IsTransport || e.Def != def) return PlaceResult.Occupied;
-                    if (e.Dir.Equals(nd)) return PlaceResult.Unchanged;
+                    if (machine || e.Def != def) return PlaceResult.Occupied;
+                    if (!bdef.IsTransport || e.Dir.Equals(nd)) return PlaceResult.Unchanged;
                     rotate = existing;
                 }
                 if (!bdef.IsTransport && c.Equals(_colony.QueenCell)) return PlaceResult.Occupied;
+                if (bdef.kind == BuildingKind.Wall && (_colony.IsRoyalCell(c) || (cell.Flags & CellFlags.Storage) != 0))
+                    return PlaceResult.Protected;
             }
-            if (!bdef.IsTransport)
+            if (machine || bdef.kind == BuildingKind.Trap)
             {
                 for (int x = 0; x < size.x; x++)
                     if (!nav.IsSolid(origin + new int2(x, -1))) return PlaceResult.NeedsFloor;
@@ -259,6 +272,13 @@ namespace Antarium.Sim
                 b.Machine = slot;
                 ConsumersChanged |= m.Data.InputMask;
             }
+            switch (b.Kind)
+            {
+                case BuildingKind.Gate: b.Health = GateMaxHealth(b.Def); break;
+                case BuildingKind.Trap: b.Rearm = 0f; break;
+                case BuildingKind.GuardPost: GuardsChanged = true; break;
+                case BuildingKind.Wall: CompletedWalls.Add(id); break;
+            }
             _networkDirty = true;
             BlueprintsChanged = true;
             RecountBlueprints();
@@ -275,8 +295,38 @@ namespace Antarium.Sim
                     Activate(i, notify: true);
         }
 
-        /// <summary>Removes the building covering <paramref name="cell"/>, refunding its cost. Carried items drop as piles.</summary>
-        public bool Remove(int2 cell)
+        /// <summary>Gate hit points when intact (research included).</summary>
+        public float GateMaxHealth(int def) => _content.Buildings[def].Def.maxHealth * _colony.Mods.Mult(StatKind.DefenseStrength);
+
+        /// <summary>
+        /// An enemy bites the gate <paramref name="id"/>. A broken gate turns back into a blueprint (enemies pass
+        /// until workers repair it; repairs are free).
+        /// </summary>
+        public void DamageGate(int id, float damage)
+        {
+            ref var b = ref Get(id);
+            if (!b.IsClosedGate) return;
+            b.Health -= damage;
+            if (b.Health > 0f) return;
+            b.Health = 0f;
+            b.State = BuildingState.Blueprint;
+            b.WorkLeft = b.WorkTotal;
+            ForEachCell(b.Origin, b.Size, index =>
+            {
+                var cell = _world.Cells[index];
+                cell.Flags |= CellFlags.Blueprint;
+                _world.Cells[index] = cell;
+            });
+            BlueprintsChanged = true;
+            RecountBlueprints();
+            _events.Publish(new GateBrokenEvent(b.Origin));
+        }
+
+        /// <summary>
+        /// Removes the building covering <paramref name="cell"/>, refunding its cost (unless <paramref name="refund"/>
+        /// is false: a finished wall). Carried items drop as piles.
+        /// </summary>
+        public bool Remove(int2 cell, bool refund = true)
         {
             int id = At(cell);
             if (id < 0) return false;
@@ -284,8 +334,9 @@ namespace Antarium.Sim
             var data = _content.Buildings[b.Def];
             bool blueprint = b.State == BuildingState.Blueprint;
             _leftover.Clear();
-            _colony.Inventory.Refund(data, blueprint ? 1f : _config.refundFraction, b.Origin, _leftover);
+            if (refund) _colony.Inventory.Refund(data, blueprint ? 1f : _config.refundFraction, b.Origin, _leftover);
             foreach (ushort item in _leftover) DropPile(b.Origin, item, 1); // the stock is full
+            if (b.Kind == BuildingKind.GuardPost) GuardsChanged = true;
 
             var inv = _colony.Inventory;
             if (!b.Front.IsEmpty) { inv.CancelTransit(b.Front.Item); DropPile(b.Origin, b.Front.Item, 1); }
@@ -316,7 +367,7 @@ namespace Antarium.Sim
                 BlueprintsChanged = true;
                 RecountBlueprints();
             }
-            _events.Publish(new BuildingRemovedEvent(b.Def, b.Origin));
+            if (refund) _events.Publish(new BuildingRemovedEvent(b.Def, b.Origin));
             return true;
         }
 
@@ -415,6 +466,7 @@ namespace Antarium.Sim
         {
             if (_networkDirty) Compile();
             _beltSpeed = _colony.Mods.Mult(StatKind.BeltSpeed);
+            TickDefense(dt);
 
             for (int i = 0; i < _order.Count; i++)
             {
@@ -538,6 +590,31 @@ namespace Antarium.Sim
             // Entering a belt from behind starts at its beginning; joining from the side starts mid-cell.
             float t0 = line && !from.Equals(t.Origin - t.Dir) ? 0.5f : 0f;
             return Insert(target, item, t0, prev);
+        }
+
+        /// <summary>Traps re-arm; intact gates slowly mend.</summary>
+        void TickDefense(float dt)
+        {
+            for (int i = 0; i < All.Length; i++)
+            {
+                ref var b = ref All.ElementAt(i);
+                if (!b.IsActive) continue;
+                if (b.Kind == BuildingKind.Trap && b.Rearm > 0f) b.Rearm = math.max(0f, b.Rearm - dt);
+                else if (b.Kind == BuildingKind.Gate)
+                {
+                    float max = GateMaxHealth(b.Def);
+                    if (b.Health < max) b.Health = math.min(max, b.Health + _combat.gateRegenPerSecond * dt);
+                }
+            }
+        }
+
+        public void AddGuardSources(NativeList<int2> sources)
+        {
+            for (int i = 0; i < All.Length; i++)
+            {
+                var b = All[i];
+                if (b.Kind == BuildingKind.GuardPost && b.IsActive) sources.Add(b.Origin);
+            }
         }
 
         void TickMachines(float dt)
@@ -688,6 +765,7 @@ namespace Antarium.Sim
             {
                 int2 next = b.Origin + b.Dir;
                 int t = ActiveAt(next);
+                if (t >= 0 && All[t].Kind > BuildingKind.Processor) t = None; // defense buildings take no items
                 if (t >= 0)
                 {
                     var tb = All[t];
@@ -706,7 +784,7 @@ namespace Antarium.Sim
             {
                 int2 d = Cardinals[k];
                 int t = ActiveAt(b.Origin + d);
-                if (t < 0) continue;
+                if (t < 0 || All[t].Kind > BuildingKind.Processor) continue;
                 var tb = All[t];
                 if (tb.IsTransport)
                 {

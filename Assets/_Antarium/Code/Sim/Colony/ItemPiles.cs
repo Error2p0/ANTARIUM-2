@@ -79,6 +79,20 @@ namespace Antarium.Sim
             Changed = true;
         }
 
+        /// <summary>Moves every pile at <paramref name="from"/> to <paramref name="to"/> (its cell became solid).</summary>
+        public void Relocate(int2 from, int2 to)
+        {
+            if (from.Equals(to)) return;
+            for (int i = _piles.Count - 1; i >= 0; i--)
+            {
+                if (i >= _piles.Count) continue;
+                var p = _piles[i];
+                if (!p.Cell.Equals(from)) continue;
+                Remove(i);
+                Add(to, p.Item, p.Count);
+            }
+        }
+
         public int CountItem(ushort item)
         {
             int total = 0;

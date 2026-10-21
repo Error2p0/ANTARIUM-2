@@ -102,7 +102,7 @@ namespace Antarium.Sim
                     }
                 }
 
-                float upkeepPerMinute = colony.UpkeepPerMinute(sim.Ants.Count) * eff;
+                float upkeepPerMinute = colony.UpkeepPerMinute(sim.Workers, sim.Soldiers) * eff;
                 inv.Food = math.clamp(inv.Food + (foodRate - upkeepPerMinute) * minutes, 0f, inv.FoodCapacity);
                 if (inv.Food <= 0f) report.Starved = true;
                 inv.AddKnowledge(knowledgeRate * minutes, studied: false);

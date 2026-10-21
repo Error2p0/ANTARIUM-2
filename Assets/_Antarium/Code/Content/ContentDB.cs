@@ -19,6 +19,7 @@ namespace Antarium.Content
 
         public bool IsAir => (Flags & MaterialFlags.Air) != 0;
         public bool IsIndestructible => (Flags & MaterialFlags.Indestructible) != 0;
+        public bool IsUnstable => (Flags & MaterialFlags.Unstable) != 0;
     }
 
     /// <summary>Baked recipe: dense item indices instead of asset references.</summary>
@@ -47,6 +48,24 @@ namespace Antarium.Content
         public int[] InputCaps;
         /// <summary>Bit per item index: items this building accepts as input.</summary>
         public ulong InputMask;
+        /// <summary>Wall: the material the cell becomes when finished.</summary>
+        public ushort FillMaterial;
+    }
+
+    /// <summary>Baked enemy: dense loot indices.</summary>
+    public sealed class EnemyData
+    {
+        public EnemyDef Def;
+        public ushort[] DropItems;
+        public int[] DropCounts;
+    }
+
+    /// <summary>Baked biome extras used at runtime (creatures).</summary>
+    public sealed class BiomeData
+    {
+        public BiomeDef Def;
+        /// <summary>Indices into <see cref="ContentDB.Enemies"/>.</summary>
+        public int[] Creatures;
     }
 
     /// <summary>Content of the incremental layer (research, abilities, contracts, random events).</summary>
@@ -56,6 +75,8 @@ namespace Antarium.Content
         public IReadOnlyList<AbilityDef> Abilities;
         public IReadOnlyList<ContractDef> Contracts;
         public IReadOnlyList<RandomEventDef> Events;
+        public IReadOnlyList<EnemyDef> Enemies;
+        public IReadOnlyList<EnemyDef> Raiders;
     }
 
     /// <summary>Baked research node: dense indices.</summary>
@@ -70,6 +91,7 @@ namespace Antarium.Content
         public ResearchEffect[] Stats;
         public int[] UnlockBuildings;
         public int[] UnlockAbilities;
+        public AntCaste[] UnlockCastes;
     }
 
     public sealed class ContractData
@@ -123,6 +145,13 @@ namespace Antarium.Content
         public readonly AbilityDef[] Abilities;
         public readonly ContractData[] Contracts;
         public readonly RandomEventData[] Events;
+        public readonly EnemyData[] Enemies;
+        /// <summary>Indices into <see cref="Enemies"/> of the creatures that raid from the surface.</summary>
+        public readonly int[] Raiders;
+        /// <summary>Biomes top to bottom (same order as <c>WorldGen.biomes</c>).</summary>
+        public readonly BiomeData[] Biomes;
+        /// <summary>Material lava turns into where it meets water.</summary>
+        public readonly ushort FluidReactionMaterial;
         /// <summary>Per building / ability: true if some research unlocks it (it starts locked).</summary>
         public readonly bool[] BuildingStartsLocked;
         public readonly bool[] AbilityStartsLocked;
@@ -135,6 +164,7 @@ namespace Antarium.Content
         readonly Dictionary<string, int> _abilityIndex = new();
         readonly Dictionary<string, int> _contractIndex = new();
         readonly Dictionary<string, int> _eventIndex = new();
+        readonly Dictionary<string, int> _enemyIndex = new();
 
         ContentDB(TerrainMaterialDef[] materials, ItemDef[] items, IReadOnlyList<ItemDef> forage, WorldGenSettings worldGen,
             IReadOnlyList<BuildingDef> buildings, ProgressionContent progression)
@@ -176,6 +206,7 @@ namespace Antarium.Content
                 _recipeIndex[Recipes[i].Def.Id] = i;
 
             progression ??= new ProgressionContent();
+            Enemies = BakeEnemies(progression.Enemies, progression.Raiders, worldGen, out Raiders);
             Abilities = Sorted(progression.Abilities, "ability", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
             for (int i = 0; i < Abilities.Length; i++) _abilityIndex.Add(Abilities[i].Id, i);
             BuildingStartsLocked = new bool[Buildings.Length];
@@ -183,6 +214,61 @@ namespace Antarium.Content
             Research = BakeResearch(progression.Research);
             Contracts = BakeContracts(progression.Contracts);
             Events = BakeEvents(progression.Events);
+
+            Biomes = new BiomeData[worldGen.biomes.Count];
+            for (int i = 0; i < Biomes.Length; i++)
+            {
+                var biome = worldGen.biomes[i];
+                var creatures = new List<int>();
+                if (biome != null)
+                    foreach (var c in biome.creatures)
+                        if (c != null) creatures.Add(GetEnemyIndex(c));
+                Biomes[i] = new BiomeData { Def = biome, Creatures = creatures.ToArray() };
+            }
+            FluidReactionMaterial = worldGen.fluidReactionMaterial != null && _materialIndex.TryGetValue(worldGen.fluidReactionMaterial.Id, out var reaction)
+                ? reaction : AirIndex;
+        }
+
+        /// <summary>
+        /// Enemies: every listed one, plus raiders and biome creatures that are not in the list (tests and
+        /// hand-made databases only list them there).
+        /// </summary>
+        EnemyData[] BakeEnemies(IReadOnlyList<EnemyDef> listed, IReadOnlyList<EnemyDef> raiders, WorldGenSettings worldGen, out int[] raiderIndices)
+        {
+            var all = new List<EnemyDef>();
+            var ids = new HashSet<string>();
+            void Collect(EnemyDef def)
+            {
+                if (def != null && ids.Add(def.Id)) all.Add(def);
+            }
+            if (listed != null) foreach (var e in listed) Collect(e);
+            if (raiders != null) foreach (var e in raiders) Collect(e);
+            foreach (var b in worldGen.biomes)
+                if (b != null) foreach (var e in b.creatures) Collect(e);
+            all.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+
+            var result = new EnemyData[all.Count];
+            for (int i = 0; i < all.Count; i++)
+            {
+                _enemyIndex.Add(all[i].Id, i);
+                var data = new EnemyData { Def = all[i] };
+                Amounts(all[i].drops, $"enemy '{all[i].Id}' drops", out data.DropItems, out data.DropCounts);
+                result[i] = data;
+            }
+            var raiderList = new List<int>();
+            if (raiders != null)
+                foreach (var e in raiders)
+                    if (e != null && !raiderList.Contains(_enemyIndex[e.Id])) raiderList.Add(_enemyIndex[e.Id]);
+            raiderIndices = raiderList.ToArray();
+            return result;
+        }
+
+        public int GetEnemyIndex(EnemyDef def)
+        {
+            if (def == null) throw new ArgumentNullException(nameof(def));
+            if (!_enemyIndex.TryGetValue(def.Id, out var index))
+                throw new KeyNotFoundException($"Enemy '{def.Id}' is not registered in the ContentDatabase.");
+            return index;
         }
 
         static T[] Sorted<T>(IReadOnlyList<T> defs, string what, Comparison<T> order) where T : ContentDef
@@ -229,6 +315,7 @@ namespace Antarium.Content
                 var stats = new List<ResearchEffect>();
                 var buildings = new List<int>();
                 var abilities = new List<int>();
+                var castes = new List<AntCaste>();
                 foreach (var e in def.effects)
                 {
                     switch (e.kind)
@@ -249,11 +336,15 @@ namespace Antarium.Content
                             AbilityStartsLocked[a] = true;
                             break;
                         }
+                        case ResearchEffectKind.UnlockCaste:
+                            if (!castes.Contains(e.caste)) castes.Add(e.caste);
+                            break;
                     }
                 }
                 data.Stats = stats.ToArray();
                 data.UnlockBuildings = buildings.ToArray();
                 data.UnlockAbilities = abilities.ToArray();
+                data.UnlockCastes = castes.ToArray();
                 result[i] = data;
             }
             return result;
@@ -359,6 +450,11 @@ namespace Antarium.Content
                 data.InputItems = inputItems.ToArray();
                 data.InputCaps = inputCaps.ToArray();
                 foreach (ushort item in data.InputItems) data.InputMask |= 1ul << item;
+                if (def.kind == BuildingKind.Wall)
+                {
+                    if (def.fillMaterial == null) throw new ArgumentException($"Wall '{def.Id}' needs a fill material.");
+                    data.FillMaterial = GetMaterialIndex(def.fillMaterial);
+                }
                 buildings[i] = data;
             }
             recipes = recipeList.ToArray();
@@ -396,6 +492,8 @@ namespace Antarium.Content
                     Abilities = database.abilities,
                     Contracts = database.contracts,
                     Events = database.events,
+                    Enemies = database.enemies,
+                    Raiders = database.raiders,
                 });
         }
 
@@ -451,6 +549,7 @@ namespace Antarium.Content
         public bool TryGetAbilityIndex(string id, out int index) => _abilityIndex.TryGetValue(id, out index);
         public bool TryGetContractIndex(string id, out int index) => _contractIndex.TryGetValue(id, out index);
         public bool TryGetEventIndex(string id, out int index) => _eventIndex.TryGetValue(id, out index);
+        public bool TryGetEnemyIndex(string id, out int index) => _enemyIndex.TryGetValue(id, out index);
 
         /// <summary>Index of the biome (top to bottom) at <paramref name="depth"/> cells below the surface, ignoring border warp.</summary>
         public int BiomeAtDepth(int depth)

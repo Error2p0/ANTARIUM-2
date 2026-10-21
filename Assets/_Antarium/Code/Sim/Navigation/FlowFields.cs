@@ -19,6 +19,14 @@ namespace Antarium.Sim
         Home,
         /// <summary>Construction sites (blueprint cells).</summary>
         Build,
+        /// <summary>Enemies (creatures and raiders): soldiers hunt down this field.</summary>
+        Enemies,
+        /// <summary>Guard posts: idle soldiers wait here.</summary>
+        Guard,
+        /// <summary>Every ant: hunting creatures descend this field.</summary>
+        Ants,
+        /// <summary>Where the current raid came from: raiders leave along this field.</summary>
+        Exit,
     }
 
     /// <summary>
@@ -32,7 +40,7 @@ namespace Antarium.Sim
     {
         public const ushort Unreachable = ushort.MaxValue;
         /// <summary>Number of <see cref="FieldKind"/> fields; consumer fields follow them.</summary>
-        public const int KindCount = 5;
+        public const int KindCount = 9;
         /// <summary>Distance units per straight step; a diagonal step costs <see cref="DiagonalCost"/> (≈ √2 ratio).</summary>
         public const int StraightCost = 2;
         public const int DiagonalCost = 3;
