@@ -64,6 +64,11 @@ namespace Antarium.Presentation
             _cellBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, sizeof(uint)) { name = "AntCells" };
             _lightBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, sizeof(uint)) { name = "AntLight" };
             _fluidBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count / 2, sizeof(uint)) { name = "AntFluid" };
+            // New GPU buffers hold whatever memory they were given (often a previous session's): fill them all once.
+            // After this only dirty chunks are uploaded.
+            _cellBuffer.SetData(world.Cells);
+            _lightBuffer.SetData(light.Light);
+            _fluidBuffer.SetData(world.Fluid.Reinterpret<uint>(UnsafeFluidSize));
 
             // Colours are authored in sRGB; buffers are raw floats, so convert to the working colour space here.
             var materials = content.Materials;
