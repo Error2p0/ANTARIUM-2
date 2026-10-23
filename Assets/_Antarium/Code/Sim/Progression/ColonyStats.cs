@@ -14,9 +14,16 @@ namespace Antarium.Sim
         /// <summary>Depth (cells below the surface) of the deepest cell dug out.</summary>
         public int MaxDepth;
         public long AntsHatched;
+        /// <summary>Per <see cref="Antarium.Content.AntCaste"/>: ants of that caste hatched.</summary>
+        public readonly long[] HatchedCaste = new long[Antarium.Content.Castes.Count];
         public int ContractsCompleted;
         public int EventsWon;
         public double KnowledgeEarned;
+        public long EnemiesKilled;
+        public long AntsLost;
+        public int RaidsRepelled;
+        /// <summary>Hidden cells scouts revealed.</summary>
+        public long CellsScouted;
 
         public ColonyStats(int items, int buildings)
         {

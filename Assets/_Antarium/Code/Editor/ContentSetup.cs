@@ -20,6 +20,8 @@ namespace Antarium.Editor
         public const string AbilitiesFolder = Root + "/Abilities";
         public const string ContractsFolder = Root + "/Contracts";
         public const string EventsFolder = Root + "/Events";
+        public const string EnemiesFolder = Root + "/Enemies";
+        public const string CastesFolder = Root + "/Castes";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -39,6 +41,8 @@ namespace Antarium.Editor
             EnsureFolder(AbilitiesFolder);
             EnsureFolder(ContractsFolder);
             EnsureFolder(EventsFolder);
+            EnsureFolder(EnemiesFolder);
+            EnsureFolder(CastesFolder);
 
             var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
             var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
@@ -115,11 +119,19 @@ namespace Antarium.Editor
 
             CreateProgression(copperItem, ironItem, coalItem, amberItem, fossilItem, crystalItem, seedItem, grubItem, copperBar, ironBar,
                 copper, iron, coal, fungusGarden);
+            var raiders = CreateDepthAndDanger(worldGen, topsoil, clayBiome, strata, dirt, copperItem, ironBar, coalItem, crystalItem, amberItem,
+                fungusItem, copperBar, crystal, iron, coal, amber);
+            CreateCastesAndPheromones(copperItem, copperBar, ironBar);
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
             if (database.surfaceForage.Count == 0)
             {
                 database.surfaceForage.Add(seedItem);
+                EditorUtility.SetDirty(database);
+            }
+            if (database.raiders.Count == 0)
+            {
+                database.raiders.AddRange(raiders);
                 EditorUtility.SetDirty(database);
             }
             RebuildDatabase();
@@ -246,6 +258,309 @@ namespace Antarium.Editor
                 duration: 150f, radius: 6f, count: 5, minDepth: 10);
         }
 
+        /// <summary>
+        /// Milestone 5: four deep biomes (crystal caverns, fungal depths, magma zone, ancient ruins), sand, fluid
+        /// pockets, enemies and raiders, soldiers, defense buildings, their research and contracts. Existing biome
+        /// and world-gen assets are extended (never overwritten). Returns the raiders.
+        /// </summary>
+        static EnemyDef[] CreateDepthAndDanger(WorldGenSettings worldGen, BiomeDef topsoil, BiomeDef clay, BiomeDef strata,
+            TerrainMaterialDef dirt, ItemDef copperOre, ItemDef iron, ItemDef coal, ItemDef crystal, ItemDef amber, ItemDef fungus,
+            ItemDef copper, TerrainMaterialDef crystalMat, TerrainMaterialDef ironMat, TerrainMaterialDef coalMat, TerrainMaterialDef amberMat)
+        {
+            var chitin = Item("chitin", "Chitin", "#a8946a");
+            var obsidianItem = Item("obsidian", "Obsidian", "#4a3c62");
+            var relicItem = Item("relic", "Relic", "#e2c66a");
+
+            // Materials.
+            var sand = Mat("sand", "Sand", 0.6f, PixelPattern.Sand, "#c8a868", "#a08850", "#e0c890", "#8a7048", 0.5f, MaterialFlags.Unstable);
+            var quartzite = Mat("quartzite", "Quartzite", 6f, PixelPattern.Rock, "#8e8a9a", "#6a6878", "#b4b0c4", "#d8d4ec", 0.4f);
+            var mycelium = Mat("mycelium", "Mycelium", 1.5f, PixelPattern.Mycelium, "#3e2a3a", "#2a1c28", "#563a50", "#d8c8e0", 0.6f);
+            var giantFungus = Mat("giant_fungus", "Giant Fungus", 1f, PixelPattern.Ore, "#4a2e48", "#331f31", "#6a4466", "#8ef0d0", 0.8f,
+                MaterialFlags.LightEmitting, emission: "#60e0c0", emissionStrength: 0.4f, glow: 0.35f, value: 4);
+            var basalt = Mat("basalt", "Basalt", 7f, PixelPattern.Rock, "#3a3436", "#262224", "#504a4c", "#1a1618", 0.3f);
+            var obsidian = Mat("obsidian", "Obsidian", 8f, PixelPattern.Crystal, "#2a2236", "#1a1424", "#6a5a8a", "#8a7ab0", 0.6f, value: 6);
+            var magmaRock = Mat("magma_rock", "Magma Rock", 6f, PixelPattern.Ore, "#4a2a22", "#2e1a14", "#6a3a2c", "#ff7a2a", 0.6f,
+                MaterialFlags.LightEmitting, emission: "#ff6020", emissionStrength: 0.45f, glow: 0.4f);
+            var ruinBrick = Mat("ruin_brick", "Ruin Brick", 8f, PixelPattern.Brick, "#7a6e5e", "#4a4238", "#9a8e7a", "#5e6a5a", 0.4f);
+            var relic = Mat("relic", "Relic", 6f, PixelPattern.Ore, "#7a6e5e", "#4a4238", "#9a8e7a", "#e8d070", 0.7f, value: 30, glow: 0.2f);
+            var packedEarth = Mat("packed_earth", "Packed Earth", 1.5f, PixelPattern.Soil, "#5e4128", "#3e2a19", "#7d583a", "#4a3220", 0.3f);
+            EnsureDrop(obsidian, obsidianItem);
+            EnsureDrop(relic, relicItem);
+            EnsureDrop(giantFungus, fungus, 2);
+
+            // Enemies.
+            var termite = Enemy("termite", "Termite Raider", EnemyBehavior.Raider, EnemyArt.Termite, 22f, 5f, 1f, 2.6f, 12f,
+                "Raiders from a rival termite mound. They head for the royal chamber, eat your food and leave when full.",
+                drops: new[] { Amt(chitin, 1) }, foodPerSecond: 1f, carryFood: 8f);
+            var centipede = Enemy("centipede", "Centipede", EnemyBehavior.CaveDweller, EnemyArt.Centipede, 60f, 8f, 1f, 2.8f, 12f,
+                "A long hunter of the stone caves.", drops: new[] { Amt(chitin, 2) }, knowledge: 2f);
+            var spider = Enemy("cave_spider", "Cave Spider", EnemyBehavior.CaveDweller, EnemyArt.Spider, 55f, 10f, 0.8f, 3.4f, 16f,
+                "Fast and fierce; it lurks in the crystal caverns.", drops: new[] { Amt(chitin, 2) }, knowledge: 4f);
+            var mite = Enemy("fungal_mite", "Fungal Mite", EnemyBehavior.CaveDweller, EnemyArt.Mite, 14f, 3f, 0.7f, 3f, 12f,
+                "Swarms of the fungal depths. Weak alone, dangerous in numbers; spore gas does not bother them.",
+                drops: new[] { Amt(chitin, 1) }, knowledge: 1f, gasImmune: true);
+            var fireBeetle = Enemy("fire_beetle", "Fire Beetle", EnemyBehavior.CaveDweller, EnemyArt.FireBeetle, 160f, 15f, 1.2f, 1.8f, 10f,
+                "An armoured beetle of the magma zone that walks through lava.",
+                drops: new[] { Amt(chitin, 3), Amt(obsidianItem, 1) }, knowledge: 8f, lavaImmune: true, gasImmune: true);
+            var guardian = Enemy("ruin_guardian", "Ruin Guardian", EnemyBehavior.CaveDweller, EnemyArt.Guardian, 320f, 24f, 1.5f, 1.4f, 12f,
+                "A stone construct left by the lost ant civilization to guard its relics.",
+                drops: new[] { Amt(relicItem, 1) }, knowledge: 20f, lavaImmune: true, gasImmune: true, swims: true);
+
+            // Deep biomes, and extras for the existing ones.
+            var crystalCaverns = Biome("crystal_caverns", "Crystal Caverns", 180, quartzite, 0.02f, 0.38f,
+                Dep(crystalMat, 0.09f, 0.74f), Dep(ironMat, 0.13f, 0.8f), Dep(amberMat, 0.17f, 0.86f));
+            Extras(crystalCaverns, new[] { Pocket(FluidKind.Water, 0.03f, 0.35f) }, new[] { spider }, 160, 4);
+            var fungalDepths = Biome("fungal_depths", "Fungal Depths", 180, mycelium, 0.024f, 0.45f,
+                Dep(giantFungus, 0.09f, 0.55f), Dep(coalMat, 0.11f, 0.72f));
+            Extras(fungalDepths, new[] { Pocket(FluidKind.Gas, 0.035f, 0.3f), Pocket(FluidKind.Water, 0.05f, 0.6f) }, new[] { mite }, 60, 8);
+            var magmaZone = Biome("magma_zone", "Magma Zone", 200, basalt, 0.022f, 0.48f,
+                Dep(obsidian, 0.1f, 0.68f), Dep(ironMat, 0.12f, 0.74f), Dep(magmaRock, 0.08f, 0.68f), Dep(coalMat, 0.12f, 0.8f));
+            Extras(magmaZone, new[] { Pocket(FluidKind.Lava, 0.03f, 0.05f), Pocket(FluidKind.Gas, 0.05f, 0.6f) }, new[] { fireBeetle }, 220, 3);
+            var ruins = Biome("ancient_ruins", "Ancient Ruins", 300, ruinBrick, 0.02f, 1.5f,
+                Dep(relic, 0.2f, 0.84f), Dep(crystalMat, 0.15f, 0.85f));
+            if (!ruins.rooms)
+            {
+                ruins.rooms = true;
+                ruins.roomSize = new Vector2Int(14, 9);
+                ruins.roomChance = 0.6f;
+                EditorUtility.SetDirty(ruins);
+            }
+            Extras(ruins, null, new[] { guardian }, 260, 2);
+
+            EnsureDeposit(topsoil, sand, 0.06f, 0.62f, 8);
+            EnsureDeposit(clay, sand, 0.07f, 0.66f, 0);
+            Extras(clay, new[] { Pocket(FluidKind.Water, 0.04f, 0.35f) }, null, 0, 0);
+            Extras(strata, new[] { Pocket(FluidKind.Water, 0.04f, 0.55f) }, new[] { centipede }, 220, 3);
+
+            bool changed = false;
+            foreach (var b in new[] { crystalCaverns, fungalDepths, magmaZone, ruins })
+            {
+                if (worldGen.biomes.Contains(b)) continue;
+                worldGen.biomes.Add(b);
+                changed = true;
+            }
+            if (worldGen.fluidReactionMaterial == null)
+            {
+                worldGen.fluidReactionMaterial = obsidian;
+                changed = true;
+            }
+            if (changed) EditorUtility.SetDirty(worldGen);
+
+            // Defense buildings.
+            var wall = Building("earth_wall", "Earth Wall", BuildingKind.Wall, 4, "#7d583a", 1.5f,
+                description: "Workers pack the cell back into solid earth: seal off floods, gas and caves. Mine it to open it again.",
+                art: PlaceholderArt.Wall);
+            if (wall.fillMaterial == null)
+            {
+                wall.fillMaterial = packedEarth;
+                EditorUtility.SetDirty(wall);
+            }
+            var gate = Building("resin_gate", "Resin Gate", BuildingKind.Gate, 20, "#c8902a", 3f, cost: new[] { Amt(copper, 4) },
+                description: "Ants walk through; enemies must break it down first. Broken gates are repaired by workers for free.",
+                art: PlaceholderArt.Gate, maxHealth: 150f);
+            var trap = Building("resin_trap", "Resin Trap", BuildingKind.Trap, 21, "#e0b050", 2f, cost: new[] { Amt(copper, 2), Amt(chitin, 2) },
+                description: "On a floor: the first enemy to step on it takes 30 damage and is stuck for 4 seconds. Re-arms after 8 seconds.",
+                art: PlaceholderArt.Trap, trapDamage: 30f, trapHold: 4f, trapRearm: 8f);
+            var post = Building("guard_post", "Guard Post", BuildingKind.GuardPost, 22, "#c03a2a", 1f, cost: new[] { Amt(copperOre, 2) },
+                description: "Idle soldiers wait at the nearest guard post and defend the area around it.", art: PlaceholderArt.GuardPost);
+
+            // Archive: relics are the richest source of knowledge.
+            var studyRelic = Recipe("study_relic", "Study a relic", 12f, new[] { Amt(relicItem, 1) }, new ItemAmount[0], knowledge: 25f);
+            var archive = AssetDatabase.LoadAssetAtPath<BuildingDef>($"{BuildingsFolder}/archive.asset");
+            if (archive != null && !archive.recipes.Contains(studyRelic))
+            {
+                archive.recipes.Add(studyRelic);
+                archive.description = "Studies finds into Knowledge for research: copper 1, crystal shard 4, amber 5, fossil 6, star fragment 12, relic 25.";
+                EditorUtility.SetDirty(archive);
+            }
+
+            // Research: tiers 5 and 6.
+            var jelly = AssetDatabase.LoadAssetAtPath<ResearchDef>($"{ResearchFolder}/royal_jelly.asset");
+            var ironJaws = AssetDatabase.LoadAssetAtPath<ResearchDef>($"{ResearchFolder}/iron_mandibles.asset");
+            var trails = AssetDatabase.LoadAssetAtPath<ResearchDef>($"{ResearchFolder}/foraging_trails.asset");
+            var soldiers = Research("soldier_caste", "Soldier Caste", 4, 0, 40f,
+                "The queen can lay soldiers: tough ants that guard the colony and hunt enemies. Set the share of soldier eggs next to the toolbar. Unlocks the Guard Post.",
+                foodCost: 30f, prerequisites: Prereq(jelly),
+                effects: new[] { ResearchEffect.Unlock(AntCaste.Soldier), ResearchEffect.Unlock(post) });
+            var fortification = Research("fortification", "Fortification", 4, 1, 45f, "Unlocks the Resin Gate and the Resin Trap.",
+                cost: new[] { Amt(iron, 6) }, prerequisites: Prereq(ironJaws),
+                effects: new[] { ResearchEffect.Unlock(gate), ResearchEffect.Unlock(trap) });
+            Research("air_sacs", "Air Sacs", 4, 3, 30f, "Ants take half damage from drowning, lava, gas and cave-ins.",
+                prerequisites: Prereq(trails), effects: new[] { ResearchEffect.Add(StatKind.HazardResistance, 1f) });
+            Research("hardened_carapace", "Hardened Carapace", 5, 0, 60f, "Every ant has 50% more hit points.",
+                cost: new[] { Amt(chitin, 8) }, prerequisites: new[] { soldiers },
+                effects: new[] { ResearchEffect.Add(StatKind.AntHealth, 0.5f) });
+            Research("venom_glands", "Venom Glands", 5, 1, 70f, "Ants bite 50% harder.",
+                cost: new[] { Amt(chitin, 10) }, prerequisites: new[] { soldiers },
+                effects: new[] { ResearchEffect.Add(StatKind.AntAttack, 0.5f) });
+            Research("obsidian_plating", "Obsidian Plating", 5, 2, 60f, "Gates have twice the hit points and traps hit twice as hard.",
+                cost: new[] { Amt(obsidianItem, 6) }, prerequisites: new[] { fortification },
+                effects: new[] { ResearchEffect.Add(StatKind.DefenseStrength, 1f) });
+
+            // Contracts.
+            Contract("pest_control", "Pest Control", ContractKind.KillEnemies, 5, knowledge: 10f, growth: 0.4f, minDepth: 290);
+            Contract("deliver_chitin", "Chitin Collector", ContractKind.Deliver, 6, item: chitin, knowledge: 8f, growth: 0.3f, minDepth: 290, weight: 0.8f);
+            Contract("deliver_crystal", "Crystal Harvest", ContractKind.Deliver, 10, item: crystal, knowledge: 14f, growth: 0.3f, minDepth: 690);
+            Contract("deliver_obsidian", "Volcanic Glass", ContractKind.Deliver, 8, item: obsidianItem, knowledge: 18f, growth: 0.3f, minDepth: 1050);
+            Contract("deliver_relics", "Relic Hunters", ContractKind.Deliver, 3, item: relicItem, knowledge: 30f, growth: 0.25f, minDepth: 1250);
+
+            return new[] { termite };
+        }
+
+        /// <summary>
+        /// Milestone 6: the caste definitions (workers and soldiers take over the numbers that were in GameConfig), the
+        /// Nursery and the Pheromone Emitter, the Pheromone Burst ability, caste and pheromone research, caste contracts.
+        /// </summary>
+        static void CreateCastesAndPheromones(ItemDef copperOre, ItemDef copper, ItemDef iron)
+        {
+            Caste("worker", "Worker", AntCaste.Worker, 0, "#b8401e", "Digs, hauls, builds and supplies machines: the backbone of the colony.",
+                egg: 6f, upkeep: 0.25f, health: 40f, attack: 3f);
+            Caste("soldier", "Soldier", AntCaste.Soldier, 1, "#862612", "Tough fighters: they hunt enemies within reach and guard posts and Defend scent. They never take jobs.",
+                egg: 15f, upkeep: 0.6f, health: 150f, attack: 14f, share: 0.2f, jobs: false);
+            Caste("miner", "Miner", AntCaste.Miner, 2, "#8e8078", "Heavy jaws: digs three times as fast as a worker, but only digs.",
+                egg: 9f, upkeep: 0.35f, health: 50f, attack: 5f, dig: 3f, jobs: false, digJob: 1f);
+            Caste("hauler", "Hauler", AntCaste.Hauler, 3, "#e8c070", "Carries three items at once and walks a little faster; hauls and supplies machines only.",
+                egg: 8f, upkeep: 0.3f, health: 45f, speed: 1.2f, carry: 3, jobs: false, haulJob: 1f, supplyJob: 1f);
+            Caste("nurse", "Nurse", AntCaste.Nurse, 4, "#fff4d8", "Carries eggs from the queen to a Nursery, where they hatch faster and free the queen to lay more.",
+                egg: 6f, upkeep: 0.2f, health: 30f, attack: 1f, jobs: false);
+            Caste("builder", "Builder", AntCaste.Builder, 5, "#9ab050", "Builds three times as fast as a worker, but only builds.",
+                egg: 8f, upkeep: 0.3f, health: 45f, build: 3f, jobs: false, buildJob: 1f);
+            Caste("scout", "Scout", AntCaste.Scout, 6, "#ffc060", "Fast explorer: walks the edge of your tunnels, senses the rock up to 10 cells around (ore it finds glows) and chases golden beetles.",
+                egg: 8f, upkeep: 0.3f, health: 35f, speed: 1.5f, jobs: false, sense: 10);
+            Caste("engineer", "Engineer", AntCaste.Engineer, 7, "#7aaad0", "Tends a working machine: it works 50% faster while an engineer stands by it.",
+                egg: 10f, upkeep: 0.35f, health: 40f, jobs: false, boost: 0.5f);
+
+            var nursery = Building("nursery", "Nursery", BuildingKind.Nursery, 13, "#efe2c0", 6f, size: new Vector2Int(3, 2),
+                cost: new[] { Amt(copperOre, 10) },
+                description: "Nurses bring eggs here from the queen: they hatch 50% faster, and the queen can lay more meanwhile. Holds 6 eggs.",
+                art: PlaceholderArt.Nursery);
+            var emitter = Building("pheromone_emitter", "Pheromone Emitter", BuildingKind.Emitter, 23, "#d8b8a0", 2f,
+                cost: new[] { Amt(copper, 3), Amt(iron, 1) },
+                description: "Keeps one scent from fading within 10 cells (paint the scent first). R picks the scent; click a placed one to change it.",
+                art: PlaceholderArt.Emitter);
+
+            var burst = Ability("pheromone_burst", "Pheromone Burst", AbilityKind.PheromoneBurst, 3, "#ffd27a", 150f,
+                "Every ant within 20 cells of the cursor drops what it is doing and rushes there, 50% faster, for 15 seconds.",
+                duration: 15f, magnitude: 0.5f, radius: 20f);
+
+            ResearchDef Load(string id) => AssetDatabase.LoadAssetAtPath<ResearchDef>($"{ResearchFolder}/{id}.asset");
+            var mandibles = Load("strong_mandibles");
+            var routing = Load("silk_routing");
+            var jelly = Load("royal_jelly");
+            var seismic = Load("seismic_sense");
+            var kilns = Load("hot_kilns");
+            var legs = Load("quick_legs");
+
+            var miners = Research("miner_caste", "Miner Caste", 1, 4, 25f, "The queen can lay miners: they dig three times as fast but do nothing else. Set their share in the castes panel (K).",
+                cost: new[] { Amt(copperOre, 10) }, prerequisites: Prereq(mandibles), effects: new[] { ResearchEffect.Unlock(AntCaste.Miner) });
+            var haulers = Research("hauler_caste", "Hauler Caste", 1, 5, 25f, "The queen can lay haulers: they carry three items at once.",
+                cost: new[] { Amt(copper, 4) }, prerequisites: Prereq(routing), effects: new[] { ResearchEffect.Unlock(AntCaste.Hauler) });
+            Research("builder_caste", "Builder Caste", 2, 4, 30f, "The queen can lay builders: they build three times as fast but do nothing else.",
+                cost: new[] { Amt(iron, 4) }, prerequisites: new[] { miners }, effects: new[] { ResearchEffect.Unlock(AntCaste.Builder) });
+            Research("nurse_caste", "Nurse Caste", 2, 5, 30f, "The queen can lay nurses, who carry eggs to a Nursery (unlocked too) where they hatch faster.",
+                foodCost: 30f, prerequisites: Prereq(jelly), effects: new[] { ResearchEffect.Unlock(AntCaste.Nurse), ResearchEffect.Unlock(nursery) });
+            Research("scout_caste", "Scout Caste", 3, 4, 35f, "The queen can lay scouts: fast explorers that sense ore through the rock around your tunnels and catch golden beetles.",
+                prerequisites: seismic != null ? new[] { seismic, miners } : new[] { miners }, effects: new[] { ResearchEffect.Unlock(AntCaste.Scout) });
+            Research("engineer_caste", "Engineer Caste", 3, 5, 40f, "The queen can lay engineers: a machine works 50% faster while one tends it.",
+                cost: new[] { Amt(iron, 6) }, prerequisites: kilns != null ? new[] { kilns, haulers } : new[] { haulers },
+                effects: new[] { ResearchEffect.Unlock(AntCaste.Engineer) });
+            var glands = Research("scent_glands", "Scent Glands", 1, 6, 20f, "Unlocks the Pheromone Emitter: it keeps a painted scent from fading.",
+                prerequisites: Prereq(legs), effects: new[] { ResearchEffect.Unlock(emitter) });
+            Research("pheromone_burst", "Pheromone Burst", 2, 6, 30f, "Unlocks the Pheromone Burst ability (V): call every ant nearby to one spot.",
+                foodCost: 20f, prerequisites: new[] { glands }, effects: new[] { ResearchEffect.Unlock(burst) });
+
+            // The soldier research now points at the castes panel.
+            var soldier = Load("soldier_caste");
+            if (soldier != null && soldier.description != null && soldier.description.Contains("next to the toolbar"))
+            {
+                soldier.description = "The queen can lay soldiers: tough ants that guard the colony and hunt enemies. Set their share in the castes panel (K). Unlocks the Guard Post.";
+                EditorUtility.SetDirty(soldier);
+            }
+
+            Contract("hatch_miners", "Deep Diggers", ContractKind.HatchCaste, 5, caste: AntCaste.Miner, knowledge: 10f, food: 15f, growth: 0.35f, requires: miners);
+            Contract("hatch_haulers", "Strong Backs", ContractKind.HatchCaste, 5, caste: AntCaste.Hauler, knowledge: 10f, food: 15f, growth: 0.35f, requires: haulers);
+            Contract("hatch_nurses", "Nannies", ContractKind.HatchCaste, 3, caste: AntCaste.Nurse, knowledge: 10f, food: 20f, growth: 0.35f,
+                requires: Load("nurse_caste"));
+        }
+
+        static CasteDef Caste(string id, string displayName, AntCaste caste, int order, string colorHex, string description,
+            float egg, float upkeep, float health, float attack = 3f, float speed = 1f, float dig = 1f, float build = 1f, int carry = 1,
+            float share = 0.1f, bool jobs = true, float digJob = 0f, float haulJob = 0f, float buildJob = 0f, float supplyJob = 0f,
+            int sense = 10, float boost = 0.5f)
+        {
+            return LoadOrCreate<CasteDef>($"{CastesFolder}/{id}.asset", c =>
+            {
+                c.EditorSetIdentity(id, displayName);
+                c.caste = caste;
+                c.order = order;
+                c.color = Hex(colorHex);
+                c.description = description;
+                c.eggFoodCost = egg;
+                c.upkeep = upkeep;
+                c.health = health;
+                c.attack = attack;
+                c.speed = speed;
+                c.dig = dig;
+                c.build = build;
+                c.carry = carry;
+                c.defaultShare = share;
+                c.digJob = jobs ? 1f : digJob;
+                c.haulJob = jobs ? 1f : haulJob;
+                c.buildJob = jobs ? 1f : buildJob;
+                c.supplyJob = jobs ? 1f : supplyJob;
+                c.senseRadius = sense;
+                c.machineBoost = boost;
+            });
+        }
+
+        static ResearchDef[] Prereq(ResearchDef def) => def != null ? new[] { def } : null;
+
+        static BiomeDef.FluidPocket Pocket(FluidKind kind, float scale, float threshold) => new() { kind = kind, scale = scale, threshold = threshold };
+
+        /// <summary>Adds fluid pockets / creatures to a biome that has none yet (keeps hand-edited assets).</summary>
+        static void Extras(BiomeDef biome, BiomeDef.FluidPocket[] pockets, EnemyDef[] creatures, int cellsPerCreature, int maxPerCave)
+        {
+            bool dirty = false;
+            if (pockets != null && biome.fluidPockets.Count == 0)
+            {
+                biome.fluidPockets.AddRange(pockets);
+                dirty = true;
+            }
+            if (creatures != null && biome.creatures.Count == 0)
+            {
+                biome.creatures.AddRange(creatures);
+                biome.caveCellsPerCreature = cellsPerCreature;
+                biome.maxCreaturesPerCave = maxPerCave;
+                dirty = true;
+            }
+            if (dirty) EditorUtility.SetDirty(biome);
+        }
+
+        static EnemyDef Enemy(string id, string displayName, EnemyBehavior behavior, EnemyArt art, float health, float damage, float interval,
+            float speed, float aggro, string description, ItemAmount[] drops = null, float knowledge = 0f, float foodPerSecond = 1f,
+            float carryFood = 10f, bool lavaImmune = false, bool gasImmune = false, bool swims = false)
+        {
+            return LoadOrCreate<EnemyDef>($"{EnemiesFolder}/{id}.asset", e =>
+            {
+                e.EditorSetIdentity(id, displayName);
+                e.behavior = behavior;
+                e.art = art;
+                e.health = health;
+                e.damage = damage;
+                e.attackInterval = interval;
+                e.speed = speed;
+                e.aggroRadius = aggro;
+                e.description = description;
+                e.drops = drops?.ToList() ?? new List<ItemAmount>();
+                e.knowledge = knowledge;
+                e.foodPerSecond = foodPerSecond;
+                e.carryFood = carryFood;
+                e.lavaImmune = lavaImmune;
+                e.gasImmune = gasImmune;
+                e.swims = swims;
+            });
+        }
+
         static AbilityDef Ability(string id, string displayName, AbilityKind kind, int order, string colorHex, float cooldown, string description,
             float duration = 0f, float magnitude = 0f, float radius = 1f, int count = 1)
         {
@@ -282,12 +597,14 @@ namespace Antarium.Editor
 
         static ContractDef Contract(string id, string displayName, ContractKind kind, int amount, int intro = 0, ItemDef item = null,
             BuildingDef building = null, float knowledge = 0f, float food = 0f, ItemAmount[] rewards = null, float growth = 0.3f,
-            float weight = 1f, int minDepth = 0, string description = null)
+            float weight = 1f, int minDepth = 0, string description = null, AntCaste caste = AntCaste.Worker, ResearchDef requires = null)
         {
             return LoadOrCreate<ContractDef>($"{ContractsFolder}/{id}.asset", c =>
             {
                 c.EditorSetIdentity(id, displayName);
                 c.kind = kind;
+                c.caste = caste;
+                c.requires = requires;
                 c.amount = amount;
                 c.introOrder = intro;
                 c.repeatable = intro == 0;
@@ -346,11 +663,14 @@ namespace Antarium.Editor
             database.abilities = FindAll<AbilityDef>();
             database.contracts = FindAll<ContractDef>();
             database.events = FindAll<RandomEventDef>();
+            database.enemies = FindAll<EnemyDef>();
+            database.castes = FindAll<CasteDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
                       $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
-                      $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events.");
+                      $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events, " +
+                      $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes.");
         }
 
         static List<T> FindAll<T>() where T : Object
@@ -426,7 +746,7 @@ namespace Antarium.Editor
 
         static BuildingDef Building(string id, string displayName, BuildingKind kind, int order, string colorHex, float work,
             float speed = 2f, Vector2Int? size = null, ItemAmount[] cost = null, RecipeDef[] recipes = null, string description = null,
-            PlaceholderArt art = PlaceholderArt.Block)
+            PlaceholderArt art = PlaceholderArt.Block, float maxHealth = 120f, float trapDamage = 25f, float trapHold = 4f, float trapRearm = 8f)
         {
             return LoadOrCreate<BuildingDef>($"{BuildingsFolder}/{id}.asset", b =>
             {
@@ -441,13 +761,18 @@ namespace Antarium.Editor
                 b.recipes = recipes?.ToList() ?? new List<RecipeDef>();
                 b.description = description;
                 b.art = art;
+                b.maxHealth = maxHealth;
+                b.trapDamage = trapDamage;
+                b.trapHold = trapHold;
+                b.trapRearm = trapRearm;
             });
         }
 
-        static void EnsureDrop(TerrainMaterialDef material, ItemDef item)
+        static void EnsureDrop(TerrainMaterialDef material, ItemDef item, int amount = 1)
         {
             if (material.drop != null) return;
             material.drop = item;
+            material.dropAmount = amount;
             EditorUtility.SetDirty(material);
         }
 

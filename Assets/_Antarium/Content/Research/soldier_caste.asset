@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: soldier_caste
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: soldier_caste
+  displayName: Soldier Caste
+  description: 'The queen can lay soldiers: tough ants that guard the colony and hunt enemies. Set their share in the castes panel (K). Unlocks the Guard Post.'
+  treePosition: {x: 4, y: 0}
+  knowledgeCost: 40
+  cost: []
+  foodCost: 30
+  prerequisites:
+  - {fileID: 11400000, guid: 9225adea3d2d65c4192cde543be90100, type: 2}
+  effects:
+  - kind: 3
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 1
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: f8df6129a5c260f40b20d0c60e0ca032, type: 2}
+    ability: {fileID: 0}
+    caste: 0

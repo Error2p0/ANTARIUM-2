@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: builder_caste
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: builder_caste
+  displayName: Builder Caste
+  description: 'The queen can lay builders: they build three times as fast but do nothing else.'
+  treePosition: {x: 2, y: 4}
+  knowledgeCost: 30
+  cost:
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 4
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: baa63473440fd024c9e6f35c9d8091f8, type: 2}
+  effects:
+  - kind: 3
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 5

@@ -18,6 +18,10 @@ namespace Antarium.Content
         Build,
         /// <summary>Dig out any cells (workers and the player).</summary>
         DigCells,
+        /// <summary>Defeat this many enemies (creatures and raiders).</summary>
+        KillEnemies,
+        /// <summary>Hatch ants of <see cref="ContractDef.caste"/>.</summary>
+        HatchCaste,
     }
 
     /// <summary>
@@ -32,6 +36,8 @@ namespace Antarium.Content
         public ContractKind kind;
         public ItemDef item;
         public BuildingDef building;
+        [Tooltip("Hatch caste: which caste counts.")]
+        public AntCaste caste;
         [Min(1)] public int amount = 10;
 
         [Header("Offering")]

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Archive
   kind: 4
   paletteOrder: 12
-  description: 'Studies finds into Knowledge for research: copper 1, crystal shard 4, amber 5, fossil 6, star fragment 12.'
+  description: 'Studies finds into Knowledge for research: copper 1, crystal shard 4, amber 5, fossil 6, star fragment 12, relic 25.'
   size: {x: 3, y: 2}
   cost:
   - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
@@ -30,7 +30,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f4eaaf4b7a31694448db257b916d414d, type: 2}
   - {fileID: 11400000, guid: e7463089474993c43af21a67a8ef8f7b, type: 2}
   - {fileID: 11400000, guid: fad94d7d39622c341af739bb5a837b17, type: 2}
+  - {fileID: 11400000, guid: cfcfe63c4fdf3744b8dafea7d2ec0ccf, type: 2}
   inputBatches: 2
   outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
   color: {r: 0.7882353, g: 0.69803923, b: 0.4862745, a: 1}
   art: 3

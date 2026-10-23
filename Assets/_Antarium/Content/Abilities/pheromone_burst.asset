@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3e7cdc898252fa49b26b5e2d7e96482, type: 3}
+  m_Name: pheromone_burst
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.AbilityDef
+  id: pheromone_burst
+  displayName: Pheromone Burst
+  kind: 3
+  description: Every ant within 20 cells of the cursor drops what it is doing and rushes there, 50% faster, for 15 seconds.
+  order: 3
+  cooldown: 150
+  foodCost: 0
+  duration: 15
+  magnitude: 0.5
+  radius: 20
+  count: 1
+  color: {r: 1, g: 0.8235294, b: 0.47843137, a: 1}

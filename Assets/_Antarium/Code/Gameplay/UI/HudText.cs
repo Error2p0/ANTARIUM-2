@@ -60,6 +60,13 @@ namespace Antarium.Gameplay
             if (sb.Length == start) sb.Append("Free");
         }
 
+        /// <summary>"a Cave Spider", "an Ant", "3 Cave Spiders".</summary>
+        public static string Plural(int count, string name)
+        {
+            if (count == 1) return ("AEIOUaeiou".IndexOf(name[0]) >= 0 ? "an " : "a ") + name;
+            return count + " " + (name.EndsWith("s") ? name : name + "s");
+        }
+
         public static string StatName(StatKind stat) => stat switch
         {
             StatKind.WorkerSpeed => "worker speed",
@@ -78,6 +85,10 @@ namespace Antarium.Gameplay
             StatKind.ContractSlots => "contract slots",
             StatKind.KnowledgeGain => "knowledge from studying",
             StatKind.AbilityRecharge => "ability recharge",
+            StatKind.AntHealth => "ant hit points",
+            StatKind.AntAttack => "ant bite damage",
+            StatKind.HazardResistance => "resistance to drowning, lava, gas and cave-ins",
+            StatKind.DefenseStrength => "gate hit points and trap damage",
             _ => stat.ToString(),
         };
 

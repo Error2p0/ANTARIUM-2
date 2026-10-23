@@ -19,10 +19,14 @@ namespace Antarium.Gameplay
 
         readonly UIDocument _document;
         readonly ContentDB _content;
+        readonly RenderConfig _render;
         readonly VisualElement _resources;
         readonly VisualElement _palette;
         readonly Label _alert, _info, _toast;
-        readonly Button[] _toolButtons = new Button[4];
+        readonly Button[] _toolButtons = new Button[5];
+        readonly VisualElement _scentPalette;
+        readonly Button[] _scentButtons = new Button[Pheromones.Count];
+        readonly Button _possessButton, _castesButton;
         readonly Button _overlayButton;
         readonly Label _food, _foodRate, _ants, _eggs, _storage;
         readonly VisualElement _storageEntry;
@@ -37,7 +41,9 @@ namespace Antarium.Gameplay
         readonly Button _researchButton;
         /// <summary>Per building: name of the research that unlocks it (null if it starts unlocked).</summary>
         readonly string[] _unlockedBy;
+        float _caveInToastCooldown;
 
+        public CastesPanel Castes { get; }
         public ContractsPanel Contracts { get; }
         public EventFeed EventFeed { get; }
         public AbilityBar Abilities { get; }
@@ -52,11 +58,15 @@ namespace Antarium.Gameplay
         public event Action<ToolMode> ToolClicked;
         public event Action<int> BuildingClicked;
         public event Action OverlayClicked;
+        public event Action<PheromoneKind> ScentClicked;
+        public event Action PossessClicked;
+        public event Action CastesClicked;
 
-        public HudController(UIDocument document, ContentDB content, float autosaveSeconds)
+        public HudController(UIDocument document, ContentDB content, RenderConfig render, float autosaveSeconds)
         {
             _document = document;
             _content = content;
+            _render = render;
             if (document == null || document.rootVisualElement == null) return;
 
             var root = document.rootVisualElement;
@@ -66,6 +76,8 @@ namespace Antarium.Gameplay
             _info = root.Q<Label>("info");
             _toast = root.Q<Label>("toast");
             _palette = root.Q<VisualElement>("build-palette");
+            _scentPalette = root.Q<VisualElement>("scent-palette");
+            var castes = root.Q<VisualElement>("castes");
             DebugLabel = root.Q<Label>("debug");
             var toolbar = root.Q<VisualElement>("toolbar");
             var contracts = root.Q<VisualElement>("contracts");
@@ -73,7 +85,7 @@ namespace Antarium.Gameplay
             var abilities = root.Q<VisualElement>("abilities");
             _modal = root.Q<VisualElement>("modal");
             if (_resources == null || toolbar == null || _palette == null || _info == null || _toast == null
-                || contracts == null || events == null || abilities == null || _modal == null)
+                || contracts == null || events == null || abilities == null || _modal == null || _scentPalette == null || castes == null)
             {
                 Debug.LogError("HUD layout is missing elements; assign Hud.uxml to the UIDocument.");
                 return;
@@ -99,15 +111,15 @@ namespace Antarium.Gameplay
             AddTool(toolbar, ToolMode.Mine, "2  Mine");
             AddTool(toolbar, ToolMode.Storage, "3  Storage");
             AddTool(toolbar, ToolMode.Build, "4  Build");
-            _researchButton = new Button(() => ResearchToggled?.Invoke()) { text = "T  Research", focusable = false };
-            _researchButton.AddToClassList("tool");
-            _researchButton.AddToClassList("tool--toggle");
-            toolbar.Add(_researchButton);
-            _overlayButton = new Button(() => OverlayClicked?.Invoke()) { text = "O  Flow", focusable = false };
-            _overlayButton.AddToClassList("tool");
-            _overlayButton.AddToClassList("tool--toggle");
-            toolbar.Add(_overlayButton);
+            AddTool(toolbar, ToolMode.Pheromone, "5  Scent");
+            _possessButton = Toggle(toolbar, "F  Possess", () => PossessClicked?.Invoke());
+            _castesButton = Toggle(toolbar, "K  Castes", () => CastesClicked?.Invoke());
+            _castesButton.AddToClassList("hidden");
+            _researchButton = Toggle(toolbar, "T  Research", () => ResearchToggled?.Invoke());
+            _overlayButton = Toggle(toolbar, "O  Flow", () => OverlayClicked?.Invoke());
             Abilities = new AbilityBar(abilities, content);
+            for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
+            Castes = new CastesPanel(castes, content);
 
             _unlockedBy = new string[content.Buildings.Length];
             foreach (var r in content.Research)
@@ -149,8 +161,54 @@ namespace Antarium.Gameplay
         {
             var button = new Button(() => ToolClicked?.Invoke(mode)) { text = text, focusable = false };
             button.AddToClassList("tool");
+            button.AddToClassList("tool--narrow");
             toolbar.Add(button);
             _toolButtons[(int)mode] = button;
+        }
+
+        static Button Toggle(VisualElement toolbar, string text, Action clicked)
+        {
+            var button = new Button(clicked) { text = text, focusable = false };
+            button.AddToClassList("tool");
+            button.AddToClassList("tool--narrow");
+            button.AddToClassList("tool--toggle");
+            toolbar.Add(button);
+            return button;
+        }
+
+        static readonly string[] ScentNames = { "Trail", "Dig here", "Gather", "Defend", "Avoid" };
+        static readonly string[] ScentHints = { "faster, preferred paths", "these orders first", "these piles first", "soldiers patrol", "ants keep out" };
+
+        /// <summary>Display name of a pheromone.</summary>
+        public static string ScentName(PheromoneKind kind) => ScentNames[(int)kind];
+
+        Button AddScent(PheromoneKind kind)
+        {
+            var button = new Button(() => ScentClicked?.Invoke(kind)) { focusable = false };
+            button.AddToClassList("building");
+            button.AddToClassList("scent");
+            var swatch = new VisualElement { pickingMode = PickingMode.Ignore };
+            swatch.AddToClassList("building__swatch");
+            var colors = _render.pheromoneColors;
+            swatch.style.backgroundColor = colors != null && (int)kind < colors.Length ? colors[(int)kind] : Color.white;
+            var text = new VisualElement { pickingMode = PickingMode.Ignore };
+            text.AddToClassList("building__text");
+            var name = new Label(ScentNames[(int)kind]) { pickingMode = PickingMode.Ignore };
+            name.AddToClassList("building__name");
+            var hint = new Label(ScentHints[(int)kind]) { pickingMode = PickingMode.Ignore };
+            hint.AddToClassList("building__cost");
+            text.Add(name);
+            text.Add(hint);
+            button.Add(swatch);
+            button.Add(text);
+            _scentPalette.Add(button);
+            return button;
+        }
+
+        public void SetSelectedScent(PheromoneKind kind)
+        {
+            for (int k = 0; k < _scentButtons.Length; k++)
+                _scentButtons[k]?.EnableInClassList("building--active", k == (int)kind);
         }
 
         Button AddBuilding(int index)
@@ -199,6 +257,7 @@ namespace Antarium.Gameplay
             for (int i = 0; i < _toolButtons.Length; i++)
                 _toolButtons[i]?.EnableInClassList("tool--active", i == (int)mode);
             _palette?.EnableInClassList("hidden", mode != ToolMode.Build);
+            _scentPalette?.EnableInClassList("hidden", mode != ToolMode.Pheromone);
         }
 
         public void SetSelectedBuilding(int index)
@@ -276,6 +335,9 @@ namespace Antarium.Gameplay
                 _sb.Clear().Append("Researched ").Append(data.Def.DisplayName).Append('.');
                 foreach (int b in data.UnlockBuildings) _sb.Append(' ').Append(_content.Buildings[b].Def.DisplayName).Append(" unlocked (4).");
                 foreach (int a in data.UnlockAbilities) _sb.Append(' ').Append(_content.Abilities[a].DisplayName).Append(" unlocked.");
+                foreach (var caste in data.UnlockCastes)
+                    _sb.Append(" The queen now lays ").Append(_content.Caste(caste).DisplayName.ToLowerInvariant())
+                        .Append("s: set their share in the castes panel (K).");
                 ShowToast(_sb.ToString());
             }
             foreach (var e in events.Read<ResearchFailedEvent>())
@@ -297,6 +359,7 @@ namespace Antarium.Gameplay
                     AbilityKind.Frenzy => $"Frenzy! Workers are {Mathf.RoundToInt(def.magnitude * 100f)}% faster for {Mathf.RoundToInt(def.duration)} seconds.",
                     AbilityKind.SeismicSense => e.Amount > 0 ? $"Seismic Sense revealed {e.Amount} hidden finds." : "Seismic Sense found nothing new here.",
                     AbilityKind.RoyalDecree => $"Royal Decree: the queen laid {e.Amount} eggs.",
+                    AbilityKind.PheromoneBurst => $"Pheromone Burst: {e.Amount} {(e.Amount == 1 ? "ant rushes" : "ants rush")} to the spot.",
                     _ => def.DisplayName,
                 });
             }
@@ -308,14 +371,65 @@ namespace Antarium.Gameplay
                     AbilityResult.Locked => $"{name} is locked: unlock it with research (T).",
                     AbilityResult.Cooling => $"{name} is still recharging ({HudText.Duration(sim.Abilities.Cooldown[e.Ability])}).",
                     AbilityResult.CantAfford => $"Not enough food for {name}.",
+                    AbilityResult.NoEffect when e.Ability < _content.Abilities.Length && _content.Abilities[e.Ability].kind == AbilityKind.PheromoneBurst =>
+                        $"No ants close enough to answer the {name}.",
                     AbilityResult.NoEffect => $"{name} has no effect right now.",
                     _ => "Can't use that.",
                 });
             }
             foreach (var e in events.Read<ContractClaimedEvent>())
                 ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
+            if (events.Read<GateBrokenEvent>().Length > 0) ShowToast("Enemies broke a gate! Workers will repair it once it is safe.");
+            if (events.Read<CaveInEvent>().Length > 0 && _caveInToastCooldown <= 0f)
+            {
+                ShowToast("Cave-in! Fallen sand is marked for digging.");
+                _caveInToastCooldown = 15f;
+            }
+            string deaths = DeathToast(events.Read<AntDiedEvent>());
+            if (deaths != null) ShowToast(deaths);
+            foreach (var e in events.Read<PossessionEvent>())
+            {
+                string caste = _content.Caste(e.Caste).DisplayName.ToLowerInvariant();
+                ShowToast(e.Phase switch
+                {
+                    PossessionPhase.Started => $"You control a {caste}. WASD: move. Left mouse: dig / bite. Right mouse or Space: pick up / drop. F: let go.",
+                    PossessionPhase.Died => $"Your {caste} died. You are the colony's mind again.",
+                    PossessionPhase.Missed => "No ant there. Point at an ant and press F.",
+                    _ => $"You let go of the {caste}.",
+                });
+            }
             string eventToast = EventFeed.Consume(events);
             if (eventToast != null) ShowToast(eventToast);
+        }
+
+        /// <summary>"A worker drowned." / "3 ants were killed by Cave Spiders." for this frame's deaths, or null.</summary>
+        string DeathToast(ReadOnlySpan<AntDiedEvent> deaths)
+        {
+            if (deaths.Length == 0) return null;
+            var first = deaths[0];
+            int same = 0;
+            bool mixedCaste = false;
+            foreach (var d in deaths)
+            {
+                if (d.Cause != first.Cause || d.Killer != first.Killer) continue;
+                same++;
+                mixedCaste |= d.Caste != first.Caste;
+            }
+            string who = mixedCaste ? "ant" : _content.Caste(first.Caste).DisplayName.ToLowerInvariant();
+            string subject = same == 1 ? "A " + who : $"{same} {who}s";
+            string verb = same == 1 ? "was" : "were";
+            string text = first.Cause switch
+            {
+                DeathCause.Drowned => $"{subject} drowned.",
+                DeathCause.Burned => $"{subject} burned in lava.",
+                DeathCause.Gassed => $"{subject} choked on gas.",
+                DeathCause.Crushed => $"{subject} {verb} buried by a cave-in.",
+                DeathCause.Killed when first.Killer >= 0 && first.Killer < _content.Enemies.Length =>
+                    $"{subject} {verb} killed by {(same == 1 ? HudText.Plural(1, _content.Enemies[first.Killer].Def.DisplayName) : "enemies")}.",
+                _ => $"{subject} died.",
+            };
+            if (deaths.Length > same) text += $" ({deaths.Length - same} more lost.)";
+            return text;
         }
 
         public string PlaceMessage(PlaceResult result, int def, Simulation sim)
@@ -324,10 +438,14 @@ namespace Antarium.Gameplay
             switch (result)
             {
                 case PlaceResult.Hidden: return "You can only build where you can see.";
+                case PlaceResult.Flooded: return "Can't build in water, gas or lava.";
+                case PlaceResult.Protected: return "Walls can't go into the royal chamber or a storage zone.";
                 case PlaceResult.NotOpen:
-                    return data != null && !data.Def.IsTransport ? "Machines need dug-out space underground." : "Belts need dug-out space or the ground surface.";
+                    if (data != null && data.Def.IsChamber) return "Machines and nurseries need dug-out space underground.";
+                    return data != null && data.Def.IsDefense ? "Needs open space ants can walk on." : "Belts need dug-out space or the ground surface.";
                 case PlaceResult.Occupied: return "Something is already built there.";
-                case PlaceResult.NeedsFloor: return "Machines need a flat, solid floor under their whole width.";
+                case PlaceResult.NeedsFloor:
+                    return data != null && data.Def.kind == BuildingKind.Trap ? "Traps need a solid floor under them." : "Machines need a flat, solid floor under their whole width.";
                 case PlaceResult.OutOfBounds: return "That is outside the world.";
                 case PlaceResult.Locked:
                     return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first (T)." : "Locked.";
@@ -346,14 +464,21 @@ namespace Antarium.Gameplay
 
         /// <param name="targeting">Ability waiting for a click in the world, or -1.</param>
         /// <param name="menuStatus">Line shown in the Esc menu (seed, play time, last save).</param>
-        public void Update(float dt, Simulation sim, int targeting, string menuStatus)
+        public void Update(float dt, Simulation sim, int targeting, string menuStatus, bool possessing = false, bool targetingPossess = false)
         {
+            if (_possessButton != null)
+            {
+                _possessButton.EnableInClassList("tool--possessing", possessing);
+                _possessButton.EnableInClassList("tool--targeting", targetingPossess);
+                _possessButton.text = possessing ? "F  Let go" : "F  Possess";
+            }
             if (_resources == null) return;
             if (_toastTimer > 0f)
             {
                 _toastTimer -= dt;
                 if (_toastTimer <= 0f) _toast.AddToClassList("hidden");
             }
+            if (_caveInToastCooldown > 0f) _caveInToastCooldown -= dt;
             _timer -= dt;
             if (_timer > 0f) return;
             _timer = RefreshInterval;
@@ -361,8 +486,18 @@ namespace Antarium.Gameplay
             var colony = sim.Colony;
             var inv = colony.Inventory;
             _food.text = $"Food {NumberFormat.Format(inv.Food)}/{NumberFormat.Format(inv.FoodCapacity)}";
-            SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.Ants.Count));
-            _ants.text = $"Ants {NumberFormat.Format(sim.Ants.Count)}";
+            SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.AliveByCaste));
+            int specialists = sim.Ants.Count - sim.Workers;
+            _ants.text = specialists > 0
+                ? $"Ants {NumberFormat.Format(sim.Ants.Count)} ({NumberFormat.Format(sim.Workers)} workers)"
+                : $"Ants {NumberFormat.Format(sim.Ants.Count)}";
+            bool castes = CastesPanel.HasSpecialists(sim);
+            _castesButton.EnableInClassList("hidden", !castes);
+            _castesButton.EnableInClassList("tool--on", Castes.Visible);
+            if (!castes) Castes.Hide();
+            Castes.Refresh(sim);
+            for (int k = 0; k < _scentButtons.Length; k++)
+                _scentButtons[k].EnableInClassList("building--locked", !ToolController.ScentAvailable(sim, (PheromoneKind)k));
             _eggs.text = $"Eggs {colony.Eggs.Count}";
             _storage.text = $"Storage {NumberFormat.Format(inv.Stored)}/{NumberFormat.Format(inv.Capacity)}";
             _storageEntry.EnableInClassList("resource--full", inv.Stored >= inv.Capacity);
@@ -398,9 +533,15 @@ namespace Antarium.Gameplay
                 _buildingCosts[i].text = locked ? "Research: " + (_unlockedBy[i] ?? "?") : CostText(_content.Buildings[i]);
             }
 
-            bool starving = colony.Starving;
-            _alert.EnableInClassList("hidden", !starving);
-            if (starving) _alert.text = "The colony is starving: work is slowed and the queen stopped laying.";
+            _sb.Clear();
+            if (colony.QueenDisturbed) _sb.Append("Raiders are in the royal chamber! They eat your food and the queen stopped laying.");
+            if (colony.Starving)
+            {
+                if (_sb.Length > 0) _sb.Append('\n');
+                _sb.Append("The colony is starving: work is slowed and the queen stopped laying.");
+            }
+            _alert.EnableInClassList("hidden", _sb.Length == 0);
+            if (_sb.Length > 0) _alert.text = _sb.ToString();
         }
 
         static void SetRate(Label label, float perMinute)

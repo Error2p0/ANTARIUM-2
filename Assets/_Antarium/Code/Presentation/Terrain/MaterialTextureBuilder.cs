@@ -85,6 +85,64 @@ namespace Antarium.Presentation
                 case PixelPattern.Crystal:
                     Shards(pixels, ref rng, (int)(6 * def.accentAmount + 3), def.accentColor, def.highlightColor);
                     break;
+                case PixelPattern.Brick:
+                    Bricks(pixels, ref rng, mid, light, dark, def.accentColor, def.accentAmount);
+                    break;
+                case PixelPattern.Mycelium:
+                    Threads(pixels, ref rng, (int)(10 * def.accentAmount + 4), def.accentColor, Lighten(def.accentColor));
+                    break;
+                case PixelPattern.Sand:
+                    Speckle(pixels, ref rng, (int)(60 * def.accentAmount + 20), def.accentColor, dark);
+                    break;
+            }
+        }
+
+        /// <summary>Running-bond blocks 8 px wide and 4 px tall: mortar lines, a lit top-left edge, a few cracked or accent blocks.</summary>
+        static void Bricks(Color32[] px, ref Unity.Mathematics.Random rng, Color mid, Color light, Color dark, Color accent, float accentAmount)
+        {
+            const int W = 8, H = 4;
+            for (int row = 0; row < Size / H; row++)
+            {
+                int shift = (row & 1) * (W / 2);
+                for (int b = 0; b < Size / W; b++)
+                {
+                    Color face = rng.NextFloat() < accentAmount * 0.3f ? accent : rng.NextFloat() < 0.3f ? Color.Lerp(mid, dark, 0.35f) : mid;
+                    for (int y = 0; y < H; y++)
+                    for (int x = 0; x < W; x++)
+                    {
+                        Color c = face;
+                        if (y == 0 || x == 0) c = dark;                 // mortar
+                        else if (y == H - 1 || x == 1) c = Color.Lerp(face, light, 0.5f); // lit edge
+                        if (c != dark && rng.NextFloat() < 0.05f) c = Color.Lerp(c, dark, 0.5f);
+                        Set(px, b * W + x + shift, row * H + y, c);
+                    }
+                }
+            }
+        }
+
+        /// <summary>Wandering pale threads (fungal mycelium) with brighter knots.</summary>
+        static void Threads(Color32[] px, ref Unity.Mathematics.Random rng, int count, Color thread, Color knot)
+        {
+            for (int t = 0; t < count; t++)
+            {
+                int2 p = rng.NextInt2(0, Size);
+                int len = rng.NextInt(5, 14);
+                for (int i = 0; i < len; i++)
+                {
+                    Set(px, p.x, p.y, thread);
+                    p += new int2(rng.NextInt(-1, 2), rng.NextInt(-1, 2));
+                }
+                Set(px, p.x, p.y, knot);
+            }
+        }
+
+        /// <summary>Scattered single grains in two colours (sand).</summary>
+        static void Speckle(Color32[] px, ref Unity.Mathematics.Random rng, int count, Color grain, Color shade)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                int2 p = rng.NextInt2(0, Size);
+                Set(px, p.x, p.y, rng.NextBool() ? grain : shade);
             }
         }
 

@@ -44,7 +44,11 @@ namespace Antarium.Sim
         /// Explores all unexplored open cells connected to <paramref name="starts"/> (up to
         /// <paramref name="limit"/>) and reveals the cells around them. Returns the number explored.
         /// </summary>
-        public static int Flood(WorldGrid world, NativeArray<int2> starts, int wallRadius, int limit)
+        public static int Flood(WorldGrid world, NativeArray<int2> starts, int wallRadius, int limit) =>
+            Flood(world, starts, wallRadius, limit, default);
+
+        /// <summary>As <see cref="Flood(WorldGrid, NativeArray{int2}, int, int)"/>; the explored cells are also appended to <paramref name="discovered"/>.</summary>
+        public static int Flood(WorldGrid world, NativeArray<int2> starts, int wallRadius, int limit, NativeList<int2> discovered)
         {
             var visited = new NativeList<int2>(256, Allocator.TempJob);
             try
@@ -61,6 +65,7 @@ namespace Antarium.Sim
                     Radius = wallRadius,
                     Limit = limit,
                 }.Run();
+                if (discovered.IsCreated) discovered.AddRange(visited.AsArray());
                 return visited.Length;
             }
             finally

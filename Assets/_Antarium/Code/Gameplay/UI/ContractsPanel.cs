@@ -119,6 +119,8 @@ namespace Antarium.Gameplay
                 ContractKind.HatchAnts => $"Hatch workers: {progress}",
                 ContractKind.Build => $"Build {_content.Buildings[data.Building].Def.DisplayName}: {progress}",
                 ContractKind.DigCells => $"Dig out cells: {progress}",
+                ContractKind.KillEnemies => $"Defeat enemies: {progress}",
+                ContractKind.HatchCaste => $"Hatch {_content.Caste(data.Def.caste).DisplayName.ToLowerInvariant()}s: {progress}",
                 _ => progress,
             };
         }

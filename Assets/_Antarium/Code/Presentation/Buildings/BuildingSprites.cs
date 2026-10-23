@@ -34,7 +34,16 @@ namespace Antarium.Presentation
         public const int StoredRect = GenericRect + 1;
         public const int StoredWidth = 3, StoredHeight = 2;
         public const int ArchiveRect = StoredRect + 1;      // 2 frames: idle, working
-        const int RectCount = ArchiveRect + 2;
+        public const int GateRect = ArchiveRect + 2;
+        public const int TrapRect = GateRect + 1;           // 2 frames: armed, sprung
+        public const int GuardPostRect = TrapRect + 2;
+        public const int WallRect = GuardPostRect + 1;
+        /// <summary>Brood nursery: silk cradles on a clay ledge (the eggs are drawn by the colony view).</summary>
+        public const int NurseryRect = WallRect + 1;
+        public const int NurseryWidth = 24, NurseryHeight = 16;
+        /// <summary>Pheromone emitter: a gland pod with a vent; its kind shows as a tinted dot.</summary>
+        public const int EmitterRect = NurseryRect + 1;
+        const int RectCount = EmitterRect + 1;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -49,6 +58,9 @@ namespace Antarium.Presentation
         static readonly Color32 Wood = Hex(0x6b4a2c), WoodHigh = Hex(0x93693f), WoodDark = Hex(0x3e2a19), Bone = Hex(0xe8dcc0), BoneShade = Hex(0xb8a888);
         static readonly Color32 AmberLump = Hex(0xe39b2b), BookRed = Hex(0x8a3b2e), BookBlue = Hex(0x2e5a8a), BookGreen = Hex(0x5a7a2e), Page = Hex(0xf4ecd8);
         static readonly Color32 Flame = Hex(0xffc040), FlameHot = Hex(0xfff4b0), Wax = Hex(0xefe6cc);
+        static readonly Color32 Resin = Hex(0xc8902a), ResinDark = Hex(0x7a5218), ResinHigh = Hex(0xf0c060), Tooth = Hex(0xf0e8d8);
+        static readonly Color32 Banner = Hex(0xc03a2a), BannerHigh = Hex(0xe8644a), Earth = Hex(0x5e4128), EarthHigh = Hex(0x7d583a), EarthDark = Hex(0x3e2a19);
+        static readonly Color32 Gland = Hex(0xd8b8a0), GlandHigh = Hex(0xf4e2d0), GlandDark = Hex(0x8a6a58), Vent = Hex(0x4a3428);
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
@@ -88,6 +100,23 @@ namespace Antarium.Presentation
             PaintArchive(24, 32, working: true);
             Rects[ArchiveRect] = Rect(0, 32, ArchiveWidth, ArchiveHeight);
             Rects[ArchiveRect + 1] = Rect(24, 32, ArchiveWidth, ArchiveHeight);
+
+            // Defense: resin gate lattice, a toothed resin trap (armed / sprung), a guard banner, a packed-earth block.
+            Blit(48, 24, new[] { "QHHHHHHQ", "QRQRQRQQ", "QRQRQRQQ", "QHHHHHHQ", "QRQRQRQQ", "QRQRQRQQ", "QHHHHHHQ", "QQQQQQQQ" });
+            Rects[GateRect] = Rect(48, 24, Cell, Cell);
+            Blit(56, 24, new[] { "........", "........", "........", "........", ".T....T.", "TT....TT", "RTR..RTR", "QRRRRRRQ" });
+            Rects[TrapRect] = Rect(56, 24, Cell, Cell);
+            Blit(64, 24, new[] { "........", "........", "........", "........", "........", "...TT...", "RRTTTTRR", "QRRRRRRQ" });
+            Rects[TrapRect + 1] = Rect(64, 24, Cell, Cell);
+            Blit(72, 24, new[] { ".pBBBB..", ".pBbBBB.", ".pBBBB..", ".p......", ".p......", ".p......", ".p......", "ppp....." });
+            Rects[GuardPostRect] = Rect(72, 24, Cell, Cell);
+            Blit(80, 24, new[] { "EEEEEEEE", "EeeEeeeE", "eeeeEeee", "eEeeeeEe", "eeeEeeee", "eeeeeEee", "EeeeeeeE", "oooooooo" });
+            Rects[WallRect] = Rect(80, 24, Cell, Cell);
+
+            PaintNursery(48, 32);
+            Rects[NurseryRect] = Rect(48, 32, NurseryWidth, NurseryHeight);
+            Blit(72, 32, new[] { "...vv...", "..VffV..", ".VffffV.", ".VfFFfV.", "VffFFffV", "VfffffFV", ".VVVVVV.", "oooooooo" });
+            Rects[EmitterRect] = Rect(72, 32, Cell, Cell);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -262,6 +291,36 @@ namespace Antarium.Presentation
             }
         }
 
+        /// <summary>A clay ledge with three silk cradles hanging from a root beam; the eggs lie in the cradles.</summary>
+        void PaintNursery(int ox, int oy)
+        {
+            for (int x = 0; x < NurseryWidth; x++)
+            {
+                Set(ox + x, oy, BrickDark);
+                Set(ox + x, oy + 1, (x * 5) % 7 == 0 ? ClayDark : Brick);
+                Set(ox + x, oy + 14, Root);
+                Set(ox + x, oy + 15, x % 6 == 0 ? RootHigh : Root);
+            }
+            for (int c = 0; c < 3; c++)
+            {
+                int cx = ox + 4 + c * 8;
+                // Strands from the beam down to the cradle.
+                for (int y = 6; y < 14; y++)
+                {
+                    Set(cx - 3, oy + y, (y & 1) == 0 ? SilkMid : SilkDark);
+                    Set(cx + 3, oy + y, (y & 1) == 0 ? SilkDark : SilkMid);
+                }
+                // The cradle: a shallow silk bowl.
+                for (int x = -3; x <= 3; x++)
+                {
+                    Set(cx + x, oy + 2, SilkShadow);
+                    Set(cx + x, oy + 3, math.abs(x) == 3 ? SilkDark : SilkMid);
+                    if (math.abs(x) >= 2) Set(cx + x, oy + 4, SilkHigh);
+                    if (math.abs(x) == 3) Set(cx + x, oy + 5, SilkMid);
+                }
+            }
+        }
+
         void PaintGeneric(int ox, int oy)
         {
             for (int y = 0; y < 16; y++)
@@ -289,6 +348,20 @@ namespace Antarium.Presentation
                         case 'w': c = White; break;
                         case 'g': c = Grey; break;
                         case 'k': c = DarkGrey; break;
+                        case 'R': c = Resin; break;
+                        case 'Q': c = ResinDark; break;
+                        case 'H': c = ResinHigh; break;
+                        case 'T': c = Tooth; break;
+                        case 'B': c = Banner; break;
+                        case 'b': c = BannerHigh; break;
+                        case 'p': c = Wood; break;
+                        case 'e': c = Earth; break;
+                        case 'E': c = EarthHigh; break;
+                        case 'o': c = EarthDark; break;
+                        case 'V': c = GlandDark; break;
+                        case 'f': c = Gland; break;
+                        case 'F': c = GlandHigh; break;
+                        case 'v': c = Vent; break;
                         default: continue;
                     }
                     Set(ox + x, y, c);

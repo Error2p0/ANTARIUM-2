@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da33025706420a84e954e088ef8d3a0e, type: 3}
+  m_Name: hauler
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.CasteDef
+  id: hauler
+  displayName: Hauler
+  caste: 3
+  description: Carries three items at once and walks a little faster; hauls and supplies machines only.
+  order: 3
+  eggFoodCost: 8
+  upkeep: 0.3
+  defaultShare: 0.1
+  health: 45
+  attack: 3
+  speed: 1.2
+  dig: 1
+  build: 1
+  carry: 3
+  digJob: 0
+  haulJob: 1
+  buildJob: 0
+  supplyJob: 1
+  senseRadius: 10
+  machineBoost: 0.5
+  color: {r: 0.9098039, g: 0.7529412, b: 0.4392157, a: 1}

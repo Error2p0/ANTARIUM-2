@@ -46,6 +46,10 @@ namespace Antarium.Sim
         UnknownBuilding,
         /// <summary>Still locked behind research.</summary>
         Locked,
+        /// <summary>The cell is full of water, gas or lava.</summary>
+        Flooded,
+        /// <summary>Walls can't go into the royal chamber or a storage zone.</summary>
+        Protected,
     }
 
     /// <summary>An item riding a transport cell. <see cref="T"/> runs 0 → 1 along the cell.</summary>
@@ -102,8 +106,17 @@ namespace Antarium.Sim
         /// <summary>0..1 progress of the running recipe.</summary>
         public float Craft;
 
+        // Defense
+        /// <summary>Gate: hit points left.</summary>
+        public float Health;
+        /// <summary>Trap: seconds until it is armed again (0 = armed).</summary>
+        public float Rearm;
+
         public bool IsActive => Alive && State == BuildingState.Active;
-        public bool IsTransport => Kind != BuildingKind.Processor;
+        /// <summary>Belts, lifts, splitters and filters.</summary>
+        public bool IsTransport => Kind <= BuildingKind.Filter;
+        /// <summary>An intact gate: ants pass, enemies are stopped.</summary>
+        public bool IsClosedGate => Kind == BuildingKind.Gate && IsActive;
         public bool Contains(int2 c) => math.all(c >= Origin) && math.all(c < Origin + Size);
     }
 
@@ -125,6 +138,8 @@ namespace Antarium.Sim
         public int Crafted;
         /// <summary>Bit per input item with free buffer space (tracked to rebuild consumer fields on change).</summary>
         public ulong NeedMask;
+        /// <summary>Engineers tending it this tick (each adds <see cref="BuildingSystem.EngineerBoost"/> speed).</summary>
+        public int Tenders;
 
         public Machine(int building, BuildingData data)
         {

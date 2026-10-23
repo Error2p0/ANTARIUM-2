@@ -64,7 +64,17 @@ namespace Antarium.Sim
     public readonly struct AntHatchedEvent
     {
         public readonly int2 Cell;
-        public AntHatchedEvent(int2 cell) { Cell = cell; }
+        public readonly Antarium.Content.AntCaste Caste;
+        public AntHatchedEvent(int2 cell, Antarium.Content.AntCaste caste = Antarium.Content.AntCaste.Worker) { Cell = cell; Caste = caste; }
+    }
+
+    /// <summary>The player took control of an ant, let go, lost it, or clicked where there was none.</summary>
+    public readonly struct PossessionEvent
+    {
+        public readonly PossessionPhase Phase;
+        public readonly Antarium.Content.AntCaste Caste;
+        public readonly int2 Cell;
+        public PossessionEvent(PossessionPhase phase, Antarium.Content.AntCaste caste, int2 cell) { Phase = phase; Caste = caste; Cell = cell; }
     }
 
     public readonly struct BuildingPlacedEvent
@@ -156,5 +166,101 @@ namespace Antarium.Sim
         public readonly RandomEventPhase Phase;
         public readonly int2 Cell;
         public RandomEventEvent(int ev, int id, RandomEventPhase phase, int2 cell) { Event = ev; Id = id; Phase = phase; Cell = cell; }
+    }
+}
+
+namespace Antarium.Sim
+{
+    /// <summary>An ant died (and was removed). <see cref="Killer"/> is the enemy definition for <see cref="DeathCause.Killed"/>, else -1.</summary>
+    public readonly struct AntDiedEvent
+    {
+        public readonly int2 Cell;
+        public readonly Antarium.Content.AntCaste Caste;
+        public readonly DeathCause Cause;
+        public readonly int Killer;
+        public AntDiedEvent(int2 cell, Antarium.Content.AntCaste caste, DeathCause cause, int killer) { Cell = cell; Caste = caste; Cause = cause; Killer = killer; }
+    }
+
+    public readonly struct EnemyKilledEvent
+    {
+        public readonly int Def;
+        public readonly int2 Cell;
+        public EnemyKilledEvent(int def, int2 cell) { Def = def; Cell = cell; }
+    }
+
+    /// <summary>A raider got away with <see cref="Food"/> food.</summary>
+    public readonly struct EnemyEscapedEvent
+    {
+        public readonly int Def;
+        public readonly int2 Cell;
+        public readonly float Food;
+        public EnemyEscapedEvent(int def, int2 cell, float food) { Def = def; Cell = cell; Food = food; }
+    }
+
+    /// <summary>The colony broke into a cave where <see cref="Count"/> creatures live (the first is <see cref="Def"/>).</summary>
+    public readonly struct CreaturesFoundEvent
+    {
+        public readonly int Def;
+        public readonly int Count;
+        public readonly int2 Cell;
+        public CreaturesFoundEvent(int def, int count, int2 cell) { Def = def; Count = count; Cell = cell; }
+    }
+
+    public enum RaidPhase : byte
+    {
+        /// <summary>Raiders will arrive in <c>raidWarningSeconds</c>.</summary>
+        Warning,
+        Started,
+        /// <summary>Every raider was killed before taking any food.</summary>
+        Repelled,
+        /// <summary>The raid is over, but raiders got away with food.</summary>
+        Ended,
+    }
+
+    public readonly struct RaidEvent
+    {
+        public readonly RaidPhase Phase;
+        public readonly int Id;
+        /// <summary>Where the raiders come from (on the surface).</summary>
+        public readonly int2 Cell;
+        public readonly int Size;
+        public readonly float FoodLost;
+        public RaidEvent(RaidPhase phase, int id, int2 cell, int size, float foodLost) { Phase = phase; Id = id; Cell = cell; Size = size; FoodLost = foodLost; }
+    }
+
+    public readonly struct TrapTriggeredEvent
+    {
+        public readonly int2 Cell;
+        public readonly int Enemy;
+        public TrapTriggeredEvent(int2 cell, int enemy) { Cell = cell; Enemy = enemy; }
+    }
+
+    /// <summary>Enemies broke a gate; it is a blueprint again until workers repair it.</summary>
+    public readonly struct GateBrokenEvent
+    {
+        public readonly int2 Cell;
+        public GateBrokenEvent(int2 cell) { Cell = cell; }
+    }
+
+    /// <summary>A cell of unstable material (sand) fell into <see cref="Cell"/>.</summary>
+    public readonly struct CaveInEvent
+    {
+        public readonly int2 Cell;
+        public readonly ushort Material;
+        public CaveInEvent(int2 cell, ushort material) { Cell = cell; Material = material; }
+    }
+
+    /// <summary>Lava met water at <see cref="Cell"/> and turned to stone.</summary>
+    public readonly struct FluidReactionEvent
+    {
+        public readonly int2 Cell;
+        public FluidReactionEvent(int2 cell) { Cell = cell; }
+    }
+
+    /// <summary>A wall was finished: its cell is solid again.</summary>
+    public readonly struct WallBuiltEvent
+    {
+        public readonly int2 Cell;
+        public WallBuiltEvent(int2 cell) { Cell = cell; }
     }
 }

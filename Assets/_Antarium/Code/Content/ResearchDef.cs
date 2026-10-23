@@ -42,6 +42,14 @@ namespace Antarium.Content
         KnowledgeGain,
         /// <summary>Multiplier: ability recharge speed.</summary>
         AbilityRecharge,
+        /// <summary>Multiplier: hit points of every ant.</summary>
+        AntHealth,
+        /// <summary>Multiplier: damage ants deal to enemies.</summary>
+        AntAttack,
+        /// <summary>Multiplier: resistance to drowning, lava, gas and cave-ins (damage is divided by it).</summary>
+        HazardResistance,
+        /// <summary>Multiplier: gate hit points and trap damage.</summary>
+        DefenseStrength,
     }
 
     public enum ResearchEffectKind : byte
@@ -50,6 +58,8 @@ namespace Antarium.Content
         Stat,
         UnlockBuilding,
         UnlockAbility,
+        /// <summary>The queen may lay eggs of <see cref="ResearchEffect.caste"/>.</summary>
+        UnlockCaste,
     }
 
     [Serializable]
@@ -60,10 +70,12 @@ namespace Antarium.Content
         public float value;
         public BuildingDef building;
         public AbilityDef ability;
+        public AntCaste caste;
 
         public static ResearchEffect Add(StatKind stat, float value) => new() { kind = ResearchEffectKind.Stat, stat = stat, value = value };
         public static ResearchEffect Unlock(BuildingDef building) => new() { kind = ResearchEffectKind.UnlockBuilding, building = building };
         public static ResearchEffect Unlock(AbilityDef ability) => new() { kind = ResearchEffectKind.UnlockAbility, ability = ability };
+        public static ResearchEffect Unlock(AntCaste caste) => new() { kind = ResearchEffectKind.UnlockCaste, caste = caste };
     }
 
     /// <summary>

@@ -16,6 +16,10 @@ namespace Antarium.Sim
         LightRecompute = 1 << 1,
         /// <summary>Light values changed and must be re-uploaded to the GPU.</summary>
         LightUpload = 1 << 2,
+        /// <summary>Fluid changed and must be re-uploaded to the GPU.</summary>
+        FluidUpload = 1 << 3,
+        /// <summary>Pheromones changed and must be re-uploaded to the GPU.</summary>
+        PheromoneUpload = 1 << 4,
     }
 
     /// <summary>
@@ -52,7 +56,11 @@ namespace Antarium.Sim
         public readonly int Height;
 
         public NativeArray<Cell> Cells;
+        /// <summary>Fluid per cell, same (chunk-major) indexing as <see cref="Cells"/>.</summary>
+        public NativeArray<FluidCell> Fluid;
         public NativeArray<ChunkFlags> Chunks;
+        /// <summary>Water or gas at or above this level blocks navigation (set from the fluid config).</summary>
+        public byte DeepFluid = 128;
 
         /// <summary>Per column: y of the topmost generated ground cell. Depth = SurfaceY[x] - y.</summary>
         public readonly int[] SurfaceY;
@@ -65,6 +73,7 @@ namespace Antarium.Sim
             Width = chunksX * WorldConstants.ChunkSize;
             Height = chunksY * WorldConstants.ChunkSize;
             Cells = new NativeArray<Cell>(Width * Height, Allocator.Persistent);
+            Fluid = new NativeArray<FluidCell>(Width * Height, Allocator.Persistent);
             Chunks = new NativeArray<ChunkFlags>(chunksX * chunksY, Allocator.Persistent);
             SurfaceY = new int[Width];
         }
@@ -93,6 +102,14 @@ namespace Antarium.Sim
             return c;
         }
 
+        /// <summary>The first open cell at or above <paramref name="c"/> (for things inside a cell that became solid).</summary>
+        public int2 OpenAbove(int2 c)
+        {
+            while (c.y < Height - 1 && !Cells[Index(c.x, c.y)].IsOpen)
+                c.y++;
+            return c;
+        }
+
         public void MarkChanged(int x, int y, ChunkFlags flags)
         {
             int chunk = (y >> WorldConstants.ChunkShift) * ChunksX + (x >> WorldConstants.ChunkShift);
@@ -112,6 +129,7 @@ namespace Antarium.Sim
         public void Dispose()
         {
             if (Cells.IsCreated) Cells.Dispose();
+            if (Fluid.IsCreated) Fluid.Dispose();
             if (Chunks.IsCreated) Chunks.Dispose();
         }
     }

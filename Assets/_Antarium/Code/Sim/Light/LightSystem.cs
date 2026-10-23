@@ -21,6 +21,8 @@ namespace Antarium.Sim
     {
         readonly LightConfig _config;
         public NativeArray<uint> Light;
+        /// <summary>Light emitted by a cell holding lava (fraction of the max level per channel).</summary>
+        public float3 LavaEmission;
 
         public LightSystem(WorldGrid world, LightConfig config)
         {
@@ -89,6 +91,8 @@ namespace Antarium.Sim
                 new PropagateJob
                 {
                     Cells = world.Cells,
+                    Fluid = world.Fluid,
+                    Lava = LavaEmission,
                     Materials = materials,
                     Light = Light,
                     ChunksX = world.ChunksX,
@@ -126,8 +130,10 @@ namespace Antarium.Sim
         struct PropagateJob : IJob
         {
             [ReadOnly] public NativeArray<Cell> Cells;
+            [ReadOnly] public NativeArray<FluidCell> Fluid;
             [ReadOnly] public NativeArray<MaterialSim> Materials;
             public NativeArray<uint> Light;
+            public float3 Lava;
 
             public int ChunksX;
             public int4 Src; // xMin, yMin, xMax (exclusive), yMax (exclusive)
@@ -163,7 +169,7 @@ namespace Antarium.Sim
                     for (int lx = 0; lx < w; lx++)
                     {
                         int local = ly * w + lx;
-                        byte e = Emission(Cells[GridIndex.Of(Src.x + lx, Src.y + ly, ChunksX)], channel);
+                        byte e = Emission(GridIndex.Of(Src.x + lx, Src.y + ly, ChunksX), channel);
                         Level[local] = e;
                         if (e > 0) Push(e, local);
                     }
@@ -205,12 +211,15 @@ namespace Antarium.Sim
                 }
             }
 
-            byte Emission(Cell cell, int channel)
+            byte Emission(int index, int channel)
             {
+                var cell = Cells[index];
                 var m = Materials[cell.Material];
                 float e;
                 if (m.IsAir) e = cell.IsOpen ? Sky[channel] : 0f;
                 else e = cell.IsEmpty ? 0f : m.Emission[channel];
+                var f = Fluid[index];
+                if (f.Kind == FluidKind.Lava && f.Level > 0) e = math.max(e, Lava[channel]);
                 return (byte)math.clamp((int)math.round(e * MaxLevel), 0, MaxLevel);
             }
 

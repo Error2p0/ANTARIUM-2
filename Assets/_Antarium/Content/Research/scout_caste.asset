@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: scout_caste
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: scout_caste
+  displayName: Scout Caste
+  description: 'The queen can lay scouts: fast explorers that sense ore through the rock around your tunnels and catch golden beetles.'
+  treePosition: {x: 3, y: 4}
+  knowledgeCost: 35
+  cost: []
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 80f60cdd5630d7146adba849e7849b57, type: 2}
+  - {fileID: 11400000, guid: baa63473440fd024c9e6f35c9d8091f8, type: 2}
+  effects:
+  - kind: 3
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 6

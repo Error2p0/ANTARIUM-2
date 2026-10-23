@@ -9,8 +9,9 @@ namespace Antarium.Gameplay
 {
     /// <summary>
     /// Places buildings from the palette. Belts and lifts are laid by dragging (locked to their axis; the
-    /// drag direction sets the flow), everything else is placed with a click. Clicking a placed filter with
-    /// the filter selected changes its item. Holding the right button removes buildings.
+    /// drag direction sets the flow); walls and gates are painted by dragging; everything else is placed with a
+    /// click. Clicking a placed filter with the filter selected changes its item. Holding the right button
+    /// removes buildings.
     /// </summary>
     public sealed class BuildTool
     {
@@ -27,6 +28,11 @@ namespace Antarium.Gameplay
         public int2 Dir { get; private set; } = new(1, 0);
         /// <summary>Item new filters are set to (the last one chosen).</summary>
         public ushort FilterItem { get; private set; }
+        /// <summary>Pheromone new emitters give off (R cycles it).</summary>
+        public PheromoneKind EmitterKind { get; private set; }
+
+        /// <summary>What a new building of the selected kind is set to: the filter item, or the emitter's pheromone.</summary>
+        ushort NewFilter => SelectedDef != null && SelectedDef.kind == BuildingKind.Emitter ? (ushort)EmitterKind : FilterItem;
         public event Action<int> SelectionChanged;
 
         public BuildTool(ContentDB content) => _content = content;
@@ -45,11 +51,16 @@ namespace Antarium.Gameplay
 
         public void Cycle(int delta) => Select(Selected + delta);
 
-        /// <summary>Belts and lifts flip; filters turn a quarter clockwise.</summary>
+        /// <summary>Belts and lifts flip; filters turn a quarter clockwise; emitters switch to the next pheromone.</summary>
         public void Rotate()
         {
             var def = SelectedDef;
             if (def == null) return;
+            if (def.kind == BuildingKind.Emitter)
+            {
+                EmitterKind = (PheromoneKind)(((int)EmitterKind + 1) % Pheromones.Count);
+                return;
+            }
             Dir = def.kind switch
             {
                 BuildingKind.Belt => new int2(-Dir.x, 0),
@@ -103,14 +114,39 @@ namespace Antarium.Gameplay
                     FilterItem = next;
                     _strokeOnFilter = true;
                 }
-                else if (!def.IsTransport || def.kind == BuildingKind.Splitter || def.kind == BuildingKind.Filter)
+                else if (def.kind == BuildingKind.Emitter && existing >= 0 && sim.Buildings.Get(existing).Kind == BuildingKind.Emitter)
                 {
-                    sim.EnqueueBuild(Selected, OriginFor(cell), Dir, FilterItem);
+                    // Click on a placed emitter: next pheromone.
+                    var next = (PheromoneKind)((sim.Buildings.Get(existing).Filter + 1) % Pheromones.Count);
+                    sim.EnqueueSetFilter(cell, (ushort)next);
+                    EmitterKind = next;
+                    _strokeOnFilter = true;
+                }
+                else if (def.kind != BuildingKind.Wall && def.kind != BuildingKind.Gate
+                         && (!def.IsTransport || def.kind == BuildingKind.Splitter || def.kind == BuildingKind.Filter))
+                {
+                    sim.EnqueueBuild(Selected, OriginFor(cell), Dir, NewFilter);
                 }
             }
             if (!primary) _stroke = false;
 
             bool line = def.kind == BuildingKind.Belt || def.kind == BuildingKind.Lift;
+            bool paint = def.kind == BuildingKind.Wall || def.kind == BuildingKind.Gate;
+            if (_stroke && paint)
+            {
+                // Every cell between the previous and the current pointer cell, so a fast drag leaves no gaps.
+                if (!_hasLast)
+                {
+                    sim.EnqueueBuild(Selected, cell, Dir, NewFilter);
+                    _last = cell;
+                    _hasLast = true;
+                }
+                while (!cell.Equals(_last))
+                {
+                    _last += (int2)math.sign(cell - _last);
+                    sim.EnqueueBuild(Selected, _last, Dir, FilterItem);
+                }
+            }
             if (_stroke && line && !_strokeOnFilter)
             {
                 // Lock the line to its axis so a slightly wobbly drag stays on one row / column.
@@ -141,7 +177,7 @@ namespace Antarium.Gameplay
                     Def = Selected,
                     Origin = origin,
                     Dir = Dir,
-                    Filter = FilterItem,
+                    Filter = NewFilter,
                     Valid = result == PlaceResult.Ok || result == PlaceResult.Rotated || result == PlaceResult.Unchanged,
                 });
             }

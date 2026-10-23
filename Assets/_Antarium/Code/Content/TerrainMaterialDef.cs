@@ -13,6 +13,7 @@ namespace Antarium.Content
         LightEmitting = 1 << 2,
         Flammable = 1 << 3,
         Conductive = 1 << 4,
+        /// <summary>Falls when the cell below is dug out (sand): cave-ins.</summary>
         Unstable = 1 << 5,
     }
 
@@ -25,6 +26,12 @@ namespace Antarium.Content
         Strata,
         Ore,
         Crystal,
+        /// <summary>Mortared blocks (ruins).</summary>
+        Brick,
+        /// <summary>Pale threads over a dark base (fungal depths).</summary>
+        Mycelium,
+        /// <summary>Fine sand with sparse grains.</summary>
+        Sand,
     }
 
     [CreateAssetMenu(menuName = "Antarium/Terrain Material", fileName = "Material")]

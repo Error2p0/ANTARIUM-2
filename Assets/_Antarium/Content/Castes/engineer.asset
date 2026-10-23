@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da33025706420a84e954e088ef8d3a0e, type: 3}
+  m_Name: engineer
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.CasteDef
+  id: engineer
+  displayName: Engineer
+  caste: 7
+  description: 'Tends a working machine: it works 50% faster while an engineer stands by it.'
+  order: 7
+  eggFoodCost: 10
+  upkeep: 0.35
+  defaultShare: 0.1
+  health: 40
+  attack: 3
+  speed: 1
+  dig: 1
+  build: 1
+  carry: 1
+  digJob: 0
+  haulJob: 0
+  buildJob: 0
+  supplyJob: 0
+  senseRadius: 10
+  machineBoost: 0.5
+  color: {r: 0.47843137, g: 0.6666667, b: 0.8156863, a: 1}

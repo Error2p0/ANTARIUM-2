@@ -276,7 +276,7 @@ namespace Antarium.Tests
             c.startingWorkers = 6;
             c.startingFood = 50f;
             c.forageInterval = 1000f;
-            c.workerUpkeep = 0f;
+            _content.WorkerCaste.upkeep = 0f;
             c.queenUpkeep = 0f;
             c.eggInterval = 1000f;
             c.fieldRefreshTicks = 1;

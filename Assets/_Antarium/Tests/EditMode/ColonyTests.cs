@@ -214,7 +214,7 @@ namespace Antarium.Tests
             c.startingWorkers = 4;
             c.startingFood = 50f;
             c.forageInterval = 1000f;
-            c.workerUpkeep = 0f;
+            _content.WorkerCaste.upkeep = 0f;
             c.queenUpkeep = 0f;
             c.eggInterval = 1000f;
             c.fieldRefreshTicks = 1;
@@ -289,7 +289,7 @@ namespace Antarium.Tests
             var c = _content.Config.colony;
             c.eggInterval = 0.5f;
             c.hatchTime = 2f;
-            c.eggFoodCost = 5f;
+            _content.WorkerCaste.eggFoodCost = 5f;
             c.maxEggs = 2;
             float food = _sim.Colony.Inventory.Food;
 

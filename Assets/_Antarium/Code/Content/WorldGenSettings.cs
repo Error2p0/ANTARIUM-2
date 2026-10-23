@@ -34,6 +34,10 @@ namespace Antarium.Content
         [Tooltip("Depth over which caves fade in below caveMinDepth.")]
         [Min(1)] public int caveFadeDepth = 24;
 
+        [Header("Fluids")]
+        [Tooltip("What lava turns into where it meets water.")]
+        public TerrainMaterialDef fluidReactionMaterial;
+
         [Header("Starting nest")]
         [Min(4)] public int nestDepth = 14;
         public Vector2 nestRadius = new(7f, 3.5f);

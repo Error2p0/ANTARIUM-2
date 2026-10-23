@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d5d53a365767843a61fb80a74fb41d, type: 3}
+  m_Name: crystal_caverns
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BiomeDef
+  id: crystal_caverns
+  displayName: Crystal Caverns
+  thickness: 180
+  baseMaterial: {fileID: 11400000, guid: 55f4a6efeb33cd449971e6576cd5b5fe, type: 2}
+  deposits:
+  - material: {fileID: 11400000, guid: 959260656c9bb594c934bda44d4e911c, type: 2}
+    scale: 0.09
+    threshold: 0.74
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 0dd4bfd0cec15104e972dc28786bc7eb, type: 2}
+    scale: 0.13
+    threshold: 0.8
+    minDepth: 0
+    maxDepth: 0
+  - material: {fileID: 11400000, guid: 7def0e179ba399b4cb5c709014eada32, type: 2}
+    scale: 0.17
+    threshold: 0.86
+    minDepth: 0
+    maxDepth: 0
+  caveScale: 0.02
+  caveThreshold: 0.38
+  rooms: 0
+  roomSize: {x: 14, y: 9}
+  roomChance: 0.55
+  fluidPockets:
+  - kind: 1
+    scale: 0.03
+    threshold: 0.35
+  creatures:
+  - {fileID: 11400000, guid: 63ad169b33f49414f8ef3f0519dd767d, type: 2}
+  caveCellsPerCreature: 160
+  maxCreaturesPerCave: 4

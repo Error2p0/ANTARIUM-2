@@ -15,6 +15,18 @@ namespace Antarium.Content
         Filter,
         /// <summary>Multi-cell machine that runs recipes.</summary>
         Processor,
+        /// <summary>Ants walk through; enemies must break it. Destroyed gates turn back into blueprints for repair.</summary>
+        Gate,
+        /// <summary>On a floor: hurts and holds the first enemy that steps on it, then re-arms.</summary>
+        Trap,
+        /// <summary>Soldiers wait at the nearest guard post when there is nothing to fight.</summary>
+        GuardPost,
+        /// <summary>Workers pack the cell back into solid soil (<see cref="BuildingDef.fillMaterial"/>); the building then disappears.</summary>
+        Wall,
+        /// <summary>Multi-cell brood chamber on a floor: nurses bring eggs here, where they hatch faster.</summary>
+        Nursery,
+        /// <summary>Keeps the pheromone of its kind (a <see cref="PheromoneKind"/> in the filter slot) from fading around it.</summary>
+        Emitter,
     }
 
     /// <summary>Which generated placeholder sprite a machine uses until real art exists.</summary>
@@ -24,6 +36,12 @@ namespace Antarium.Content
         Kiln,
         Garden,
         Archive,
+        Gate,
+        Trap,
+        GuardPost,
+        Wall,
+        Nursery,
+        Emitter,
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>
@@ -55,13 +73,38 @@ namespace Antarium.Content
         [Tooltip("Production pauses while this many products wait at the machine (no output belt).")]
         [Min(1)] public int outputLimit = 6;
 
+        [Header("Defense")]
+        [Tooltip("Gate: hit points before enemies break through.")]
+        [Min(1f)] public float maxHealth = 120f;
+        [Tooltip("Trap: damage dealt to the enemy that triggers it.")]
+        [Min(0f)] public float trapDamage = 25f;
+        [Tooltip("Trap: seconds the enemy is held in place.")]
+        [Min(0f)] public float trapHold = 4f;
+        [Tooltip("Trap: seconds to re-arm after triggering.")]
+        [Min(0.1f)] public float trapRearm = 8f;
+        [Tooltip("Wall: the solid material the cell becomes.")]
+        public TerrainMaterialDef fillMaterial;
+
+        [Header("Brood & pheromones")]
+        [Tooltip("Nursery: eggs it holds.")]
+        [Min(1)] public int eggCapacity = 6;
+        [Tooltip("Nursery: eggs inside hatch this much faster (0.5 = +50%).")]
+        [Min(0f)] public float hatchBonus = 0.5f;
+        [Tooltip("Emitter: pheromone of its kind within this many cells never fades.")]
+        [Min(1f)] public float emitterRadius = 10f;
+
         [Header("Presentation")]
         [Tooltip("Colour of the palette swatch.")]
         public Color color = Color.white;
         [Tooltip("Generated sprite for machines (transport cells have their own).")]
         public PlaceholderArt art;
 
-        public bool IsTransport => kind != BuildingKind.Processor;
-        public Vector2Int Footprint => IsTransport ? Vector2Int.one : new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y));
+        /// <summary>Belts, lifts, splitters and filters: one cell that carries items.</summary>
+        public bool IsTransport => kind <= BuildingKind.Filter;
+        /// <summary>Gates, traps, guard posts and walls: one cell, no items.</summary>
+        public bool IsDefense => kind >= BuildingKind.Gate && kind <= BuildingKind.Wall;
+        /// <summary>Machines and nurseries: several cells on a flat floor.</summary>
+        public bool IsChamber => kind == BuildingKind.Processor || kind == BuildingKind.Nursery;
+        public Vector2Int Footprint => IsChamber ? new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y)) : Vector2Int.one;
     }
 }

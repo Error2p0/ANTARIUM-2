@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da33025706420a84e954e088ef8d3a0e, type: 3}
+  m_Name: soldier
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.CasteDef
+  id: soldier
+  displayName: Soldier
+  caste: 1
+  description: 'Tough fighters: they hunt enemies within reach and guard posts and Defend scent. They never take jobs.'
+  order: 1
+  eggFoodCost: 15
+  upkeep: 0.6
+  defaultShare: 0.2
+  health: 150
+  attack: 14
+  speed: 1
+  dig: 1
+  build: 1
+  carry: 1
+  digJob: 0
+  haulJob: 0
+  buildJob: 0
+  supplyJob: 0
+  senseRadius: 10
+  machineBoost: 0.5
+  color: {r: 0.5254902, g: 0.14901961, b: 0.07058824, a: 1}

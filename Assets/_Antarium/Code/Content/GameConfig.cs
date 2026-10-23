@@ -18,6 +18,156 @@ namespace Antarium.Content
         public LogisticsConfig logistics = new();
         public ProgressionConfig progression = new();
         public SaveConfig save = new();
+        public FluidConfig fluids = new();
+        public CombatConfig combat = new();
+        public ThreatConfig threats = new();
+        public CasteConfig castes = new();
+        public PheromoneConfig pheromones = new();
+        public PossessionConfig possession = new();
+    }
+
+    [Serializable]
+    public sealed class CasteConfig
+    {
+        [Tooltip("Step of the caste shares the player sets (0.05 = 0%, 5%, 10%...).")]
+        [Range(0.01f, 0.5f)] public float shareStep = 0.05f;
+        [Tooltip("Most of the colony one specialist caste may be.")]
+        [Range(0f, 1f)] public float maxShare = 0.5f;
+        [Tooltip("Most of the colony all specialist castes together may be (workers keep the rest).")]
+        [Range(0f, 1f)] public float maxTotalShare = 0.8f;
+        [Tooltip("Engineers that may tend one machine at once.")]
+        [Min(1)] public int engineersPerMachine = 1;
+        [Tooltip("Scouts re-plan where the edge of the known tunnels is this often (seconds).")]
+        [Min(0.5f)] public float scoutFieldSeconds = 3f;
+    }
+
+    [Serializable]
+    public sealed class PheromoneConfig
+    {
+        [Tooltip("Strength (of 255) a painted cell loses per second; 1 = it fades in about 4 minutes.")]
+        [Min(0f)] public float decayPerSecond = 1f;
+        [Tooltip("Strength a trail cell regains each time a carrying ant steps onto it.")]
+        [Range(0, 255)] public int trafficRefresh = 6;
+        [Tooltip("Walking speed on trail cells.")]
+        [Min(1f)] public float trailSpeed = 1.5f;
+        [Tooltip("Jobs inside Dig / Gather scent are preferred over jobs up to this many cells closer.")]
+        [Min(0)] public int priorityCells = 40;
+        [Tooltip("Brush radius (cells) for painting pheromones.")]
+        [Min(0.5f)] public float brushRadius = 1.6f;
+        [Tooltip("Ants answering a Pheromone Burst stop once they are this close (cells) to its spot.")]
+        [Min(1)] public int rallyArriveCells = 3;
+    }
+
+    [Serializable]
+    public sealed class PossessionConfig
+    {
+        [Tooltip("The possessed ant walks this much faster than its caste.")]
+        [Min(0.1f)] public float speed = 1.6f;
+        [Tooltip("Dig power of the possessed ant's bite, per hit (like the Dig tool's power).")]
+        [Min(0f)] public float digPower = 0.9f;
+        [Tooltip("Damage of one bite at an enemy.")]
+        [Min(0f)] public float biteDamage = 6f;
+        [Tooltip("How far (cells) from the possessed ant you can dig or bite.")]
+        [Min(1f)] public float reach = 2.5f;
+        [Tooltip("Bites (digging or fighting) per second while the button is held.")]
+        [Min(0.5f)] public float bitesPerSecond = 6f;
+        [Tooltip("The possessed ant takes this share of damage (0.5 = half).")]
+        [Range(0.05f, 1f)] public float damageTaken = 0.5f;
+        [Tooltip("Radius (cells) and intensity of the light that follows the possessed ant.")]
+        [Min(0f)] public float lightRadius = 6f;
+        [Range(0f, 2f)] public float lightIntensity = 0.6f;
+    }
+
+    [Serializable]
+    public sealed class FluidConfig
+    {
+        [Tooltip("Fluids update once every N simulation ticks (2 = 10 times a second).")]
+        [Min(1)] public int ticksPerStep = 2;
+        [Tooltip("Water or gas at or above this level (of 255) blocks ant paths; deep water drowns.")]
+        [Range(1, 255)] public int deepLevel = 128;
+        [Tooltip("Gas at or above this level hurts ants inside it.")]
+        [Range(1, 255)] public int gasHarmLevel = 48;
+        [Tooltip("Lava moves only every N fluid steps (it is thick).")]
+        [Min(1)] public int lavaStepEvery = 4;
+        [Tooltip("Lava only spreads sideways where the level difference is at least this (it heaps up).")]
+        [Range(2, 128)] public int lavaMinDiff = 24;
+        [Tooltip("Lava's sideways flow is divided by this (it creeps).")]
+        [Range(1, 8)] public int lavaThickness = 2;
+        [Tooltip("Water films this thin (or thinner) evaporate over time in explored tunnels.")]
+        [Range(0, 64)] public int evaporateBelow = 8;
+        [Range(0f, 1f)] public float evaporateChance = 0.06f;
+        [Tooltip("Chance per step that gas in explored tunnels thins by one level.")]
+        [Range(0f, 1f)] public float gasDecayChance = 0.35f;
+        [Tooltip("Water lost as steam where water and lava meet (and the lava turns to obsidian).")]
+        [Range(0, 255)] public int steamLoss = 96;
+        [Tooltip("Fluid steps a chunk stays awake after its last change.")]
+        [Min(1)] public int awakeSteps = 12;
+        [Tooltip("Fluid steps run during world generation so lakes start settled.")]
+        [Min(0)] public int settleSteps = 400;
+        [Tooltip("Ant paths are rebuilt for moving fluids (and falling sand) at most this often, in seconds.")]
+        [Min(0.05f)] public float pathRefreshSeconds = 1f;
+        [Tooltip("Colour of the light lava gives off.")]
+        [ColorUsage(false)] public Color lavaLight = new(1f, 0.5f, 0.15f);
+        [Tooltip("Light emitted by lava, as a fraction of the maximum light level.")]
+        [Range(0f, 1f)] public float lavaLightStrength = 0.75f;
+    }
+
+    [Serializable]
+    public sealed class CombatConfig
+    {
+        [Header("Ants (hit points and bite per caste are in the Caste assets)")]
+        [Tooltip("Hit points regained per second after a while without damage.")]
+        [Min(0f)] public float regenPerSecond = 2f;
+        [Min(0f)] public float regenDelay = 6f;
+
+        [Header("Hazards (damage per second)")]
+        [Min(0f)] public float drownDamage = 6f;
+        [Min(0f)] public float lavaDamage = 40f;
+        [Min(0f)] public float gasDamage = 4f;
+        [Tooltip("Damage (once) to an ant buried by falling sand.")]
+        [Min(0f)] public float caveInDamage = 25f;
+        [Tooltip("Ants swim at this share of their walking speed.")]
+        [Range(0.1f, 1f)] public float swimSpeedFactor = 0.55f;
+
+        [Header("Soldiers (egg cost, upkeep and share are in the Caste assets)")]
+        [Tooltip("Soldiers go after enemies within this path distance (cells).")]
+        [Min(1f)] public float soldierRange = 60f;
+        [Tooltip("Idle soldiers stay within this many cells of their guard post.")]
+        [Min(1f)] public float guardRadius = 3f;
+
+        [Header("Defense")]
+        [Tooltip("Hit points an intact gate mends per second.")]
+        [Min(0f)] public float gateRegenPerSecond = 1f;
+    }
+
+    [Serializable]
+    public sealed class ThreatConfig
+    {
+        [Header("Cave creatures")]
+        [Tooltip("Creatures spawn at least this far (cells) from where the colony broke into their cave.")]
+        [Min(0)] public int minSpawnDistance = 8;
+        [Tooltip("Awake cave creatures without prey wander within this many cells of where they spawned.")]
+        [Min(1)] public int leashRadius = 12;
+
+        [Header("Raids")]
+        [Tooltip("No raids before this many seconds into a colony.")]
+        [Min(0f)] public float firstRaidSeconds = 720f;
+        [Tooltip("No raids while the colony has fewer ants than this.")]
+        [Min(0)] public int raidMinAnts = 20;
+        [Min(1f)] public float raidIntervalMin = 420f;
+        [Min(1f)] public float raidIntervalMax = 600f;
+        [Tooltip("Seconds of warning before raiders arrive.")]
+        [Min(0f)] public float raidWarningSeconds = 30f;
+        [Min(1)] public int raidBaseSize = 3;
+        [Tooltip("Extra raiders per ant in the colony.")]
+        [Min(0f)] public float raidPerAnt = 0.08f;
+        [Tooltip("Extra raiders per biome the colony has reached below the first.")]
+        [Min(0f)] public float raidPerBiome = 2f;
+        [Min(1)] public int raidMaxSize = 40;
+        [Tooltip("Raiders arrive on the surface this far (cells) from the nest.")]
+        public Vector2Int raidDistance = new(60, 100);
+        [Tooltip("Knowledge for beating a raid (every raider killed or chased off).")]
+        [Min(0f)] public float raidKnowledge = 10f;
     }
 
     [Serializable]
@@ -98,16 +248,14 @@ namespace Antarium.Content
         [Min(0)] public int storageItemsPerCell = 8;
         [Min(0f)] public float storageFoodPerCell = 6f;
 
-        [Header("Queen & brood")]
-        [Min(0f)] public float eggFoodCost = 6f;
+        [Header("Queen & brood (egg cost per caste is in the Caste assets)")]
         [Min(0.1f)] public float eggInterval = 6f;
         [Min(0)] public int maxEggs = 6;
         [Min(0.1f)] public float hatchTime = 20f;
         [Tooltip("Cells around the queen that count as the royal chamber for deliveries and eggs.")]
         [Min(1)] public int royalRadius = 4;
 
-        [Header("Upkeep (food per minute)")]
-        [Min(0f)] public float workerUpkeep = 0.25f;
+        [Header("Upkeep (food per minute; ants per caste in the Caste assets)")]
         [Min(0f)] public float queenUpkeep = 1.5f;
         [Range(0.05f, 1f)] public float starvingSpeedFactor = 0.5f;
 
@@ -217,6 +365,33 @@ namespace Antarium.Content
         public Color overlayIdleAntColor = new(0.45f, 0.7f, 1f);
         [Tooltip("Brightness of items kept in storage relative to loose items (they sit on the back wall).")]
         [Range(0.3f, 1f)] public float stockBrightness = 0.8f;
+
+        [Header("Fluids")]
+        [Tooltip("Water tint; alpha = how strongly it covers the wall behind it.")]
+        public Color waterColor = new(0.22f, 0.48f, 0.9f, 0.62f);
+        public Color waterSurfaceColor = new(0.62f, 0.85f, 1f, 1f);
+        public Color lavaColor = new(0.95f, 0.36f, 0.08f, 1f);
+        public Color lavaHotColor = new(1f, 0.85f, 0.35f, 1f);
+        [Tooltip("Gas tint; alpha = cover at full density.")]
+        public Color gasColor = new(0.62f, 0.85f, 0.3f, 0.55f);
+
+        [Header("Combat")]
+        public Color healthBarColor = new(0.45f, 0.95f, 0.4f);
+        public Color healthBarBackColor = new(0.15f, 0.05f, 0.05f);
+        public Color enemyHealthBarColor = new(1f, 0.35f, 0.25f);
+        [Tooltip("Sprites flash this colour for a moment when hurt.")]
+        public Color hurtFlashColor = new(1f, 0.45f, 0.4f);
+
+        [Header("Pheromones (in PheromoneKind order: trail, dig, gather, defend, avoid)")]
+        public Color[] pheromoneColors =
+        {
+            new(1f, 0.88f, 0.4f), new(1f, 0.55f, 0.2f), new(0.45f, 0.95f, 0.4f), new(1f, 0.3f, 0.3f), new(0.75f, 0.5f, 1f),
+        };
+        [Tooltip("Share of pixels a full-strength pheromone tints, normally / while the Pheromone tool is active.")]
+        [Range(0f, 1f)] public float pheromoneCover = 0.16f;
+        [Range(0f, 1f)] public float pheromoneToolCover = 0.35f;
+        [Tooltip("Marker over the ant you control.")]
+        public Color possessedColor = new(1f, 0.85f, 0.3f);
     }
 
     [Serializable]
@@ -230,6 +405,8 @@ namespace Antarium.Content
         [Tooltip("Max shake offset in art pixels at full trauma.")]
         [Min(0f)] public float maxShakePixels = 3f;
         [Min(0f)] public float shakeDecay = 2.5f;
+        [Tooltip("How quickly the camera catches up with the ant you control (higher = tighter).")]
+        [Min(0.1f)] public float followSharpness = 8f;
     }
 
     [Serializable]
@@ -242,6 +419,10 @@ namespace Antarium.Content
         [Min(0f)] public float particleSpeed = 4f;
         [Min(0f)] public float particleLifetime = 0.6f;
         [Min(0f)] public float shakePerBreak = 0.06f;
+        [Tooltip("Camera shake per cell of sand that falls (cave-ins); a frame adds at most maxShakePerHit.")]
+        [Min(0f)] public float caveInShake = 0.08f;
+        [Tooltip("Particles when an ant or enemy dies.")]
+        [Min(0)] public int particlesPerDeath = 8;
         [Tooltip("Camera shake when Seismic Sense is used / a meteorite lands.")]
         [Min(0f)] public float seismicShake = 0.5f;
         [Min(0f)] public float meteoriteShake = 0.8f;
