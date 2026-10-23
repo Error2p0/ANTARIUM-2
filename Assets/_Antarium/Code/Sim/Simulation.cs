@@ -13,7 +13,11 @@ namespace Antarium.Sim
     /// </summary>
     public sealed partial class Simulation : IDisposable, IAntIntentHandler
     {
-        enum CommandKind : byte { Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, SoldierShare, TriggerRaid }
+        enum CommandKind : byte
+        {
+            Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
+            Pheromone, Possess, Release, PossessAct, PossessInteract,
+        }
 
         readonly struct Command
         {
@@ -27,14 +31,14 @@ namespace Antarium.Sim
             public readonly int2 Dir;
             public readonly ushort Item;
 
-            public Command(CommandKind kind, float2 cellPos, float radius, float power, bool set)
+            public Command(CommandKind kind, float2 cellPos, float radius, float power, bool set, int def = 0)
             {
                 Kind = kind;
                 CellPos = cellPos;
                 Radius = radius;
                 Power = power;
                 Set = set;
-                Def = 0;
+                Def = def;
                 Cell = default;
                 Dir = default;
                 Item = 0;
@@ -71,10 +75,15 @@ namespace Antarium.Sim
         public readonly RandomEventSystem RandomEvents;
         public readonly FluidSystem Fluids;
         public readonly EnemySystem Enemies;
+        public readonly PheromoneSystem Pheromones;
 
         /// <summary>Soldiers alive (counted once per tick).</summary>
-        public int Soldiers { get; private set; }
-        public int Workers => Ants.Count - Soldiers;
+        public int Soldiers => _alive[(int)AntCaste.Soldier];
+        public int Workers => _alive[(int)AntCaste.Worker];
+        /// <summary>Ants alive per <see cref="AntCaste"/> (counted once per tick).</summary>
+        public IReadOnlyList<int> AliveByCaste => _alive;
+        readonly int[] _alive = new int[Castes.Count];
+        readonly int[] _aliveWithEggs = new int[Castes.Count];
 
         /// <summary>Seconds of simulated time in this colony (saved).</summary>
         public double PlayTime { get; internal set; }
@@ -128,13 +137,15 @@ namespace Antarium.Sim
             _breachStarts = new NativeList<int2>(16, Allocator.Persistent);
             _discovered = new NativeList<int2>(256, Allocator.Persistent);
 
-            Colony = new Colony(content, config.colony, config.combat);
+            Colony = new Colony(content, config.colony, config.castes);
             Colony.QueenCell = FindQueenCell();
             FindRoyalDisplayCells();
             Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat);
+            Buildings.EngineerBoost = content.Caste(AntCaste.Engineer).machineBoost;
             int slots = content.ConsumerSlotCount;
             Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
-            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length);
+            Pheromones = new PheromoneSystem(World, config.pheromones);
+            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length, content.CasteSim);
             for (int i = 0; i < content.Items.Length; i++)
             {
                 int slot = content.ConsumerSlot[i];
@@ -173,7 +184,7 @@ namespace Antarium.Sim
             // Items in transit = carried by ants + riding belts.
             var transit = new int[Content.Items.Length];
             foreach (var a in Ants.Ants)
-                if (a.IsCarrying) transit[a.Carry]++;
+                if (a.IsCarrying) transit[a.Carry] += math.max(1, (int)a.CarryCount);
             foreach (var b in Buildings.All)
             {
                 if (!b.Alive) continue;
@@ -190,7 +201,8 @@ namespace Antarium.Sim
             RefreshFields(force: true);
             World.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload);
             Fluids.WakeAllWithFluid();
-            Soldiers = Ants.CountCaste(AntCaste.Soldier);
+            Ants.CountCastes(_alive, _aliveWithEggs);
+            ValidateNurseryEggs();
             Contracts.Tick();
         }
 
@@ -231,11 +243,31 @@ namespace Antarium.Sim
         /// <summary>Debug: starts random event <paramref name="index"/> now (-1 = a random one).</summary>
         public void EnqueueTriggerEvent(int index) => _pending.Add(new Command(CommandKind.TriggerEvent, index, default, default, 0));
 
-        /// <summary>Sets the share of soldier eggs (0..1, snapped to the configured step).</summary>
-        public void EnqueueSoldierShare(float share) => _pending.Add(new Command(CommandKind.SoldierShare, default, 0f, share, true));
+        /// <summary>Sets the share of a specialist caste's eggs (0..1, snapped to the configured step and limits).</summary>
+        public void EnqueueCasteShare(AntCaste caste, float share) =>
+            _pending.Add(new Command(CommandKind.CasteShare, default, 0f, share, true, (int)caste));
 
         /// <summary>Debug: a raid arrives now.</summary>
         public void EnqueueTriggerRaid() => _pending.Add(new Command(CommandKind.TriggerRaid, 0, default, default, 0));
+
+        /// <summary>Paints (or erases) a circle of pheromone <paramref name="kind"/>.</summary>
+        public void EnqueuePheromone(PheromoneKind kind, float2 cellPos, float radius, bool set) =>
+            _pending.Add(new Command(CommandKind.Pheromone, cellPos, radius, 0f, set, (int)kind));
+
+        /// <summary>Takes control of the ant nearest to <paramref name="cellPos"/> (cell space).</summary>
+        public void EnqueuePossess(float2 cellPos) => _pending.Add(new Command(CommandKind.Possess, cellPos, 0f, 0f, true));
+
+        /// <summary>Lets go of the possessed ant.</summary>
+        public void EnqueueRelease() => _pending.Add(new Command(CommandKind.Release, 0, default, default, 0));
+
+        /// <summary>The possessed ant bites toward <paramref name="cellPos"/>: an enemy there, else the rock (dig power times <paramref name="combo"/>).</summary>
+        public void EnqueuePossessAct(float2 cellPos, float combo) => _pending.Add(new Command(CommandKind.PossessAct, cellPos, 0f, combo, true));
+
+        /// <summary>The possessed ant picks up a pile next to it, or delivers / puts down what it carries.</summary>
+        public void EnqueuePossessInteract() => _pending.Add(new Command(CommandKind.PossessInteract, 0, default, default, 0));
+
+        /// <summary>Direction the player pushes the possessed ant (held keys; zero = stand still). Read every tick.</summary>
+        public int2 PossessInput { get; set; }
 
         /// <summary>Advances the clock and runs the due ticks. Returns the number of ticks run.</summary>
         public int Advance(double deltaTime)
@@ -256,11 +288,16 @@ namespace Antarium.Sim
             PlayTime += dt;
             UpdateColony(dt);
             Abilities.Tick(dt);
+            UpdateEngineers();
             Buildings.Tick(dt);
             Colony.Inventory.UpdateRates(dt, Config.logistics.rateSmoothing);
             Colony.Meter.Update(dt);
             StepHazards(dt);
-            RefreshFields(force: false);
+            Pheromones.Tick(dt, SustainEmitters);
+            UpdateScouts(dt);
+            UpdateRally(dt);
+            RefreshFields(force: _forceFields);
+            _forceFields = false;
 
             var inventory = Colony.Inventory;
             for (int i = 0; i < Content.Items.Length; i++)
@@ -269,10 +306,21 @@ namespace Antarium.Sim
             var mods = Colony.Mods;
             float work = Colony.SpeedFactor * Abilities.WorkFactor;
             Ants.HealthMultiplier = mods.Mult(StatKind.AntHealth);
-            Ants.Think(World, Fields, dt, work * mods.Mult(StatKind.WorkerSpeed), work * mods.Mult(StatKind.WorkerDig),
-                work * mods.Mult(StatKind.BuildSpeed), Ants.JobChances(_digSlots, _haulSlots, Buildings.BuildSlots, supplySlots),
-                mods.Mult(StatKind.HazardResistance));
+            var tick = AntTick.Default(dt);
+            tick.MoveFactor = work * mods.Mult(StatKind.WorkerSpeed);
+            tick.DigFactor = work * mods.Mult(StatKind.WorkerDig);
+            tick.BuildFactor = work * mods.Mult(StatKind.BuildSpeed);
+            tick.HazardResistance = mods.Mult(StatKind.HazardResistance);
+            tick.Chances = Ants.Chances(_digSlots, _haulSlots, Buildings.BuildSlots, supplySlots, NurseSlots());
+            tick.TrailSpeed = Config.pheromones.trailSpeed;
+            tick.RallySpeed = _rallySpeed;
+            tick.RallyArrive = RallyArriveCells * FlowFields.StraightCost;
+            tick.PossessSpeed = Config.possession.speed;
+            tick.PossessDamageTaken = Config.possession.damageTaken;
+            tick.PossessDir = PossessInput;
+            Ants.Think(World, Fields, Pheromones, tick);
             Ants.Resolve(this);
+            ReinforceTrails();
             ProcessCompletedWalls();
             FlushBreaches();
             Enemies.Tick(dt);
@@ -308,7 +356,7 @@ namespace Antarium.Sim
         {
             for (int i = 0; i < count; i++)
                 Ants.Spawn(RandomRoyalFloorCell(), Seed, caste);
-            Soldiers = Ants.CountCaste(AntCaste.Soldier);
+            Ants.CountCastes(_alive, _aliveWithEggs);
         }
 
         // ---------------------------------------------------------------- commands
@@ -327,8 +375,16 @@ namespace Antarium.Sim
                 case CommandKind.Ability: UseAbility(cmd.Def, cmd.Cell); break;
                 case CommandKind.Claim: Contracts.Claim(cmd.Def); break;
                 case CommandKind.Catch: RandomEvents.Catch(cmd.CellPos); break;
-                case CommandKind.SoldierShare: Colony.SetSoldierShare(cmd.Power); break;
+                case CommandKind.CasteShare: Colony.SetCasteShare((AntCaste)cmd.Def, cmd.Power); break;
                 case CommandKind.TriggerRaid: Enemies.TriggerRaid(); break;
+                case CommandKind.Pheromone:
+                    if (cmd.Def >= 0 && cmd.Def < Antarium.Content.Pheromones.Count)
+                        Pheromones.Paint((PheromoneKind)cmd.Def, cmd.CellPos, cmd.Radius, cmd.Set);
+                    break;
+                case CommandKind.Possess: Possess(cmd.CellPos); break;
+                case CommandKind.Release: Release(PossessionPhase.Released); break;
+                case CommandKind.PossessAct: PossessAct(cmd.CellPos, cmd.Power); break;
+                case CommandKind.PossessInteract: PossessInteract(); break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -341,9 +397,12 @@ namespace Antarium.Sim
             }
         }
 
-        void ResolveDig(in Command cmd)
+        void ResolveDig(in Command cmd) => ResolveDig(new DigCommand(cmd.CellPos, cmd.Radius, cmd.Power));
+
+        void ResolveDig(DigCommand command)
         {
             _broken.Clear();
+            var cmd = command;
             var dig = new DigCommand(cmd.CellPos, cmd.Radius, cmd.Power * Colony.Mods.Mult(StatKind.PlayerDig));
             int damaged = Digging.Apply(World, Content.MaterialSim, dig, Config.dig.brushEdgeFactor, Events, _broken, out bool opened);
             if (opened) _terrainChanged = true;
@@ -489,6 +548,7 @@ namespace Antarium.Sim
         void IAntIntentHandler.Handle(in AntIntent intent, ref Ant ant)
         {
             var inventory = Colony.Inventory;
+            if (HandleCasteIntent(intent, ref ant)) return;
             switch (intent.Kind)
             {
                 case IntentKind.Dig:
@@ -506,10 +566,15 @@ namespace Antarium.Sim
                 case IntentKind.Pickup:
                     if (Colony.Piles.TryTake(intent.Cell, inventory, out ushort item))
                     {
+                        // Haulers take more of the same item from the pile while it still fits somewhere.
+                        int capacity = Ants.Caste(ant.Caste).Carry;
+                        int count = 1;
+                        while (count < capacity && Colony.Piles.TryTakeItem(intent.Cell, item, inventory)) count++;
                         ant.Carry = item;
+                        ant.CarryCount = (byte)count;
                         ant.State = AntState.Carrying;
                         ant.Dest = CarryDest.Undecided;
-                        inventory.BeginTransit(item);
+                        for (int n = 0; n < count; n++) inventory.BeginTransit(item);
                     }
                     else ant.State = AntState.Idle;
                     break;
@@ -517,16 +582,12 @@ namespace Antarium.Sim
                 {
                     // A machine that needs the item first, then the stock, then a belt that can take it.
                     int2 c = intent.Cell;
-                    ushort carried = ant.Carry;
-                    bool delivered = ant.IsCarrying
-                                     && (Buildings.TryFeed(c, carried)
-                                         || (Colony.IsStockCell(c, World.Index(c.x, c.y)) && inventory.Deliver(carried, c))
-                                         || Buildings.TryLoad(c, carried));
-                    if (delivered)
+                    int delivered = DeliverCarried(ref ant, c);
+                    if (!ant.IsCarrying) ant.State = AntState.Idle;
+                    else if (delivered > 0)
                     {
-                        Events.Publish(new ItemDeliveredEvent(c, carried));
-                        ant.Carry = ContentDB.NoItem;
-                        ant.State = AntState.Idle;
+                        ant.State = AntState.Carrying; // some left over: pick a new destination for the rest
+                        ant.Dest = CarryDest.Undecided;
                     }
                     else
                     {
@@ -541,29 +602,66 @@ namespace Antarium.Sim
                 case IntentKind.Withdraw:
                 {
                     int2 c = intent.Cell;
-                    if (!ant.IsCarrying && inventory.TryWithdraw(ant.Want, World.Index(c.x, c.y), Colony.IsRoyalCell(c)))
+                    int index = World.Index(c.x, c.y);
+                    bool royal = Colony.IsRoyalCell(c);
+                    if (!ant.IsCarrying && inventory.TryWithdraw(ant.Want, index, royal))
                     {
+                        // Haulers fetch as many as machines still want (shared with the others fetching this tick).
+                        int count = 1, capacity = Ants.Caste(ant.Caste).Carry;
+                        while (count < capacity && Ants.SupplyNeed[ant.Want] > 0 && inventory.TryWithdraw(ant.Want, index, royal))
+                        {
+                            Ants.SupplyNeed[ant.Want]--;
+                            count++;
+                        }
                         ant.Carry = ant.Want;
+                        ant.CarryCount = (byte)count;
                         ant.State = AntState.Carrying;
                         ant.Dest = CarryDest.Consumer;
-                        inventory.BeginTransit(ant.Carry);
+                        for (int n = 0; n < count; n++) inventory.BeginTransit(ant.Carry);
                     }
                     else ant.State = AntState.Idle;
                     break;
                 }
                 case IntentKind.Drop:
-                    if (ant.IsCarrying)
-                    {
-                        int2 land = World.FloorBelow(intent.Cell);
-                        inventory.CancelTransit(ant.Carry);
-                        Colony.Piles.Add(land, ant.Carry, 1);
-                        Events.Publish(new ItemDroppedEvent(land, ant.Carry));
-                        ant.Carry = ContentDB.NoItem;
-                    }
+                    DropCarried(ref ant, intent.Cell);
                     ant.State = AntState.Wander;
                     ant.Timer = 2f;
                     break;
             }
+        }
+
+        /// <summary>
+        /// Hands carried items over at <paramref name="c"/>, one at a time: a machine that needs them first, then the stock,
+        /// then a belt that can take them. Returns how many were delivered.
+        /// </summary>
+        int DeliverCarried(ref Ant ant, int2 c)
+        {
+            var inventory = Colony.Inventory;
+            bool stockCell = Colony.IsStockCell(c, World.Index(c.x, c.y));
+            int delivered = 0;
+            while (ant.IsCarrying)
+            {
+                ushort carried = ant.Carry;
+                bool ok = Buildings.TryFeed(c, carried) || (stockCell && inventory.Deliver(carried, c)) || Buildings.TryLoad(c, carried);
+                if (!ok) break;
+                Events.Publish(new ItemDeliveredEvent(c, carried));
+                delivered++;
+                if (ant.CarryCount > 1) ant.CarryCount--;
+                else ant.ClearCarry();
+            }
+            return delivered;
+        }
+
+        /// <summary>Puts everything the ant carries down as a pile below <paramref name="c"/>.</summary>
+        void DropCarried(ref Ant ant, int2 c)
+        {
+            if (!ant.IsCarrying) return;
+            int2 land = World.FloorBelow(c);
+            int count = math.max(1, (int)ant.CarryCount);
+            for (int n = 0; n < count; n++) Colony.Inventory.CancelTransit(ant.Carry);
+            Colony.Piles.Add(land, ant.Carry, count);
+            Events.Publish(new ItemDroppedEvent(land, ant.Carry));
+            ant.ClearCarry();
         }
 
         // ---------------------------------------------------------------- abilities, rewards, event helpers
@@ -580,6 +678,10 @@ namespace Antarium.Sim
                     case AbilityKind.SeismicSense: amount = RevealOre(cell, def.radius); break;
                     case AbilityKind.RoyalDecree:
                         amount = LayEggsNow(def.count);
+                        if (amount == 0) result = AbilityResult.NoEffect;
+                        break;
+                    case AbilityKind.PheromoneBurst:
+                        amount = StartRally(cell, def);
                         if (amount == 0) result = AbilityResult.NoEffect;
                         break;
                 }
@@ -673,23 +775,32 @@ namespace Antarium.Sim
 
         void UpdateColony(float dt)
         {
-            Soldiers = Ants.CountCaste(AntCaste.Soldier);
-            Colony.UpdateUpkeep(Ants.Count - Soldiers, Soldiers, dt);
+            Ants.CountCastes(_alive, _aliveWithEggs);
+            Colony.UpdateUpkeep(_alive, dt);
             Colony.QueenDisturbed = Enemies.RaidersInChamber;
 
-            if (TryFindEggCell(out int2 eggCell) && Colony.TryLayEgg(dt, eggCell, Ants.Count, Soldiers))
-                Events.Publish(new EggLaidEvent(eggCell));
-
-            _hatched.Clear();
-            Colony.UpdateEggs(dt, _hatched);
-            foreach (var egg in _hatched)
+            if (TryFindEggCell(out int2 eggCell) && Colony.TryLayEgg(dt, eggCell, _aliveWithEggs))
             {
-                Ants.Spawn(egg.Cell, Seed, egg.Caste);
-                Colony.Stats.AntsHatched++;
-                Events.Publish(new AntHatchedEvent(egg.Cell));
+                Events.Publish(new EggLaidEvent(eggCell));
+                _broodChanged = true;
             }
 
+            _hatched.Clear();
+            Colony.UpdateEggs(dt, _hatched, NurseryBonus);
+            foreach (var egg in _hatched) Hatch(egg.Cell, egg.Caste);
+            if (_hatched.Count > 0) _broodChanged = true;
+            AgeCarriedEggs(dt);
+
             UpdateForage(dt);
+        }
+
+        void Hatch(int2 cell, AntCaste caste)
+        {
+            Ants.Spawn(cell, Seed, caste);
+            _alive[(int)caste]++;
+            Colony.Stats.AntsHatched++;
+            Colony.Stats.HatchedCaste[(int)caste]++;
+            Events.Publish(new AntHatchedEvent(cell, caste));
         }
 
         void UpdateForage(float dt)
@@ -781,7 +892,7 @@ namespace Antarium.Sim
                 cell = cells[_rng.NextInt(cells.Count)];
                 bool taken = false;
                 foreach (var egg in Colony.Eggs)
-                    if (egg.Cell.Equals(cell)) { taken = true; break; }
+                    if (!egg.InNursery && egg.Cell.Equals(cell)) { taken = true; break; }
                 if (!taken) return true;
             }
             cell = Colony.QueenCell;
@@ -823,6 +934,15 @@ namespace Antarium.Sim
                         Fields.MarkDirty(FlowFields.ConsumerField(slot));
                 }
             }
+            // Pheromones: trails and Avoid change step costs; Dig / Gather / Defend change which jobs come first.
+            int scents = Pheromones.ChangedKinds;
+            Pheromones.ChangedKinds = 0;
+            if ((scents & (Bit(PheromoneKind.Trail) | Bit(PheromoneKind.Avoid))) != 0) Fields.MarkScentedDirty();
+            if ((scents & Bit(PheromoneKind.Dig)) != 0) Fields.MarkDirty(FieldKind.Dig);
+            if ((scents & Bit(PheromoneKind.Gather)) != 0) Fields.MarkDirty(FieldKind.Items);
+            if ((scents & Bit(PheromoneKind.Defend)) != 0) Fields.MarkDirty(FieldKind.Guard);
+            MarkCasteFieldsDirty();
+
             _terrainChanged = _designationsChanged = _storageChanged = false;
             Buildings.DropoffChanged = Buildings.BlueprintsChanged = Buildings.GuardsChanged = false;
             Buildings.ConsumersChanged = 0;
@@ -837,31 +957,44 @@ namespace Antarium.Sim
             _ticksSinceFieldRefresh = 0;
 
             var nav = new NavGrid(World);
+            int priorityOffset = Config.pheromones.priorityCells * FlowFields.StraightCost;
             if (Fields.IsDirty(FieldKind.Dig))
             {
+                // Orders inside Dig scent start at 0, the others "late"; none inside Avoid scent.
                 var sources = Fields.Sources(FieldKind.Dig);
+                var late = Fields.LateSources(FieldKind.Dig, priorityOffset);
                 sources.Clear();
+                late.Clear();
+                bool anyScent = Pheromones.Cells[(int)PheromoneKind.Dig] > 0;
                 foreach (int index in Colony.Designated)
                 {
+                    if (Pheromones.Has(PheromoneKind.Avoid, index)) continue;
                     int2 c = GridIndex.ToCell(index, World.ChunksX);
+                    bool scented = Pheromones.Has(PheromoneKind.Dig, index);
                     for (int d = 0; d < NavGrid.DirectionCount; d++)
                     {
                         int2 n = c + NavGrid.Direction(d);
-                        if (nav.IsWalkable(n)) sources.Add(n);
+                        if (!nav.IsWalkable(n) || Pheromones.Has(PheromoneKind.Avoid, n)) continue;
+                        bool first = !anyScent || scented || Pheromones.Has(PheromoneKind.Dig, n);
+                        (first ? sources : late).Add(n);
                     }
                 }
-                _digSlots = sources.Length * Config.worker.diggersPerFrontierCell;
+                _digSlots = (sources.Length + late.Length) * Config.worker.diggersPerFrontierCell;
             }
             if (Fields.IsDirty(FieldKind.Items))
             {
                 var sources = Fields.Sources(FieldKind.Items);
+                var late = Fields.LateSources(FieldKind.Items, priorityOffset);
                 sources.Clear();
+                late.Clear();
                 _haulSlots = 0;
+                bool anyScent = Pheromones.Cells[(int)PheromoneKind.Gather] > 0;
                 for (int i = 0; i < Colony.Piles.Count; i++)
                 {
                     var p = Colony.Piles[i];
-                    if (!Colony.Inventory.CanAccept(p.Item)) continue;
-                    sources.Add(p.Cell);
+                    if (!Colony.Inventory.CanAccept(p.Item) || Pheromones.Has(PheromoneKind.Avoid, p.Cell)) continue;
+                    bool first = !anyScent || Pheromones.Has(PheromoneKind.Gather, p.Cell);
+                    (first ? sources : late).Add(p.Cell);
                     _haulSlots += p.Count;
                 }
             }
@@ -879,6 +1012,8 @@ namespace Antarium.Sim
                 var sources = Fields.Sources(FieldKind.Build);
                 sources.Clear();
                 Buildings.AddBuildSources(sources);
+                for (int i = sources.Length - 1; i >= 0; i--)
+                    if (Pheromones.Has(PheromoneKind.Avoid, sources[i])) sources.RemoveAtSwapBack(i);
             }
             for (int i = 0; i < Content.Items.Length; i++)
             {
@@ -920,7 +1055,9 @@ namespace Antarium.Sim
                 var sources = Fields.Sources(FieldKind.Guard);
                 sources.Clear();
                 Buildings.AddGuardSources(sources);
+                Pheromones.AddCells(PheromoneKind.Defend, sources);
             }
+            FillCasteSources();
             if (Fields.IsDirty(FieldKind.Ants))
             {
                 var sources = Fields.Sources(FieldKind.Ants);
@@ -934,8 +1071,10 @@ namespace Antarium.Sim
                 sources.Clear();
                 if (Enemies.AnyLeaving) sources.Add(Enemies.RaidCell);
             }
-            Fields.Rebuild(World);
+            Fields.Rebuild(World, Pheromones);
         }
+
+        static int Bit(PheromoneKind kind) => 1 << (int)kind;
 
         void AddRoyalCells(NativeList<int2> sources, int radius)
         {
@@ -953,6 +1092,8 @@ namespace Antarium.Sim
 
         public void Dispose()
         {
+            Pheromones.Dispose();
+            if (_frontier.IsCreated) _frontier.Dispose();
             Ants.Dispose();
             Buildings.Dispose();
             Fields.Dispose();

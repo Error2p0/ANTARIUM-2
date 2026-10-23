@@ -15,7 +15,11 @@ namespace Antarium.Tests
         public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed;
         public readonly BiomeDef Topsoil, Deep;
         public readonly ItemDef Ore, Seed, Bar, Chitin;
-        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab, Gate, Trap, Post, Wall;
+        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter;
+        public readonly CasteDef WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste, EngineerCaste;
+        /// <summary>Unlocks every specialist caste but soldiers.</summary>
+        public readonly ResearchDef CasteResearch;
+        public readonly AbilityDef Burst;
         public readonly EnemyDef Raider, Spider;
         public readonly ResearchDef SoldierResearch;
         public readonly RecipeDef Smelt, Study;
@@ -84,6 +88,31 @@ namespace Antarium.Tests
             Post = Building("post", BuildingKind.GuardPost, 8);
             Wall = Building("wall", BuildingKind.Wall, 9);
             Wall.fillMaterial = Packed;
+            Nursery = Building("nursery", BuildingKind.Nursery, 10);
+            Nursery.size = new Vector2Int(2, 1);
+            Nursery.eggCapacity = 4;
+            Nursery.hatchBonus = 1f;
+            Emitter = Building("emitter", BuildingKind.Emitter, 11);
+            Emitter.emitterRadius = 5f;
+
+            // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
+            WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
+            SoldierCaste = Caste("soldier", AntCaste.Soldier, health: 150f, attack: 14f, upkeep: 0.6f, egg: 15f, share: 0.2f, jobs: false);
+            MinerCaste = Caste("miner", AntCaste.Miner, jobs: false);
+            MinerCaste.dig = 3f;
+            MinerCaste.digJob = 1f;
+            HaulerCaste = Caste("hauler", AntCaste.Hauler, jobs: false);
+            HaulerCaste.carry = 3;
+            HaulerCaste.haulJob = 1f;
+            HaulerCaste.supplyJob = 1f;
+            NurseCaste = Caste("nurse", AntCaste.Nurse, jobs: false);
+            BuilderCaste = Caste("builder", AntCaste.Builder, jobs: false);
+            BuilderCaste.build = 3f;
+            BuilderCaste.buildJob = 1f;
+            ScoutCaste = Caste("scout", AntCaste.Scout, jobs: false);
+            ScoutCaste.senseRadius = 6;
+            EngineerCaste = Caste("engineer", AntCaste.Engineer, jobs: false);
+            EngineerCaste.machineBoost = 1f;
 
             Raider = Make<EnemyDef>("raider");
             Raider.behavior = EnemyBehavior.Raider;
@@ -116,6 +145,12 @@ namespace Antarium.Tests
             Decree.kind = AbilityKind.RoyalDecree;
             Decree.order = 2;
             Decree.count = 3;
+            Burst = Make<AbilityDef>("burst");
+            Burst.kind = AbilityKind.PheromoneBurst;
+            Burst.order = 3;
+            Burst.radius = 12f;
+            Burst.duration = 10f;
+            Burst.magnitude = 0.5f;
 
             FastBelts = Make<ResearchDef>("fast_belts");
             FastBelts.knowledgeCost = 5f;
@@ -134,6 +169,11 @@ namespace Antarium.Tests
             SoldierResearch.treePosition = new Vector2Int(2, 0);
             SoldierResearch.knowledgeCost = 1f;
             SoldierResearch.effects.Add(ResearchEffect.Unlock(AntCaste.Soldier));
+            CasteResearch = Make<ResearchDef>("caste_research");
+            CasteResearch.treePosition = new Vector2Int(2, 1);
+            CasteResearch.knowledgeCost = 1f;
+            foreach (var caste in new[] { AntCaste.Miner, AntCaste.Hauler, AntCaste.Nurse, AntCaste.Builder, AntCaste.Scout, AntCaste.Engineer })
+                CasteResearch.effects.Add(ResearchEffect.Unlock(caste));
 
             DigIntro = Make<ContractDef>("dig_intro");
             DigIntro.kind = ContractKind.DigCells;
@@ -170,8 +210,9 @@ namespace Antarium.Tests
 
             Progression = new ProgressionContent
             {
-                Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch },
-                Abilities = new[] { Decree, Frenzy, Seismic },
+                Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch },
+                Abilities = new[] { Decree, Frenzy, Seismic, Burst },
+                Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste },
                 Contracts = new[] { DeliverOre, DigIntro },
                 Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent },
                 Enemies = new[] { Spider, Raider },
@@ -213,14 +254,36 @@ namespace Antarium.Tests
             // Deliberately not air-first, to exercise ContentDB ordering.
             DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed }, WorldGen,
                 new[] { Ore, Seed, Bar, Chitin }, null,
-                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall }, Progression);
+                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter }, Progression);
+        }
+
+        CasteDef Caste(string id, AntCaste caste, float health = 40f, float attack = 3f, float upkeep = 0f, float egg = 6f, float share = 0.1f,
+            bool jobs = true)
+        {
+            var c = Make<CasteDef>(id);
+            c.caste = caste;
+            c.order = (int)caste;
+            c.health = health;
+            c.attack = attack;
+            c.upkeep = upkeep;
+            c.eggFoodCost = egg;
+            c.defaultShare = share;
+            if (!jobs) c.digJob = c.haulJob = c.buildJob = c.supplyJob = 0f;
+            return c;
+        }
+
+        /// <summary>Changes a caste's numbers after the database was built (re-reads them).</summary>
+        public void SetCaste(AntCaste caste, Action<CasteDef> change)
+        {
+            change(DB.Caste(caste));
+            DB.RefreshCastes();
         }
 
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
             ContentDB.Build(new[] { Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
                 new[] { Chitin, Bar, Seed, Ore }, null,
-                new[] { Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter }, Progression);
+                new[] { Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter }, Progression);
 
         BuildingDef Building(string id, BuildingKind kind, int order)
         {

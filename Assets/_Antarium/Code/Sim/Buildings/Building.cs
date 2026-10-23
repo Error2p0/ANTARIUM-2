@@ -138,6 +138,8 @@ namespace Antarium.Sim
         public int Crafted;
         /// <summary>Bit per input item with free buffer space (tracked to rebuild consumer fields on change).</summary>
         public ulong NeedMask;
+        /// <summary>Engineers tending it this tick (each adds <see cref="BuildingSystem.EngineerBoost"/> speed).</summary>
+        public int Tenders;
 
         public Machine(int building, BuildingData data)
         {

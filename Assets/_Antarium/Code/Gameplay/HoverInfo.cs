@@ -3,6 +3,7 @@ using Antarium.Content;
 using Antarium.Core;
 using Antarium.Sim;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Antarium.Gameplay
 {
@@ -40,6 +41,11 @@ namespace Antarium.Gameplay
         string Build(Simulation sim, int2 cell, ToolController tools, bool pointerOverUi)
         {
             _sb.Clear();
+            if (tools.Possessing)
+            {
+                DescribePossessed(sim);
+                return _sb.ToString();
+            }
             if (!pointerOverUi && sim.RandomEvents.CritterAt(new float2(cell) + 0.5f) >= 0)
             {
                 _sb.Append("Golden beetle! Click it to catch it before it leaves.");
@@ -51,6 +57,17 @@ namespace Antarium.Gameplay
                 DescribeEnemy(sim, enemy);
                 return _sb.ToString();
             }
+            if (tools.Mode == ToolMode.Pheromone)
+            {
+                DescribeScentTool(sim, cell, tools, pointerOverUi);
+                return _sb.ToString();
+            }
+            int ant = pointerOverUi ? -1 : sim.Ants.AntAt(new float2(cell) + 0.5f, 0.9f);
+            if (ant >= 0 && tools.Mode != ToolMode.Build)
+            {
+                DescribeAnt(sim, ant);
+                return _sb.ToString();
+            }
             int id = pointerOverUi ? BuildingSystem.None : sim.Buildings.At(cell);
             if (id >= 0) DescribeBuilding(sim, id);
             else if (tools.Mode == ToolMode.Build && tools.Build.SelectedDef != null) DescribeSelection(sim, cell, tools);
@@ -59,7 +76,84 @@ namespace Antarium.Gameplay
                 DescribeStock(sim, cell);
                 if (_sb.Length == 0) DescribeFluid(sim, cell);
             }
+            if (!pointerOverUi) AppendScents(sim, cell);
             return _sb.Length > 0 ? _sb.ToString() : null;
+        }
+
+        static string StateText(in Ant a) => a.State switch
+        {
+            AntState.SeekDig => "going to dig",
+            AntState.Digging => "digging",
+            AntState.SeekItem => "going to pick something up",
+            AntState.Carrying => "carrying",
+            AntState.SeekBuild => "going to build",
+            AntState.Building => "building",
+            AntState.SeekSupply => "fetching for a machine",
+            AntState.Hunting => "hunting",
+            AntState.Fighting => "fighting",
+            AntState.Swimming => "swimming out",
+            AntState.Falling => "falling",
+            AntState.SeekEgg => "going for an egg",
+            AntState.CarryEgg => "carrying an egg to a nursery",
+            AntState.Scouting => "scouting",
+            AntState.SeekCritter => "chasing a golden beetle",
+            AntState.SeekMachine => "going to tend a machine",
+            AntState.Tending => "tending a machine",
+            AntState.Rallying => "answering the Pheromone Burst",
+            _ => "idle",
+        };
+
+        void DescribeAnt(Simulation sim, int index)
+        {
+            var a = sim.Ants.Ants[index];
+            var def = _content.Caste(a.Caste);
+            _sb.Append(def.DisplayName).Append("  ").Append(math.max(1, (int)math.ceil(a.Health))).Append('/')
+                .Append((int)sim.Ants.MaxHealth(a.Caste)).Append(" HP  -  ").Append(StateText(a));
+            if (a.IsCarrying)
+                _sb.Append(" (").Append(a.CarryCount > 1 ? $"{a.CarryCount} " : "").Append(_content.Items[a.Carry].DisplayName).Append(')');
+            if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
+            _sb.Append("\nF: take control of this ant.");
+        }
+
+        void DescribePossessed(Simulation sim)
+        {
+            int i = sim.PossessedAnt;
+            if (i < 0) return;
+            var a = sim.Ants.Ants[i];
+            _sb.Append("You control a ").Append(_content.Caste(a.Caste).DisplayName.ToLowerInvariant()).Append("  ")
+                .Append(math.max(1, (int)math.ceil(a.Health))).Append('/').Append((int)sim.Ants.MaxHealth(a.Caste)).Append(" HP");
+            if (a.CarryingEgg) _sb.Append("  -  carrying an egg");
+            else if (a.IsCarrying) _sb.Append("  -  carrying ").Append(_content.Items[a.Carry].DisplayName);
+            _sb.Append("\nWASD / arrows: move   left mouse: dig or bite (within reach)   right mouse / Space: pick up, deliver, drop   F / Esc: let go");
+        }
+
+        void DescribeScentTool(Simulation sim, int2 cell, ToolController tools, bool pointerOverUi)
+        {
+            var kind = tools.Scent;
+            _sb.Append(HudController.ScentName(kind)).Append(" scent  -  ").Append(kind switch
+            {
+                PheromoneKind.Trail => "ants walk faster along it and prefer it as a route. Ants carrying loads keep it fresh.",
+                PheromoneKind.Dig => "mining orders inside are dug before all others.",
+                PheromoneKind.Gather => "item piles inside are hauled before all others.",
+                PheromoneKind.Defend => "idle soldiers patrol here.",
+                _ => "ants route around it and take no jobs inside.",
+            });
+            _sb.Append("\nLeft mouse: paint   right mouse: erase   Q / E: other scent. Scents fade after about 4 minutes unless an Emitter keeps them.");
+            if (!pointerOverUi) AppendScents(sim, cell);
+        }
+
+        /// <summary>"Scent: Trail 80%, Dig here 40%" for the cell under the cursor.</summary>
+        void AppendScents(Simulation sim, int2 cell)
+        {
+            bool first = true;
+            for (int k = 0; k < Pheromones.Count; k++)
+            {
+                int s = sim.Pheromones.Get((PheromoneKind)k, cell);
+                if (s == 0) continue;
+                _sb.Append(first ? (_sb.Length > 0 ? "\nScent: " : "Scent: ") : ", ")
+                    .Append(HudController.ScentName((PheromoneKind)k)).Append(' ').Append(s * 100 / PheromoneSystem.Full).Append('%');
+                first = false;
+            }
         }
 
         static bool IsVisible(Simulation sim, int2 cell) => sim.World.InBounds(cell.x, cell.y) && sim.World[cell.x, cell.y].IsRevealed;
@@ -132,6 +226,20 @@ namespace Antarium.Gameplay
                 case BuildingKind.GuardPost:
                     _sb.Append("\nIdle soldiers wait at the nearest guard post and defend the area around it.");
                     return;
+                case BuildingKind.Nursery:
+                {
+                    int eggs = 0;
+                    foreach (var e in sim.Colony.Eggs)
+                        if (e.Nursery == id) eggs++;
+                    _sb.Append("  -  ").Append(eggs).Append('/').Append(data.Def.eggCapacity).Append(" eggs\nNurses bring eggs here from the queen; they hatch ")
+                        .Append(Mathf.RoundToInt(data.Def.hatchBonus * 100f)).Append("% faster and the queen can lay more meanwhile.");
+                    return;
+                }
+                case BuildingKind.Emitter:
+                    _sb.Append("  -  ").Append(HudController.ScentName((PheromoneKind)math.min(b.Filter, Pheromones.Count - 1)))
+                        .Append("\nKeeps that scent from fading within ").Append(data.Def.emitterRadius.ToString("0")).Append(" cells (paint it first).")
+                        .Append(" Click it with the Emitter selected to change the scent; R picks the scent of new ones.");
+                    return;
             }
 
             if (b.IsTransport)
@@ -161,6 +269,8 @@ namespace Antarium.Gameplay
                 MachineStatus.OutputBlocked => "output blocked (products are not being taken away)",
                 _ => "waiting for input",
             });
+            if (m.Tenders > 0)
+                _sb.Append(", tended by an engineer (+").Append(Mathf.RoundToInt(buildings.EngineerBoost * m.Tenders * 100f)).Append("%)");
             if (m.Recipe >= 0)
             {
                 var recipe = _content.Recipes[m.Recipe];

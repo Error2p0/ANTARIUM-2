@@ -64,6 +64,36 @@ namespace Antarium.Sim
             return false;
         }
 
+        /// <summary>Takes one more <paramref name="item"/> at <paramref name="cell"/> if the inventory can still accept it (haulers filling up).</summary>
+        public bool TryTakeItem(int2 cell, ushort item, Inventory inventory)
+        {
+            if (!_lookup.TryGetValue(Key(cell, item), out int index) || !inventory.CanAccept(item)) return false;
+            TakeAt(index);
+            return true;
+        }
+
+        /// <summary>Takes one item of any kind at <paramref name="cell"/>, whether or not the stock has room (the possessed ant).</summary>
+        public bool TryTakeAny(int2 cell, out ushort item)
+        {
+            for (int i = 0; i < _itemTypes; i++)
+            {
+                item = (ushort)i;
+                if (!_lookup.TryGetValue(Key(cell, item), out int index)) continue;
+                TakeAt(index);
+                return true;
+            }
+            item = 0;
+            return false;
+        }
+
+        void TakeAt(int index)
+        {
+            var p = _piles[index];
+            p.Count--;
+            if (p.Count > 0) _piles[index] = p;
+            else Remove(index);
+        }
+
         void Remove(int index)
         {
             var removed = _piles[index];

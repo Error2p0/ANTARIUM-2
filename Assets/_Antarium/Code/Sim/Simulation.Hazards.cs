@@ -237,15 +237,15 @@ namespace Antarium.Sim
             {
                 var a = ants[i];
                 if (!a.IsDead) continue;
-                if (a.IsCarrying)
-                {
-                    var land = World.FloorBelow(a.Cell);
-                    Colony.Inventory.CancelTransit(a.Carry);
-                    Colony.Piles.Add(land, a.Carry, 1);
-                    Events.Publish(new ItemDroppedEvent(land, a.Carry));
-                }
+                DropCarried(ref a, a.Cell);
+                PutEggDown(ref a, a.Cell);
                 Colony.Stats.AntsLost++;
-                if (a.IsSoldier) Soldiers = math.max(0, Soldiers - 1);
+                _alive[(int)a.Caste] = math.max(0, _alive[(int)a.Caste] - 1);
+                if (a.Possessed)
+                {
+                    PossessInput = int2.zero;
+                    Events.Publish(new PossessionEvent(PossessionPhase.Died, a.Caste, a.Cell));
+                }
                 Events.Publish(new AntDiedEvent(a.Cell, a.Caste, a.Cause, a.Cause == DeathCause.Killed ? a.Killer : -1));
                 ants.RemoveAtSwapBack(i);
             }

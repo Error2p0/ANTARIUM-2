@@ -52,13 +52,6 @@ namespace Antarium.Content
         DefenseStrength,
     }
 
-    /// <summary>Kinds of ant. Workers dig, haul and build; soldiers guard and fight.</summary>
-    public enum AntCaste : byte
-    {
-        Worker,
-        Soldier,
-    }
-
     public enum ResearchEffectKind : byte
     {
         /// <summary>Adds <see cref="ResearchEffect.value"/> to <see cref="ResearchEffect.stat"/>.</summary>

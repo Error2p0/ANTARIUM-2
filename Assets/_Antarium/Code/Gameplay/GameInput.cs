@@ -20,12 +20,18 @@ namespace Antarium.Gameplay
         public readonly InputAction ToolMine;
         public readonly InputAction ToolStorage;
         public readonly InputAction ToolBuild;
+        public readonly InputAction ToolPheromone;
+        /// <summary>F: take control of the ant under the cursor, or let go.</summary>
+        public readonly InputAction Possess;
+        /// <summary>Space: the possessed ant picks up / delivers / drops.</summary>
+        public readonly InputAction Interact;
+        public readonly InputAction Castes;
         public readonly InputAction Rotate;
         public readonly InputAction NextBuilding;
         public readonly InputAction PrevBuilding;
         public readonly InputAction Overlay;
         public readonly InputAction Research;
-        /// <summary>Z / X / C: the abilities in bar order.</summary>
+        /// <summary>Z / X / C / V: the abilities in bar order.</summary>
         public readonly InputAction[] Abilities;
         public readonly InputAction Menu;
         public readonly InputAction QuickSave;
@@ -51,6 +57,10 @@ namespace Antarium.Gameplay
             ToolMine = asset.FindAction("Tools/ToolMine", true);
             ToolStorage = asset.FindAction("Tools/ToolStorage", true);
             ToolBuild = asset.FindAction("Tools/ToolBuild", true);
+            ToolPheromone = asset.FindAction("Tools/ToolPheromone", true);
+            Possess = asset.FindAction("Tools/Possess", true);
+            Interact = asset.FindAction("Tools/Interact", true);
+            Castes = asset.FindAction("View/Castes", true);
             Rotate = asset.FindAction("Tools/Rotate", true);
             NextBuilding = asset.FindAction("Tools/NextBuilding", true);
             PrevBuilding = asset.FindAction("Tools/PrevBuilding", true);
@@ -61,6 +71,7 @@ namespace Antarium.Gameplay
                 asset.FindAction("Tools/Ability1", true),
                 asset.FindAction("Tools/Ability2", true),
                 asset.FindAction("Tools/Ability3", true),
+                asset.FindAction("Tools/Ability4", true),
             };
             Menu = asset.FindAction("System/Menu", true);
             QuickSave = asset.FindAction("System/QuickSave", true);

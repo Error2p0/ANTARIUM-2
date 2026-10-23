@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da33025706420a84e954e088ef8d3a0e, type: 3}
+  m_Name: nurse
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.CasteDef
+  id: nurse
+  displayName: Nurse
+  caste: 4
+  description: Carries eggs from the queen to a Nursery, where they hatch faster and free the queen to lay more.
+  order: 4
+  eggFoodCost: 6
+  upkeep: 0.2
+  defaultShare: 0.1
+  health: 30
+  attack: 1
+  speed: 1
+  dig: 1
+  build: 1
+  carry: 1
+  digJob: 0
+  haulJob: 0
+  buildJob: 0
+  supplyJob: 0
+  senseRadius: 10
+  machineBoost: 0.5
+  color: {r: 1, g: 0.95686275, b: 0.84705883, a: 1}

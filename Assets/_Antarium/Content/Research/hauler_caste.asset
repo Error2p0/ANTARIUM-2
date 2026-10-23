@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: hauler_caste
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: hauler_caste
+  displayName: Hauler Caste
+  description: 'The queen can lay haulers: they carry three items at once.'
+  treePosition: {x: 1, y: 5}
+  knowledgeCost: 25
+  cost:
+  - item: {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
+    count: 4
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 0d6c2790aea638d428c77f5817055b60, type: 2}
+  effects:
+  - kind: 3
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 3

@@ -20,7 +20,7 @@ namespace Antarium.Presentation
         public const int PileWidth = 6, PileHeight = 4;
         public const int CarryWidth = 3, CarryHeight = 3;
 
-        const int AtlasWidth = 128, AtlasHeight = 64;
+        const int AtlasWidth = 128, AtlasHeight = 96;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax); see the *Rect constants.</summary>
@@ -42,7 +42,14 @@ namespace Antarium.Presentation
         /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
         public const int EnemyRect = PixelRect + 1;
         public const int EnemyArtCount = 6;
-        const int RectCount = EnemyRect + EnemyArtCount * 2;
+        /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer): 4 walk frames each, in caste order.</summary>
+        public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
+        const int SpecialistCount = 6;
+        const int RectCount = SpecialistRect + SpecialistCount * WorkerFrames;
+
+        /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
+        public NativeArray<int> CasteRect;
+        public NativeArray<int2> CasteSize;
 
         // Side view facing right: gaster (x0-3), waist (x4), thorax (x5-6), neck (x7), head (x8-10), mandible (x11).
         // The body colour carries the silhouette (a dark outline would vanish against dark tunnels):
@@ -206,6 +213,8 @@ namespace Antarium.Presentation
                 ['G'] = Hex(0x6a6878), ['g'] = Hex(0x8e8ca0), ['C'] = Hex(0x70f0ff),
             });
 
+            PaintCastes(pixels);
+
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
                 filterMode = FilterMode.Point,
@@ -214,6 +223,89 @@ namespace Antarium.Presentation
             };
             Texture.SetPixels32(pixels);
             Texture.Apply(false, false); // small; kept readable for debugging
+        }
+
+        /// <summary>One specialist caste: body rows (first = top), legs and palette (D dark, M mid, H high, L leg, K accent).</summary>
+        readonly struct CasteArt
+        {
+            public readonly AntCaste Caste;
+            public readonly string[] Body;
+            public readonly int LegShift;
+            public readonly Color32 Dark, Mid, High, Leg, Accent;
+
+            public CasteArt(AntCaste caste, string[] body, int legShift, int dark, int mid, int high, int leg, int accent)
+            {
+                Caste = caste;
+                Body = body;
+                LegShift = legShift;
+                Dark = Hex(dark);
+                Mid = Hex(mid);
+                High = Hex(high);
+                Leg = Hex(leg);
+                Accent = Hex(accent);
+            }
+        }
+
+        // Miners: a heavy head with pale digging mandibles. Haulers: a big gaster. Scouts: slim with long antennae.
+        static readonly CasteArt[] Specialists =
+        {
+            new(AntCaste.Miner, new[] { "...........L.", ".HH......HHL.", "HMMM.HH.HMMM.", "MMMMLMMLMMMMK", ".DMD.DD.DDDK." }, 0,
+                0x2e2a2a, 0x5e5350, 0x8e8078, 0x221c1a, 0xd8c8a0),
+            new(AntCaste.Hauler, new[] { "...........L.", ".HHH.....HL..", "HMMMM.HH.HMM.", "MMMMMLMMLMMML", "DDMMD.DD.DD.." }, 1,
+                0x6a4a1c, 0xb88a3a, 0xe8c070, 0x4a3210, 0xe8c070),
+            new(AntCaste.Nurse, new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMML", ".DMD.DD.DD.." }, 0,
+                0x8a7a5a, 0xd8c8a0, 0xfff4d8, 0x6a5a40, 0xfff4d8),
+            new(AntCaste.Builder, new[] { "..........L.", ".HH.....HL..", "HMKM.HH.HMM.", "MMMMLMMLMMMK", ".DMD.DD.DD.." }, 0,
+                0x34401c, 0x6a7a34, 0x9ab050, 0x283010, 0xc8d890),
+            new(AntCaste.Scout, new[] { "........LLL.", ".H......HL..", "HMM..HH.HMM.", "MMMLLMMLMMML", ".DD..DD.DD.." }, 0,
+                0x8a4a10, 0xe08a28, 0xffc060, 0x5a3008, 0xffe0a0),
+            new(AntCaste.Engineer, new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMK.", "MMMMLMMLMMML", ".DMD.DD.DD.." }, 0,
+                0x1e3448, 0x3e6a8e, 0x7aaad0, 0x162432, 0xa0f0ff),
+        };
+
+        /// <summary>Walk cycles of the specialist castes (palette swaps and small silhouette changes of the worker).</summary>
+        void PaintCastes(Color32[] pixels)
+        {
+            CasteRect = new NativeArray<int>(Castes.Count, Allocator.Persistent);
+            CasteSize = new NativeArray<int2>(Castes.Count, Allocator.Persistent);
+            CasteRect[(int)AntCaste.Worker] = 0;
+            CasteSize[(int)AntCaste.Worker] = new int2(WorkerWidth, WorkerHeight);
+            CasteRect[(int)AntCaste.Soldier] = SoldierRect;
+            CasteSize[(int)AntCaste.Soldier] = new int2(SoldierWidth, SoldierHeight);
+            for (int s = 0; s < Specialists.Length; s++)
+            {
+                var art = Specialists[s];
+                int w = art.Body[0].Length, h = art.Body.Length + 2;
+                int ox = (s % 2) * 56, oy = 44 + (s / 2) * 9;
+                for (int f = 0; f < WorkerFrames; f++)
+                {
+                    var rows = new string[h];
+                    art.Body.CopyTo(rows, 0);
+                    rows[h - 2] = (new string('.', art.LegShift) + WorkerLegs[f][0]).PadRight(w, '.').Substring(0, w);
+                    rows[h - 1] = (new string('.', art.LegShift) + WorkerLegs[f][1]).PadRight(w, '.').Substring(0, w);
+                    for (int r = 0; r < h; r++)
+                    {
+                        int y = oy + (h - 1 - r);
+                        for (int x = 0; x < w; x++)
+                        {
+                            Color32 c;
+                            switch (rows[r][x])
+                            {
+                                case 'D': c = art.Dark; break;
+                                case 'M': c = art.Mid; break;
+                                case 'H': c = art.High; break;
+                                case 'L': c = art.Leg; break;
+                                case 'K': c = art.Accent; break;
+                                default: continue;
+                            }
+                            pixels[y * AtlasWidth + ox + f * (w + 1) + x] = c;
+                        }
+                    }
+                    Rects[SpecialistRect + s * WorkerFrames + f] = Rect(ox + f * (w + 1), oy, w, h);
+                }
+                CasteRect[(int)art.Caste] = SpecialistRect + s * WorkerFrames;
+                CasteSize[(int)art.Caste] = new int2(w, h);
+            }
         }
 
         /// <summary>Two frames of an enemy side by side at (ox, oy), drawn with the enemy's own palette.</summary>
@@ -330,6 +422,8 @@ namespace Antarium.Presentation
         public void Dispose()
         {
             if (Rects.IsCreated) Rects.Dispose();
+            if (CasteRect.IsCreated) CasteRect.Dispose();
+            if (CasteSize.IsCreated) CasteSize.Dispose();
             if (Texture != null) Object.Destroy(Texture);
         }
     }

@@ -52,6 +52,12 @@ namespace Antarium.Sim
         public ulong ConsumersChanged = ulong.MaxValue;
         /// <summary>Guard posts were built or removed (the guard field must be rebuilt).</summary>
         public bool GuardsChanged = true;
+        /// <summary>Nurseries were built or removed (brood fields must be rebuilt).</summary>
+        public bool NurseriesChanged = true;
+        /// <summary>Machines were built or removed (the engineers' field must be rebuilt).</summary>
+        public bool MachinesChanged = true;
+        /// <summary>Extra machine speed per engineer tending it (from the engineer caste, set by the simulation).</summary>
+        public float EngineerBoost;
         /// <summary>Walls finished this tick: the simulation turns their cells solid and removes them.</summary>
         public readonly List<int> CompletedWalls = new();
 
@@ -132,7 +138,7 @@ namespace Antarium.Sim
             int2 nd = NormalizeDir(bdef.kind, dir);
             var nav = new NavGrid(_world);
 
-            bool machine = bdef.kind == BuildingKind.Processor;
+            bool machine = bdef.IsChamber;
             for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
@@ -271,6 +277,7 @@ namespace Antarium.Sim
                 else _machines[slot] = m;
                 b.Machine = slot;
                 ConsumersChanged |= m.Data.InputMask;
+                MachinesChanged = true;
             }
             switch (b.Kind)
             {
@@ -278,6 +285,7 @@ namespace Antarium.Sim
                 case BuildingKind.Trap: b.Rearm = 0f; break;
                 case BuildingKind.GuardPost: GuardsChanged = true; break;
                 case BuildingKind.Wall: CompletedWalls.Add(id); break;
+                case BuildingKind.Nursery: NurseriesChanged = true; break;
             }
             _networkDirty = true;
             BlueprintsChanged = true;
@@ -337,6 +345,8 @@ namespace Antarium.Sim
             if (refund) _colony.Inventory.Refund(data, blueprint ? 1f : _config.refundFraction, b.Origin, _leftover);
             foreach (ushort item in _leftover) DropPile(b.Origin, item, 1); // the stock is full
             if (b.Kind == BuildingKind.GuardPost) GuardsChanged = true;
+            if (b.Kind == BuildingKind.Nursery) NurseriesChanged = true;
+            if (b.Kind == BuildingKind.Processor) MachinesChanged = true;
 
             var inv = _colony.Inventory;
             if (!b.Front.IsEmpty) { inv.CancelTransit(b.Front.Item); DropPile(b.Origin, b.Front.Item, 1); }
@@ -371,11 +381,19 @@ namespace Antarium.Sim
             return true;
         }
 
-        /// <summary>Sets the filtered item of the filter at <paramref name="cell"/>.</summary>
+        /// <summary>Sets the filtered item of the filter at <paramref name="cell"/>, or the pheromone kind of an emitter there.</summary>
         public bool SetFilter(int2 cell, ushort item)
         {
             int id = At(cell);
-            if (id < 0 || All[id].Kind != BuildingKind.Filter || item >= _content.Items.Length) return false;
+            if (id < 0) return false;
+            var kind = All[id].Kind;
+            if (kind == BuildingKind.Emitter)
+            {
+                if (item >= Pheromones.Count) return false;
+                Get(id).Filter = item;
+                return true;
+            }
+            if (kind != BuildingKind.Filter || item >= _content.Items.Length) return false;
             Get(id).Filter = item;
             _networkDirty = true;
             return true;
@@ -617,6 +635,35 @@ namespace Antarium.Sim
             }
         }
 
+        /// <summary>Every cell of active machines tended by fewer than <paramref name="maxTenders"/> engineers.</summary>
+        public void AddMachineSources(NativeList<int2> sources, int maxTenders)
+        {
+            foreach (var m in _machines)
+            {
+                if (m == null || m.Tenders >= maxTenders) continue;
+                var b = All[m.Building];
+                if (!b.IsActive) continue;
+                for (int y = 0; y < b.Size.y; y++)
+                for (int x = 0; x < b.Size.x; x++)
+                    sources.Add(b.Origin + new int2(x, y));
+            }
+        }
+
+        /// <summary>Ids of finished buildings of <paramref name="kind"/> (nurseries, emitters).</summary>
+        public void Collect(BuildingKind kind, List<int> ids)
+        {
+            ids.Clear();
+            for (int i = 0; i < All.Length; i++)
+                if (All[i].Kind == kind && All[i].IsActive) ids.Add(i);
+        }
+
+        /// <summary>Resets the engineer counts of every machine (the simulation recounts them each tick).</summary>
+        public void ClearTenders()
+        {
+            foreach (var m in _machines)
+                if (m != null) m.Tenders = 0;
+        }
+
         void TickMachines(float dt)
         {
             float speed = _colony.Mods.Mult(StatKind.MachineSpeed);
@@ -638,7 +685,7 @@ namespace Antarium.Sim
                     {
                         var recipe = _content.Recipes[m.Recipe];
                         m.Status = MachineStatus.Working;
-                        m.Progress += dt * speed;
+                        m.Progress += dt * speed * (1f + EngineerBoost * m.Tenders);
                         if (m.Progress >= recipe.Duration)
                         {
                             for (int i = 0; i < recipe.OutputItems.Length; i++)

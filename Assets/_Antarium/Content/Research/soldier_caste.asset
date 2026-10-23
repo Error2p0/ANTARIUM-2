@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
   id: soldier_caste
   displayName: Soldier Caste
-  description: 'The queen can lay soldiers: tough ants that guard the colony and hunt enemies. Set the share of soldier eggs next to the toolbar. Unlocks the Guard Post.'
+  description: 'The queen can lay soldiers: tough ants that guard the colony and hunt enemies. Set their share in the castes panel (K). Unlocks the Guard Post.'
   treePosition: {x: 4, y: 0}
   knowledgeCost: 40
   cost: []

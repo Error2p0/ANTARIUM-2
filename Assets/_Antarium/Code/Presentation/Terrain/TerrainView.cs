@@ -44,6 +44,9 @@ namespace Antarium.Presentation
         static readonly int LavaHotId = Shader.PropertyToID("_AntLavaHot");
         static readonly int GasId = Shader.PropertyToID("_AntGas");
         static readonly int TimeId = Shader.PropertyToID("_AntTime");
+        static readonly int ScentId = Shader.PropertyToID("_AntScent");
+        static readonly int ScentColorsId = Shader.PropertyToID("_AntScentColors");
+        static readonly int ScentCoverId = Shader.PropertyToID("_AntScentCover");
 
         readonly WorldGrid _world;
         readonly LightSystem _light;
@@ -51,24 +54,33 @@ namespace Antarium.Presentation
         readonly GraphicsBuffer _lightBuffer;
         /// <summary>Two cells per uint (each: level | kind &lt;&lt; 8), the fluid plane reinterpreted.</summary>
         readonly GraphicsBuffer _fluidBuffer;
+        /// <summary>Two cells per uint (each: 2 bits per pheromone kind), the render plane of <see cref="PheromoneSystem"/>.</summary>
+        readonly GraphicsBuffer _scentBuffer;
+        readonly PheromoneSystem _pheromones;
+        readonly RenderConfig _render;
         readonly GraphicsBuffer _materialBuffer;
         readonly Texture2DArray _materialTextures;
         readonly GameObject _quad;
         readonly Mesh _mesh;
 
-        public TerrainView(WorldGrid world, LightSystem light, ContentDB content, RenderConfig render, Material terrainMaterial, Transform parent)
+        public TerrainView(WorldGrid world, LightSystem light, PheromoneSystem pheromones, ContentDB content, RenderConfig render,
+            Material terrainMaterial, Transform parent)
         {
             _world = world;
             _light = light;
+            _pheromones = pheromones;
+            _render = render;
             int count = world.Width * world.Height;
             _cellBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, sizeof(uint)) { name = "AntCells" };
             _lightBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, sizeof(uint)) { name = "AntLight" };
             _fluidBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count / 2, sizeof(uint)) { name = "AntFluid" };
+            _scentBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count / 2, sizeof(uint)) { name = "AntScent" };
             // New GPU buffers hold whatever memory they were given (often a previous session's): fill them all once.
             // After this only dirty chunks are uploaded.
             _cellBuffer.SetData(world.Cells);
             _lightBuffer.SetData(light.Light);
             _fluidBuffer.SetData(world.Fluid.Reinterpret<uint>(UnsafeFluidSize));
+            _scentBuffer.SetData(pheromones.Render.Reinterpret<uint>(sizeof(ushort)));
 
             // Colours are authored in sRGB; buffers are raw floats, so convert to the working colour space here.
             var materials = content.Materials;
@@ -107,6 +119,12 @@ namespace Antarium.Presentation
             Shader.SetGlobalBuffer(CellsId, _cellBuffer);
             Shader.SetGlobalBuffer(LightId, _lightBuffer);
             Shader.SetGlobalBuffer(FluidId, _fluidBuffer);
+            Shader.SetGlobalBuffer(ScentId, _scentBuffer);
+            var scentColors = new Vector4[8];
+            for (int i = 0; i < Pheromones.Count && render.pheromoneColors != null && i < render.pheromoneColors.Length; i++)
+                scentColors[i] = ToWorking(render.pheromoneColors[i]);
+            Shader.SetGlobalVectorArray(ScentColorsId, scentColors);
+            SetScentCover(false);
             Shader.SetGlobalColor(WaterId, ToWorkingAlpha(render.waterColor));
             Shader.SetGlobalColor(WaterSurfaceId, ToWorkingAlpha(render.waterSurfaceColor));
             Shader.SetGlobalColor(LavaId, ToWorkingAlpha(render.lavaColor));
@@ -127,14 +145,19 @@ namespace Antarium.Presentation
             Shader.SetGlobalVector(SkyRangeId, new Vector4(horizon, _world.Height * WorldConstants.CellSize, 0f, 0f));
         }
 
-        /// <summary>Uploads chunks whose cells, fluid or light changed since the last call.</summary>
+        /// <summary>Pheromones are drawn faintly, or clearly while the Pheromone tool is active.</summary>
+        public void SetScentCover(bool toolActive) =>
+            Shader.SetGlobalFloat(ScentCoverId, toolActive ? _render.pheromoneToolCover : _render.pheromoneCover);
+
+        /// <summary>Uploads chunks whose cells, fluid, pheromones or light changed since the last call.</summary>
         public int Upload()
         {
-            const ChunkFlags any = ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload;
+            const ChunkFlags any = ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload | ChunkFlags.PheromoneUpload;
             Shader.SetGlobalFloat(TimeId, Time.time);
             int uploaded = 0;
             var chunks = _world.Chunks;
             var fluid = _world.Fluid.Reinterpret<uint>(UnsafeFluidSize);
+            var scent = _pheromones.Render.Reinterpret<uint>(sizeof(ushort));
             for (int i = 0; i < chunks.Length; i++)
             {
                 var flags = chunks[i];
@@ -146,6 +169,8 @@ namespace Antarium.Presentation
                     _lightBuffer.SetData(_light.Light, start, start, WorldConstants.ChunkCellCount);
                 if ((flags & ChunkFlags.FluidUpload) != 0)
                     _fluidBuffer.SetData(fluid, start / 2, start / 2, WorldConstants.ChunkCellCount / 2);
+                if ((flags & ChunkFlags.PheromoneUpload) != 0)
+                    _scentBuffer.SetData(scent, start / 2, start / 2, WorldConstants.ChunkCellCount / 2);
                 chunks[i] = flags & ~any;
                 uploaded++;
             }
@@ -183,6 +208,7 @@ namespace Antarium.Presentation
             _cellBuffer?.Release();
             _lightBuffer?.Release();
             _fluidBuffer?.Release();
+            _scentBuffer?.Release();
             _materialBuffer?.Release();
             if (_materialTextures != null) UnityEngine.Object.Destroy(_materialTextures);
             if (_mesh != null) UnityEngine.Object.Destroy(_mesh);

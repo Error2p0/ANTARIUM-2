@@ -21,6 +21,61 @@ namespace Antarium.Content
         public FluidConfig fluids = new();
         public CombatConfig combat = new();
         public ThreatConfig threats = new();
+        public CasteConfig castes = new();
+        public PheromoneConfig pheromones = new();
+        public PossessionConfig possession = new();
+    }
+
+    [Serializable]
+    public sealed class CasteConfig
+    {
+        [Tooltip("Step of the caste shares the player sets (0.05 = 0%, 5%, 10%...).")]
+        [Range(0.01f, 0.5f)] public float shareStep = 0.05f;
+        [Tooltip("Most of the colony one specialist caste may be.")]
+        [Range(0f, 1f)] public float maxShare = 0.5f;
+        [Tooltip("Most of the colony all specialist castes together may be (workers keep the rest).")]
+        [Range(0f, 1f)] public float maxTotalShare = 0.8f;
+        [Tooltip("Engineers that may tend one machine at once.")]
+        [Min(1)] public int engineersPerMachine = 1;
+        [Tooltip("Scouts re-plan where the edge of the known tunnels is this often (seconds).")]
+        [Min(0.5f)] public float scoutFieldSeconds = 3f;
+    }
+
+    [Serializable]
+    public sealed class PheromoneConfig
+    {
+        [Tooltip("Strength (of 255) a painted cell loses per second; 1 = it fades in about 4 minutes.")]
+        [Min(0f)] public float decayPerSecond = 1f;
+        [Tooltip("Strength a trail cell regains each time a carrying ant steps onto it.")]
+        [Range(0, 255)] public int trafficRefresh = 6;
+        [Tooltip("Walking speed on trail cells.")]
+        [Min(1f)] public float trailSpeed = 1.5f;
+        [Tooltip("Jobs inside Dig / Gather scent are preferred over jobs up to this many cells closer.")]
+        [Min(0)] public int priorityCells = 40;
+        [Tooltip("Brush radius (cells) for painting pheromones.")]
+        [Min(0.5f)] public float brushRadius = 1.6f;
+        [Tooltip("Ants answering a Pheromone Burst stop once they are this close (cells) to its spot.")]
+        [Min(1)] public int rallyArriveCells = 3;
+    }
+
+    [Serializable]
+    public sealed class PossessionConfig
+    {
+        [Tooltip("The possessed ant walks this much faster than its caste.")]
+        [Min(0.1f)] public float speed = 1.6f;
+        [Tooltip("Dig power of the possessed ant's bite, per hit (like the Dig tool's power).")]
+        [Min(0f)] public float digPower = 0.9f;
+        [Tooltip("Damage of one bite at an enemy.")]
+        [Min(0f)] public float biteDamage = 6f;
+        [Tooltip("How far (cells) from the possessed ant you can dig or bite.")]
+        [Min(1f)] public float reach = 2.5f;
+        [Tooltip("Bites (digging or fighting) per second while the button is held.")]
+        [Min(0.5f)] public float bitesPerSecond = 6f;
+        [Tooltip("The possessed ant takes this share of damage (0.5 = half).")]
+        [Range(0.05f, 1f)] public float damageTaken = 0.5f;
+        [Tooltip("Radius (cells) and intensity of the light that follows the possessed ant.")]
+        [Min(0f)] public float lightRadius = 6f;
+        [Range(0f, 2f)] public float lightIntensity = 0.6f;
     }
 
     [Serializable]
@@ -60,15 +115,10 @@ namespace Antarium.Content
     [Serializable]
     public sealed class CombatConfig
     {
-        [Header("Ants")]
-        [Min(1f)] public float workerHealth = 40f;
-        [Min(1f)] public float soldierHealth = 150f;
+        [Header("Ants (hit points and bite per caste are in the Caste assets)")]
         [Tooltip("Hit points regained per second after a while without damage.")]
         [Min(0f)] public float regenPerSecond = 2f;
         [Min(0f)] public float regenDelay = 6f;
-        [Tooltip("Damage per second an ant deals to an enemy next to it.")]
-        [Min(0f)] public float workerAttack = 3f;
-        [Min(0f)] public float soldierAttack = 14f;
 
         [Header("Hazards (damage per second)")]
         [Min(0f)] public float drownDamage = 6f;
@@ -79,20 +129,11 @@ namespace Antarium.Content
         [Tooltip("Ants swim at this share of their walking speed.")]
         [Range(0.1f, 1f)] public float swimSpeedFactor = 0.55f;
 
-        [Header("Soldiers")]
-        [Tooltip("Food for a soldier egg (worker eggs use colony.eggFoodCost).")]
-        [Min(0f)] public float soldierEggFoodCost = 15f;
-        [Tooltip("Food per minute per soldier.")]
-        [Min(0f)] public float soldierUpkeep = 0.6f;
+        [Header("Soldiers (egg cost, upkeep and share are in the Caste assets)")]
         [Tooltip("Soldiers go after enemies within this path distance (cells).")]
         [Min(1f)] public float soldierRange = 60f;
         [Tooltip("Idle soldiers stay within this many cells of their guard post.")]
         [Min(1f)] public float guardRadius = 3f;
-        [Tooltip("Step of the soldier share the player can set (0.1 = 0%, 10%, 20%...).")]
-        [Range(0.05f, 0.5f)] public float soldierShareStep = 0.1f;
-        [Range(0f, 1f)] public float maxSoldierShare = 0.5f;
-        [Tooltip("Soldier share set when soldiers are unlocked.")]
-        [Range(0f, 1f)] public float defaultSoldierShare = 0.2f;
 
         [Header("Defense")]
         [Tooltip("Hit points an intact gate mends per second.")]
@@ -207,16 +248,14 @@ namespace Antarium.Content
         [Min(0)] public int storageItemsPerCell = 8;
         [Min(0f)] public float storageFoodPerCell = 6f;
 
-        [Header("Queen & brood")]
-        [Min(0f)] public float eggFoodCost = 6f;
+        [Header("Queen & brood (egg cost per caste is in the Caste assets)")]
         [Min(0.1f)] public float eggInterval = 6f;
         [Min(0)] public int maxEggs = 6;
         [Min(0.1f)] public float hatchTime = 20f;
         [Tooltip("Cells around the queen that count as the royal chamber for deliveries and eggs.")]
         [Min(1)] public int royalRadius = 4;
 
-        [Header("Upkeep (food per minute)")]
-        [Min(0f)] public float workerUpkeep = 0.25f;
+        [Header("Upkeep (food per minute; ants per caste in the Caste assets)")]
         [Min(0f)] public float queenUpkeep = 1.5f;
         [Range(0.05f, 1f)] public float starvingSpeedFactor = 0.5f;
 
@@ -342,6 +381,17 @@ namespace Antarium.Content
         public Color enemyHealthBarColor = new(1f, 0.35f, 0.25f);
         [Tooltip("Sprites flash this colour for a moment when hurt.")]
         public Color hurtFlashColor = new(1f, 0.45f, 0.4f);
+
+        [Header("Pheromones (in PheromoneKind order: trail, dig, gather, defend, avoid)")]
+        public Color[] pheromoneColors =
+        {
+            new(1f, 0.88f, 0.4f), new(1f, 0.55f, 0.2f), new(0.45f, 0.95f, 0.4f), new(1f, 0.3f, 0.3f), new(0.75f, 0.5f, 1f),
+        };
+        [Tooltip("Share of pixels a full-strength pheromone tints, normally / while the Pheromone tool is active.")]
+        [Range(0f, 1f)] public float pheromoneCover = 0.16f;
+        [Range(0f, 1f)] public float pheromoneToolCover = 0.35f;
+        [Tooltip("Marker over the ant you control.")]
+        public Color possessedColor = new(1f, 0.85f, 0.3f);
     }
 
     [Serializable]
@@ -355,6 +405,8 @@ namespace Antarium.Content
         [Tooltip("Max shake offset in art pixels at full trauma.")]
         [Min(0f)] public float maxShakePixels = 3f;
         [Min(0f)] public float shakeDecay = 2.5f;
+        [Tooltip("How quickly the camera catches up with the ant you control (higher = tighter).")]
+        [Min(0.1f)] public float followSharpness = 8f;
     }
 
     [Serializable]

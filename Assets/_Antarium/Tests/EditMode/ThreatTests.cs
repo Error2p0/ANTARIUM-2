@@ -37,22 +37,22 @@ namespace Antarium.Tests
         public void Soldiers_AreLaidByShareOnceUnlocked()
         {
             var colony = Sim.Colony;
-            Assert.AreEqual(AntCaste.Worker, colony.NextCaste(10, 0), "locked: always workers");
+            Assert.AreEqual(AntCaste.Worker, colony.NextCaste(Alive(workers: 10)), "locked: always workers");
             Unlock(C.SoldierResearch);
             Assert.IsTrue(colony.SoldiersUnlocked);
-            Assert.AreEqual(C.Config.combat.defaultSoldierShare, colony.SoldierShare, 1e-4f);
-            Assert.AreEqual(AntCaste.Soldier, colony.NextCaste(10, 0));
-            Assert.AreEqual(AntCaste.Worker, colony.NextCaste(13, 3), "3 of 14 are soldiers already");
+            Assert.AreEqual(C.SoldierCaste.defaultShare, colony.CasteShare[(int)AntCaste.Soldier], 1e-4f);
+            Assert.AreEqual(AntCaste.Soldier, colony.NextCaste(Alive(workers: 10)));
+            Assert.AreEqual(AntCaste.Worker, colony.NextCaste(Alive(workers: 10, soldiers: 3)), "3 of 14 are soldiers already");
 
-            Sim.EnqueueSoldierShare(0.37f);
+            Sim.EnqueueCasteShare(AntCaste.Soldier, 0.37f);
             Sim.Tick();
-            Assert.AreEqual(0.4f, colony.SoldierShare, 1e-4f, "snapped to the 10% step");
-            Sim.EnqueueSoldierShare(0f);
+            Assert.AreEqual(0.35f, colony.CasteShare[(int)AntCaste.Soldier], 1e-4f, "snapped to the 5% step");
+            Sim.EnqueueCasteShare(AntCaste.Soldier, 0f);
             Sim.Tick();
-            Assert.AreEqual(AntCaste.Worker, colony.NextCaste(10, 0));
+            Assert.AreEqual(AntCaste.Worker, colony.NextCaste(Alive(workers: 10)));
 
             // A soldier egg hatches into a soldier with soldier hit points.
-            Sim.EnqueueSoldierShare(0.5f);
+            Sim.EnqueueCasteShare(AntCaste.Soldier, 0.5f);
             C.Config.colony.eggInterval = 0.5f;
             C.Config.colony.hatchTime = 1f;
             Inv.Food = 80f;
@@ -66,7 +66,7 @@ namespace Antarium.Tests
         public void Offline_HatchesSoldiersByShare()
         {
             Unlock(C.SoldierResearch);
-            Sim.EnqueueSoldierShare(0.5f);
+            Sim.EnqueueCasteShare(AntCaste.Soldier, 0.5f);
             Sim.Tick();
             Inv.Food = 100f;
             C.Config.colony.eggInterval = 6f;
@@ -129,7 +129,7 @@ namespace Antarium.Tests
         [Test]
         public void Creature_KillsWorkers_WhenNobodyFights()
         {
-            C.Config.combat.workerAttack = 0f;
+            C.SetCaste(AntCaste.Worker, d => d.attack = 0f);
             C.Spider.damage = 25f; // two bites kill a worker
             int2 next = Queen + new int2(0, 1);
             Sim.Enemies.Spawn(EnemyIndex(C.Spider), next, EnemyState.Hunt);
@@ -144,7 +144,7 @@ namespace Antarium.Tests
         [Test]
         public void Raid_ArrivesFromTheSurface_EatsFood_AndLeaves()
         {
-            C.Config.combat.workerAttack = 0f;
+            C.SetCaste(AntCaste.Worker, d => d.attack = 0f);
             C.Config.threats.raidBaseSize = 2;
             C.Config.threats.raidPerAnt = 0f;
             C.Config.threats.raidDistance = new UnityEngine.Vector2Int(20, 30);
@@ -173,7 +173,7 @@ namespace Antarium.Tests
         [Test]
         public void Gates_HoldRaidersUntilBroken()
         {
-            C.Config.combat.workerAttack = 0f;
+            C.SetCaste(AntCaste.Worker, d => d.attack = 0f);
             C.Config.threats.raidBaseSize = 2;
             C.Config.threats.raidPerAnt = 0f;
             C.Config.threats.raidDistance = new UnityEngine.Vector2Int(20, 30);
@@ -212,7 +212,7 @@ namespace Antarium.Tests
         [Test]
         public void Trap_HurtsAndHoldsTheFirstEnemy()
         {
-            C.Config.combat.workerAttack = 0f;
+            C.SetCaste(AntCaste.Worker, d => d.attack = 0f);
             var start = CarveTunnel(8, height: 1); // one cell high: the only way is over the trap
             int2 trap = start + new int2(1, 0);
             Build(C.Trap, trap);
@@ -233,7 +233,7 @@ namespace Antarium.Tests
         public void Save_KeepsFluidsEnemiesSoldiersAndDefense()
         {
             Unlock(C.SoldierResearch);
-            Sim.EnqueueSoldierShare(0.3f);
+            Sim.EnqueueCasteShare(AntCaste.Soldier, 0.3f);
             var start = CarveTunnel(10);
             Build(C.Gate, start + new int2(2, 0));
             int gate = Sim.Buildings.At(start + new int2(2, 0));
@@ -259,7 +259,7 @@ namespace Antarium.Tests
             Assert.AreEqual(Sim.Enemies.SecondsToRaid, loaded.Enemies.SecondsToRaid, 1e-3f);
             Assert.AreEqual(Sim.Soldiers, loaded.Soldiers);
             Assert.IsTrue(loaded.Colony.SoldiersUnlocked);
-            Assert.AreEqual(0.3f, loaded.Colony.SoldierShare, 1e-4f);
+            Assert.AreEqual(0.3f, loaded.Colony.CasteShare[(int)AntCaste.Soldier], 1e-4f);
             for (int i = 0; i < Sim.Ants.Count; i++)
             {
                 Assert.AreEqual(Sim.Ants.Ants[i].Caste, loaded.Ants.Ants[i].Caste);

@@ -610,3 +610,69 @@
     padding: 4px 6px;
     background-color: rgb(30, 20, 14);
 }
+
+/* Milestone 6: castes panel, scent palette, possession */
+.tool--narrow {
+    width: 96px;
+}
+.castes {
+    position: absolute;
+    left: 8px;
+    bottom: 64px;
+    min-width: 300px;
+}
+.caste {
+    flex-direction: row;
+    align-items: center;
+    height: 24px;
+}
+.caste__swatch {
+    width: 8px;
+    height: 14px;
+    margin-right: 6px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.6);
+}
+.caste__name {
+    color: rgb(240, 230, 210);
+    font-size: 13px;
+    -unity-font-style: bold;
+    width: 76px;
+    margin: 0;
+    padding: 0;
+}
+.caste__count {
+    color: rgb(200, 185, 160);
+    font-size: 12px;
+    width: 104px;
+    margin: 0;
+    padding: 0;
+}
+.caste__share {
+    color: rgb(255, 210, 140);
+    font-size: 13px;
+    -unity-font-style: bold;
+    width: 54px;
+    -unity-text-align: middle-right;
+    margin: 0;
+    padding: 0;
+}
+.caste__share--rest {
+    color: rgb(170, 160, 140);
+    width: 78px;
+}
+.caste__hint {
+    color: rgb(170, 160, 140);
+    font-size: 11px;
+    white-space: normal;
+    max-width: 300px;
+    margin: 4px 0 0 0;
+    padding: 0;
+}
+.scent {
+    width: 132px;
+}
+.tool--possessing {
+    border-color: rgb(255, 210, 90);
+    color: rgb(255, 230, 150);
+}

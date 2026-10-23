@@ -63,14 +63,29 @@ namespace Antarium.Sim
             float knowledgeRate = meter.KnowledgePerMinute * eff;
             var carry = new float[n];
             float food0 = inv.Food, knowledge0 = inv.Knowledge;
-            float eggCost = sim.Config.colony.eggFoodCost;
 
-            // Eggs that were waiting have hatched by now (each into its own caste).
+            // Eggs that were waiting (or being carried by nurses) have hatched by now, each into its own caste.
             int waiting = colony.Eggs.Count;
-            foreach (var egg in colony.Eggs) sim.SpawnAnts(1, egg.Caste);
+            foreach (var egg in colony.Eggs)
+            {
+                sim.SpawnAnts(1, egg.Caste);
+                colony.Stats.HatchedCaste[(int)egg.Caste]++;
+            }
             colony.Eggs.Clear();
+            var ants = sim.Ants.Ants;
+            for (int i = 0; i < ants.Length; i++)
+            {
+                var a = ants[i];
+                if (!a.CarryingEgg) continue;
+                a.CarryingEgg = false;
+                ants[i] = a;
+                sim.SpawnAnts(1, a.EggCaste);
+                colony.Stats.HatchedCaste[(int)a.EggCaste]++;
+                waiting++;
+            }
             report.Hatched += waiting;
-            int soldiers = sim.Ants.CountCaste(AntCaste.Soldier);
+            var alive = new int[Castes.Count];
+            sim.Ants.CountCastes(alive);
 
             float eggs = 0f;
             double left = report.CreditedSeconds;
@@ -103,7 +118,7 @@ namespace Antarium.Sim
                     }
                 }
 
-                float upkeepPerMinute = colony.UpkeepPerMinute(sim.Ants.Count - soldiers, soldiers) * eff;
+                float upkeepPerMinute = colony.UpkeepPerMinute(alive) * eff;
                 inv.Food = math.clamp(inv.Food + (foodRate - upkeepPerMinute) * minutes, 0f, inv.FoodCapacity);
                 if (inv.Food <= 0f) report.Starved = true;
                 inv.AddKnowledge(knowledgeRate * minutes, studied: false);
@@ -113,14 +128,15 @@ namespace Antarium.Sim
                 float reserve = upkeepPerMinute * cfg.offlineFoodReserveMinutes;
                 while (eggs >= 1f)
                 {
-                    // Soldiers keep their share of the colony, as while playing.
-                    var caste = colony.NextCaste(sim.Ants.Count, soldiers);
-                    float cost = caste == AntCaste.Soldier ? sim.Config.combat.soldierEggFoodCost : eggCost;
+                    // Castes keep their shares of the colony, as while playing.
+                    var caste = colony.NextCaste(alive);
+                    float cost = colony.EggCost(caste);
                     if (inv.Food - cost < reserve) break;
                     inv.Food -= cost;
                     eggs -= 1f;
                     sim.SpawnAnts(1, caste);
-                    if (caste == AntCaste.Soldier) soldiers++;
+                    alive[(int)caste]++;
+                    colony.Stats.HatchedCaste[(int)caste]++;
                     report.Hatched++;
                 }
                 eggs = Math.Min(eggs, 1f); // no saving up while hungry

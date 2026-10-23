@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da33025706420a84e954e088ef8d3a0e, type: 3}
+  m_Name: worker
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.CasteDef
+  id: worker
+  displayName: Worker
+  caste: 0
+  description: 'Digs, hauls, builds and supplies machines: the backbone of the colony.'
+  order: 0
+  eggFoodCost: 6
+  upkeep: 0.25
+  defaultShare: 0.1
+  health: 40
+  attack: 3
+  speed: 1
+  dig: 1
+  build: 1
+  carry: 1
+  digJob: 1
+  haulJob: 1
+  buildJob: 1
+  supplyJob: 1
+  senseRadius: 10
+  machineBoost: 0.5
+  color: {r: 0.72156864, g: 0.2509804, b: 0.11764706, a: 1}

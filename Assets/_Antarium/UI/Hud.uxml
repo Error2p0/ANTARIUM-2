@@ -14,9 +14,11 @@
             <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />
             <ui:Label name="info" class="info hidden" picking-mode="Ignore" />
             <ui:VisualElement name="build-palette" class="palette hidden" picking-mode="Ignore" />
+            <ui:VisualElement name="scent-palette" class="palette hidden" picking-mode="Ignore" />
             <ui:VisualElement name="toolbar" class="toolbar" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="abilities" class="abilities" picking-mode="Ignore" />
+        <ui:VisualElement name="castes" class="panel castes hidden" />
         <ui:VisualElement name="modal" class="modal hidden" />
     </ui:VisualElement>
 </ui:UXML>

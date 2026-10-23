@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: engineer_caste
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: engineer_caste
+  displayName: Engineer Caste
+  description: 'The queen can lay engineers: a machine works 50% faster while one tends it.'
+  treePosition: {x: 3, y: 5}
+  knowledgeCost: 40
+  cost:
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 6
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 62fea3bcefc52724a8d742b8d2ffbaca, type: 2}
+  - {fileID: 11400000, guid: 686ee252db1012341b08ace1be1989ce, type: 2}
+  effects:
+  - kind: 3
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 7

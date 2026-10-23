@@ -18,6 +18,8 @@ namespace Antarium.Sim
         LightUpload = 1 << 2,
         /// <summary>Fluid changed and must be re-uploaded to the GPU.</summary>
         FluidUpload = 1 << 3,
+        /// <summary>Pheromones changed and must be re-uploaded to the GPU.</summary>
+        PheromoneUpload = 1 << 4,
     }
 
     /// <summary>

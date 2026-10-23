@@ -16,13 +16,14 @@ namespace Antarium.Gameplay
             _input = input;
         }
 
-        public void Update(float deltaTime)
+        /// <param name="allowPan">False while the player controls an ant: the pan keys move the ant and the camera follows it.</param>
+        public void Update(float deltaTime, bool allowPan = true)
         {
             Vector2 pan = _input.Pan.ReadValue<Vector2>();
-            if (pan.sqrMagnitude > 0f)
+            if (allowPan && pan.sqrMagnitude > 0f)
                 _camera.PanWorld((float2)pan * _camera.PanSpeed * deltaTime);
 
-            if (_input.DragPan.IsPressed())
+            if (allowPan && _input.DragPan.IsPressed())
                 _camera.PanScreenPixels(_input.PointerDelta.ReadValue<Vector2>());
 
             float scroll = _input.Zoom.ReadValue<float>();

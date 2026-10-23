@@ -22,6 +22,16 @@ namespace Antarium.Gameplay
 
         public DebugHud(Label label) => _label = label;
 
+        static string Castes(Simulation sim)
+        {
+            var alive = sim.AliveByCaste;
+            var parts = new string[alive.Count];
+            for (int c = 0; c < alive.Count; c++) parts[c] = alive[c].ToString();
+            return string.Join("/", parts);
+        }
+
+        static string Scents(Simulation sim) => string.Join("/", sim.Pheromones.Cells);
+
         public void Update(float deltaTime, Simulation sim, float2 pointerWorld, int zoom, ToolController tools)
         {
             if (_label == null || !Visible) return;
@@ -56,6 +66,7 @@ namespace Antarium.Gameplay
                 $"buildings {sim.Buildings.ActiveCount}   blueprints {sim.Buildings.BlueprintCount}   belt cells {sim.Buildings.TransportOrder.Count}\n" +
                 $"knowledge {sim.Colony.Inventory.Knowledge:0.0}   research {sim.Research.DoneCount}/{sim.Content.Research.Length}   next event {sim.RandomEvents.SecondsToNext:0}s\n" +
                 $"soldiers {sim.Soldiers}   enemies {sim.Enemies.Count}   raid in {sim.Enemies.SecondsToRaid:0}s (size {sim.Enemies.NextRaidSize()})   fluid chunks {sim.Fluids.ActiveChunks}   lost {sim.Colony.Stats.AntsLost}\n" +
+                $"castes {Castes(sim)}   scent cells {Scents(sim)}   scouted {sim.Colony.Stats.CellsScouted}   possessed {sim.PossessedAnt}\n" +
                 "F3 toggle   F6 +50 ants   F7 finish blueprints   F8 +20 items, food, knowledge   F10 random event   F11 raid";
         }
     }

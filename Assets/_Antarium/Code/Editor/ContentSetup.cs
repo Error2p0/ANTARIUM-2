@@ -21,6 +21,7 @@ namespace Antarium.Editor
         public const string ContractsFolder = Root + "/Contracts";
         public const string EventsFolder = Root + "/Events";
         public const string EnemiesFolder = Root + "/Enemies";
+        public const string CastesFolder = Root + "/Castes";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -41,6 +42,7 @@ namespace Antarium.Editor
             EnsureFolder(ContractsFolder);
             EnsureFolder(EventsFolder);
             EnsureFolder(EnemiesFolder);
+            EnsureFolder(CastesFolder);
 
             var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
             var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
@@ -119,6 +121,7 @@ namespace Antarium.Editor
                 copper, iron, coal, fungusGarden);
             var raiders = CreateDepthAndDanger(worldGen, topsoil, clayBiome, strata, dirt, copperItem, ironBar, coalItem, crystalItem, amberItem,
                 fungusItem, copperBar, crystal, iron, coal, amber);
+            CreateCastesAndPheromones(copperItem, copperBar, ironBar);
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
             if (database.surfaceForage.Count == 0)
@@ -404,6 +407,112 @@ namespace Antarium.Editor
             return new[] { termite };
         }
 
+        /// <summary>
+        /// Milestone 6: the caste definitions (workers and soldiers take over the numbers that were in GameConfig), the
+        /// Nursery and the Pheromone Emitter, the Pheromone Burst ability, caste and pheromone research, caste contracts.
+        /// </summary>
+        static void CreateCastesAndPheromones(ItemDef copperOre, ItemDef copper, ItemDef iron)
+        {
+            Caste("worker", "Worker", AntCaste.Worker, 0, "#b8401e", "Digs, hauls, builds and supplies machines: the backbone of the colony.",
+                egg: 6f, upkeep: 0.25f, health: 40f, attack: 3f);
+            Caste("soldier", "Soldier", AntCaste.Soldier, 1, "#862612", "Tough fighters: they hunt enemies within reach and guard posts and Defend scent. They never take jobs.",
+                egg: 15f, upkeep: 0.6f, health: 150f, attack: 14f, share: 0.2f, jobs: false);
+            Caste("miner", "Miner", AntCaste.Miner, 2, "#8e8078", "Heavy jaws: digs three times as fast as a worker, but only digs.",
+                egg: 9f, upkeep: 0.35f, health: 50f, attack: 5f, dig: 3f, jobs: false, digJob: 1f);
+            Caste("hauler", "Hauler", AntCaste.Hauler, 3, "#e8c070", "Carries three items at once and walks a little faster; hauls and supplies machines only.",
+                egg: 8f, upkeep: 0.3f, health: 45f, speed: 1.2f, carry: 3, jobs: false, haulJob: 1f, supplyJob: 1f);
+            Caste("nurse", "Nurse", AntCaste.Nurse, 4, "#fff4d8", "Carries eggs from the queen to a Nursery, where they hatch faster and free the queen to lay more.",
+                egg: 6f, upkeep: 0.2f, health: 30f, attack: 1f, jobs: false);
+            Caste("builder", "Builder", AntCaste.Builder, 5, "#9ab050", "Builds three times as fast as a worker, but only builds.",
+                egg: 8f, upkeep: 0.3f, health: 45f, build: 3f, jobs: false, buildJob: 1f);
+            Caste("scout", "Scout", AntCaste.Scout, 6, "#ffc060", "Fast explorer: walks the edge of your tunnels, senses the rock up to 10 cells around (ore it finds glows) and chases golden beetles.",
+                egg: 8f, upkeep: 0.3f, health: 35f, speed: 1.5f, jobs: false, sense: 10);
+            Caste("engineer", "Engineer", AntCaste.Engineer, 7, "#7aaad0", "Tends a working machine: it works 50% faster while an engineer stands by it.",
+                egg: 10f, upkeep: 0.35f, health: 40f, jobs: false, boost: 0.5f);
+
+            var nursery = Building("nursery", "Nursery", BuildingKind.Nursery, 13, "#efe2c0", 6f, size: new Vector2Int(3, 2),
+                cost: new[] { Amt(copperOre, 10) },
+                description: "Nurses bring eggs here from the queen: they hatch 50% faster, and the queen can lay more meanwhile. Holds 6 eggs.",
+                art: PlaceholderArt.Nursery);
+            var emitter = Building("pheromone_emitter", "Pheromone Emitter", BuildingKind.Emitter, 23, "#d8b8a0", 2f,
+                cost: new[] { Amt(copper, 3), Amt(iron, 1) },
+                description: "Keeps one scent from fading within 10 cells (paint the scent first). R picks the scent; click a placed one to change it.",
+                art: PlaceholderArt.Emitter);
+
+            var burst = Ability("pheromone_burst", "Pheromone Burst", AbilityKind.PheromoneBurst, 3, "#ffd27a", 150f,
+                "Every ant within 20 cells of the cursor drops what it is doing and rushes there, 50% faster, for 15 seconds.",
+                duration: 15f, magnitude: 0.5f, radius: 20f);
+
+            ResearchDef Load(string id) => AssetDatabase.LoadAssetAtPath<ResearchDef>($"{ResearchFolder}/{id}.asset");
+            var mandibles = Load("strong_mandibles");
+            var routing = Load("silk_routing");
+            var jelly = Load("royal_jelly");
+            var seismic = Load("seismic_sense");
+            var kilns = Load("hot_kilns");
+            var legs = Load("quick_legs");
+
+            var miners = Research("miner_caste", "Miner Caste", 1, 4, 25f, "The queen can lay miners: they dig three times as fast but do nothing else. Set their share in the castes panel (K).",
+                cost: new[] { Amt(copperOre, 10) }, prerequisites: Prereq(mandibles), effects: new[] { ResearchEffect.Unlock(AntCaste.Miner) });
+            var haulers = Research("hauler_caste", "Hauler Caste", 1, 5, 25f, "The queen can lay haulers: they carry three items at once.",
+                cost: new[] { Amt(copper, 4) }, prerequisites: Prereq(routing), effects: new[] { ResearchEffect.Unlock(AntCaste.Hauler) });
+            Research("builder_caste", "Builder Caste", 2, 4, 30f, "The queen can lay builders: they build three times as fast but do nothing else.",
+                cost: new[] { Amt(iron, 4) }, prerequisites: new[] { miners }, effects: new[] { ResearchEffect.Unlock(AntCaste.Builder) });
+            Research("nurse_caste", "Nurse Caste", 2, 5, 30f, "The queen can lay nurses, who carry eggs to a Nursery (unlocked too) where they hatch faster.",
+                foodCost: 30f, prerequisites: Prereq(jelly), effects: new[] { ResearchEffect.Unlock(AntCaste.Nurse), ResearchEffect.Unlock(nursery) });
+            Research("scout_caste", "Scout Caste", 3, 4, 35f, "The queen can lay scouts: fast explorers that sense ore through the rock around your tunnels and catch golden beetles.",
+                prerequisites: seismic != null ? new[] { seismic, miners } : new[] { miners }, effects: new[] { ResearchEffect.Unlock(AntCaste.Scout) });
+            Research("engineer_caste", "Engineer Caste", 3, 5, 40f, "The queen can lay engineers: a machine works 50% faster while one tends it.",
+                cost: new[] { Amt(iron, 6) }, prerequisites: kilns != null ? new[] { kilns, haulers } : new[] { haulers },
+                effects: new[] { ResearchEffect.Unlock(AntCaste.Engineer) });
+            var glands = Research("scent_glands", "Scent Glands", 1, 6, 20f, "Unlocks the Pheromone Emitter: it keeps a painted scent from fading.",
+                prerequisites: Prereq(legs), effects: new[] { ResearchEffect.Unlock(emitter) });
+            Research("pheromone_burst", "Pheromone Burst", 2, 6, 30f, "Unlocks the Pheromone Burst ability (V): call every ant nearby to one spot.",
+                foodCost: 20f, prerequisites: new[] { glands }, effects: new[] { ResearchEffect.Unlock(burst) });
+
+            // The soldier research now points at the castes panel.
+            var soldier = Load("soldier_caste");
+            if (soldier != null && soldier.description != null && soldier.description.Contains("next to the toolbar"))
+            {
+                soldier.description = "The queen can lay soldiers: tough ants that guard the colony and hunt enemies. Set their share in the castes panel (K). Unlocks the Guard Post.";
+                EditorUtility.SetDirty(soldier);
+            }
+
+            Contract("hatch_miners", "Deep Diggers", ContractKind.HatchCaste, 5, caste: AntCaste.Miner, knowledge: 10f, food: 15f, growth: 0.35f, requires: miners);
+            Contract("hatch_haulers", "Strong Backs", ContractKind.HatchCaste, 5, caste: AntCaste.Hauler, knowledge: 10f, food: 15f, growth: 0.35f, requires: haulers);
+            Contract("hatch_nurses", "Nannies", ContractKind.HatchCaste, 3, caste: AntCaste.Nurse, knowledge: 10f, food: 20f, growth: 0.35f,
+                requires: Load("nurse_caste"));
+        }
+
+        static CasteDef Caste(string id, string displayName, AntCaste caste, int order, string colorHex, string description,
+            float egg, float upkeep, float health, float attack = 3f, float speed = 1f, float dig = 1f, float build = 1f, int carry = 1,
+            float share = 0.1f, bool jobs = true, float digJob = 0f, float haulJob = 0f, float buildJob = 0f, float supplyJob = 0f,
+            int sense = 10, float boost = 0.5f)
+        {
+            return LoadOrCreate<CasteDef>($"{CastesFolder}/{id}.asset", c =>
+            {
+                c.EditorSetIdentity(id, displayName);
+                c.caste = caste;
+                c.order = order;
+                c.color = Hex(colorHex);
+                c.description = description;
+                c.eggFoodCost = egg;
+                c.upkeep = upkeep;
+                c.health = health;
+                c.attack = attack;
+                c.speed = speed;
+                c.dig = dig;
+                c.build = build;
+                c.carry = carry;
+                c.defaultShare = share;
+                c.digJob = jobs ? 1f : digJob;
+                c.haulJob = jobs ? 1f : haulJob;
+                c.buildJob = jobs ? 1f : buildJob;
+                c.supplyJob = jobs ? 1f : supplyJob;
+                c.senseRadius = sense;
+                c.machineBoost = boost;
+            });
+        }
+
         static ResearchDef[] Prereq(ResearchDef def) => def != null ? new[] { def } : null;
 
         static BiomeDef.FluidPocket Pocket(FluidKind kind, float scale, float threshold) => new() { kind = kind, scale = scale, threshold = threshold };
@@ -488,12 +597,14 @@ namespace Antarium.Editor
 
         static ContractDef Contract(string id, string displayName, ContractKind kind, int amount, int intro = 0, ItemDef item = null,
             BuildingDef building = null, float knowledge = 0f, float food = 0f, ItemAmount[] rewards = null, float growth = 0.3f,
-            float weight = 1f, int minDepth = 0, string description = null)
+            float weight = 1f, int minDepth = 0, string description = null, AntCaste caste = AntCaste.Worker, ResearchDef requires = null)
         {
             return LoadOrCreate<ContractDef>($"{ContractsFolder}/{id}.asset", c =>
             {
                 c.EditorSetIdentity(id, displayName);
                 c.kind = kind;
+                c.caste = caste;
+                c.requires = requires;
                 c.amount = amount;
                 c.introOrder = intro;
                 c.repeatable = intro == 0;
@@ -553,12 +664,13 @@ namespace Antarium.Editor
             database.contracts = FindAll<ContractDef>();
             database.events = FindAll<RandomEventDef>();
             database.enemies = FindAll<EnemyDef>();
+            database.castes = FindAll<CasteDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
                       $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
                       $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events, " +
-                      $"{database.enemies.Count} enemies ({database.raiders.Count} raiders).");
+                      $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes.");
         }
 
         static List<T> FindAll<T>() where T : Object

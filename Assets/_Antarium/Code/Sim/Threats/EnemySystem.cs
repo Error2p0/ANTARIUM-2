@@ -65,6 +65,7 @@ namespace Antarium.Sim
         readonly ThreatConfig _threats;
         readonly CombatConfig _combat;
         readonly FluidConfig _fluids;
+        readonly PossessionConfig _possession;
         readonly Simulation _sim;
         NativeParallelMultiHashMap<int, int> _antsByCell;
 
@@ -105,6 +106,7 @@ namespace Antarium.Sim
             _threats = config.threats;
             _combat = config.combat;
             _fluids = config.fluids;
+            _possession = config.possession;
             _sim = sim;
             Rng = new Unity.Mathematics.Random(math.hash(new uint2(seed, 0xE11Eu)) | 1u);
             RaidTimer = math.max(_threats.firstRaidSeconds, _threats.raidWarningSeconds + 1f);
@@ -636,7 +638,7 @@ namespace Antarium.Sim
             var ants = _sim.Ants.Ants;
             var a = ants[antIndex];
             if (a.IsDead) return;
-            a.Health -= damage;
+            a.Health -= a.Possessed ? damage * _possession.damageTaken : damage;
             a.SinceHurt = 0f;
             if (a.Health <= 0f)
             {
@@ -647,13 +649,23 @@ namespace Antarium.Sim
             ants[antIndex] = a;
         }
 
-        /// <summary>Every ant next to an enemy bites it (soldiers much harder than workers).</summary>
+        /// <summary>The possessed ant bites enemy <paramref name="index"/>.</summary>
+        internal void Strike(int index, float damage)
+        {
+            if (index < 0 || index >= Enemies.Count) return;
+            var e = Enemies[index];
+            Hurt(ref e, damage);
+            Enemies[index] = e;
+            if (e.IsDead) RemoveDead();
+        }
+
+        /// <summary>Every ant next to an enemy bites it, by its caste (soldiers much harder than workers).</summary>
         void AntsBite(float dt)
         {
             var ants = _sim.Ants.Ants;
             var world = _sim.World;
-            float mult = _sim.Colony.Mods.Mult(StatKind.AntAttack);
-            float worker = _combat.workerAttack * mult * dt, soldier = _combat.soldierAttack * mult * dt;
+            var castes = _content.CasteSim;
+            float mult = _sim.Colony.Mods.Mult(StatKind.AntAttack) * dt;
             for (int i = 0; i < Enemies.Count; i++)
             {
                 var e = Enemies[i];
@@ -668,7 +680,7 @@ namespace Antarium.Sim
                     do
                     {
                         var a = ants[ant];
-                        if (!a.IsDead) damage += a.IsSoldier ? soldier : worker;
+                        if (!a.IsDead) damage += castes[(int)a.Caste].Attack * mult;
                     } while (_antsByCell.TryGetNextValue(out ant, ref it));
                 }
                 if (damage <= 0f) continue;

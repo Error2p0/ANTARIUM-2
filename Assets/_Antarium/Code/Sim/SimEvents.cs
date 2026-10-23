@@ -64,7 +64,17 @@ namespace Antarium.Sim
     public readonly struct AntHatchedEvent
     {
         public readonly int2 Cell;
-        public AntHatchedEvent(int2 cell) { Cell = cell; }
+        public readonly Antarium.Content.AntCaste Caste;
+        public AntHatchedEvent(int2 cell, Antarium.Content.AntCaste caste = Antarium.Content.AntCaste.Worker) { Cell = cell; Caste = caste; }
+    }
+
+    /// <summary>The player took control of an ant, let go, lost it, or clicked where there was none.</summary>
+    public readonly struct PossessionEvent
+    {
+        public readonly PossessionPhase Phase;
+        public readonly Antarium.Content.AntCaste Caste;
+        public readonly int2 Cell;
+        public PossessionEvent(PossessionPhase phase, Antarium.Content.AntCaste caste, int2 cell) { Phase = phase; Caste = caste; Cell = cell; }
     }
 
     public readonly struct BuildingPlacedEvent

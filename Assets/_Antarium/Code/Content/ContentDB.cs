@@ -22,6 +22,20 @@ namespace Antarium.Content
         public bool IsUnstable => (Flags & MaterialFlags.Unstable) != 0;
     }
 
+    /// <summary>Blittable per-caste numbers for Burst jobs (see <see cref="CasteDef"/>).</summary>
+    public struct CasteSim
+    {
+        public float Health;
+        public float Attack;
+        public float Speed;
+        public float Dig;
+        public float Build;
+        public int Carry;
+        /// <summary>Job distance multipliers; 0 = never takes that job.</summary>
+        public float DigJob, HaulJob, BuildJob, SupplyJob;
+        public int SenseRadius;
+    }
+
     /// <summary>Baked recipe: dense item indices instead of asset references.</summary>
     public sealed class RecipeData
     {
@@ -77,6 +91,7 @@ namespace Antarium.Content
         public IReadOnlyList<RandomEventDef> Events;
         public IReadOnlyList<EnemyDef> Enemies;
         public IReadOnlyList<EnemyDef> Raiders;
+        public IReadOnlyList<CasteDef> Castes;
     }
 
     /// <summary>Baked research node: dense indices.</summary>
@@ -155,6 +170,17 @@ namespace Antarium.Content
         /// <summary>Per building / ability: true if some research unlocks it (it starts locked).</summary>
         public readonly bool[] BuildingStartsLocked;
         public readonly bool[] AbilityStartsLocked;
+        /// <summary>Per <see cref="AntCaste"/>: its definition (a default one if the content has none). Never null.</summary>
+        public readonly CasteDef[] CasteDefs;
+        /// <summary>Per <see cref="AntCaste"/>: the numbers jobs read.</summary>
+        public NativeArray<CasteSim> CasteSim;
+        /// <summary>Per <see cref="AntCaste"/>: true if some research unlocks it (it starts locked). Workers never start locked.</summary>
+        public readonly bool[] CasteStartsLocked;
+        /// <summary>Per <see cref="AntCaste"/>: authored in the content (castes without a definition never hatch).</summary>
+        public readonly bool[] CasteDefined;
+        /// <summary>Authored castes in panel order.</summary>
+        public readonly AntCaste[] CasteOrder;
+        readonly List<CasteDef> _ownedCasteDefs = new();
 
         readonly Dictionary<string, ushort> _materialIndex = new();
         readonly Dictionary<string, ushort> _itemIndex = new();
@@ -211,6 +237,10 @@ namespace Antarium.Content
             for (int i = 0; i < Abilities.Length; i++) _abilityIndex.Add(Abilities[i].Id, i);
             BuildingStartsLocked = new bool[Buildings.Length];
             AbilityStartsLocked = new bool[Abilities.Length];
+            CasteDefs = new CasteDef[Castes.Count];
+            CasteStartsLocked = new bool[Castes.Count];
+            CasteDefined = new bool[Castes.Count];
+            CasteOrder = BakeCastes(progression.Castes);
             Research = BakeResearch(progression.Research);
             Contracts = BakeContracts(progression.Contracts);
             Events = BakeEvents(progression.Events);
@@ -338,6 +368,7 @@ namespace Antarium.Content
                         }
                         case ResearchEffectKind.UnlockCaste:
                             if (!castes.Contains(e.caste)) castes.Add(e.caste);
+                            if (e.caste != AntCaste.Worker) CasteStartsLocked[(int)e.caste] = true;
                             break;
                     }
                 }
@@ -349,6 +380,66 @@ namespace Antarium.Content
             }
             return result;
         }
+
+        /// <summary>
+        /// One definition per caste. Castes the content leaves out get a default definition (so tables are complete),
+        /// but only authored castes (and workers) can hatch. Returns the authored castes in panel order.
+        /// </summary>
+        AntCaste[] BakeCastes(IReadOnlyList<CasteDef> defs)
+        {
+            var sorted = Sorted(defs, "caste", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : a.caste.CompareTo(b.caste));
+            foreach (var def in sorted)
+            {
+                int c = (int)def.caste;
+                if (c >= Castes.Count) throw new ArgumentException($"Caste '{def.Id}' has an unknown caste value.");
+                if (CasteDefs[c] != null) throw new ArgumentException($"Two definitions for the {def.caste} caste ('{CasteDefs[c].Id}', '{def.Id}').");
+                CasteDefs[c] = def;
+                CasteDefined[c] = true;
+            }
+            CasteDefined[(int)AntCaste.Worker] = true;
+            CasteSim = new NativeArray<CasteSim>(Castes.Count, Allocator.Persistent);
+            for (int c = 0; c < Castes.Count; c++)
+            {
+                if (CasteDefs[c] != null) continue;
+                var def = UnityEngine.ScriptableObject.CreateInstance<CasteDef>();
+                def.caste = (AntCaste)c;
+                def.name = ((AntCaste)c).ToString();
+                def.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+                _ownedCasteDefs.Add(def);
+                CasteDefs[c] = def;
+            }
+            RefreshCastes();
+            var order = new List<AntCaste> { AntCaste.Worker };
+            foreach (var def in sorted)
+                if (def.caste != AntCaste.Worker) order.Add(def.caste);
+            return order.ToArray();
+        }
+
+        /// <summary>Re-reads the caste numbers jobs use from the definitions (after they were edited: tuning, tests).</summary>
+        public void RefreshCastes()
+        {
+            for (int c = 0; c < Castes.Count; c++)
+            {
+                var d = CasteDefs[c];
+                CasteSim[c] = new CasteSim
+                {
+                    Health = math.max(1f, d.health),
+                    Attack = math.max(0f, d.attack),
+                    Speed = math.max(0.1f, d.speed),
+                    Dig = math.max(0f, d.dig),
+                    Build = math.max(0f, d.build),
+                    Carry = math.clamp(d.carry, 1, 8),
+                    DigJob = math.max(0f, d.digJob),
+                    HaulJob = math.max(0f, d.haulJob),
+                    BuildJob = math.max(0f, d.buildJob),
+                    SupplyJob = math.max(0f, d.supplyJob),
+                    SenseRadius = math.max(0, d.senseRadius),
+                };
+            }
+        }
+
+        /// <summary>Definition of a caste (never null).</summary>
+        public CasteDef Caste(AntCaste caste) => CasteDefs[(int)caste];
 
         ContractData[] BakeContracts(IReadOnlyList<ContractDef> defs)
         {
@@ -494,6 +585,7 @@ namespace Antarium.Content
                     Events = database.events,
                     Enemies = database.enemies,
                     Raiders = database.raiders,
+                    Castes = database.castes,
                 });
         }
 
@@ -607,6 +699,10 @@ namespace Antarium.Content
         public void Dispose()
         {
             if (MaterialSim.IsCreated) MaterialSim.Dispose();
+            if (CasteSim.IsCreated) CasteSim.Dispose();
+            foreach (var def in _ownedCasteDefs)
+                if (def != null) UnityEngine.Object.DestroyImmediate(def);
+            _ownedCasteDefs.Clear();
         }
     }
 }

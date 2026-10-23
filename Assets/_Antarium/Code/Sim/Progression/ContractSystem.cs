@@ -113,6 +113,7 @@ namespace Antarium.Sim
                 case ContractKind.Build: return stats.Built[data.Building];
                 case ContractKind.DigCells: return stats.CellsDug;
                 case ContractKind.KillEnemies: return stats.EnemiesKilled;
+                case ContractKind.HatchCaste: return stats.HatchedCaste[(int)data.Def.caste];
                 default: return 0;
             }
         }

@@ -20,6 +20,7 @@ namespace Antarium.Sim
         internal int[] SurfaceY;
         internal Cell[] Cells;
         internal FluidCell[] Fluid;
+        internal byte[] Pheromones;
 
         public void WriteTo(Stream stream)
         {
@@ -27,6 +28,7 @@ namespace Antarium.Sim
             {
                 new("WRLD", SaveGame.WriteWorld(this)),
                 new("FLUD", SaveGame.WriteFluid(this)),
+                new("PHER", SaveGame.WritePheromones(this)),
             };
             SaveFormat.Write(stream, Header, all);
         }
@@ -42,8 +44,9 @@ namespace Antarium.Sim
         /// <summary>
         /// Format version written into new saves. Bump it (and migrate in <see cref="Migrate"/>) on breaking changes.
         /// Version 2 (Milestone 5): sections carry their own versions (IDS / COLN / ANTS / BLDG 2) and FLUD + THRT exist.
+        /// Version 3 (Milestone 6): COLN 3 (caste shares, nursery eggs), ANTS 3 (carried counts and eggs) and PHER exist.
         /// </summary>
-        public const int Version = 2;
+        public const int Version = 3;
 
         // ---------------------------------------------------------------- save
 
@@ -67,11 +70,12 @@ namespace Antarium.Sim
                 SurfaceY = (int[])world.SurfaceY.Clone(),
                 Cells = world.Cells.ToArray(),
                 Fluid = world.Fluid.ToArray(),
+                Pheromones = sim.Pheromones.Strength.ToArray(),
             };
             snap.Sections.Add(new("IDS", Section(w => WriteIds(w, sim.Content), 2)));
             snap.Sections.Add(new("SIM", Section(w => WriteSim(w, sim))));
-            snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 2)));
-            snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 2)));
+            snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 3)));
+            snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 3)));
             snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 2)));
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
             snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim))));
@@ -123,6 +127,14 @@ namespace Antarium.Sim
                 w.Write(kind);
             });
         }
+
+        /// <summary>Pheromone strengths, one plane per kind (mostly zeros: they compress to almost nothing).</summary>
+        internal static byte[] WritePheromones(SaveSnapshot s) => Section(w =>
+        {
+            w.Write(Antarium.Content.Pheromones.Count);
+            w.Write(s.Pheromones.Length);
+            w.Write(s.Pheromones);
+        });
 
         /// <summary>World cells as separate planes (material, density, flags): they compress far better than interleaved.</summary>
         internal static byte[] WriteWorld(SaveSnapshot s)
@@ -236,10 +248,28 @@ namespace Antarium.Sim
             // v2: castes of the eggs (same order), soldier share, threat statistics.
             w.Write(colony.Eggs.Count);
             foreach (var egg in colony.Eggs) w.Write((byte)egg.Caste);
-            w.Write(colony.SoldierShare);
+            w.Write(colony.CasteShare[(int)AntCaste.Soldier]);
             w.Write(stats.EnemiesKilled);
             w.Write(stats.AntsLost);
             w.Write(stats.RaidsRepelled);
+
+            // v3: every caste's share and hatch count, scouting, eggs in nurseries (by the nursery's origin cell).
+            w.Write(Castes.Count);
+            for (int c = 0; c < Castes.Count; c++)
+            {
+                w.Write(colony.CasteShare[c]);
+                w.Write(stats.HatchedCaste[c]);
+            }
+            w.Write(stats.CellsScouted);
+            w.Write(colony.Eggs.Count);
+            foreach (var egg in colony.Eggs)
+            {
+                bool inNursery = egg.InNursery && egg.Nursery < sim.Buildings.All.Length && sim.Buildings.All[egg.Nursery].Alive;
+                w.Write(inNursery);
+                if (!inNursery) continue;
+                w.Write(sim.Buildings.All[egg.Nursery].Origin);
+                w.Write(egg.Slot);
+            }
         }
 
         static void WriteLongs(BinaryWriter w, long[] values)
@@ -273,6 +303,10 @@ namespace Antarium.Sim
                 w.Write((byte)a.Caste); // v2
                 w.Write(a.Health);
                 w.Write(a.SinceHurt);
+                w.Write(a.CarryCount); // v3
+                w.Write(a.CarryingEgg);
+                w.Write((byte)a.EggCaste);
+                w.Write(a.EggAge);
             }
         }
 
@@ -438,13 +472,16 @@ namespace Antarium.Sim
             try
             {
                 sim = new Simulation(content, config, header.Seed, world);
+                var nurseryEggs = new List<(int egg, int2 origin, int slot)>();
                 Read(sections, "FLUD", (r, _) => ReadFluid(r, sim.World));
+                Read(sections, "PHER", (r, _) => ReadPheromones(r, sim));
                 Read(sections, "SIM", (r, _) => ReadSim(r, sim));
                 Read(sections, "PROG", (r, _) => ReadProgress(r, sim, map)); // research first: it sets capacities and unlocks
-                Read(sections, "COLN", (r, v) => ReadColony(r, sim, map, v));
+                Read(sections, "COLN", (r, v) => ReadColony(r, sim, map, v, nurseryEggs));
                 Read(sections, "ANTS", (r, v) => ReadAnts(r, sim, map, v));
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, _) => ReadThreats(r, sim, map));
+                PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
                 return sim;
             }
@@ -457,8 +494,9 @@ namespace Antarium.Sim
         }
 
         /// <summary>
-        /// Upgrades the sections of an older save in place. 1 → 2 needs nothing: every changed section carries its
-        /// own version byte and the readers fill in defaults for version 1 data (full health, workers, no fluid).
+        /// Upgrades the sections of an older save in place. 1 → 2 → 3 need nothing: every changed section carries its
+        /// own version byte and the readers fill in defaults for older data (full health, workers, no fluid, no
+        /// pheromones, the soldier share as the only caste share, one item carried).
         /// </summary>
         static void Migrate(int fromVersion, Dictionary<string, byte[]> sections)
         {
@@ -515,6 +553,36 @@ namespace Antarium.Sim
             fluid.Dispose();
         }
 
+        static void ReadPheromones(BinaryReader r, Simulation sim)
+        {
+            int kinds = r.ReadInt32();
+            int n = r.ReadInt32();
+            var data = r.ReadBytes(n);
+            if (data.Length != n) throw new InvalidDataException("Corrupt save: the pheromone planes are truncated.");
+            int cells = sim.Pheromones.CellCount;
+            if (n != kinds * cells) throw new InvalidDataException("Corrupt save: the pheromone planes do not match the world.");
+            var strengths = new byte[Antarium.Content.Pheromones.Count * cells];
+            Array.Copy(data, strengths, Math.Min(data.Length, strengths.Length)); // kinds added later start empty
+            sim.Pheromones.Restore(strengths);
+        }
+
+        /// <summary>Eggs saved in a nursery go back into the nursery now standing at that origin (else they lie loose).</summary>
+        static void PlaceNurseryEggs(Simulation sim, List<(int egg, int2 origin, int slot)> eggs)
+        {
+            var colony = sim.Colony;
+            foreach (var (index, origin, slot) in eggs)
+            {
+                if (index >= colony.Eggs.Count) continue;
+                int id = sim.Buildings.At(origin);
+                if (id < 0 || sim.Buildings.Get(id).Kind != BuildingKind.Nursery) continue;
+                var egg = colony.Eggs[index];
+                egg.Nursery = id;
+                egg.Slot = slot;
+                egg.Cell = Simulation.NurserySlotCell(sim.Buildings.Get(id), slot);
+                colony.Eggs[index] = egg;
+            }
+        }
+
         static WorldGrid ReadWorld(byte[] data, Remap map, ContentDB content)
         {
             using var r = new BinaryReader(new MemoryStream(data), Encoding.UTF8);
@@ -567,7 +635,7 @@ namespace Antarium.Sim
             }
         }
 
-        static void ReadColony(BinaryReader r, Simulation sim, Remap map, byte version)
+        static void ReadColony(BinaryReader r, Simulation sim, Remap map, byte version, List<(int egg, int2 origin, int slot)> nurseryEggs)
         {
             var colony = sim.Colony;
             var inv = colony.Inventory;
@@ -581,7 +649,7 @@ namespace Antarium.Sim
 
             colony.Eggs.Clear();
             int eggs = r.ReadInt32();
-            for (int i = 0; i < eggs; i++) colony.Eggs.Add(new Egg { Cell = r.ReadInt2(), Age = r.ReadSingle() });
+            for (int i = 0; i < eggs; i++) colony.Eggs.Add(new Egg { Cell = r.ReadInt2(), Age = r.ReadSingle(), Nursery = -1 });
             colony.RoyalDisplayCells.Clear();
             int display = r.ReadInt32();
             for (int i = 0; i < display; i++) colony.RoyalDisplayCells.Add(r.ReadInt2());
@@ -667,10 +735,30 @@ namespace Antarium.Sim
                 colony.Eggs[i] = egg;
             }
             float share = r.ReadSingle();
-            if (colony.SoldiersUnlocked) colony.SetSoldierShare(share);
+            if (version < 3) colony.SetCasteShare(AntCaste.Soldier, share);
             stats.EnemiesKilled = r.ReadInt64();
             stats.AntsLost = r.ReadInt64();
             stats.RaidsRepelled = r.ReadInt32();
+            if (version < 3) return;
+
+            int casteCount = r.ReadInt32();
+            for (int c = 0; c < casteCount; c++)
+            {
+                float s = r.ReadSingle();
+                long hatched = r.ReadInt64();
+                if (c >= Castes.Count) continue;
+                stats.HatchedCaste[c] = hatched;
+                if (c != (int)AntCaste.Worker) colony.SetCasteShare((AntCaste)c, s);
+            }
+            stats.CellsScouted = r.ReadInt64();
+            int eggCount = r.ReadInt32();
+            for (int i = 0; i < eggCount; i++)
+            {
+                if (!r.ReadBoolean()) continue;
+                var origin = r.ReadInt2();
+                int slot = r.ReadInt32();
+                nurseryEggs.Add((i, origin, slot));
+            }
         }
 
         static void ReadLongs(BinaryReader r, Action<int, long> set)
@@ -715,13 +803,23 @@ namespace Antarium.Sim
                     a.Health = r.ReadSingle();
                     a.SinceHurt = r.ReadSingle();
                 }
+                if (version >= 3)
+                {
+                    a.CarryCount = r.ReadByte();
+                    a.CarryingEgg = r.ReadBoolean();
+                    a.EggCaste = (AntCaste)r.ReadByte();
+                    a.EggAge = r.ReadSingle();
+                    if (!Enum.IsDefined(typeof(AntCaste), a.EggCaste)) a.CarryingEgg = false;
+                }
                 float max = ants.MaxHealth(a.Caste);
                 a.Health = version >= 2 ? math.clamp(a.Health, 1f, max) : max;
                 if (version < 2) a.SinceHurt = 1000f;
-                if (a.State == AntState.Dead) a.State = AntState.Idle;
+                if (a.State == AntState.Dead || !Enum.IsDefined(typeof(AntState), a.State)) a.State = AntState.Idle;
+                if (a.State == AntState.Tending || a.State == AntState.Rallying) a.State = AntState.Idle; // re-found after loading
 
                 bool wasCarrying = a.Carry != ContentDB.NoItem;
                 a.Carry = wasCarrying ? map.ItemOf(a.Carry) : ContentDB.NoItem;
+                a.CarryCount = a.Carry == ContentDB.NoItem ? (byte)0 : (byte)math.max(1, (int)a.CarryCount);
                 a.Want = map.ItemOf(a.Want);
                 if (a.Want == ContentDB.NoItem) a.Want = 0;
                 if (!sim.World.InBounds(a.Cell.x, a.Cell.y) || !sim.World.InBounds(a.From.x, a.From.y)) continue;
@@ -754,7 +852,10 @@ namespace Antarium.Sim
                 var dir = r.ReadInt2();
                 var state = (BuildingState)r.ReadByte();
                 float workLeft = r.ReadSingle();
-                ushort filter = map.ItemOf(r.ReadUInt16());
+                ushort rawFilter = r.ReadUInt16();
+                // Filters store an item (remapped by id); emitters store a pheromone kind.
+                bool emitter = def >= 0 && content.Buildings[def].Def.kind == BuildingKind.Emitter;
+                ushort filter = emitter ? (rawFilter < Antarium.Content.Pheromones.Count ? rawFilter : (ushort)0) : map.ItemOf(rawFilter);
                 if (filter == ContentDB.NoItem) filter = 0;
                 int id = def >= 0 ? buildings.Restore(def, origin, dir, filter, state, workLeft) : BuildingSystem.None;
                 var probe = id >= 0 ? buildings.Get(id) : new Building { Origin = origin, Dir = dir };

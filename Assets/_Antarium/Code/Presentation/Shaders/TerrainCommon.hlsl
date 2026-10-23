@@ -292,6 +292,35 @@ void ApplyFluid(inout TerrainSurface s, Neighborhood n, PixelInfo p)
     }
 }
 
+// Pheromones: two cells per uint, each 16 bits = 2 bits per kind (0 none, 1..3 by strength).
+StructuredBuffer<uint> _AntScent;
+float4 _AntScentColors[8];
+float _AntScentCover;   // share of pixels a full-strength scent tints
+
+uint ScentWord(int2 c)
+{
+    int i = CellIndex(c);
+    uint w = _AntScent[i >> 1];
+    return (i & 1) != 0 ? (w >> 16) : (w & 0xFFFFu);
+}
+
+// Painted scents show as sparse speckles in their colour (static hash noise, not a regular grid), denser when fresh.
+// Each kind hashes with its own offset, so overlapping scents mostly light different pixels.
+void ApplyScent(inout TerrainSurface s, PixelInfo p)
+{
+    uint w = ScentWord((int2)floor(p.cellPos));
+    if (w == 0u) return;
+    [unroll] for (uint k = 0; k < 5; k++)
+    {
+        uint level = (w >> (k * 2u)) & 3u;
+        if (level == 0u) continue;
+        float cover = _AntScentCover * (0.4 + 0.2 * level);
+        if (Hash21(p.px + int2((int)k * 7919, (int)k * 104729)) >= cover) continue;
+        s.albedo = lerp(s.albedo, _AntScentColors[k].rgb, 0.75);
+        s.glow = max(s.glow, 0.3);
+    }
+}
+
 TerrainSurface EvaluateTerrain(float2 positionWS)
 {
     TerrainSurface s;
@@ -374,6 +403,7 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
         }
     }
 
+    ApplyScent(s, p);
     s.hidden = RevealedAt(n, p.cellPos) + (Bayer4(p.px) - 0.5) * 0.7 < 0.5;
     // Mining orders stay visible as faint stripes over the fog so the player can see the plan.
     s.fogOrder = s.hidden && (n.flags[4] & ANT_FLAG_DIG_DESIGNATED) != 0 && ((p.px.x + p.px.y) & 3) == 0;

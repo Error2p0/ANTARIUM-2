@@ -49,6 +49,7 @@ namespace Antarium.Presentation
         readonly NativeArray<Color32> _itemColors;
         readonly Color32[] _stockColors;
         readonly NativeArray<DefVisual> _defs;
+        readonly NativeArray<Color32> _scentColors;
         readonly OverlayColors _colors;
 
         public readonly List<BuildGhost> Ghosts = new();
@@ -76,6 +77,7 @@ namespace Antarium.Presentation
             _defs = new NativeArray<DefVisual>(math.max(1, content.Buildings.Length), Allocator.Persistent);
             for (int i = 0; i < content.Buildings.Length; i++)
                 _defs[i] = Visual(content.Buildings[i].Def);
+            _scentColors = PheromoneColors(render);
 
             _colors = new OverlayColors
             {
@@ -89,6 +91,15 @@ namespace Antarium.Presentation
                 FullRate = render.overlayFullRate,
                 GhostAlpha = (byte)math.round(render.ghostAlpha * 255f),
             };
+        }
+
+        /// <summary>Pheromone colours (in <see cref="PheromoneKind"/> order) in the working colour space.</summary>
+        public static NativeArray<Color32> PheromoneColors(RenderConfig render)
+        {
+            var colors = new NativeArray<Color32>(Pheromones.Count, Allocator.Persistent);
+            for (int i = 0; i < colors.Length; i++)
+                colors[i] = TerrainView.ToWorking(render.pheromoneColors != null && i < render.pheromoneColors.Length ? render.pheromoneColors[i] : Color.white);
+            return colors;
         }
 
         static DefVisual Visual(BuildingDef def)
@@ -108,6 +119,8 @@ namespace Antarium.Presentation
                 case BuildingKind.Trap: v.Rect = BuildingSprites.TrapRect; v.Frames = 2; break;
                 case BuildingKind.GuardPost: v.Rect = BuildingSprites.GuardPostRect; break;
                 case BuildingKind.Wall: v.Rect = BuildingSprites.WallRect; break;
+                case BuildingKind.Nursery: v.Rect = BuildingSprites.NurseryRect; break;
+                case BuildingKind.Emitter: v.Rect = BuildingSprites.EmitterRect; break;
                 default:
                     v.Rect = def.art switch
                     {
@@ -138,6 +151,7 @@ namespace Antarium.Presentation
                     Defs = _defs,
                     Rects = _sprites.Rects,
                     ItemColors = _itemColors,
+                    ScentColors = _scentColors,
                     Vertices = vertices,
                     Alpha = alpha,
                     Time = time,
@@ -160,7 +174,7 @@ namespace Antarium.Presentation
                     Filter = ghost.Filter,
                     State = BuildingState.Active,
                 };
-                WriteSprite(vertices, quad, quad + 1, b, _defs[ghost.Def], _sprites.Rects, _itemColors, color, time);
+                WriteSprite(vertices, quad, quad + 1, b, _defs[ghost.Def], _sprites.Rects, _itemColors, _scentColors, color, time);
                 quad += 2;
             }
             _mesh.Apply(quad);
@@ -213,7 +227,7 @@ namespace Antarium.Presentation
 
         /// <summary>Building sprite into <paramref name="quad"/>; the filter's item dot into <paramref name="dotQuad"/>.</summary>
         static void WriteSprite(NativeArray<SpriteVertex> v, int quad, int dotQuad, in Building b, in DefVisual vis,
-            NativeArray<float4> rects, NativeArray<Color32> itemColors, Color32 color, float time)
+            NativeArray<float4> rects, NativeArray<Color32> itemColors, NativeArray<Color32> scentColors, Color32 color, float time)
         {
             float2 origin = new float2(b.Origin) * WorldConstants.CellSize;
             float2 cellCenter = origin + WorldConstants.CellSize * 0.5f;
@@ -253,6 +267,17 @@ namespace Antarium.Presentation
                     SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.DotSize), new int2(0, 1), 1, rects[BuildingSprites.DotRect], dot, light);
                     break;
                 }
+                case BuildingKind.Emitter:
+                {
+                    SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect], color, light);
+                    // The scent it gives off: a dot that pulses slowly over the pod.
+                    var dot = scentColors[math.min(b.Filter, scentColors.Length - 1)];
+                    dot.a = color.a;
+                    float pulse = ((int)(time * 2f) & 1) == 0 ? 0f : 1f / WorldConstants.PixelsPerUnit;
+                    float2 dotCenter = cellCenter + new float2(0f, pulse);
+                    SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.DotSize), new int2(0, 1), 1, rects[BuildingSprites.DotRect], dot, light);
+                    break;
+                }
                 default:
                 {
                     int frame = vis.Frames > 1 && b.State == BuildingState.Active && b.Status == MachineStatus.Working ? 1 : 0;
@@ -269,6 +294,7 @@ namespace Antarium.Presentation
             _sprites.Dispose();
             if (_itemColors.IsCreated) _itemColors.Dispose();
             if (_defs.IsCreated) _defs.Dispose();
+            if (_scentColors.IsCreated) _scentColors.Dispose();
         }
 
         [BurstCompile]
@@ -278,6 +304,7 @@ namespace Antarium.Presentation
             [ReadOnly] public NativeArray<DefVisual> Defs;
             [ReadOnly] public NativeArray<float4> Rects;
             [ReadOnly] public NativeArray<Color32> ItemColors;
+            [ReadOnly] public NativeArray<Color32> ScentColors;
             [NativeDisableParallelForRestriction] public NativeArray<SpriteVertex> Vertices;
             public float Alpha;
             public float Time;
@@ -294,7 +321,7 @@ namespace Antarium.Presentation
                     return;
                 }
                 var vis = Defs[b.Def];
-                WriteSprite(Vertices, quad, quad + 3, b, vis, Rects, ItemColors, Tint(b), Time);
+                WriteSprite(Vertices, quad, quad + 3, b, vis, Rects, ItemColors, ScentColors, Tint(b), Time);
                 WriteItem(quad + 1, b, b.Front);
                 WriteItem(quad + 2, b, b.Back);
             }

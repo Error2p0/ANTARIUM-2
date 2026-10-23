@@ -9,7 +9,7 @@ namespace Antarium.Gameplay
     /// <summary>Ability buttons at the end of the toolbar: hotkey, name, and the time left to recharge or run.</summary>
     public sealed class AbilityBar
     {
-        static readonly string[] Keys = { "Z", "X", "C" };
+        static readonly string[] Keys = { "Z", "X", "C", "V" };
 
         readonly ContentDB _content;
         readonly Button[] _buttons;

@@ -60,6 +60,7 @@ namespace Antarium.Gameplay
         BuildingView _buildingView;
         HoverInfo _hoverInfo;
         string[] _targetingHints;
+        Light2D _possessLight;
         bool _overlay;
         float2 _worldSize;
         int2 _pointerCell;
@@ -83,15 +84,19 @@ namespace Antarium.Gameplay
             _camera = new PixelCamera(worldCamera, config.camera);
             _input = new GameInput(inputActions);
             _cameraController = new CameraController(_camera, _input);
-            _hud = new HudController(hudDocument, _content, config.save.autosaveSeconds);
+            _hud = new HudController(hudDocument, _content, config.render, config.save.autosaveSeconds);
             _hud.ToolClicked += mode => _tools?.SetMode(mode);
             _hud.BuildingClicked += def => _tools?.SelectBuilding(def);
+            _hud.ScentClicked += kind => _tools?.SelectScent(kind);
             _hud.OverlayClicked += ToggleOverlay;
             _hud.ResearchToggled += ToggleResearch;
-            _hud.SoldierShareStep += step =>
-            {
-                if (_sim != null) _sim.EnqueueSoldierShare(_sim.Colony.SoldierShare + step * _sim.Colony.SoldierShareStep);
-            };
+            _hud.PossessClicked += () => { if (_sim != null) _tools.ClickPossess(_sim); };
+            _hud.CastesClicked += () => _hud.Castes?.Toggle();
+            if (_hud.Castes != null)
+                _hud.Castes.ShareStep += (caste, step) =>
+                {
+                    if (_sim != null) _sim.EnqueueCasteShare(caste, _sim.Colony.CasteShare[(int)caste] + step * _sim.Colony.ShareStep);
+                };
             if (_hud.Contracts != null)
             {
                 _hud.Contracts.ClaimClicked += slot => _sim?.EnqueueClaim(slot);
@@ -109,6 +114,7 @@ namespace Antarium.Gameplay
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
             _targetingHints = Array.ConvertAll(_content.Abilities, a => $"Click where to use {a.DisplayName}. Right click or Esc cancels.");
+            _possessLight = CreatePossessLight();
 
             if (!(continueLastSave && TryLoad(applyOffline: true)))
                 StartNewColony(randomSeed ? (uint)Environment.TickCount | 1u : seedOverride != 0 ? seedOverride : _content.WorldGen.defaultSeed);
@@ -156,16 +162,19 @@ namespace Antarium.Gameplay
             EndSession();
             _sim = sim;
             _worldSize = new float2(sim.World.Width, sim.World.Height) * WorldConstants.CellSize;
-            _terrain = new TerrainView(sim.World, sim.Light, _content, config.render, terrainMaterial, transform);
+            _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform);
             _terrain.Upload();
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
             _buildingView = new BuildingView(_content, config.render, spriteMaterial, transform, _worldSize);
             _colonyView = new ColonyView(_content, config.render, spriteMaterial, transform, _worldSize);
-            _tools = new ToolController(config.dig, _content, _buildingView.Ghosts);
+            _tools = new ToolController(config, _content, _buildingView.Ghosts);
             _tools.ModeChanged += _hud.SetActiveTool;
+            _tools.ModeChanged += mode => _terrain?.SetScentCover(mode == ToolMode.Pheromone);
             _tools.Build.SelectionChanged += _hud.SetSelectedBuilding;
+            _tools.ScentChanged += _hud.SetSelectedScent;
             _hud.SetActiveTool(_tools.Mode);
             _hud.SetSelectedBuilding(_tools.Build.Selected);
+            _hud.SetSelectedScent(_tools.Scent);
             _hud.ResetSession(sim);
             LookAt(sim.Colony.QueenCell + new int2(0, 4));
             _autosaveTimer = config.save.autosaveSeconds;
@@ -236,7 +245,9 @@ namespace Antarium.Gameplay
             HandleSystemKeys();
             bool paused = _hud.IsShowing(_hud.Menu?.Root);
 
-            _cameraController.Update(dt);
+            bool possessing = _tools.Possessing;
+            _cameraController.Update(dt, allowPan: !possessing);
+            if (possessing) FollowPossessed(dt);
             _camera.Apply(dt, _worldSize);
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
             _pointerCell = WorldGrid.WorldToCell(pointerWorld);
@@ -269,9 +280,12 @@ namespace Antarium.Gameplay
             _camera.AddTrauma(_feedback.Consume(events) + EventShake(events));
             _tools.Consume(events, now);
             _hud.Consume(events, _sim);
-            _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null);
+            _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null, _tools.Possessing, _tools.TargetingPossess);
             _hoverInfo.Update(dt, _sim, WorldGrid.WorldToCell(pointerWorld), _tools, overUi);
-            _hud.SetInfo(_tools.TargetingAbility >= 0 ? _targetingHints[_tools.TargetingAbility] : _hoverInfo.Text);
+            _hud.SetInfo(_tools.TargetingAbility >= 0 ? _targetingHints[_tools.TargetingAbility]
+                : _tools.TargetingPossess ? "Click an ant to take control of it. Right click or Esc cancels."
+                : _hoverInfo.Text);
+            UpdatePossessLight(alpha);
             _debugHud.Update(dt, _sim, pointerWorld, _camera.Zoom, _tools);
             events.Flush();
 
@@ -290,9 +304,11 @@ namespace Antarium.Gameplay
             {
                 if (_tools.CancelTargeting()) { }
                 else if (_hud.ModalOpen) _hud.HideModal();
+                else if (_tools.Possessing) _sim.EnqueueRelease();
                 else _hud.ShowModal(_hud.Menu?.Root);
             }
             if (_input.Research.WasPressedThisFrame()) ToggleResearch();
+            if (_input.Castes.WasPressedThisFrame() && _hud.Castes != null && CastesPanel.HasSpecialists(_sim)) _hud.Castes.Toggle();
             if (_input.QuickSave.WasPressedThisFrame()) Save(background: true, announce: true);
             if (_input.QuickLoad.WasPressedThisFrame() && !TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load.");
         }
@@ -332,6 +348,44 @@ namespace Antarium.Gameplay
         }
 
         void LookAt(int2 cell) => _camera.Position = WorldGrid.CellCenterToWorld(cell);
+
+        /// <summary>The camera eases toward the ant the player controls.</summary>
+        void FollowPossessed(float dt)
+        {
+            int i = _sim.PossessedAnt;
+            if (i < 0) return;
+            float2 target = _sim.Ants.Ants[i].Pos * WorldConstants.CellSize;
+            float t = 1f - math.exp(-config.camera.followSharpness * dt);
+            _camera.Position = math.lerp(_camera.Position, target, t);
+        }
+
+        Light2D CreatePossessLight()
+        {
+            var go = new GameObject("PossessLight");
+            go.transform.SetParent(transform, false);
+            var light = go.AddComponent<Light2D>();
+            light.lightType = Light2D.LightType.Point;
+            light.pointLightInnerRadius = 0f;
+            light.pointLightOuterRadius = config.possession.lightRadius * WorldConstants.CellSize;
+            light.intensity = config.possession.lightIntensity;
+            light.color = config.render.possessedColor;
+            light.shadowsEnabled = false;
+            go.SetActive(false);
+            return light;
+        }
+
+        /// <summary>A warm light follows the possessed ant (no shadows: see GDD 3.2).</summary>
+        void UpdatePossessLight(float alpha)
+        {
+            if (_possessLight == null) return;
+            int i = _sim.PossessedAnt;
+            bool on = i >= 0 && config.possession.lightIntensity > 0f;
+            if (_possessLight.gameObject.activeSelf != on) _possessLight.gameObject.SetActive(on);
+            if (!on) return;
+            var a = _sim.Ants.Ants[i];
+            float2 p = math.lerp(a.PrevPos, a.Pos, alpha) * WorldConstants.CellSize;
+            _possessLight.transform.position = new Vector3(p.x, p.y, 0f);
+        }
 
         void OnDestroy()
         {

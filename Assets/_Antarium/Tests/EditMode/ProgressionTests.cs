@@ -19,7 +19,7 @@ namespace Antarium.Tests
             c.startingWorkers = 6;
             c.startingFood = 50f;
             c.forageInterval = 1000f;
-            c.workerUpkeep = 0f;
+            C.WorkerCaste.upkeep = 0f;
             c.queenUpkeep = 0f;
             c.eggInterval = 1000f;
             c.fieldRefreshTicks = 1;
@@ -37,6 +37,15 @@ namespace Antarium.Tests
         {
             int ticks = (int)math.round(seconds / Sim.TickDuration);
             for (int i = 0; i < ticks; i++) Sim.Tick();
+        }
+
+        /// <summary>Ants per caste, for <see cref="Colony.NextCaste"/>.</summary>
+        protected static int[] Alive(int workers = 0, int soldiers = 0)
+        {
+            var alive = new int[Castes.Count];
+            alive[(int)AntCaste.Worker] = workers;
+            alive[(int)AntCaste.Soldier] = soldiers;
+            return alive;
         }
 
         protected int2 Queen => Sim.Colony.QueenCell;
@@ -389,8 +398,8 @@ namespace Antarium.Tests
         {
             var c = C.Config.colony;
             c.eggInterval = 6f;
-            c.eggFoodCost = 6f;
-            c.workerUpkeep = 0.25f;
+            C.WorkerCaste.eggFoodCost = 6f;
+            C.WorkerCaste.upkeep = 0.25f;
             c.queenUpkeep = 1.5f;
             C.Config.save.offlineMaxHours = 8f;
             Sim.Colony.Meter.AddFood(60f);

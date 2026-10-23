@@ -17,8 +17,8 @@ namespace Antarium.Presentation
     /// </summary>
     public sealed class ColonyView : IDisposable
     {
-        /// <summary>Body, carried item (or idle marker), health bar back and front.</summary>
-        const int QuadsPerAnt = 4;
+        /// <summary>Body, carried item / egg (or idle marker), a second carried item or the possessed marker, health bar back and front.</summary>
+        const int QuadsPerAnt = 5;
         const int QuadsPerEnemy = 3;
         const float FlashSeconds = 0.15f;
 
@@ -27,6 +27,7 @@ namespace Antarium.Presentation
         readonly SpriteMesh _mesh;
         readonly NativeArray<Color32> _itemColors;
         readonly Color32 _idleTint;
+        readonly Color32 _possessedTint;
         readonly BarColors _bars;
         static readonly Color32 SparkleTint = new(255, 230, 120, 255);
         static readonly Color32 AlertTint = new(255, 150, 70, 255);
@@ -44,6 +45,7 @@ namespace Antarium.Presentation
             _mesh = new SpriteMesh("Colony", spriteMaterial, _sprites.Texture, parent, worldSize, 10);
             _itemColors = ItemColors(content);
             _idleTint = TerrainView.ToWorking(render.overlayIdleAntColor);
+            _possessedTint = TerrainView.ToWorking(render.possessedColor);
             _bars = new BarColors
             {
                 Ant = TerrainView.ToWorking(render.healthBarColor),
@@ -79,14 +81,18 @@ namespace Antarium.Presentation
                 Ants = sim.Ants.Ants.AsArray(),
                 Nav = new NavGrid(sim.World),
                 Rects = _sprites.Rects,
+                CasteRect = _sprites.CasteRect,
+                CasteSize = _sprites.CasteSize,
+                Castes = _content.CasteSim,
+                HealthMultiplier = sim.Ants.HealthMultiplier,
                 ItemColors = _itemColors,
                 Vertices = vertices,
                 Alpha = alpha,
                 Overlay = overlay,
+                Blink = ((int)(time * 3f) & 1) == 0,
                 IdleTint = _idleTint,
+                PossessedTint = _possessedTint,
                 Bars = _bars,
-                WorkerMax = sim.Ants.MaxHealth(AntCaste.Worker),
-                SoldierMax = sim.Ants.MaxHealth(AntCaste.Soldier),
             }.Schedule(antCount, 64).Complete();
 
             int quad = antCount * QuadsPerAnt;
@@ -94,7 +100,19 @@ namespace Antarium.Presentation
 
             WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[ColonySprites.QueenRect], White, quad++);
             foreach (var egg in colony.Eggs)
+            {
+                if (egg.InNursery && egg.Nursery < sim.Buildings.All.Length)
+                {
+                    // In a nursery cradle: two eggs side by side, lifted into the silk bowl.
+                    var b = sim.Buildings.All[egg.Nursery];
+                    float2 px = new float2(Simulation.NurserySlotOffset(b, egg.Slot), 2f) / WorldConstants.PixelsPerUnit;
+                    float2 at = WorldGrid.CellCenterToWorld(egg.Cell) + px;
+                    SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(at, new int2(0, 1), ColonySprites.EggHeight),
+                        new int2(ColonySprites.EggWidth, ColonySprites.EggHeight), new int2(0, 1), 1, rects[ColonySprites.EggRect], White, at);
+                    continue;
+                }
                 WriteOnFloor(vertices, egg.Cell, ColonySprites.EggWidth, ColonySprites.EggHeight, rects[ColonySprites.EggRect], White, quad++);
+            }
             for (int i = 0; i < colony.Piles.Count; i++)
             {
                 var pile = colony.Piles[i];
@@ -196,14 +214,18 @@ namespace Antarium.Presentation
             [ReadOnly] public NativeArray<Ant> Ants;
             public NavGrid Nav;
             [ReadOnly] public NativeArray<float4> Rects;
+            [ReadOnly] public NativeArray<int> CasteRect;
+            [ReadOnly] public NativeArray<int2> CasteSize;
+            [ReadOnly] public NativeArray<CasteSim> Castes;
+            public float HealthMultiplier;
             [ReadOnly] public NativeArray<Color32> ItemColors;
             [NativeDisableParallelForRestriction] public NativeArray<SpriteVertex> Vertices;
             public float Alpha;
             public bool Overlay;
+            public bool Blink;
             public Color32 IdleTint;
+            public Color32 PossessedTint;
             public BarColors Bars;
-            public float WorkerMax;
-            public float SoldierMax;
 
             public void Execute(int index)
             {
@@ -222,39 +244,58 @@ namespace Antarium.Presentation
                 int facing = along != 0 ? (int)math.sign(along) : (a.Heading.x + a.Heading.y >= 0 ? 1 : -1);
 
                 int frame;
-                if (a.State == AntState.Digging || a.State == AntState.Building || a.State == AntState.Fighting) frame = (int)(a.WalkPhase * 2f) & 1;
+                bool working = a.State == AntState.Digging || a.State == AntState.Building || a.State == AntState.Fighting
+                               || a.State == AntState.Tending || a.ActTimer > 0f;
+                if (working) frame = (int)(a.WalkPhase * 2f + (a.ActTimer > 0f ? a.ActTimer * 8f : 0f)) & 1;
                 else if (a.IsMoving) frame = (int)(a.WalkPhase * 4f) & 3;
                 else frame = 0;
 
-                bool soldier = a.IsSoldier;
-                int2 size = soldier ? new int2(ColonySprites.SoldierWidth, ColonySprites.SoldierHeight) : new int2(ColonySprites.WorkerWidth, ColonySprites.WorkerHeight);
-                int rect = soldier ? ColonySprites.SoldierRect + frame : frame;
+                int caste = (int)a.Caste;
+                int2 size = CasteSize[caste];
+                int rect = CasteRect[caste] + frame;
                 float2 world = cellPos * WorldConstants.CellSize;
                 float2 center = SpriteQuads.OnSurface(world, up, size.y);
                 var tint = a.SinceHurt < FlashSeconds ? Bars.Flash : new Color32(255, 255, 255, 255);
                 SpriteQuads.WriteQuad(Vertices, quad, center, size, up, facing, Rects[rect], tint, world);
 
-                float max = soldier ? SoldierMax : WorkerMax;
-                WriteBar(Vertices, quad + 2, Rects[ColonySprites.PixelRect], center + new float2(0f, (size.y * 0.5f + 2f) / WorldConstants.PixelsPerUnit),
+                float max = Castes[caste].Health * HealthMultiplier;
+                WriteBar(Vertices, quad + 3, Rects[ColonySprites.PixelRect], center + new float2(0f, (size.y * 0.5f + 2f) / WorldConstants.PixelsPerUnit),
                     a.Health / math.max(1f, max), Bars.Back, Bars.Ant, world);
 
-                bool idle = !soldier && (a.State == AntState.Idle || (a.State == AntState.Wander && !a.IsCarrying));
+                // The ant you control: a gold diamond above it (blinks so it can be found in a crowd).
+                float2 above = center + new float2(up) * ((size.y * 0.5f + 3f) / WorldConstants.PixelsPerUnit);
+                if (a.Possessed && Blink)
+                    SpriteQuads.WriteQuad(Vertices, quad + 2, above, new int2(ColonySprites.MarkerSize), up, facing, Rects[ColonySprites.MarkerRect], PossessedTint, world);
+                else SpriteQuads.WriteEmpty(Vertices, quad + 2);
+
+                bool idle = !a.IsSoldier && !a.Possessed && (a.State == AntState.Idle || (a.State == AntState.Wander && !a.IsCarrying));
                 if (Overlay && idle)
                 {
                     // Idle marker: a dot floating above the ant (uses the carried-item slot, which is empty).
-                    float2 marker = center + new float2(up) * ((size.y * 0.5f + 3f) / WorldConstants.PixelsPerUnit);
-                    SpriteQuads.WriteQuad(Vertices, quad + 1, marker, new int2(ColonySprites.MarkerSize), up, facing,
+                    SpriteQuads.WriteQuad(Vertices, quad + 1, above, new int2(ColonySprites.MarkerSize), up, facing,
                         Rects[ColonySprites.MarkerRect], IdleTint, world);
                     return;
                 }
 
-                if (a.IsCarrying)
+                float2 f = new float2(forwardAxis) * facing;
+                float2 carry = center + f * ((size.x * 0.5f) / WorldConstants.PixelsPerUnit) + new float2(up) * (2f / WorldConstants.PixelsPerUnit);
+                if (a.CarryingEgg)
                 {
-                    float2 f = new float2(forwardAxis) * facing;
-                    float2 carry = center + f * ((size.x * 0.5f) / WorldConstants.PixelsPerUnit)
-                                   + new float2(up) * (2f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(Vertices, quad + 1, carry, new int2(ColonySprites.EggWidth, ColonySprites.EggHeight), up, facing,
+                        Rects[ColonySprites.EggRect], new Color32(255, 255, 255, 255), world);
+                }
+                else if (a.IsCarrying)
+                {
+                    var color = ItemColors[a.Carry];
                     SpriteQuads.WriteQuad(Vertices, quad + 1, carry, new int2(ColonySprites.CarryWidth, ColonySprites.CarryHeight), up, facing,
-                        Rects[ColonySprites.CarryRect], ItemColors[a.Carry], world);
+                        Rects[ColonySprites.CarryRect], color, world);
+                    if (a.CarryCount > 1 && !a.Possessed)
+                    {
+                        // A hauler's stack: a second lump on top.
+                        float2 stacked = carry + new float2(up) * (2f / WorldConstants.PixelsPerUnit) - f * (1f / WorldConstants.PixelsPerUnit);
+                        SpriteQuads.WriteQuad(Vertices, quad + 2, stacked, new int2(ColonySprites.CarryWidth, ColonySprites.CarryHeight), up, facing,
+                            Rects[ColonySprites.CarryRect], color, world);
+                    }
                 }
                 else SpriteQuads.WriteEmpty(Vertices, quad + 1);
             }

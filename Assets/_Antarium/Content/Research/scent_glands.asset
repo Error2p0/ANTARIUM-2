@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: scent_glands
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: scent_glands
+  displayName: Scent Glands
+  description: 'Unlocks the Pheromone Emitter: it keeps a painted scent from fading.'
+  treePosition: {x: 1, y: 6}
+  knowledgeCost: 20
+  cost: []
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 2eb108b09af724340b628b9c2d57f211, type: 2}
+  effects:
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: 3c35a85ffcead8d478509d56a917f5a6, type: 2}
+    ability: {fileID: 0}
+    caste: 0
