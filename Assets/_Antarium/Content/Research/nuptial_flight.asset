@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: nuptial_flight
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: nuptial_flight
+  displayName: Nuptial Flight
+  description: 'Unlocks the Princess Chamber: raise princesses from fungus and amber, then send them on a Nuptial Flight (N) to found a new colony with Genetic Memory.'
+  treePosition: {x: 5, y: 3}
+  knowledgeCost: 80
+  cost:
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 6
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 9225adea3d2d65c4192cde543be90100, type: 2}
+  - {fileID: 11400000, guid: 4bdbb0c6f379f4944a0e98c9064d8db7, type: 2}
+  effects:
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: e045ed51333525144af9a683e5886094, type: 2}
+    ability: {fileID: 0}
+    caste: 0

@@ -42,6 +42,7 @@ namespace Antarium.Content
         Wall,
         Nursery,
         Emitter,
+        PrincessChamber,
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>
@@ -92,6 +93,8 @@ namespace Antarium.Content
         [Min(0f)] public float hatchBonus = 0.5f;
         [Tooltip("Emitter: pheromone of its kind within this many cells never fades.")]
         [Min(1f)] public float emitterRadius = 10f;
+        [Tooltip("Princess chamber: princesses shown resting in it.")]
+        [Min(0)] public int princessSlots;
 
         [Header("Presentation")]
         [Tooltip("Colour of the palette swatch.")]

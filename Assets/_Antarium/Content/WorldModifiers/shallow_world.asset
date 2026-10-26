@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e233917afcdc9340b87a427b777937f, type: 3}
+  m_Name: shallow_world
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.WorldModifierDef
+  id: shallow_world
+  displayName: Shallow World
+  description: every layer is 25% thinner, so the deep biomes come sooner. +10% Genetic Memory.
+  order: 2
+  color: {r: 0.49803922, g: 0.84705883, b: 1, a: 1}
+  oreThreshold: 0
+  caveThreshold: 0
+  waterThreshold: 0
+  lavaThreshold: 0
+  gasThreshold: 0
+  biomeThickness: 0.75
+  stats:
+  - stat: 20
+    value: 0.1

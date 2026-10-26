@@ -390,7 +390,7 @@ namespace Antarium.Sim
                 float angle = Rng.NextFloat(math.PI * 2f);
                 int2 c = anchor + (int2)math.round(new float2(math.cos(angle), math.sin(angle)) * Rng.NextFloat(radius + 1f, radius + 5f));
                 if (!IsPlainSolid(c)) continue;
-                int layer = _content.BiomeAtDepth(world.Depth(c.x, c.y));
+                int layer = _sim.BiomeAtDepth(world.Depth(c.x, c.y));
                 ushort ore = data.Materials[math.min(layer, data.Materials.Length - 1)];
 
                 int converted = 0;

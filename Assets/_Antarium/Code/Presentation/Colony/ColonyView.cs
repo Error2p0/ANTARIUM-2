@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Antarium.Content;
 using Antarium.Core;
 using Antarium.Sim;
@@ -15,6 +16,14 @@ namespace Antarium.Presentation
     /// call). Ant quads are built by a Burst job. Sprites snap to the art-pixel grid and rotate in 90° steps to
     /// follow the surface an ant clings to, so pixels stay crisp. Hurt ants and enemies flash and show a health bar.
     /// </summary>
+    /// <summary>A princess in the air during the Nuptial Flight (world position, wing phase, facing).</summary>
+    public struct Flyer
+    {
+        public float2 Pos;
+        public float Phase;
+        public int Facing;
+    }
+
     public sealed class ColonyView : IDisposable
     {
         /// <summary>Body, carried item / egg (or idle marker), a second carried item or the possessed marker, health bar back and front.</summary>
@@ -32,6 +41,11 @@ namespace Antarium.Presentation
         static readonly Color32 SparkleTint = new(255, 230, 120, 255);
         static readonly Color32 AlertTint = new(255, 150, 70, 255);
         static readonly Color32 White = new(255, 255, 255, 255);
+
+        /// <summary>Princesses flying off (Nuptial Flight), drawn on top of everything. Filled by the game each frame.</summary>
+        public readonly List<Flyer> Flyers = new();
+        /// <summary>The princesses left on their flight: the chambers are drawn empty.</summary>
+        public bool PrincessesFlown;
 
         struct BarColors
         {
@@ -72,7 +86,7 @@ namespace Antarium.Presentation
             var enemies = sim.Enemies.Enemies;
             int antCount = sim.Ants.Count;
             int quads = antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count
-                        + enemies.Count * QuadsPerEnemy;
+                        + enemies.Count * QuadsPerEnemy + colony.Princesses + Flyers.Count;
             _mesh.EnsureCapacity(quads);
             var vertices = _mesh.Vertices;
 
@@ -163,7 +177,40 @@ namespace Antarium.Presentation
                     e.Health / math.max(1f, def.health), _bars.Back, _bars.Enemy, world);
                 quad += 2;
             }
+            quad = WritePrincesses(sim, vertices, quad);
             _mesh.Apply(quad);
+        }
+
+        /// <summary>
+        /// Princesses rest on the silk beds of the princess chambers (in building order; any beyond the beds are not
+        /// drawn), and the ones of a Nuptial Flight flap up into the sky.
+        /// </summary>
+        int WritePrincesses(Simulation sim, NativeArray<SpriteVertex> vertices, int quad)
+        {
+            var rects = _sprites.Rects;
+            var size = new int2(ColonySprites.PrincessWidth, ColonySprites.PrincessHeight);
+            var up = new int2(0, 1);
+            int left = PrincessesFlown ? 0 : sim.Colony.Princesses;
+            var all = sim.Buildings.All;
+            for (int id = 0; id < all.Length && left > 0; id++)
+            {
+                var b = all[id];
+                if (!b.Alive || !b.IsActive || b.Kind != BuildingKind.Processor) continue;
+                int beds = math.min(_content.Buildings[b.Def].Def.princessSlots, BuildingSprites.PrincessBeds.Length);
+                for (int s = 0; s < beds && left > 0; s++, left--)
+                {
+                    float2 at = WorldGrid.CellCenterToWorld(b.Origin)
+                                + new float2(BuildingSprites.PrincessBeds[s].x - BuildingSprites.Cell / 2, BuildingSprites.PrincessBeds[s].y + 4) / WorldConstants.PixelsPerUnit;
+                    SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(at, up, size.y), size, up, s == 0 ? 1 : -1,
+                        rects[ColonySprites.PrincessRect], White, at);
+                }
+            }
+            foreach (var f in Flyers)
+            {
+                int frame = 1 + ((int)(f.Phase * 12f) & 1);
+                SpriteQuads.WriteQuad(vertices, quad++, f.Pos, size, up, f.Facing, rects[ColonySprites.PrincessRect + frame], White, f.Pos);
+            }
+            return quad;
         }
 
         /// <summary>Centre and orientation of a creature sprite clinging to the surface at <paramref name="cellPos"/>.</summary>

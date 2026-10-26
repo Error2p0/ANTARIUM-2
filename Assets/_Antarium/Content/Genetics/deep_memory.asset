@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14707ad79a2368a40bf87987021cdcda, type: 3}
+  m_Name: deep_memory
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GeneticDef
+  id: deep_memory
+  displayName: Deep Memory
+  description: Nuptial Flights pass on more Genetic Memory.
+  treePosition: {x: 3, y: 1}
+  cost: 5
+  costPerLevel: 3
+  maxLevel: 5
+  prerequisites:
+  - {fileID: 11400000, guid: 19e2e98e87bc90341935eb93ed8ca9c7, type: 2}
+  effects:
+  - kind: 0
+    stat: 20
+    value: 0.1
+    item: {fileID: 0}
+    count: 0
+    research: {fileID: 0}
+    modifier: {fileID: 0}

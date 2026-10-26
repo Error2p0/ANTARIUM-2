@@ -37,8 +37,12 @@ namespace Antarium.Gameplay
         readonly bool[] _buildingLockShown;
         readonly StringBuilder _sb = new();
         readonly Label _knowledge, _knowledgeRate;
+        readonly Label _princesses, _memory;
+        readonly VisualElement _princessEntry, _memoryEntry;
         readonly VisualElement _modal;
-        readonly Button _researchButton;
+        readonly Button _researchButton, _geneticsButton, _flightButton;
+        /// <summary>Buildings whose recipes raise princesses.</summary>
+        readonly bool[] _raisesPrincesses;
         /// <summary>Per building: name of the research that unlocks it (null if it starts unlocked).</summary>
         readonly string[] _unlockedBy;
         float _caveInToastCooldown;
@@ -50,7 +54,11 @@ namespace Antarium.Gameplay
         public ResearchPanel Research { get; }
         public MenuDialog Menu { get; }
         public WelcomeBackDialog WelcomeBack { get; }
+        public GeneticPanel Genetics { get; }
+        public FlightDialog Flight { get; }
         public event Action ResearchToggled;
+        public event Action GeneticsToggled;
+        public event Action FlightToggled;
         float _timer;
         float _toastTimer;
 
@@ -97,6 +105,11 @@ namespace Antarium.Gameplay
             _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _);
             _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate);
             knowledgeEntry.AddToClassList("resource--knowledge");
+            _princesses = AddEntry(new Color(1f, 0.75f, 0.4f), out _princessEntry, out _);
+            _princessEntry.AddToClassList("hidden");
+            _memory = AddEntry(new Color(1f, 0.85f, 0.45f), out _memoryEntry, out _);
+            _memoryEntry.AddToClassList("resource--memory");
+            _memoryEntry.AddToClassList("hidden");
             _itemEntries = new VisualElement[content.Items.Length];
             _itemLabels = new Label[content.Items.Length];
             _itemRates = new Label[content.Items.Length];
@@ -117,6 +130,14 @@ namespace Antarium.Gameplay
             _castesButton.AddToClassList("hidden");
             _researchButton = Toggle(toolbar, "T  Research", () => ResearchToggled?.Invoke());
             _overlayButton = Toggle(toolbar, "O  Flow", () => OverlayClicked?.Invoke());
+            _geneticsButton = Toggle(toolbar, "G  Genes", () => GeneticsToggled?.Invoke());
+            _geneticsButton.AddToClassList("hidden");
+            _flightButton = Toggle(toolbar, "N  Flight", () => FlightToggled?.Invoke());
+            _flightButton.AddToClassList("hidden");
+            _raisesPrincesses = new bool[content.Buildings.Length];
+            for (int i = 0; i < content.Buildings.Length; i++)
+                foreach (int r in content.Buildings[i].Recipes)
+                    if (content.Recipes[r].Princesses > 0) _raisesPrincesses[i] = true;
             Abilities = new AbilityBar(abilities, content);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
             Castes = new CastesPanel(castes, content);
@@ -135,6 +156,8 @@ namespace Antarium.Gameplay
             Research = new ResearchPanel(content);
             Menu = new MenuDialog(autosaveSeconds);
             WelcomeBack = new WelcomeBackDialog(content);
+            Genetics = new GeneticPanel(content);
+            Flight = new FlightDialog(content);
             SetActiveTool(ToolMode.Dig);
             SetSelectedBuilding(0);
         }
@@ -377,6 +400,34 @@ namespace Antarium.Gameplay
                     _ => "Can't use that.",
                 });
             }
+            foreach (var e in events.Read<GeneticBoughtEvent>())
+            {
+                var data = _content.Genetics[e.Trait];
+                _sb.Clear().Append(data.Def.DisplayName);
+                if (data.MaxLevel > 1) _sb.Append(" level ").Append(e.Level);
+                _sb.Append(" is part of your bloodline now.");
+                bool startOnly = true;
+                foreach (var effect in data.Effects)
+                    startOnly &= effect.kind is GeneticEffectKind.StartWorkers or GeneticEffectKind.StartFood or GeneticEffectKind.StartKnowledge
+                        or GeneticEffectKind.StartItems or GeneticEffectKind.RevealRadius;
+                if (startOnly) _sb.Append(" It takes effect in the next colony.");
+                ShowToast(_sb.ToString());
+            }
+            foreach (var e in events.Read<GeneticFailedEvent>())
+            {
+                if (e.Trait < 0 || e.Trait >= _content.Genetics.Length) continue;
+                string name = _content.Genetics[e.Trait].Def.DisplayName;
+                ShowToast(e.Result switch
+                {
+                    GeneticResult.NeedsPrerequisites => $"{name} needs the trait before it first.",
+                    GeneticResult.CantAfford => $"Not enough Genetic Memory for {name}.",
+                    _ => $"{name} is already at its highest level.",
+                });
+            }
+            foreach (var e in events.Read<PrincessRaisedEvent>())
+                ShowToast(e.Total >= sim.Colony.PrincessCap
+                    ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen (N)."
+                    : $"A princess is ready ({e.Total}/{sim.Colony.PrincessCap}). Each one raises the Genetic Memory of a Nuptial Flight (N).");
             foreach (var e in events.Read<ContractClaimedEvent>())
                 ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
             if (events.Read<GateBrokenEvent>().Length > 0) ShowToast("Enemies broke a gate! Workers will repair it once it is safe.");
@@ -510,6 +561,19 @@ namespace Antarium.Gameplay
             bool researchOpen = IsShowing(Research.Root);
             _researchButton.EnableInClassList("tool--on", researchOpen);
             if (researchOpen) Research.Refresh(sim);
+            bool flightKnown = FlightKnown(sim);
+            _flightButton.EnableInClassList("hidden", !flightKnown);
+            _geneticsButton.EnableInClassList("hidden", !sim.Legacy.Awakened);
+            bool geneticsOpen = IsShowing(Genetics.Root), flightOpen = IsShowing(Flight.Root);
+            _geneticsButton.EnableInClassList("tool--on", geneticsOpen);
+            _flightButton.EnableInClassList("tool--on", flightOpen);
+            _flightButton.EnableInClassList("tool--ready", sim.Colony.Princesses > 0 && !flightOpen);
+            if (geneticsOpen) Genetics.Refresh(sim);
+            if (flightOpen) Flight.Update(RefreshInterval, sim);
+            _princessEntry.EnableInClassList("hidden", !flightKnown);
+            if (flightKnown) _princesses.text = $"Princesses {colony.Princesses}/{colony.PrincessCap}";
+            _memoryEntry.EnableInClassList("hidden", !sim.Legacy.Awakened);
+            if (sim.Legacy.Awakened) _memory.text = $"Memory {sim.Legacy.Memory}";
             if (IsShowing(Menu.Root)) Menu.Update(RefreshInterval, menuStatus);
 
             for (int i = 0; i < _itemLabels.Length; i++)
@@ -542,6 +606,15 @@ namespace Antarium.Gameplay
             }
             _alert.EnableInClassList("hidden", _sb.Length == 0);
             if (_sb.Length > 0) _alert.text = _sb.ToString();
+        }
+
+        /// <summary>The Nuptial Flight is known: a princess chamber is unlocked, princesses exist, or the colony has flown before.</summary>
+        public bool FlightKnown(Simulation sim)
+        {
+            if (sim.Legacy.Awakened || sim.Colony.Princesses > 0) return true;
+            for (int i = 0; i < _raisesPrincesses.Length; i++)
+                if (_raisesPrincesses[i] && sim.Colony.BuildingUnlocked[i]) return true;
+            return false;
         }
 
         static void SetRate(Label label, float perMinute)

@@ -264,3 +264,30 @@ namespace Antarium.Sim
         public WallBuiltEvent(int2 cell) { Cell = cell; }
     }
 }
+
+namespace Antarium.Sim
+{
+    /// <summary>A level of a genetic trait was bought.</summary>
+    public readonly struct GeneticBoughtEvent
+    {
+        public readonly int Trait;
+        public readonly int Level;
+        public GeneticBoughtEvent(int trait, int level) { Trait = trait; Level = level; }
+    }
+
+    /// <summary>Buying a genetic trait was refused.</summary>
+    public readonly struct GeneticFailedEvent
+    {
+        public readonly int Trait;
+        public readonly GeneticResult Result;
+        public GeneticFailedEvent(int trait, GeneticResult result) { Trait = trait; Result = result; }
+    }
+
+    /// <summary>A princess chamber raised a princess; <see cref="Total"/> are now waiting.</summary>
+    public readonly struct PrincessRaisedEvent
+    {
+        public readonly int2 Cell;
+        public readonly int Total;
+        public PrincessRaisedEvent(int2 cell, int total) { Cell = cell; Total = total; }
+    }
+}

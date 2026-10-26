@@ -680,7 +680,8 @@ namespace Antarium.Sim
                 if (m.Pending.Count > 0) m.Status = MachineStatus.OutputBlocked;
                 else
                 {
-                    if (m.Recipe < 0) TryStart(m);
+                    bool noRoom = false;
+                    if (m.Recipe < 0) TryStart(m, out noRoom);
                     if (m.Recipe >= 0)
                     {
                         var recipe = _content.Recipes[m.Recipe];
@@ -696,6 +697,12 @@ namespace Antarium.Sim
                             }
                             if (recipe.Knowledge > 0f)
                                 _colony.Inventory.AddKnowledge(recipe.Knowledge * _colony.Mods.Mult(StatKind.KnowledgeGain), studied: true);
+                            if (recipe.Princesses > 0)
+                            {
+                                _colony.Princesses += recipe.Princesses;
+                                stats.PrincessesRaised += recipe.Princesses;
+                                _events.Publish(new PrincessRaisedEvent(b.Origin, _colony.Princesses));
+                            }
                             m.Recipe = -1;
                             m.Progress = 0f;
                             m.Crafted++;
@@ -705,16 +712,20 @@ namespace Antarium.Sim
                                 m.Pending.RemoveAt(0);
                         }
                     }
-                    else m.Status = MachineStatus.Idle;
+                    else m.Status = noRoom ? MachineStatus.OutputBlocked : MachineStatus.Idle;
                 }
                 b.Status = m.Status;
                 b.Craft = m.Recipe >= 0 ? m.Progress / _content.Recipes[m.Recipe].Duration : 0f;
             }
         }
 
-        /// <summary>Starts the next craftable recipe (round-robin, so one recipe cannot starve the others).</summary>
-        void TryStart(Machine m)
+        /// <summary>
+        /// Starts the next craftable recipe (round-robin, so one recipe cannot starve the others). Princess recipes wait
+        /// while the colony already has (or is raising) as many princesses as count (<paramref name="noRoom"/>).
+        /// </summary>
+        void TryStart(Machine m, out bool noRoom)
         {
+            noRoom = false;
             var recipes = m.Data.Recipes;
             for (int k = 0; k < recipes.Length; k++)
             {
@@ -724,6 +735,11 @@ namespace Antarium.Sim
                 for (int i = 0; i < recipe.InputItems.Length && ok; i++)
                     ok = m.Inputs[m.InputIndex(recipe.InputItems[i])] >= recipe.InputCounts[i];
                 if (!ok) continue;
+                if (recipe.Princesses > 0 && _colony.Princesses + PrincessesInProgress() + recipe.Princesses > _colony.PrincessCap)
+                {
+                    noRoom = true;
+                    continue;
+                }
                 for (int i = 0; i < recipe.InputItems.Length; i++)
                     m.Inputs[m.InputIndex(recipe.InputItems[i])] -= recipe.InputCounts[i];
                 m.Recipe = recipes[ri];
@@ -731,6 +747,15 @@ namespace Antarium.Sim
                 m.NextRecipe = (ri + 1) % recipes.Length;
                 return;
             }
+        }
+
+        /// <summary>Princesses machines are raising right now.</summary>
+        public int PrincessesInProgress()
+        {
+            int n = 0;
+            foreach (var m in _machines)
+                if (m != null && m.Recipe >= 0) n += _content.Recipes[m.Recipe].Princesses;
+            return n;
         }
 
         bool EmitProduct(Machine m, ushort item)

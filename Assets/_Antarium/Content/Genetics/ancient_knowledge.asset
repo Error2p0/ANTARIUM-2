@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14707ad79a2368a40bf87987021cdcda, type: 3}
+  m_Name: ancient_knowledge
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GeneticDef
+  id: ancient_knowledge
+  displayName: Ancient Knowledge
+  description: Each colony starts with knowledge for its first research.
+  treePosition: {x: 3, y: 0}
+  cost: 4
+  costPerLevel: 2
+  maxLevel: 3
+  prerequisites:
+  - {fileID: 11400000, guid: 129de723d2db95c44a61d68576be5418, type: 2}
+  effects:
+  - kind: 3
+    stat: 0
+    value: 25
+    item: {fileID: 0}
+    count: 0
+    research: {fileID: 0}
+    modifier: {fileID: 0}

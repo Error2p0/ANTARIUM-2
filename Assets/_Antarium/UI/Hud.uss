@@ -676,3 +676,94 @@
     border-color: rgb(255, 210, 90);
     color: rgb(255, 230, 150);
 }
+
+/* Milestone 7: Nuptial Flight, genetic tree, princesses */
+.flight {
+    max-width: 680px;
+    width: 680px;
+}
+.flight__heading {
+    color: rgb(255, 210, 140);
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin: 8px 0 0 0;
+    padding: 0;
+}
+.flight__modifiers {
+    flex-direction: column;
+    margin: 2px 0 4px 0;
+}
+.modifier {
+    flex-direction: row;
+    align-items: center;
+    min-height: 26px;
+    margin: 1px 0;
+    padding: 2px 6px;
+    background-color: rgb(34, 24, 18);
+    border-width: 2px;
+    border-color: rgb(60, 44, 32);
+    border-radius: 0;
+}
+.modifier:hover {
+    background-color: rgb(52, 36, 26);
+}
+.modifier__swatch {
+    width: 8px;
+    height: 14px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.6);
+}
+.modifier__text {
+    color: rgb(220, 205, 180);
+    font-size: 12px;
+    white-space: normal;
+    flex-shrink: 1;
+    margin: 0;
+    padding: 0;
+}
+.modifier--chosen {
+    border-color: rgb(255, 210, 110);
+    background-color: rgb(70, 52, 24);
+}
+.modifier--chosen .modifier__text {
+    color: rgb(255, 235, 180);
+}
+.modifier--locked .modifier__text {
+    color: rgb(130, 118, 100);
+}
+.genetics {
+    width: 1000px;
+}
+.genetics .research__knowledge {
+    color: rgb(255, 215, 120);
+}
+.genetics .node--available {
+    border-color: rgb(170, 130, 60);
+    background-color: rgb(48, 36, 20);
+}
+.genetics .node--available .node__name {
+    color: rgb(255, 235, 190);
+}
+.genetics .node--affordable {
+    border-color: rgb(255, 210, 110);
+    background-color: rgb(84, 62, 26);
+}
+.genetics .node--affordable .node__cost {
+    color: rgb(255, 220, 140);
+}
+.genetics .node--affordable:hover {
+    background-color: rgb(112, 84, 34);
+}
+.genetics .node--owned {
+    border-left-color: rgb(120, 200, 120);
+    border-left-width: 4px;
+}
+.resource--memory .resource__label {
+    color: rgb(255, 215, 120);
+}
+.tool--ready {
+    border-color: rgb(255, 210, 110);
+    color: rgb(255, 230, 160);
+}

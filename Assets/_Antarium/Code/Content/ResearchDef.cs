@@ -50,6 +50,14 @@ namespace Antarium.Content
         HazardResistance,
         /// <summary>Multiplier: gate hit points and trap damage.</summary>
         DefenseStrength,
+        /// <summary>Multiplier: Genetic Memory earned by a Nuptial Flight.</summary>
+        GeneticGain,
+        /// <summary>Multiplier: raiders per raid.</summary>
+        RaidSize,
+        /// <summary>Multiplier: how often raids come (the time between raids is divided by it).</summary>
+        RaidFrequency,
+        /// <summary>Multiplier: creatures living in each cave.</summary>
+        CreatureCount,
     }
 
     public enum ResearchEffectKind : byte

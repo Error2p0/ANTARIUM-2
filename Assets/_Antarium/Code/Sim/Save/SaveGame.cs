@@ -45,8 +45,9 @@ namespace Antarium.Sim
         /// Format version written into new saves. Bump it (and migrate in <see cref="Migrate"/>) on breaking changes.
         /// Version 2 (Milestone 5): sections carry their own versions (IDS / COLN / ANTS / BLDG 2) and FLUD + THRT exist.
         /// Version 3 (Milestone 6): COLN 3 (caste shares, nursery eggs), ANTS 3 (carried counts and eggs) and PHER exist.
+        /// Version 4 (Milestone 7): COLN 4 (princesses) and LGCY (Genetic Memory, genetic traits, world modifiers) exist.
         /// </summary>
-        public const int Version = 3;
+        public const int Version = 4;
 
         // ---------------------------------------------------------------- save
 
@@ -74,11 +75,12 @@ namespace Antarium.Sim
             };
             snap.Sections.Add(new("IDS", Section(w => WriteIds(w, sim.Content), 2)));
             snap.Sections.Add(new("SIM", Section(w => WriteSim(w, sim))));
-            snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 3)));
+            snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 4)));
             snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 3)));
             snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 2)));
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
             snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim))));
+            snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim))));
             return snap;
         }
 
@@ -270,6 +272,32 @@ namespace Antarium.Sim
                 w.Write(sim.Buildings.All[egg.Nursery].Origin);
                 w.Write(egg.Slot);
             }
+
+            // v4: princesses waiting for the Nuptial Flight.
+            w.Write(colony.Princesses);
+            w.Write(stats.PrincessesRaised);
+        }
+
+        /// <summary>The legacy (kept across colonies) by id, and this colony's world modifiers by id.</summary>
+        static void WriteLegacy(BinaryWriter w, Simulation sim)
+        {
+            var legacy = sim.Legacy;
+            w.Write(legacy.Memory);
+            w.Write(legacy.MemoryEarned);
+            w.Write(legacy.Flights);
+            w.Write(legacy.BestDepth);
+            w.Write(legacy.BestFlight);
+            int traits = 0;
+            foreach (int level in legacy.Levels) if (level > 0) traits++;
+            w.Write(traits);
+            for (int g = 0; g < legacy.Levels.Length; g++)
+            {
+                if (legacy.Levels[g] == 0) continue;
+                w.Write(sim.Content.Genetics[g].Def.Id);
+                w.Write(legacy.Levels[g]);
+            }
+            w.Write(sim.WorldModifiers.Count);
+            foreach (int m in sim.WorldModifiers) w.Write(sim.Content.Modifiers[m].Id);
         }
 
         static void WriteLongs(BinaryWriter w, long[] values)
@@ -481,6 +509,7 @@ namespace Antarium.Sim
                 Read(sections, "ANTS", (r, v) => ReadAnts(r, sim, map, v));
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, _) => ReadThreats(r, sim, map));
+                Read(sections, "LGCY", (r, _) => ReadLegacy(r, sim));
                 PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
                 return sim;
@@ -494,9 +523,9 @@ namespace Antarium.Sim
         }
 
         /// <summary>
-        /// Upgrades the sections of an older save in place. 1 → 2 → 3 need nothing: every changed section carries its
-        /// own version byte and the readers fill in defaults for older data (full health, workers, no fluid, no
-        /// pheromones, the soldier share as the only caste share, one item carried).
+        /// Upgrades the sections of an older save in place. 1 → 2 → 3 → 4 need nothing: every changed section carries
+        /// its own version byte and the readers fill in defaults for older data (full health, workers, no fluid, no
+        /// pheromones, the soldier share as the only caste share, one item carried, no princesses, an empty legacy).
         /// </summary>
         static void Migrate(int fromVersion, Dictionary<string, byte[]> sections)
         {
@@ -759,6 +788,37 @@ namespace Antarium.Sim
                 int slot = r.ReadInt32();
                 nurseryEggs.Add((i, origin, slot));
             }
+            if (version < 4) return;
+
+            colony.Princesses = math.max(0, r.ReadInt32());
+            stats.PrincessesRaised = r.ReadInt64();
+        }
+
+        /// <summary>Traits and world modifiers that no longer exist are dropped; levels above a trait's maximum are cut.</summary>
+        static void ReadLegacy(BinaryReader r, Simulation sim)
+        {
+            var content = sim.Content;
+            var legacy = new Legacy(content)
+            {
+                Memory = math.max(0, r.ReadInt32()),
+                MemoryEarned = r.ReadInt64(),
+                Flights = r.ReadInt32(),
+                BestDepth = r.ReadInt32(),
+                BestFlight = r.ReadInt32(),
+            };
+            int traits = r.ReadInt32();
+            for (int i = 0; i < traits; i++)
+            {
+                string id = r.ReadString();
+                int level = r.ReadInt32();
+                if (content.TryGetGeneticIndex(id, out int g))
+                    legacy.Levels[g] = math.clamp(level, 0, content.Genetics[g].MaxLevel);
+            }
+            int count = r.ReadInt32();
+            var modifiers = new List<int>();
+            for (int i = 0; i < count; i++)
+                if (content.TryGetModifierIndex(r.ReadString(), out int m)) modifiers.Add(m);
+            sim.RestoreLegacy(legacy, modifiers);
         }
 
         static void ReadLongs(BinaryReader r, Action<int, long> set)
