@@ -67,7 +67,8 @@ namespace Antarium.Gameplay
                 $"knowledge {sim.Colony.Inventory.Knowledge:0.0}   research {sim.Research.DoneCount}/{sim.Content.Research.Length}   next event {sim.RandomEvents.SecondsToNext:0}s\n" +
                 $"soldiers {sim.Soldiers}   enemies {sim.Enemies.Count}   raid in {sim.Enemies.SecondsToRaid:0}s (size {sim.Enemies.NextRaidSize()})   fluid chunks {sim.Fluids.ActiveChunks}   lost {sim.Colony.Stats.AntsLost}\n" +
                 $"castes {Castes(sim)}   scent cells {Scents(sim)}   scouted {sim.Colony.Stats.CellsScouted}   possessed {sim.PossessedAnt}\n" +
-                "F3 toggle   F6 +50 ants   F7 finish blueprints   F8 +20 items, food, knowledge   F10 random event   F11 raid";
+                $"princesses {sim.Colony.Princesses}/{sim.Colony.PrincessCap}   flight +{sim.EstimateFlight().Memory}   memory {sim.Legacy.Memory}   flights {sim.Legacy.Flights}   modifiers {sim.WorldModifiers.Count}\n" +
+                "F3 toggle   F6 +50 ants   F7 finish blueprints   F8 +20 items, food, knowledge   F10 random event   F11 raid   F12 +2 princesses, +10 memory";
         }
     }
 }

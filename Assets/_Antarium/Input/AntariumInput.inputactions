@@ -640,6 +640,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "GivePrestige",
+                    "type": "Button",
+                    "id": "3e8a1f52-7c4d-4b9e-a6f1-2d5c8b0e7a94",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "TriggerEvent",
                     "type": "Button",
                     "id": "5940d9d1-82fd-4d78-9c02-c30513028ebe",
@@ -724,6 +733,17 @@
                     "action": "TriggerEvent",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9b1c4e7a-2f6d-4a83-b5e0-7d3a6c9f1e28",
+                    "path": "<Keyboard>/f12",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "GivePrestige",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -753,6 +773,24 @@
                     "name": "Castes",
                     "type": "Button",
                     "id": "d7f9b1c3-5e2a-4b6d-8f0a-c2e4a6b8d0f5",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Genetics",
+                    "type": "Button",
+                    "id": "6f2d8b1e-4a7c-4e95-9d3b-1c8e5a2f7b60",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Flight",
+                    "type": "Button",
+                    "id": "a4e7c2d9-8b3f-4c16-b2a5-5e9d1f6c3a87",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -790,6 +828,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Castes",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c3b9e1f4-6d2a-4f78-8e1c-9a4d7b2e5f13",
+                    "path": "<Keyboard>/g",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Genetics",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e8d2a6c1-3f9b-4b57-a4e8-2c6f1d9b8e45",
+                    "path": "<Keyboard>/n",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Flight",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

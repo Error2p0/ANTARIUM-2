@@ -263,12 +263,18 @@ namespace Antarium.Gameplay
 
             var m = buildings.MachineOf(id);
             if (m == null) return;
+            bool raises = false;
+            foreach (int r in m.Data.Recipes) raises |= _content.Recipes[r].Princesses > 0;
             _sb.Append("  -  ").Append(b.Status switch
             {
                 MachineStatus.Working => "working",
+                MachineStatus.OutputBlocked when raises => "resting: the colony has as many princesses as count",
                 MachineStatus.OutputBlocked => "output blocked (products are not being taken away)",
                 _ => "waiting for input",
             });
+            if (raises)
+                _sb.Append("\nPrincesses ").Append(sim.Colony.Princesses).Append('/').Append(sim.Colony.PrincessCap)
+                    .Append("   they wait here for the Nuptial Flight (N)");
             if (m.Tenders > 0)
                 _sb.Append(", tended by an engineer (+").Append(Mathf.RoundToInt(buildings.EngineerBoost * m.Tenders * 100f)).Append("%)");
             if (m.Recipe >= 0)
@@ -344,6 +350,11 @@ namespace Antarium.Gameplay
             {
                 if (recipe.OutputItems.Length > 0) _sb.Append(" + ");
                 _sb.Append(recipe.Knowledge.ToString("0.#")).Append(" Knowledge");
+            }
+            if (recipe.Princesses > 0)
+            {
+                if (recipe.OutputItems.Length > 0 || recipe.Knowledge > 0f) _sb.Append(" + ");
+                _sb.Append(recipe.Princesses).Append(recipe.Princesses == 1 ? " Princess" : " Princesses");
             }
             _sb.Append(" (").Append(recipe.Duration.ToString("0.#")).Append("s)");
         }

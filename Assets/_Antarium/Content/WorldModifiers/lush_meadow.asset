@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e233917afcdc9340b87a427b777937f, type: 3}
+  m_Name: lush_meadow
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.WorldModifierDef
+  id: lush_meadow
+  displayName: Lush Meadow
+  description: seeds appear 50% more often on the surface; ore is a little rarer.
+  order: 1
+  color: {r: 0.5254902, g: 0.7882353, b: 0.30588236, a: 1}
+  oreThreshold: 0.05
+  caveThreshold: 0
+  waterThreshold: 0
+  lavaThreshold: 0
+  gasThreshold: 0
+  biomeThickness: 1
+  stats:
+  - stat: 10
+    value: 0.5

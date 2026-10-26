@@ -67,6 +67,18 @@ namespace Antarium.Gameplay
         float _autosaveTimer;
         DateTime? _lastSaved;
         bool _quitSaved;
+        FlightSequence _flight;
+
+        /// <summary>The Nuptial Flight being shown: princesses fly up from the nest before the next colony is founded.</summary>
+        sealed class FlightSequence
+        {
+            public Legacy Next;
+            public int Earned;
+            public int[] Modifiers;
+            public float2 Origin;
+            public int Count;
+            public float Time;
+        }
 
         void Awake()
         {
@@ -108,9 +120,16 @@ namespace Antarium.Gameplay
                 _hud.Menu.Resume += _hud.HideModal;
                 _hud.Menu.Save += () => Save(background: true, announce: true);
                 _hud.Menu.Load += () => { if (!TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load."); };
-                _hud.Menu.NewGame += () => StartNewColony((uint)(DateTime.UtcNow.Ticks ^ Environment.TickCount) | 1u);
+                _hud.Menu.NewGame += () => StartNewColony(NewSeed(), _sim?.Legacy.Clone());
                 _hud.Menu.Quit += Quit;
+                _hud.Genetics.BuyClicked += trait => _sim?.EnqueueGenetic(trait);
+                _hud.Genetics.CloseClicked += _hud.HideModal;
+                _hud.Flight.FlyClicked += BeginFlight;
+                _hud.Flight.GeneticsClicked += () => _hud.ShowModal(_hud.Genetics.Root);
+                _hud.Flight.CloseClicked += _hud.HideModal;
             }
+            _hud.GeneticsToggled += ToggleGenetics;
+            _hud.FlightToggled += ToggleFlight;
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
             _targetingHints = Array.ConvertAll(_content.Abilities, a => $"Click where to use {a.DisplayName}. Right click or Esc cancels.");
@@ -122,12 +141,15 @@ namespace Antarium.Gameplay
 
         // ---------------------------------------------------------------- sessions
 
-        void StartNewColony(uint seed)
+        /// <summary>A new colony that inherits <paramref name="legacy"/> (Genetic Memory and traits; none = a fresh bloodline).</summary>
+        void StartNewColony(uint seed, Legacy legacy = null, int[] modifiers = null)
         {
-            BeginSession(new Simulation(_content, config, seed));
+            BeginSession(new Simulation(_content, config, seed, legacy ?? new Legacy(_content), modifiers));
             _lastSaved = null;
             _hud.ShowToast("A new colony begins. Contracts on the right show what to do next.");
         }
+
+        static uint NewSeed() => (uint)(DateTime.UtcNow.Ticks ^ Environment.TickCount) | 1u;
 
         /// <summary>Loads the save. With <paramref name="applyOffline"/> the time since it was written is credited as offline progress.</summary>
         bool TryLoad(bool applyOffline)
@@ -229,6 +251,7 @@ namespace Antarium.Gameplay
 
         void OnApplicationQuit()
         {
+            if (_flight != null) FinishFlight(); // the flight was confirmed: found the new colony before saving
             if (_quitSaved || _sim == null) return;
             Save(background: false, announce: false);
             _quitSaved = true;
@@ -241,6 +264,11 @@ namespace Antarium.Gameplay
             if (_sim == null) return;
             float dt = Time.deltaTime;
             double now = Time.timeAsDouble;
+            if (_flight != null)
+            {
+                UpdateFlight(dt);
+                return;
+            }
 
             HandleSystemKeys();
             bool paused = _hud.IsShowing(_hud.Menu?.Root);
@@ -267,6 +295,7 @@ namespace Antarium.Gameplay
                 }
                 if (_input.TriggerEvent.WasPressedThisFrame()) _sim.EnqueueTriggerEvent(-1);
                 if (_input.TriggerRaid.WasPressedThisFrame()) _sim.EnqueueTriggerRaid();
+                if (_input.GivePrestige.WasPressedThisFrame()) _sim.DebugGivePrestige(2, 10);
             }
 
             if (!paused) _sim.Advance(dt);
@@ -308,6 +337,8 @@ namespace Antarium.Gameplay
                 else _hud.ShowModal(_hud.Menu?.Root);
             }
             if (_input.Research.WasPressedThisFrame()) ToggleResearch();
+            if (_input.Genetics.WasPressedThisFrame()) ToggleGenetics();
+            if (_input.Flight.WasPressedThisFrame()) ToggleFlight();
             if (_input.Castes.WasPressedThisFrame() && _hud.Castes != null && CastesPanel.HasSpecialists(_sim)) _hud.Castes.Toggle();
             if (_input.QuickSave.WasPressedThisFrame()) Save(background: true, announce: true);
             if (_input.QuickLoad.WasPressedThisFrame() && !TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load.");
@@ -345,6 +376,101 @@ namespace Antarium.Gameplay
             if (_hud.Research == null) return;
             if (_hud.IsShowing(_hud.Research.Root)) _hud.HideModal();
             else if (!_hud.IsShowing(_hud.Menu.Root)) _hud.ShowModal(_hud.Research.Root);
+        }
+
+        void ToggleGenetics()
+        {
+            if (_hud.Genetics == null || _sim == null) return;
+            if (_hud.IsShowing(_hud.Genetics.Root)) _hud.HideModal();
+            else if (!_hud.IsShowing(_hud.Menu.Root) && (_sim.Legacy.Awakened || _hud.FlightKnown(_sim))) _hud.ShowModal(_hud.Genetics.Root);
+        }
+
+        void ToggleFlight()
+        {
+            if (_hud.Flight == null || _sim == null) return;
+            if (_hud.IsShowing(_hud.Flight.Root)) _hud.HideModal();
+            else if (!_hud.IsShowing(_hud.Menu.Root) && _hud.FlightKnown(_sim))
+            {
+                _hud.Flight.Open(_sim);
+                _hud.ShowModal(_hud.Flight.Root);
+            }
+        }
+
+        // ---------------------------------------------------------------- Nuptial Flight
+
+        /// <summary>The player confirmed the flight: the princesses take off, then the next colony is founded.</summary>
+        void BeginFlight(int[] modifiers)
+        {
+            if (_sim == null || _flight != null) return;
+            if (!_sim.TryNuptialFlight(out var next, out int earned))
+            {
+                _hud.ShowToast("The princesses are not ready to fly yet.");
+                return;
+            }
+            var chosen = new System.Collections.Generic.List<int>();
+            int slots = next.ModifierSlots(config.prestige);
+            foreach (int m in modifiers)
+                if (chosen.Count < slots && next.ModifierUnlocked(m) && !chosen.Contains(m)) chosen.Add(m);
+
+            int2 queen = _sim.Colony.QueenCell;
+            _flight = new FlightSequence
+            {
+                Next = next,
+                Earned = earned,
+                Modifiers = chosen.ToArray(),
+                Origin = new float2(queen.x + 0.5f, _sim.World.SurfaceY[queen.x] + 1f),
+                Count = math.clamp(_sim.Colony.Princesses, 1, 12),
+            };
+            _tools.CancelTargeting();
+            _hud.HideModal();
+            _hud.SetInfo(null);
+            if (_possessLight != null) _possessLight.gameObject.SetActive(false);
+            _colonyView.PrincessesFlown = true;
+            _hud.ShowToast("The Nuptial Flight! The princesses take to the sky to found a new colony...");
+        }
+
+        /// <summary>Princesses climb from the nest entrance in a loose, wobbling swarm; the camera rises with them.</summary>
+        void UpdateFlight(float dt)
+        {
+            var f = _flight;
+            var cfg = config.prestige;
+            f.Time += dt;
+            var flyers = _colonyView.Flyers;
+            flyers.Clear();
+            float2 sum = f.Origin;
+            int counted = 1;
+            for (int i = 0; i < f.Count; i++)
+            {
+                float t = f.Time - i * 0.3f;
+                if (t < 0f) continue;
+                int side = (i & 1) == 0 ? 1 : -1;
+                float drift = side * (0.6f + 0.35f * (i >> 1));
+                float climb = cfg.flightSpeed * (0.85f + 0.1f * (i % 3));
+                var p = f.Origin + new float2(drift * t + math.sin(t * 2.6f + i * 1.7f) * 0.8f, climb * t + math.sin(t * 7f + i) * 0.3f);
+                flyers.Add(new Flyer { Pos = p * WorldConstants.CellSize, Phase = t + i * 0.13f, Facing = side });
+                sum += p;
+                counted++;
+            }
+            float2 target = sum / counted * WorldConstants.CellSize;
+            _camera.Position = math.lerp(_camera.Position, target, 1f - math.exp(-3f * dt));
+            _camera.Apply(dt, _worldSize);
+            _terrain.Upload();
+            _buildingView.Render(_sim, 1f, Time.time, false);
+            _colonyView.Render(_sim, 1f, false, Time.time);
+            _hud.Update(dt, _sim, -1, null);
+            _sim.Events.Flush();
+            if (f.Time >= cfg.flightSeconds) FinishFlight();
+        }
+
+        void FinishFlight()
+        {
+            var f = _flight;
+            _flight = null;
+            BeginSession(new Simulation(_content, config, NewSeed(), f.Next, f.Modifiers));
+            _lastSaved = null;
+            Save(background: false, announce: false); // the flight is final once the new colony exists
+            _hud.ShowToast($"The princesses founded a new colony. +{f.Earned} Genetic Memory: spend it in the genetic tree (G).");
+            _hud.ShowModal(_hud.Genetics?.Root);
         }
 
         void LookAt(int2 cell) => _camera.Position = WorldGrid.CellCenterToWorld(cell);

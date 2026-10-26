@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14707ad79a2368a40bf87987021cdcda, type: 3}
+  m_Name: starter_cache
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GeneticDef
+  id: starter_cache
+  displayName: Starter Cache
+  description: Each colony starts with copper ore and copper in the royal chamber.
+  treePosition: {x: 1, y: 3}
+  cost: 2
+  costPerLevel: 1
+  maxLevel: 3
+  prerequisites:
+  - {fileID: 11400000, guid: 04b3f8796f2aeab49a828ca4e46d4d32, type: 2}
+  effects:
+  - kind: 4
+    stat: 0
+    value: 0
+    item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 10
+    research: {fileID: 0}
+    modifier: {fileID: 0}
+  - kind: 4
+    stat: 0
+    value: 0
+    item: {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
+    count: 3
+    research: {fileID: 0}
+    modifier: {fileID: 0}

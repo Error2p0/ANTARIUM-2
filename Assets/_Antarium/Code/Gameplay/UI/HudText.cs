@@ -89,6 +89,10 @@ namespace Antarium.Gameplay
             StatKind.AntAttack => "ant bite damage",
             StatKind.HazardResistance => "resistance to drowning, lava, gas and cave-ins",
             StatKind.DefenseStrength => "gate hit points and trap damage",
+            StatKind.GeneticGain => "Genetic Memory from flights",
+            StatKind.RaidSize => "raiders per raid",
+            StatKind.RaidFrequency => "raid frequency",
+            StatKind.CreatureCount => "cave creatures",
             _ => stat.ToString(),
         };
 

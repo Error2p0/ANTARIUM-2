@@ -22,6 +22,8 @@ namespace Antarium.Editor
         public const string EventsFolder = Root + "/Events";
         public const string EnemiesFolder = Root + "/Enemies";
         public const string CastesFolder = Root + "/Castes";
+        public const string GeneticsFolder = Root + "/Genetics";
+        public const string ModifiersFolder = Root + "/WorldModifiers";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -43,6 +45,8 @@ namespace Antarium.Editor
             EnsureFolder(EventsFolder);
             EnsureFolder(EnemiesFolder);
             EnsureFolder(CastesFolder);
+            EnsureFolder(GeneticsFolder);
+            EnsureFolder(ModifiersFolder);
 
             var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
             var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
@@ -122,6 +126,7 @@ namespace Antarium.Editor
             var raiders = CreateDepthAndDanger(worldGen, topsoil, clayBiome, strata, dirt, copperItem, ironBar, coalItem, crystalItem, amberItem,
                 fungusItem, copperBar, crystal, iron, coal, amber);
             CreateCastesAndPheromones(copperItem, copperBar, ironBar);
+            CreatePrestige(copperItem, copperBar, ironBar, amberItem, fungusItem);
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
             if (database.surfaceForage.Count == 0)
@@ -483,6 +488,138 @@ namespace Antarium.Editor
                 requires: Load("nurse_caste"));
         }
 
+        /// <summary>
+        /// Milestone 7: the Princess Chamber (research Nuptial Flight) that raises princesses from fungus and amber, the
+        /// world modifiers and the Genetic Memory tree.
+        /// </summary>
+        static void CreatePrestige(ItemDef copperOre, ItemDef copper, ItemDef iron, ItemDef amber, ItemDef fungus)
+        {
+            ResearchDef Load(string id) => AssetDatabase.LoadAssetAtPath<ResearchDef>($"{ResearchFolder}/{id}.asset");
+
+            var raise = LoadOrCreate<RecipeDef>($"{RecipesFolder}/raise_princess.asset", r =>
+            {
+                r.EditorSetIdentity("raise_princess", "Raise a princess");
+                r.duration = 60f;
+                r.inputs = new List<ItemAmount> { Amt(fungus, 12), Amt(amber, 2) };
+                r.outputs = new List<ItemAmount>();
+                r.princesses = 1;
+            });
+            var chamber = Building("princess_chamber", "Princess Chamber", BuildingKind.Processor, 14, "#f0c060", 12f, size: new Vector2Int(4, 3),
+                cost: new[] { Amt(copper, 10), Amt(iron, 4) }, recipes: new[] { raise },
+                description: "12 fungus + 2 amber -> 1 princess (60 s). Princesses wait here for the Nuptial Flight (N); each one raises the Genetic Memory it earns.",
+                art: PlaceholderArt.PrincessChamber);
+            if (chamber.princessSlots == 0)
+            {
+                chamber.princessSlots = 3;
+                EditorUtility.SetDirty(chamber);
+            }
+            var jelly = Load("royal_jelly");
+            var fungiculture = Load("fungiculture");
+            Research("nuptial_flight", "Nuptial Flight", 5, 3, 80f,
+                "Unlocks the Princess Chamber: raise princesses from fungus and amber, then send them on a Nuptial Flight (N) to found a new colony with Genetic Memory.",
+                cost: new[] { Amt(iron, 6) }, prerequisites: new[] { jelly, fungiculture }.Where(r => r != null).ToArray(),
+                effects: new[] { ResearchEffect.Unlock(chamber) });
+
+            // World modifiers: the first five start unlocked, the harsh four come with the trait Strange Worlds.
+            Modifier("rich_veins", "Rich Veins", 0, "#d47a3c", "much more ore in every layer, but raids are 25% bigger.",
+                m => m.oreThreshold = -0.08f, Stat(StatKind.RaidSize, 0.25f));
+            Modifier("lush_meadow", "Lush Meadow", 1, "#86c94e", "seeds appear 50% more often on the surface; ore is a little rarer.",
+                m => m.oreThreshold = 0.05f, Stat(StatKind.ForageRate, 0.5f));
+            Modifier("shallow_world", "Shallow World", 2, "#7fd8ff", "every layer is 25% thinner, so the deep biomes come sooner. +10% Genetic Memory.",
+                m => m.biomeThickness = 0.75f, Stat(StatKind.GeneticGain, 0.1f));
+            Modifier("hollow_earth", "Hollow Earth", 3, "#8a7fa0", "far more caves, and 50% more creatures live in them. +15% Genetic Memory.",
+                m => m.caveThreshold = -0.1f, Stat(StatKind.CreatureCount, 0.5f), Stat(StatKind.GeneticGain, 0.15f));
+            Modifier("quiet_surface", "Quiet Surface", 4, "#c8c0a0", "raids come 40% less often and are 25% smaller. -25% Genetic Memory.",
+                null, Stat(StatKind.RaidFrequency, -0.4f), Stat(StatKind.RaidSize, -0.25f), Stat(StatKind.GeneticGain, -0.25f));
+            var flooded = Modifier("flooded_depths", "Flooded Depths", 5, "#3a7ae0", "far more lakes in the caves of every layer. +25% Genetic Memory.",
+                m => m.waterThreshold = -0.2f, Stat(StatKind.GeneticGain, 0.25f));
+            var volcanic = Modifier("volcanic", "Volcanic", 6, "#f05a20", "more lava lakes and gas pockets in the deep. +30% Genetic Memory.",
+                m => { m.lavaThreshold = -0.15f; m.gasThreshold = -0.15f; }, Stat(StatKind.GeneticGain, 0.3f));
+            var famine = Modifier("famine", "Famine", 7, "#a08050", "seeds appear half as often. +35% Genetic Memory.",
+                null, Stat(StatKind.ForageRate, -0.5f), Stat(StatKind.GeneticGain, 0.35f));
+            var swarming = Modifier("swarming", "Swarming", 8, "#c03a2a", "raids are 50% bigger and 30% more frequent, caves hold twice the creatures. +50% Genetic Memory.",
+                null, Stat(StatKind.RaidSize, 0.5f), Stat(StatKind.RaidFrequency, 0.3f), Stat(StatKind.CreatureCount, 1f), Stat(StatKind.GeneticGain, 0.5f));
+
+            // Genetic Memory tree: columns are tiers; rows are brood, food, digging, logistics, exploration.
+            var brood = Genetic("big_brood", "Big Brood", 0, 0, 1, 1, 5, "The queen starts each colony with more workers.",
+                GeneticEffect.Of(GeneticEffectKind.StartWorkers, 2f));
+            var reserves = Genetic("fat_reserves", "Fat Reserves", 0, 1, 1, 1, 3, "Each colony starts with more food and can store more.",
+                GeneticEffect.Of(GeneticEffectKind.StartFood, 40f), GeneticEffect.Add(StatKind.FoodCapacity, 40f));
+            var jaws = Genetic("strong_jaws", "Strong Jaws", 0, 2, 1, 1, 5, "Workers and you dig faster.",
+                GeneticEffect.Add(StatKind.WorkerDig, 0.1f), GeneticEffect.Add(StatKind.PlayerDig, 0.1f));
+            var legs = Genetic("long_legs", "Long Legs", 0, 3, 1, 1, 5, "Workers walk faster.",
+                GeneticEffect.Add(StatKind.WorkerSpeed, 0.08f));
+            var map = Genetic("ancestral_map", "Ancestral Map", 0, 4, 2, 1, 3, "New colonies remember the land: the area around the nest starts revealed.",
+                GeneticEffect.Of(GeneticEffectKind.RevealRadius, 15f));
+
+            var fertile = Genetic("fertile_queen", "Fertile Queen", 1, 0, 2, 2, 3, "The queen lays faster and more eggs wait at once.",
+                new[] { brood }, GeneticEffect.Add(StatKind.LayingSpeed, 0.15f), GeneticEffect.Add(StatKind.MaxEggs, 1f));
+            var gardens = Genetic("inherited_gardens", "Inherited Gardens", 1, 1, 3, 0, 1, "Every colony knows Fungiculture from the start.",
+                new[] { reserves }, GeneticEffect.Inherit(fungiculture));
+            var silk = Genetic("inherited_silk", "Inherited Silk", 1, 2, 3, 0, 1, "Every colony knows Silk Routing (splitters and filters) from the start.",
+                new[] { legs }, GeneticEffect.Inherit(Load("silk_routing")));
+            var cache = Genetic("starter_cache", "Starter Cache", 1, 3, 2, 1, 3, "Each colony starts with copper ore and copper in the royal chamber.",
+                new[] { jaws }, GeneticEffect.Items(copperOre, 10), GeneticEffect.Items(copper, 3));
+            var wanderlust = Genetic("wanderlust", "Wanderlust", 1, 4, 3, 3, 2, "One more world modifier can be chosen for a new colony.",
+                new[] { map }, GeneticEffect.Of(GeneticEffectKind.ModifierSlots, 1f));
+
+            var miners = Genetic("born_miners", "Born Miners", 2, 0, 5, 0, 1, "Every colony can lay miners from the start.",
+                new[] { fertile }, GeneticEffect.Inherit(Load("miner_caste")));
+            Genetic("born_soldiers", "Born Soldiers", 2, 1, 5, 0, 1, "Every colony can lay soldiers from the start.",
+                new[] { fertile }, GeneticEffect.Inherit(Load("soldier_caste")));
+            var vein = Genetic("vein_instinct", "Vein Instinct", 2, 2, 6, 0, 1, "Ore next to every cell your colony digs out is ordered for mining automatically: ants follow veins on their own.",
+                new[] { silk }, GeneticEffect.Of(GeneticEffectKind.VeinInstinct));
+            var lineage = Genetic("royal_lineage", "Royal Lineage", 2, 3, 4, 2, 3, "One more princess counts toward a Nuptial Flight.",
+                new[] { gardens }, GeneticEffect.Of(GeneticEffectKind.MaxPrincesses, 1f));
+            Genetic("strange_worlds", "Strange Worlds", 2, 4, 5, 0, 1, "Unlocks four harsh world modifiers that raise the Genetic Memory of a flight.",
+                new[] { wanderlust }, GeneticEffect.Unlock(flooded), GeneticEffect.Unlock(volcanic), GeneticEffect.Unlock(famine), GeneticEffect.Unlock(swarming));
+
+            Genetic("ancient_knowledge", "Ancient Knowledge", 3, 0, 4, 2, 3, "Each colony starts with knowledge for its first research.",
+                new[] { miners }, GeneticEffect.Of(GeneticEffectKind.StartKnowledge, 25f));
+            Genetic("deep_memory", "Deep Memory", 3, 1, 5, 3, 5, "Nuptial Flights pass on more Genetic Memory.",
+                new[] { lineage }, GeneticEffect.Add(StatKind.GeneticGain, 0.1f));
+            Genetic("dormant_wisdom", "Dormant Wisdom", 3, 2, 4, 2, 3, "The colony earns more while the game is closed.",
+                new[] { vein }, GeneticEffect.Add(StatKind.OfflineEfficiency, 0.1f));
+            Genetic("silk_mastery", "Silk Mastery", 3, 3, 4, 2, 3, "Belts and machines run faster.",
+                new[] { vein }, GeneticEffect.Add(StatKind.BeltSpeed, 0.15f), GeneticEffect.Add(StatKind.MachineSpeed, 0.1f));
+        }
+
+        static StatAmount Stat(StatKind stat, float value) => new(stat, value);
+
+        static WorldModifierDef Modifier(string id, string displayName, int order, string colorHex, string description,
+            System.Action<WorldModifierDef> world, params StatAmount[] stats)
+        {
+            return LoadOrCreate<WorldModifierDef>($"{ModifiersFolder}/{id}.asset", m =>
+            {
+                m.EditorSetIdentity(id, displayName);
+                m.order = order;
+                m.color = Hex(colorHex);
+                m.description = description;
+                world?.Invoke(m);
+                m.stats = stats.ToList();
+            });
+        }
+
+        static GeneticDef Genetic(string id, string displayName, int column, int row, int cost, int costPerLevel, int maxLevel, string description,
+            params GeneticEffect[] effects) =>
+            Genetic(id, displayName, column, row, cost, costPerLevel, maxLevel, description, null, effects);
+
+        static GeneticDef Genetic(string id, string displayName, int column, int row, int cost, int costPerLevel, int maxLevel, string description,
+            GeneticDef[] prerequisites, params GeneticEffect[] effects)
+        {
+            return LoadOrCreate<GeneticDef>($"{GeneticsFolder}/{id}.asset", g =>
+            {
+                g.EditorSetIdentity(id, displayName);
+                g.treePosition = new Vector2Int(column, row);
+                g.cost = cost;
+                g.costPerLevel = costPerLevel;
+                g.maxLevel = maxLevel;
+                g.description = description;
+                g.prerequisites = prerequisites?.Where(p => p != null).ToList() ?? new List<GeneticDef>();
+                g.effects = effects.ToList();
+            });
+        }
+
         static CasteDef Caste(string id, string displayName, AntCaste caste, int order, string colorHex, string description,
             float egg, float upkeep, float health, float attack = 3f, float speed = 1f, float dig = 1f, float build = 1f, int carry = 1,
             float share = 0.1f, bool jobs = true, float digJob = 0f, float haulJob = 0f, float buildJob = 0f, float supplyJob = 0f,
@@ -665,12 +802,15 @@ namespace Antarium.Editor
             database.events = FindAll<RandomEventDef>();
             database.enemies = FindAll<EnemyDef>();
             database.castes = FindAll<CasteDef>();
+            database.genetics = FindAll<GeneticDef>();
+            database.worldModifiers = FindAll<WorldModifierDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
                       $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
                       $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events, " +
-                      $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes.");
+                      $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes, " +
+                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers.");
         }
 
         static List<T> FindAll<T>() where T : Object

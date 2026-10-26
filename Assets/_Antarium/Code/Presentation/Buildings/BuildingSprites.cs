@@ -18,7 +18,7 @@ namespace Antarium.Presentation
         public const int GardenWidth = 32, GardenHeight = 16;
         public const int ArchiveWidth = 24, ArchiveHeight = 16;
 
-        const int AtlasWidth = 128, AtlasHeight = 64;
+        const int AtlasWidth = 128, AtlasHeight = 96;
 
         // Rect indices.
         public const int BeltRect = 0;                      // 4 frames
@@ -43,7 +43,12 @@ namespace Antarium.Presentation
         public const int NurseryWidth = 24, NurseryHeight = 16;
         /// <summary>Pheromone emitter: a gland pod with a vent; its kind shows as a tinted dot.</summary>
         public const int EmitterRect = NurseryRect + 1;
-        const int RectCount = EmitterRect + 1;
+        /// <summary>Princess chamber: an amber-lined alcove with silk beds (the princesses are drawn by the colony view); 2 frames.</summary>
+        public const int PrincessChamberRect = EmitterRect + 1;
+        public const int PrincessChamberWidth = 32, PrincessChamberHeight = 24;
+        /// <summary>Pixel positions of the princess beds from the chamber's bottom-left: two on the floor, one on a raised ledge.</summary>
+        public static readonly int2[] PrincessBeds = { new(8, 0), new(24, 0), new(16, 9) };
+        const int RectCount = PrincessChamberRect + 2;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -117,6 +122,10 @@ namespace Antarium.Presentation
             Rects[NurseryRect] = Rect(48, 32, NurseryWidth, NurseryHeight);
             Blit(72, 32, new[] { "...vv...", "..VffV..", ".VffffV.", ".VfFFfV.", "VffFFffV", "VfffffFV", ".VVVVVV.", "oooooooo" });
             Rects[EmitterRect] = Rect(72, 32, Cell, Cell);
+            PaintPrincessChamber(0, 64, working: false);
+            PaintPrincessChamber(32, 64, working: true);
+            Rects[PrincessChamberRect] = Rect(0, 64, PrincessChamberWidth, PrincessChamberHeight);
+            Rects[PrincessChamberRect + 1] = Rect(32, 64, PrincessChamberWidth, PrincessChamberHeight);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -318,6 +327,56 @@ namespace Antarium.Presentation
                     if (math.abs(x) >= 2) Set(cx + x, oy + 4, SilkHigh);
                     if (math.abs(x) == 3) Set(cx + x, oy + 5, SilkMid);
                 }
+            }
+        }
+
+        /// <summary>
+        /// An arch of amber resin over a clay floor with three silk beds (the middle one on a clay ledge); royal jelly
+        /// gathers under the top of the arch and drips while a princess is being raised.
+        /// </summary>
+        void PaintPrincessChamber(int ox, int oy, bool working)
+        {
+            const int w = PrincessChamberWidth, h = PrincessChamberHeight;
+            float2 center = new float2(w * 0.5f, 1f);
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float2 d = (new float2(x + 0.5f, y + 0.5f) - center) / new float2(w * 0.5f, h - 1f);
+                float r = math.length(d);
+                if (r > 1f) continue;
+                if (r > 0.88f) Set(ox + x, oy + y, (x + y) % 4 == 0 ? ResinHigh : Resin);       // amber rim
+                else if (r > 0.8f) Set(ox + x, oy + y, ResinDark);
+            }
+            for (int x = 0; x < w; x++)
+            {
+                Set(ox + x, oy, BrickDark);
+                Set(ox + x, oy + 1, (x * 5) % 7 == 0 ? ClayDark : Brick);
+            }
+            foreach (var bed in PrincessBeds)
+            {
+                int bx = ox + bed.x, by = oy + bed.y;
+                if (bed.y > 0)
+                    for (int x = -4; x <= 4; x++)
+                    {
+                        Set(bx + x, by, ClayDark);
+                        Set(bx + x, by + 1, (x * 5) % 7 == 0 ? ClayDark : Brick);
+                    }
+                for (int x = -3; x <= 3; x++)
+                {
+                    Set(bx + x, by + 2, SilkShadow);
+                    Set(bx + x, by + 3, math.abs(x) == 3 ? SilkDark : SilkHigh);
+                }
+            }
+            // Royal jelly gathers under the top of the arch.
+            int jx = ox + w / 2, jy = oy + h - 4;
+            for (int x = -2; x <= 1; x++) Set(jx + x, jy, working ? FlameHot : Wax);
+            Set(jx - 1, jy - 1, working ? Flame : Wax);
+            if (working)
+            {
+                Set(jx - 1, jy - 3, FlameHot);
+                Set(jx, jy - 6, Flame);
+                Set(ox + 9, oy + 16, Flame);
+                Set(ox + 22, oy + 15, Flame);
             }
         }
 

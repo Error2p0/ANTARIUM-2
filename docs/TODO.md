@@ -105,8 +105,30 @@
 - [x] 113 EditMode tests (20 new: scent painting / fading / erasing, emitters, trails shorten paths and traffic refreshes them, Avoid, Dig and Gather priority, Defend, Pheromone Burst, pheromone save; caste shares and limits, miner, hauler, builder, nurse + nursery, scout, engineer, possession (move, dig, carry, deliver, release, death), caste save, offline castes)
 - Measured in the editor: 2,000 ants of all castes, scents painted: 0.32 ms per tick on average (worst 2.8 ms); frontier scan 0.8 ms (every 3 s at most, scouts only); a full rebuild of all 35 flow fields 8 ms.
 
+## Milestone 7 — Prestige ✅
+- [x] Decisions (asked and confirmed): princesses come from a **Princess Chamber** machine and raise the memory a flight earns; Genetic Memory can be spent **any time**; the player **picks** world modifiers from the unlocked ones
+- [x] Content: `GeneticDef` (tree position, cost + cost per level, max level, prerequisites, effects: stat, starting workers / food / knowledge / items, inherited research, modifier slots, unlock modifier, max princesses, reveal radius, Vein Instinct), `WorldModifierDef` (ore / cave / water / lava / gas thresholds, biome thickness, colony stats), `RecipeDef.princesses`, `BuildingDef.princessSlots`, `PlaceholderArt.PrincessChamber`, stats `GeneticGain` / `RaidSize` / `RaidFrequency` / `CreatureCount`, `GameConfig.prestige`; baked into `ContentDB` (genetics by tree position, modifiers, modifiers named by a trait start locked); `ContentDatabase.genetics` / `worldModifiers`
+- [x] Sim: `Legacy` (memory, earned, flights, trait levels, records; buy / check / totals / unlocked modifiers / slots / princess limit), `Simulation.Prestige` (legacy and modifiers per colony, trait effects, starting bonuses, buying traits by command, flight estimate, `TryNuptialFlight` returns the next legacy), `WorldTweaks` threaded through world generation, `Simulation.BiomeAtDepth` with the world's biome scale (raids, creatures, rich veins), raid size / frequency and creature counts read the new stats, princess recipes in machines (pause at the limit), Vein Instinct
+- [x] Princess Chamber (research *Nuptial Flight*, tier 6) with *Raise a princess* (12 fungus + 2 amber → 1 princess, 60 s); 19 genetic traits in 4 tiers; 9 world modifiers (4 behind *Strange Worlds*); `ContentSetup` creates them
+- [x] Flight: confirm on the N screen, princesses fly out of the nest shaft (4.5 s, sim paused, camera follows), the next colony is founded on a new seed with the chosen modifiers and saved at once, the genetic tree opens; quitting mid-flight founds the colony first
+- [x] Rendering: princess sprites (resting, two wing frames), princess chamber sprite (amber arch, three beds, royal jelly that drips while working), resting princesses on the beds, flying princesses
+- [x] UI: Nuptial Flight screen (N: breakdown, modifiers with slots, locked ones, confirm), Genetic Memory tree (G: levels, costs, owned / done, hover details), toolbar buttons G Genes / N Flight (gold while princesses wait), resource entries Princesses and Memory, hover info for princess chambers and recipes, toasts (princess raised, trait bought / refused, flight, new colony); input actions View/Genetics (G), View/Flight (N), Debug/GivePrestige (F12)
+- [x] *New colony* from the Esc menu keeps the legacy (no memory for the abandoned colony)
+- [x] Save format 4: `COLN` 4 (princesses), `LGCY` (legacy by id + world modifiers by id); format 3 saves load with an empty legacy (checked with the M6 save)
+- [x] `GameConfig.asset` re-saved: the prestige, caste, pheromone and possession sections are serialized and the unused worker / soldier fields are gone
+- [x] 125 EditMode tests (12 new: content baking, buying traits (cost, levels, prerequisites, memory, max level), inherited research now and in new colonies, starting bonuses, princess chamber limit, flight estimate and the next legacy, locked modifiers / slots / princess limit, modifiers shaping world gen and stats, raid size, Vein Instinct, legacy save round trip, loading a save without `LGCY`)
+- Measured in the editor: founding a colony (world, fluid settling, traits, 3 modifiers) ~630 ms, the same as a plain one; the flight shows a short hitch when the new colony appears.
+
 ## Known limits / follow-ups
-- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: painting walls and gates, raid / creature cards and Go; M6: painting scents, the castes panel buttons, steering a possessed ant with WASD and biting with the mouse, aiming the Pheromone Burst). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: painting walls and gates, raid / creature cards and Go; M6: painting scents, the castes panel buttons, steering a possessed ant with WASD and biting with the mouse, aiming the Pheromone Burst; M7: clicking modifiers, the double-click Take flight, buying traits in the genetic tree). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- Prestige balance is first-pass (score weights and the square root, princess recipe and limit, trait costs and effects, modifier numbers). A first flight after a full colony earns tens of memory; check that tier 1–2 traits don't trivialise the next start.
+- Genetic Memory can't be refunded (no respec) and there is no "new bloodline" option: a fresh legacy needs the save deleted.
+- Princesses are a colony counter, not ants: they don't walk or eat, a chamber shows at most 3 (more princesses with *Royal Lineage* need more chambers to be seen), and removing chambers keeps them. Chambers don't raise princesses while the game is closed (offline progress replays items, food and knowledge only).
+- The flight is a cosmetic 4.5 s sequence from the nest shaft (even if it was walled up); it can't be skipped. The new colony appears with a ~0.6 s hitch (world generation and fluid settling on the main thread).
+- World modifiers are picked only on the flight screen; *New colony* from the menu starts without any. Lava / gas modifiers only change biomes that have such pockets (magma zone, fungal depths).
+- Inherited research counts toward the next flight's research score.
+- Vein Instinct orders every revealed material that drops a non-food item (ore, coal, amber, fossils, crystals, relics) within 2 cells of a dug-out cell, including cells dug by the player and cave-ins.
+- The flight screen shows decimals in the system's number format (like the resource bar rates).
 - Caste, pheromone and possession balance is first-pass (caste costs and multipliers, shares, scent fade time, trail speed, priority distance, Burst numbers, possession numbers).
 - Specialists only do their own jobs (by their job weights): miners stand idle without mining orders, nurses without a nursery. That is the point of the mix, but the panel only hints at it for nurses.
 - Scents are on / off for the simulation; strength only sets how long they last and how they are drawn. No diffusion. Emitters keep only cells that are already scented (plus their own spot).
@@ -116,7 +138,6 @@
 - Pheromone Burst moves every caste in range, soldiers included (they go back to hunting afterwards).
 - Pheromones do not fade while the game is closed. Possession and a running Burst are not saved.
 - Debug-spawned ants of a still-locked caste don't show in the castes panel.
-- The worker and soldier numbers that used to be in `GameConfig.asset` are still in that file as unused fields until it is saved again.
 - Combat and hazard balance is first-pass (enemy stats, raid timing and size, soldier cost, damage per second, lake / gas / lava amounts, sand amounts).
 - Fluids have no pressure: water does not rise through U-bends, and a lake surface can keep a slope of one level (of 255) per cell. Hidden lakes only settle once the colony has revealed part of their chunk, so a freshly breached lake may still be levelling.
 - Ants only know "blocked or not" for fluid: they route around deep water, dense gas and lava but walk through shallow water and thin gas (which hurts).
@@ -154,8 +175,8 @@
 - Light falloff and fog use Bayer dithering; tune `lightBands` if it reads too noisy.
 - Sky has no day/night yet (GDD 2.8).
 
-## Next: Milestone 7 — Prestige
-Nuptial Flight, Genetic Memory tree, world modifiers (GDD 2.12).
+## Next: Milestone 8 — Polish
+Audio, juice, UI polish, balancing tools, settings, Steam hooks (GDD §4).
 
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
@@ -183,11 +204,11 @@ Things the current build is still missing, grouped by area. Many are planned for
 
 **Gameplay layers**
 - Events: no golden aphid (needs aphids).
-- Research: no conveyor tiers or QoL automation (auto-designate veins); no queen evolution tree.
+- Research: no conveyor tiers; no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
 - One save slot; no settings menu, no Steam cloud saves.
 - Threats: termite raids and one cave creature per deep biome; no birds, surface spiders or rival ant colonies, no enemies that dig.
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
-- No prestige (Nuptial Flight) [M7].
+- Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
 
 **Presentation**
 - All art is placeholder generated in code (ant/queen/egg sprites, terrain textures).

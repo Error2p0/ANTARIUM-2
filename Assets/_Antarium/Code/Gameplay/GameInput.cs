@@ -31,6 +31,10 @@ namespace Antarium.Gameplay
         public readonly InputAction PrevBuilding;
         public readonly InputAction Overlay;
         public readonly InputAction Research;
+        /// <summary>G: the Genetic Memory tree.</summary>
+        public readonly InputAction Genetics;
+        /// <summary>N: the Nuptial Flight screen.</summary>
+        public readonly InputAction Flight;
         /// <summary>Z / X / C / V: the abilities in bar order.</summary>
         public readonly InputAction[] Abilities;
         public readonly InputAction Menu;
@@ -42,6 +46,7 @@ namespace Antarium.Gameplay
         public readonly InputAction SpawnAnts;
         public readonly InputAction FinishBuilds;
         public readonly InputAction GiveItems;
+        public readonly InputAction GivePrestige;
 
         public GameInput(InputActionAsset asset)
         {
@@ -66,6 +71,8 @@ namespace Antarium.Gameplay
             PrevBuilding = asset.FindAction("Tools/PrevBuilding", true);
             Overlay = asset.FindAction("View/Overlay", true);
             Research = asset.FindAction("View/Research", true);
+            Genetics = asset.FindAction("View/Genetics", true);
+            Flight = asset.FindAction("View/Flight", true);
             Abilities = new[]
             {
                 asset.FindAction("Tools/Ability1", true),
@@ -82,6 +89,7 @@ namespace Antarium.Gameplay
             SpawnAnts = asset.FindAction("Debug/SpawnAnts", true);
             FinishBuilds = asset.FindAction("Debug/FinishBuilds", true);
             GiveItems = asset.FindAction("Debug/GiveItems", true);
+            GivePrestige = asset.FindAction("Debug/GivePrestige", true);
             asset.Enable();
         }
 

@@ -1,6 +1,6 @@
 # How to play Antarium 2
 
-This covers everything that exists in the current build (Milestones 1–6). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes), so they change if those assets are tuned.
+This covers everything that exists in the current build (Milestones 1–7). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
 
 To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene is missing, run **Antarium → Setup → Create Main Scene** in the editor menu. The game continues your saved colony if there is one (see *Saving and offline progress*); to always start fresh, untick **Continue Last Save** on the `GameBootstrap` object.
 
@@ -87,6 +87,8 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 | **O** (or the **O Flow** button) | Toggle the flow overlay (see *The screen*) |
 | **T** (or the **T Research** button) | Open / close the research tree |
 | **K** (or the **K Castes** button) | Open / close the castes panel (once the queen can lay anything but workers) |
+| **N** (or the **N Flight** button) | Open / close the Nuptial Flight screen (once *Nuptial Flight* is researched, or after your first flight) |
+| **G** (or the **G Genes** button) | Open / close the Genetic Memory tree (once you have had Genetic Memory, or from the flight screen) |
 
 ### Game
 
@@ -106,8 +108,9 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 | **F8** | Add up to 20 of every resource (as far as storage has room), 50 food and 50 knowledge |
 | **F10** | Start a random event now |
 | **F11** | A raid arrives right now (no warning) |
+| **F12** | Add 2 princesses (up to the limit) and 10 Genetic Memory |
 
-The F3 readout also shows soldiers, enemies, the time to the next raid and its size, how many fluid chunks are moving, ants lost, ants per caste (worker / soldier / miner / hauler / nurse / builder / scout / engineer), scented cells per pheromone, cells scouted and the possessed ant.
+The F3 readout also shows soldiers, enemies, the time to the next raid and its size, how many fluid chunks are moving, ants lost, ants per caste (worker / soldier / miner / hauler / nurse / builder / scout / engineer), scented cells per pheromone, cells scouted, the possessed ant, princesses, what a flight would earn now, unspent Genetic Memory, flights so far and the colony's world modifiers.
 
 ---
 
@@ -117,20 +120,22 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **Food** current / capacity, with the **net food rate** per minute (food delivered minus what the colony eats; red when negative). **Ants** (with how many of them are workers once you have other castes), **Eggs**.
   - **Storage** used / total: how many items (of any type) the royal chamber and your storage cells hold. Turns orange when full.
   - **Knowledge** (violet): the research currency, with the knowledge your Archives study per minute.
+  - **Princesses** waiting / how many count (once the Nuptial Flight is known) and **Memory** (gold): your unspent Genetic Memory (once you have had any).
   - One entry per resource you own, e.g. *Copper Ore 4 +12/min*. Entries appear once you have that item. The green number is how many arrived in the stock per minute recently.
 - **Alert (under the bar):** shows in red while the colony is starving, and while raiders are in the royal chamber.
 - **Contracts (right):** your current goals with a progress bar and the reward. A finished contract turns gold with a **Claim reward** button.
 - **Event cards (left):** random events with the time left to act, a **Go** button that moves the camera there and **x** to dismiss the card. When an event ends, its card says how it went and fades after a few seconds.
   - **Raid** cards are red: first a warning with the time until the raiders arrive, then how many are left. **Go** jumps to the raiders. The card turns green if the raid is repelled.
   - A card also appears when you break into a cave where **creatures** live (which kind and how many).
-- **Toolbar (bottom):** Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research** and **O Flow** for the overlay. The active tool is outlined in gold; the toggle buttons turn green while open / on.
+- **Toolbar (bottom):** Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
 - **Build palette** (above the toolbar, Build tool only): every building with its cost. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
 - **Scent palette** (above the toolbar, Scent tool only): the five pheromones with what each does. *Defend* is faded until you have soldiers.
-- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent), an **ant** under the cursor (caste, hit points, what it is doing, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor, what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls.
+- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent, a princess chamber's princesses), an **ant** under the cursor (caste, hit points, what it is doing, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor, what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls.
 - **Messages** (above the info panel): short notes, e.g. a refused placement (*Not enough Copper Ore (3/12)*), finished research, an ability that is still recharging, a claimed contract, a random event, an ant lost (*A worker drowned.*), a cave-in, a broken gate, or taking / losing control of an ant.
 - **Research tree (T):** see *Research*.
+- **Nuptial Flight screen (N)** and **Genetic Memory tree (G):** see *Nuptial Flight and Genetic Memory*.
 - **Welcome back** (after the game was closed): what the colony did while you were away.
 - **In the world:**
   - Orange **diagonal stripes** are mining orders (also visible over unexplored darkness).
@@ -148,6 +153,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **Soldiers** are darker and bigger than workers, with a heavy head and golden mandibles. **Miners** are grey with a heavy head and pale jaws, **haulers** tan with a big rear (a second lump on top when they carry more than one), **nurses** pale cream, **builders** olive green, **scouts** bright orange with long antennae, **engineers** steel blue with a cyan eye.
   - A **nurse carrying an egg** holds a little white oval. The ant you control has a **blinking gold diamond** over it and a warm light around it.
   - A **clay ledge with three silk cradles** is a nursery; the eggs lie in the cradles. A **pale pod** with a coloured dot is a pheromone emitter (the dot is its scent).
+  - An **amber arch** over three silk beds is a princess chamber: royal jelly glows and drips under the arch while a princess is being raised, and **golden winged princesses** rest on the beds (two on the floor, one on a raised ledge).
   - **Pheromones** are scattered speckles in the scent's colour: yellow **Trail**, orange **Dig here**, green **Gather**, red **Defend**, violet **Avoid**. They thin out as they fade and show more clearly while the Scent tool is active. **Enemies**: pale termites with brown heads (raiders), long red-brown centipedes, purple cave spiders, small pink fungal mites, black fire beetles with glowing stripes, grey stone ruin guardians with a cyan eye.
   - A short **bar** above an ant (green) or enemy (red) shows its health once it is hurt; a sprite **flashes red** when it is hit.
   - A **resin lattice** across a tunnel is a gate (it turns redder as it is damaged); **resin with bone teeth** on the floor is a trap (jaws open = armed); a **red banner** is a guard post; a **packed earth block** is a wall blueprint.
@@ -274,8 +280,9 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Guard Post** | 2 Copper Ore | 1 cell | 1 s | Idle soldiers wait at the nearest guard post and defend the area around it. |
 | **Nursery** | 10 Copper Ore | 3 × 2 | 6 s | Nurses bring eggs here; they hatch 50% faster and the queen can lay more meanwhile. Holds 6 eggs. Needs a flat floor. |
 | **Pheromone Emitter** | 3 Copper, 1 Iron | 1 cell | 2 s | Keeps one scent from fading within 10 cells. |
+| **Princess Chamber** | 10 Copper, 4 Iron | 4 × 3 | 12 s | 12 Fungus + 2 Amber → **1 princess** (60 s). Stops while the colony has as many princesses as count (5). Needs a flat floor. |
 
-The **Splitter** and **Filter** are locked until you research *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste* and the **Pheromone Emitter** until *Scent Glands*. Locked buildings are faded in the palette.
+The **Splitter** and **Filter** are locked until you research *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands* and the **Princess Chamber** until *Nuptial Flight*. Locked buildings are faded in the palette.
 
 ### Belts and lifts
 - Each belt or lift cell holds **2 items**. Items pass from cell to cell; if the next cell is full they wait, so a blocked line **backs up**.
@@ -307,7 +314,7 @@ The **Splitter** and **Filter** are locked until you research *Silk Routing*, th
   - **contracts** and the **golden beetle**.
 - Press **T** to open the research tree. Each node costs knowledge, sometimes items from the stock or food, and is bought instantly with a click. A node can be bought once every node it needs is done.
 - Node colours: **green** = researched; **bright violet** = you can buy it now; **violet with red cost** = available, but you don't have enough yet; **grey** = needs other research first. Hover a node to see exactly what it does and what it still needs.
-- Research is permanent for this colony.
+- Research is permanent for this colony (genetic traits can make a research node part of every colony: see *Nuptial Flight and Genetic Memory*).
 
 | Tier | Research | Cost | Needs | Effect |
 |---|---|---|---|---|
@@ -333,6 +340,7 @@ The **Splitter** and **Filter** are locked until you research *Silk Routing*, th
 | 6 | **Hardened Carapace** | 60 Knowledge, 8 Chitin | Soldier Caste | Every ant has 50% more hit points |
 | 6 | **Venom Glands** | 70 Knowledge, 10 Chitin | Soldier Caste | Ants bite 50% harder |
 | 6 | **Obsidian Plating** | 60 Knowledge, 6 Obsidian | Fortification | Gates have twice the hit points, traps hit twice as hard |
+| 6 | **Nuptial Flight** | 80 Knowledge, 6 Iron | Fungiculture, Royal Jelly | Unlocks the **Princess Chamber** and the Nuptial Flight (see *Nuptial Flight and Genetic Memory*) |
 | 2 | **Miner Caste** | 25 Knowledge, 10 Copper Ore | Strong Mandibles | The queen can lay **miners** |
 | 2 | **Hauler Caste** | 25 Knowledge, 4 Copper | Silk Routing | The queen can lay **haulers** |
 | 2 | **Scent Glands** | 20 Knowledge | Quick Legs | Unlocks the **Pheromone Emitter** |
@@ -417,8 +425,56 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
   - Waiting eggs (also those nurses carry) hatch, abilities recharge, and timed events (beetle, trapped ants) run out. New eggs follow your caste shares.
   - No raids, creatures or hazards happen while the game is closed.
   - A **Welcome back** panel lists what changed.
-- Saves keep castes, eggs in nurseries, what haulers and nurses carry and every painted scent. The ant you control is let go when you load. Saves from earlier versions load.
-- **Load last save** (menu or **F9**) goes back to the last save without offline progress. **New colony** (click twice to confirm) abandons the current colony and starts on a new random world; the next save overwrites the old colony.
+- Saves keep castes, eggs in nurseries, what haulers and nurses carry, every painted scent, princesses, your Genetic Memory and traits, and the colony's world modifiers. The ant you control is let go when you load. Saves from earlier versions load (with no Genetic Memory yet).
+- **Load last save** (menu or **F9**) goes back to the last save without offline progress. **New colony** (click twice to confirm) abandons the current colony and starts on a new random world without world modifiers; you **keep your Genetic Memory and traits** but earn nothing for the abandoned colony. The next save overwrites the old colony.
+
+### Nuptial Flight and Genetic Memory
+When a colony slows down, the queen can send winged **princesses** to found a new one. The colony ends, but its **Genetic Memory** lives on: you spend it on **genetic traits** that are kept forever, in every colony after.
+
+- **Princesses**: research **Nuptial Flight** (tier 6) and build a **Princess Chamber**. Workers and belts feed it like any machine: **12 Fungus + 2 Amber** raise **1 princess** in 60 seconds. Up to **5** princesses count (traits add more); the chamber rests while you have that many.
+- **The flight screen (N)** shows what a flight would earn and why:
+  - **Colony score** = deepest dig × 0.1 + knowledge earned × 0.1 + research nodes done × 2 + contracts completed × 1 (starting knowledge from traits doesn't count as earned).
+  - **Genetic Memory** = √(score ÷ 4) × **princess factor** × **gain**, rounded down. The princess factor is 1 for one princess and +0.25 for each one after it (2 with five). Gain comes from traits and world modifiers.
+  - You need at least **1 princess** and at least 1 Genetic Memory to fly.
+- **World modifiers** for the next colony are picked on the same screen: click one to choose it (1 slot; the trait *Wanderlust* adds more). Harder worlds raise the next flight's Genetic Memory.
+
+| Modifier | Effect | Unlocked |
+|---|---|---|
+| **Rich Veins** | Much more ore in every layer; raids 25% bigger | from the start |
+| **Lush Meadow** | Seeds appear 50% more often; ore a little rarer | from the start |
+| **Shallow World** | Every layer 25% thinner (the deep biomes come sooner); +10% Genetic Memory | from the start |
+| **Hollow Earth** | Far more caves, 50% more creatures in them; +15% Genetic Memory | from the start |
+| **Quiet Surface** | Raids 40% less often and 25% smaller; −25% Genetic Memory | from the start |
+| **Flooded Depths** | Far more lakes in the caves; +25% Genetic Memory | *Strange Worlds* |
+| **Volcanic** | More lava lakes and gas pockets in the deep; +30% Genetic Memory | *Strange Worlds* |
+| **Famine** | Seeds appear half as often; +35% Genetic Memory | *Strange Worlds* |
+| **Swarming** | Raids 50% bigger and 30% more often, twice the cave creatures; +50% Genetic Memory | *Strange Worlds* |
+
+- **Take flight** (click twice to confirm): the princesses fly up out of the nest into the sky, then the new colony is founded on a new random world with your modifiers, and the game saves at once. The genetic tree opens so you can spend what you earned.
+- **What carries over**: unspent Genetic Memory, every trait, the number of flights and your records (deepest colony, best flight). Everything else (ants, buildings, research, items, princesses) starts over.
+- **The genetic tree (G)**: click a trait to buy its next level. Colony bonuses and inherited research work **right away**; starting bonuses (workers, food, knowledge, items, revealed map) from the **next colony** on. Node colours: **gold** = you can buy it now; **dim gold** = available but not enough memory; **grey** = needs another trait first; a **green edge** = some levels bought; **green** = fully bought. Hover a trait for details.
+
+| Tier | Trait | Cost (memory) | Levels | Needs | Effect (per level) |
+|---|---|---|---|---|---|
+| 1 | **Big Brood** | 1, +1 per level | 5 | — | +2 starting workers |
+| 1 | **Fat Reserves** | 1, +1 | 3 | — | +40 starting food and +40 food capacity |
+| 1 | **Strong Jaws** | 1, +1 | 5 | — | Workers and you dig 10% faster |
+| 1 | **Long Legs** | 1, +1 | 5 | — | Workers walk 8% faster |
+| 1 | **Ancestral Map** | 2, +1 | 3 | — | New colonies start with 15 more cells around the nest revealed |
+| 2 | **Fertile Queen** | 2, +2 | 3 | Big Brood | The queen lays 15% faster; +1 waiting egg |
+| 2 | **Inherited Gardens** | 3 | 1 | Fat Reserves | Every colony knows *Fungiculture* |
+| 2 | **Inherited Silk** | 3 | 1 | Long Legs | Every colony knows *Silk Routing* |
+| 2 | **Starter Cache** | 2, +1 | 3 | Strong Jaws | Start with 10 Copper Ore and 3 Copper |
+| 2 | **Wanderlust** | 3, +3 | 2 | Ancestral Map | +1 world modifier slot |
+| 3 | **Born Miners** | 5 | 1 | Fertile Queen | Every colony knows *Miner Caste* |
+| 3 | **Born Soldiers** | 5 | 1 | Fertile Queen | Every colony knows *Soldier Caste* |
+| 3 | **Vein Instinct** | 6 | 1 | Inherited Silk | Ore within 2 cells of every dug-out cell is ordered for mining automatically, so ants follow veins on their own |
+| 3 | **Royal Lineage** | 4, +2 | 3 | Inherited Gardens | +1 princess counts toward a flight |
+| 3 | **Strange Worlds** | 5 | 1 | Wanderlust | Unlocks Flooded Depths, Volcanic, Famine and Swarming |
+| 4 | **Ancient Knowledge** | 4, +2 | 3 | Born Miners | +25 starting knowledge |
+| 4 | **Deep Memory** | 5, +3 | 5 | Royal Lineage | +10% Genetic Memory from flights |
+| 4 | **Dormant Wisdom** | 4, +2 | 3 | Vein Instinct | +10 percentage points offline efficiency |
+| 4 | **Silk Mastery** | 4, +2 | 3 | Vein Instinct | Belts 15% and machines 10% faster |
 
 ### Light and darkness
 - Sunlight reaches into shafts and tunnels near the surface and fades deeper down.
@@ -448,9 +504,10 @@ The **contracts** on the right walk you through the first steps; this is the sam
 14. Press **5** and paint a **Trail** along your busiest tunnel: haulers go faster and keep it fresh. Paint **Dig here** over the mining orders you want first and **Avoid** over a dangerous cave.
 15. Research **Miner Caste** and **Hauler Caste**, then open the castes panel (**K**) and give them a share. Later **Nurses** with a **Nursery** keep the queen laying, **Scouts** find ore in the dark, **Engineers** speed up your machines.
 16. Point at an ant and press **F** to play it yourself: dig a shortcut, carry a find home, or bite a raider. **F** again lets go.
+17. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
 
 ---
 
 ## Not in the game yet
 
-Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, prestige, a settings menu, several save slots, and a way to put stored items onto belts. See `docs/TODO.md` for the full list of what's missing.
+Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, a settings menu, several save slots, and a way to put stored items onto belts. See `docs/TODO.md` for the full list of what's missing.

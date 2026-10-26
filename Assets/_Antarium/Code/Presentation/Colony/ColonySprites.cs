@@ -45,7 +45,10 @@ namespace Antarium.Presentation
         /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer): 4 walk frames each, in caste order.</summary>
         public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
         const int SpecialistCount = 6;
-        const int RectCount = SpecialistRect + SpecialistCount * WorkerFrames;
+        /// <summary>Winged princess: resting (wings folded), then two flight frames (wings up, wings back).</summary>
+        public const int PrincessRect = SpecialistRect + SpecialistCount * WorkerFrames;
+        public const int PrincessWidth = 14, PrincessHeight = 10, PrincessFrames = 3;
+        const int RectCount = PrincessRect + PrincessFrames;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -89,6 +92,26 @@ namespace Antarium.Presentation
             new[] { ".....LL.L.....", "....L.L...L..." },
             new[] { "....L.L.L.....", "....L.L..L...." },
             new[] { "....LL..L.....", "...L..L...L..." },
+        };
+
+        // Princess: a slim golden young queen (long gaster) with two pairs of wings on the thorax.
+        static readonly string[][] Princess =
+        {
+            new[] // resting: wings folded flat along the back
+            {
+                "..............", "..............", "..............", "vwwwwwv....L..", ".HHH..HH..HL..", "HMMMM.MM.HMM..",
+                "MMMMMLMMLMMMK.", ".DMMD.DD.DD...", ".....L.L.L....", "....L..L..L...",
+            },
+            new[] // flying, wings up
+            {
+                "..vww..vw.....", "...vwww.ww....", "....vwwwww....", "......ww...L..", ".HHH..HH..HL..", "HMMMM.MM.HMM..",
+                "MMMMMLMMLMMMK.", ".DMMD.DD.DD...", ".....L.L.L....", ".....L.L.L....",
+            },
+            new[] // flying, wings swept back
+            {
+                "..............", "..............", "vwwwwwv.......", ".vvwwwwww..L..", ".HHH..HH..HL..", "HMMMM.MM.HMM..",
+                "MMMMMLMMLMMMK.", ".DMMD.DD.DD...", ".....L.L.L....", ".....L.L.L....",
+            },
         };
 
         static readonly string[] Egg = { ".EE.", "EWEE", "EEEE", "ESSE", ".SS." };
@@ -214,6 +237,11 @@ namespace Antarium.Presentation
             });
 
             PaintCastes(pixels);
+            AddFrames(pixels, Princess, 0, 74, PrincessRect, new Dictionary<char, Color32>
+            {
+                ['D'] = Hex(0x7a4a10), ['M'] = Hex(0xe0a032), ['H'] = Hex(0xffe48a), ['L'] = Hex(0x5a3008), ['K'] = Hex(0xfff4c8),
+                ['w'] = Hex(0xf0f8ff), ['v'] = Hex(0x7896c8),
+            });
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -305,6 +333,23 @@ namespace Antarium.Presentation
                 }
                 CasteRect[(int)art.Caste] = SpecialistRect + s * WorkerFrames;
                 CasteSize[(int)art.Caste] = new int2(w, h);
+            }
+        }
+
+        /// <summary>Frames side by side (one pixel apart) from (ox, oy) with their own palette, into consecutive rects.</summary>
+        void AddFrames(Color32[] pixels, string[][] frames, int ox, int oy, int firstRect, Dictionary<char, Color32> palette)
+        {
+            int w = frames[0][0].Length, h = frames[0].Length;
+            for (int f = 0; f < frames.Length; f++)
+            {
+                int fx = ox + f * (w + 1);
+                for (int r = 0; r < h; r++)
+                {
+                    int y = oy + (h - 1 - r);
+                    for (int x = 0; x < frames[f][r].Length; x++)
+                        if (palette.TryGetValue(frames[f][r][x], out var c)) pixels[y * AtlasWidth + fx + x] = c;
+                }
+                Rects[firstRect + f] = Rect(fx, oy, w, h);
             }
         }
 

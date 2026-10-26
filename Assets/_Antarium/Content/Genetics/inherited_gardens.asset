@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14707ad79a2368a40bf87987021cdcda, type: 3}
+  m_Name: inherited_gardens
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GeneticDef
+  id: inherited_gardens
+  displayName: Inherited Gardens
+  description: Every colony knows Fungiculture from the start.
+  treePosition: {x: 1, y: 1}
+  cost: 3
+  costPerLevel: 0
+  maxLevel: 1
+  prerequisites:
+  - {fileID: 11400000, guid: 4fdfee152cedc4042b2d77600ba382bf, type: 2}
+  effects:
+  - kind: 5
+    stat: 0
+    value: 0
+    item: {fileID: 0}
+    count: 0
+    research: {fileID: 11400000, guid: 4bdbb0c6f379f4944a0e98c9064d8db7, type: 2}
+    modifier: {fileID: 0}
