@@ -24,6 +24,8 @@ namespace Antarium.Sim
         public int RaidsRepelled;
         /// <summary>Hidden cells scouts revealed.</summary>
         public long CellsScouted;
+        /// <summary>Princesses raised for the Nuptial Flight.</summary>
+        public long PrincessesRaised;
 
         public ColonyStats(int items, int buildings)
         {

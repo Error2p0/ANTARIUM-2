@@ -47,6 +47,8 @@ namespace Antarium.Content
         public float Duration;
         /// <summary>Knowledge added per craft.</summary>
         public float Knowledge;
+        /// <summary>Princesses raised per craft.</summary>
+        public int Princesses;
     }
 
     /// <summary>Baked building: dense cost and recipe indices.</summary>
@@ -92,6 +94,23 @@ namespace Antarium.Content
         public IReadOnlyList<EnemyDef> Enemies;
         public IReadOnlyList<EnemyDef> Raiders;
         public IReadOnlyList<CasteDef> Castes;
+        public IReadOnlyList<GeneticDef> Genetics;
+        public IReadOnlyList<WorldModifierDef> WorldModifiers;
+    }
+
+    /// <summary>Baked genetic trait: dense indices.</summary>
+    public sealed class GeneticData
+    {
+        public GeneticDef Def;
+        /// <summary>Indices into <see cref="ContentDB.Genetics"/>.</summary>
+        public int[] Prerequisites;
+        public GeneticEffect[] Effects;
+        /// <summary>Per effect: the research, world modifier or item index it names, else -1.</summary>
+        public int[] Targets;
+
+        public int MaxLevel => Math.Max(1, Def.maxLevel);
+        /// <summary>Genetic Memory for the next level when <paramref name="level"/> levels are bought.</summary>
+        public int Cost(int level) => Math.Max(0, Def.cost) + Math.Max(0, Def.costPerLevel) * level;
     }
 
     /// <summary>Baked research node: dense indices.</summary>
@@ -161,6 +180,12 @@ namespace Antarium.Content
         public readonly ContractData[] Contracts;
         public readonly RandomEventData[] Events;
         public readonly EnemyData[] Enemies;
+        /// <summary>Genetic traits ordered by tree position.</summary>
+        public readonly GeneticData[] Genetics;
+        /// <summary>World modifiers in flight-screen order.</summary>
+        public readonly WorldModifierDef[] Modifiers;
+        /// <summary>Per world modifier: true if a genetic trait unlocks it (it starts locked).</summary>
+        public readonly bool[] ModifierStartsLocked;
         /// <summary>Indices into <see cref="Enemies"/> of the creatures that raid from the surface.</summary>
         public readonly int[] Raiders;
         /// <summary>Biomes top to bottom (same order as <c>WorldGen.biomes</c>).</summary>
@@ -191,6 +216,8 @@ namespace Antarium.Content
         readonly Dictionary<string, int> _contractIndex = new();
         readonly Dictionary<string, int> _eventIndex = new();
         readonly Dictionary<string, int> _enemyIndex = new();
+        readonly Dictionary<string, int> _geneticIndex = new();
+        readonly Dictionary<string, int> _modifierIndex = new();
 
         ContentDB(TerrainMaterialDef[] materials, ItemDef[] items, IReadOnlyList<ItemDef> forage, WorldGenSettings worldGen,
             IReadOnlyList<BuildingDef> buildings, ProgressionContent progression)
@@ -244,6 +271,10 @@ namespace Antarium.Content
             Research = BakeResearch(progression.Research);
             Contracts = BakeContracts(progression.Contracts);
             Events = BakeEvents(progression.Events);
+            Modifiers = Sorted(progression.WorldModifiers, "world modifier", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
+            for (int i = 0; i < Modifiers.Length; i++) _modifierIndex.Add(Modifiers[i].Id, i);
+            ModifierStartsLocked = new bool[Modifiers.Length];
+            Genetics = BakeGenetics(progression.Genetics);
 
             Biomes = new BiomeData[worldGen.biomes.Count];
             for (int i = 0; i < Biomes.Length; i++)
@@ -377,6 +408,54 @@ namespace Antarium.Content
                 data.UnlockAbilities = abilities.ToArray();
                 data.UnlockCastes = castes.ToArray();
                 result[i] = data;
+            }
+            return result;
+        }
+
+        GeneticData[] BakeGenetics(IReadOnlyList<GeneticDef> defs)
+        {
+            var sorted = Sorted(defs, "genetic trait", (a, b) =>
+                a.treePosition.x != b.treePosition.x ? a.treePosition.x.CompareTo(b.treePosition.x)
+                : a.treePosition.y != b.treePosition.y ? a.treePosition.y.CompareTo(b.treePosition.y)
+                : string.CompareOrdinal(a.Id, b.Id));
+            for (int i = 0; i < sorted.Length; i++) _geneticIndex.Add(sorted[i].Id, i);
+
+            var result = new GeneticData[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                var prereqs = new List<int>();
+                foreach (var p in def.prerequisites)
+                {
+                    if (p == null) continue;
+                    if (!_geneticIndex.TryGetValue(p.Id, out int pi))
+                        throw new ArgumentException($"Genetic trait '{def.Id}' needs '{p.Id}', which is not registered.");
+                    prereqs.Add(pi);
+                }
+                var effects = def.effects.ToArray();
+                var targets = new int[effects.Length];
+                for (int k = 0; k < effects.Length; k++)
+                {
+                    var e = effects[k];
+                    targets[k] = -1;
+                    switch (e.kind)
+                    {
+                        case GeneticEffectKind.InheritResearch:
+                            if (e.research == null || !_researchIndex.TryGetValue(e.research.Id, out targets[k]))
+                                throw new ArgumentException($"Genetic trait '{def.Id}' inherits research that is not registered.");
+                            break;
+                        case GeneticEffectKind.UnlockModifier:
+                            if (e.modifier == null || !_modifierIndex.TryGetValue(e.modifier.Id, out targets[k]))
+                                throw new ArgumentException($"Genetic trait '{def.Id}' unlocks a world modifier that is not registered.");
+                            ModifierStartsLocked[targets[k]] = true;
+                            break;
+                        case GeneticEffectKind.StartItems:
+                            if (e.item == null) throw new ArgumentException($"Genetic trait '{def.Id}' gives an empty item.");
+                            targets[k] = GetItemIndex(e.item);
+                            break;
+                    }
+                }
+                result[i] = new GeneticData { Def = def, Prerequisites = prereqs.ToArray(), Effects = effects, Targets = targets };
             }
             return result;
         }
@@ -553,10 +632,13 @@ namespace Antarium.Content
 
         RecipeData BakeRecipe(RecipeDef def)
         {
-            var data = new RecipeData { Def = def, Duration = math.max(0.1f, def.duration), Knowledge = math.max(0f, def.knowledge) };
+            var data = new RecipeData
+            {
+                Def = def, Duration = math.max(0.1f, def.duration), Knowledge = math.max(0f, def.knowledge), Princesses = math.max(0, def.princesses),
+            };
             Amounts(def.inputs, $"recipe '{def.Id}' inputs", out data.InputItems, out data.InputCounts);
             Amounts(def.outputs, $"recipe '{def.Id}' outputs", out data.OutputItems, out data.OutputCounts);
-            if (data.OutputItems.Length == 0 && data.Knowledge <= 0f) throw new ArgumentException($"Recipe '{def.Id}' has no outputs.");
+            if (data.OutputItems.Length == 0 && data.Knowledge <= 0f && data.Princesses <= 0) throw new ArgumentException($"Recipe '{def.Id}' has no outputs.");
             return data;
         }
 
@@ -586,6 +668,8 @@ namespace Antarium.Content
                     Enemies = database.enemies,
                     Raiders = database.raiders,
                     Castes = database.castes,
+                    Genetics = database.genetics,
+                    WorldModifiers = database.worldModifiers,
                 });
         }
 
@@ -642,19 +726,27 @@ namespace Antarium.Content
         public bool TryGetContractIndex(string id, out int index) => _contractIndex.TryGetValue(id, out index);
         public bool TryGetEventIndex(string id, out int index) => _eventIndex.TryGetValue(id, out index);
         public bool TryGetEnemyIndex(string id, out int index) => _enemyIndex.TryGetValue(id, out index);
+        public bool TryGetGeneticIndex(string id, out int index) => _geneticIndex.TryGetValue(id, out index);
+        public bool TryGetModifierIndex(string id, out int index) => _modifierIndex.TryGetValue(id, out index);
 
-        /// <summary>Index of the biome (top to bottom) at <paramref name="depth"/> cells below the surface, ignoring border warp.</summary>
-        public int BiomeAtDepth(int depth)
+        /// <summary>
+        /// Index of the biome (top to bottom) at <paramref name="depth"/> cells below the surface, ignoring border warp.
+        /// <paramref name="thicknessScale"/> is the world's biome thickness multiplier (world modifiers).
+        /// </summary>
+        public int BiomeAtDepth(int depth, float thicknessScale = 1f)
         {
             var biomes = WorldGen.biomes;
             int top = 0;
             for (int i = 0; i < biomes.Count - 1; i++)
             {
-                top += biomes[i].thickness;
+                top += BiomeThickness(biomes[i], thicknessScale);
                 if (depth < top) return i;
             }
             return math.max(0, biomes.Count - 1);
         }
+
+        /// <summary>Thickness in cells of a biome in a world whose biomes are scaled by <paramref name="scale"/>.</summary>
+        public static int BiomeThickness(BiomeDef biome, float scale) => math.max(1, (int)math.round(biome.thickness * scale));
 
         public int GetBuildingIndex(BuildingDef def)
         {

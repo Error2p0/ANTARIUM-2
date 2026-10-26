@@ -20,6 +20,8 @@ namespace Antarium.Content
         public List<RandomEventDef> events = new();
         public List<EnemyDef> enemies = new();
         public List<CasteDef> castes = new();
+        public List<GeneticDef> genetics = new();
+        public List<WorldModifierDef> worldModifiers = new();
         [Tooltip("Creatures that come from the surface in raids (picked at random).")]
         public List<EnemyDef> raiders = new();
         public WorldGenSettings worldGen;

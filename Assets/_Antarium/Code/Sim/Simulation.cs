@@ -16,7 +16,7 @@ namespace Antarium.Sim
         enum CommandKind : byte
         {
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
-            Pheromone, Possess, Release, PossessAct, PossessInteract,
+            Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
         }
 
         readonly struct Command
@@ -104,13 +104,21 @@ namespace Antarium.Sim
         int _haulSlots;
 
         /// <summary>Starts a new colony on a world generated from <paramref name="seed"/>.</summary>
-        public Simulation(ContentDB content, GameConfig config, uint seed) : this(content, config, seed, null) { }
+        public Simulation(ContentDB content, GameConfig config, uint seed) : this(content, config, seed, (WorldGrid)null) { }
+
+        /// <summary>
+        /// Starts a new colony that inherits <paramref name="legacy"/> (genetic traits, Genetic Memory) on a world shaped
+        /// by <paramref name="worldModifiers"/> (indices into <see cref="ContentDB.Modifiers"/>).
+        /// </summary>
+        public Simulation(ContentDB content, GameConfig config, uint seed, Legacy legacy, IReadOnlyList<int> worldModifiers = null)
+            : this(content, config, seed, null, legacy, worldModifiers) { }
 
         /// <summary>
         /// With <paramref name="loadedWorld"/> (loading a save) nothing is generated or spawned: the save fills in
         /// the rest and calls <see cref="FinishLoad"/>.
         /// </summary>
-        internal Simulation(ContentDB content, GameConfig config, uint seed, WorldGrid loadedWorld)
+        internal Simulation(ContentDB content, GameConfig config, uint seed, WorldGrid loadedWorld, Legacy legacy = null,
+            IReadOnlyList<int> worldModifiers = null)
         {
             Content = content;
             Config = config;
@@ -119,7 +127,8 @@ namespace Antarium.Sim
             _rng = new Unity.Mathematics.Random(math.hash(new uint2(seed, 0xC0105u)) | 1u);
 
             bool fresh = loadedWorld == null;
-            World = loadedWorld ?? WorldGenerator.Create(content, seed);
+            InitPrestige(legacy, worldModifiers);
+            World = loadedWorld ?? WorldGenerator.Create(content, seed, Tweaks);
             Fluids = new FluidSystem(World, config.fluids);
             Fluids.SetReactionMaterial(content.FluidReactionMaterial != ContentDB.AirIndex
                 ? content.FluidReactionMaterial : content.GetMaterialIndex(content.WorldGen.biomes[0].baseMaterial));
@@ -157,9 +166,12 @@ namespace Antarium.Sim
             Contracts = new ContractSystem(content, config.progression, this, seed);
             RandomEvents = new RandomEventSystem(content, config.progression, this, seed);
             Enemies = new EnemySystem(content, config, this, seed);
+            ApplyLegacyEffects();
             if (!fresh) return;
 
-            for (int i = 0; i < config.colony.startingWorkers; i++)
+            ApplyStartBonuses();
+            int workers = config.colony.startingWorkers + (int)Legacy.Total(GeneticEffectKind.StartWorkers);
+            for (int i = 0; i < workers; i++)
                 Ants.Spawn(RandomRoyalFloorCell(), seed);
             RefreshFields(force: true);
             Contracts.Tick();
@@ -385,6 +397,7 @@ namespace Antarium.Sim
                 case CommandKind.Release: Release(PossessionPhase.Released); break;
                 case CommandKind.PossessAct: PossessAct(cmd.CellPos, cmd.Power); break;
                 case CommandKind.PossessInteract: PossessInteract(); break;
+                case CommandKind.Genetic: BuyGenetic(cmd.Def); break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -493,6 +506,7 @@ namespace Antarium.Sim
             if (Colony.Designated.Remove(index)) _designationsChanged = true;
 
             Reveal.Around(World, c, Config.dig.revealRadius);
+            if (_veinInstinct) FollowVein(c);
             Fluids.Wake(c);
             CheckUnstableAbove(c);
             AddBreach(c + new int2(1, 0));

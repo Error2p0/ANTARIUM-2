@@ -24,6 +24,43 @@ namespace Antarium.Content
         public CasteConfig castes = new();
         public PheromoneConfig pheromones = new();
         public PossessionConfig possession = new();
+        public PrestigeConfig prestige = new();
+    }
+
+    [Serializable]
+    public sealed class PrestigeConfig
+    {
+        [Header("Genetic Memory from a flight: floor((score / divisor) ^ exponent x princess factor x gain)")]
+        [Tooltip("Score per cell of the deepest dig.")]
+        [Min(0f)] public float depthScore = 0.1f;
+        [Tooltip("Score per point of knowledge earned (studied, rewards, events).")]
+        [Min(0f)] public float knowledgeScore = 0.1f;
+        [Tooltip("Score per research node done (inherited ones too).")]
+        [Min(0f)] public float researchScore = 2f;
+        [Tooltip("Score per contract completed.")]
+        [Min(0f)] public float contractScore = 1f;
+        [Min(0.01f)] public float scoreDivisor = 4f;
+        [Range(0.1f, 1f)] public float scoreExponent = 0.5f;
+
+        [Header("Princesses")]
+        [Tooltip("A flight needs at least this many princesses.")]
+        [Min(1)] public int minPrincesses = 1;
+        [Tooltip("Princesses that count toward a flight (genetic traits add more). Princess chambers stop at this many.")]
+        [Min(1)] public int maxPrincesses = 5;
+        [Tooltip("Each princess after the first adds this much to the princess factor (1 + bonus x (princesses - 1)).")]
+        [Min(0f)] public float princessBonus = 0.25f;
+
+        [Header("World modifiers & traits")]
+        [Tooltip("World modifiers that can be chosen for a new colony (genetic traits add more).")]
+        [Min(0)] public int modifierSlots = 1;
+        [Tooltip("Vein Instinct: ore within this many cells of a dug-out cell is ordered for mining.")]
+        [Min(1)] public int veinRadius = 2;
+
+        [Header("Flight (presentation)")]
+        [Tooltip("Seconds the princesses are shown flying before the new colony is founded.")]
+        [Min(0.5f)] public float flightSeconds = 4.5f;
+        [Tooltip("Princesses climb this many cells per second.")]
+        [Min(0.5f)] public float flightSpeed = 9f;
     }
 
     [Serializable]

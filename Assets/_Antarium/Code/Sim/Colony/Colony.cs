@@ -46,6 +46,10 @@ namespace Antarium.Sim
         public bool Starving;
         /// <summary>Raiders are in the royal chamber: the queen does not lay.</summary>
         public bool QueenDisturbed;
+        /// <summary>Princesses raised in princess chambers, waiting for the Nuptial Flight.</summary>
+        public int Princesses;
+        /// <summary>Princesses that count toward a flight; princess chambers stop raising more at this many.</summary>
+        public int PrincessCap = 5;
 
         /// <summary>World indices of cells designated for mining / painted as storage.</summary>
         public readonly HashSet<int> Designated = new();

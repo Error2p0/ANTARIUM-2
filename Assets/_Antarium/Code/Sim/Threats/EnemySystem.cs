@@ -175,15 +175,16 @@ namespace Antarium.Sim
             if (cells.Length < 12) return;
             var world = _sim.World;
             int2 mid = cells[cells.Length / 2];
-            int biome = _content.BiomeAtDepth(world.Depth(mid.x, mid.y));
+            int biome = _sim.BiomeAtDepth(world.Depth(mid.x, mid.y));
             if (biome >= _content.Biomes.Length) return;
             var data = _content.Biomes[biome];
             if (data.Creatures.Length == 0 || data.Def == null) return;
 
-            float expected = cells.Length / (float)math.max(1, data.Def.caveCellsPerCreature);
+            float more = math.max(0f, _sim.Colony.Mods.Mult(StatKind.CreatureCount));
+            float expected = cells.Length / (float)math.max(1, data.Def.caveCellsPerCreature) * more;
             int count = (int)expected;
             if (Rng.NextFloat() < expected - count) count++;
-            count = math.min(count, data.Def.maxCreaturesPerCave);
+            count = math.min(count, (int)math.round(data.Def.maxCreaturesPerCave * more));
             if (count == 0) return;
 
             var nav = new NavGrid(world);
@@ -215,9 +216,10 @@ namespace Antarium.Sim
         /// <summary>Raiders the next raid brings: grows with the colony and with the depth reached.</summary>
         public int NextRaidSize()
         {
-            int biome = _content.BiomeAtDepth(_sim.Colony.Stats.MaxDepth);
-            float size = _threats.raidBaseSize + _sim.Ants.Count * _threats.raidPerAnt + biome * _threats.raidPerBiome;
-            return math.clamp((int)math.round(size), 1, _threats.raidMaxSize);
+            int biome = _sim.BiomeAtDepth(_sim.Colony.Stats.MaxDepth);
+            float bigger = math.max(0f, _sim.Colony.Mods.Mult(StatKind.RaidSize));
+            float size = (_threats.raidBaseSize + _sim.Ants.Count * _threats.raidPerAnt + biome * _threats.raidPerBiome) * bigger;
+            return math.clamp((int)math.round(size), 1, math.max(1, (int)math.round(_threats.raidMaxSize * bigger)));
         }
 
         bool RaidsQualify() =>
@@ -242,7 +244,8 @@ namespace Antarium.Sim
             {
                 RaidWarned = false;
                 StartRaid(RaidSpawn);
-                RaidTimer = Rng.NextFloat(_threats.raidIntervalMin, math.max(_threats.raidIntervalMin, _threats.raidIntervalMax));
+                RaidTimer = Rng.NextFloat(_threats.raidIntervalMin, math.max(_threats.raidIntervalMin, _threats.raidIntervalMax))
+                            / math.max(0.1f, _sim.Colony.Mods.Mult(StatKind.RaidFrequency));
             }
         }
 

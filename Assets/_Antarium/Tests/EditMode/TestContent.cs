@@ -8,14 +8,20 @@ namespace Antarium.Tests
 {
     /// <summary>
     /// In-memory content for tests: a small world with dirt over stone, a glow crystal and bedrock; sand, obsidian
-    /// and packed earth; a raider and a cave creature; gates, traps, guard posts and walls.
+    /// and packed earth; a raider and a cave creature; gates, traps, guard posts and walls; a princess chamber,
+    /// genetic traits and world modifiers.
     /// </summary>
     public sealed class TestContent : IDisposable
     {
-        public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed;
+        public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock;
         public readonly BiomeDef Topsoil, Deep;
         public readonly ItemDef Ore, Seed, Bar, Chitin;
-        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter;
+        public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber;
+        public readonly RecipeDef Raise;
+        /// <summary>Brood: +2 starting workers per level (3 levels). Jaws (needs Brood): +50% worker digging. Start: food, knowledge, bars, reveal.</summary>
+        public readonly GeneticDef GeneBrood, GeneJaws, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain;
+        /// <summary>Rich: far more ore, raids twice as big. Shallow: biomes half as thick. Hard: locked behind GeneStrange.</summary>
+        public readonly WorldModifierDef ModRich, ModShallow, ModHard;
         public readonly CasteDef WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste, EngineerCaste;
         /// <summary>Unlocks every specialist caste but soldiers.</summary>
         public readonly ResearchDef CasteResearch;
@@ -35,7 +41,8 @@ namespace Antarium.Tests
         readonly List<Object> _objects = new();
 
         /// <param name="creatures">Cave creatures (<see cref="Spider"/>) live in the deep biome's caves.</param>
-        public TestContent(int chunksX = 4, int chunksY = 4, bool caves = true, bool creatures = false)
+        /// <param name="ores">The deep biome has a deposit of <see cref="OreRock"/> (drops ore).</param>
+        public TestContent(int chunksX = 4, int chunksY = 4, bool caves = true, bool creatures = false, bool ores = false)
         {
             Ore = Make<ItemDef>("ore");
             Seed = Make<ItemDef>("seed");
@@ -78,6 +85,8 @@ namespace Antarium.Tests
             Sand = Mat("sand", 0.5f, MaterialFlags.Unstable);
             Obsidian = Mat("obsidian", 6f);
             Packed = Mat("packed", 1f);
+            OreRock = Mat("ore_rock", 2f);
+            OreRock.drop = Ore;
 
             Gate = Building("gate", BuildingKind.Gate, 6);
             Gate.maxHealth = 40f;
@@ -94,6 +103,14 @@ namespace Antarium.Tests
             Nursery.hatchBonus = 1f;
             Emitter = Building("emitter", BuildingKind.Emitter, 11);
             Emitter.emitterRadius = 5f;
+            Raise = Make<RecipeDef>("raise");
+            Raise.inputs.Add(new ItemAmount(Ore, 1));
+            Raise.princesses = 1;
+            Raise.duration = 1f;
+            Chamber = Building("chamber", BuildingKind.Processor, 12);
+            Chamber.size = new Vector2Int(2, 2);
+            Chamber.recipes.Add(Raise);
+            Chamber.princessSlots = 3;
 
             // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
             WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
@@ -208,6 +225,30 @@ namespace Antarium.Tests
             TrappedEvent.radius = 4f;
             TrappedEvent.count = 3;
 
+            // Prestige: world modifiers and genetic traits.
+            ModRich = Make<WorldModifierDef>("mod_rich");
+            ModRich.oreThreshold = -0.5f;
+            ModRich.stats.Add(new StatAmount(StatKind.RaidSize, 1f));
+            ModShallow = Make<WorldModifierDef>("mod_shallow");
+            ModShallow.order = 1;
+            ModShallow.biomeThickness = 0.5f;
+            ModHard = Make<WorldModifierDef>("mod_hard");
+            ModHard.order = 2;
+            ModHard.stats.Add(new StatAmount(StatKind.GeneticGain, 1f));
+            ModHard.stats.Add(new StatAmount(StatKind.CreatureCount, 1f));
+
+            GeneBrood = Genetic("gene_brood", 0, 0, 1, 1, 3, GeneticEffect.Of(GeneticEffectKind.StartWorkers, 2f));
+            GeneJaws = Genetic("gene_jaws", 1, 0, 2, 0, 1, GeneticEffect.Add(StatKind.WorkerDig, 0.5f));
+            GeneJaws.prerequisites.Add(GeneBrood);
+            GeneStart = Genetic("gene_start", 0, 1, 1, 0, 1, GeneticEffect.Of(GeneticEffectKind.StartFood, 20f),
+                GeneticEffect.Of(GeneticEffectKind.StartKnowledge, 7f), GeneticEffect.Items(Bar, 2), GeneticEffect.Of(GeneticEffectKind.RevealRadius, 10f));
+            GeneInherit = Genetic("gene_inherit", 0, 2, 1, 0, 1, GeneticEffect.Inherit(FastBelts));
+            GeneVein = Genetic("gene_vein", 0, 3, 1, 0, 1, GeneticEffect.Of(GeneticEffectKind.VeinInstinct));
+            GeneRoyal = Genetic("gene_royal", 0, 4, 1, 0, 1, GeneticEffect.Of(GeneticEffectKind.MaxPrincesses, 1f),
+                GeneticEffect.Of(GeneticEffectKind.ModifierSlots, 1f));
+            GeneStrange = Genetic("gene_strange", 1, 1, 1, 0, 1, GeneticEffect.Unlock(ModHard));
+            GeneGain = Genetic("gene_gain", 1, 2, 1, 0, 1, GeneticEffect.Add(StatKind.GeneticGain, 1f));
+
             Progression = new ProgressionContent
             {
                 Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch },
@@ -217,6 +258,8 @@ namespace Antarium.Tests
                 Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent },
                 Enemies = new[] { Spider, Raider },
                 Raiders = new[] { Raider },
+                Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain },
+                WorldModifiers = new[] { ModHard, ModRich, ModShallow },
             };
 
             Topsoil = Make<BiomeDef>("topsoil");
@@ -227,6 +270,7 @@ namespace Antarium.Tests
             Deep.baseMaterial = Stone;
             Deep.caveThreshold = caves ? 0.45f : 2f;
             Deep.deposits.Add(new BiomeDef.Deposit { material = Crystal, scale = 0.2f, threshold = 0.8f });
+            if (ores) Deep.deposits.Add(new BiomeDef.Deposit { material = OreRock, scale = 0.15f, threshold = 0.6f });
             if (creatures)
             {
                 Deep.creatures.Add(Spider);
@@ -252,9 +296,9 @@ namespace Antarium.Tests
             Config.threats.firstRaidSeconds = 1e9f;    // raids too
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed }, WorldGen,
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock }, WorldGen,
                 new[] { Ore, Seed, Bar, Chitin }, null,
-                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter }, Progression);
+                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber }, Progression);
         }
 
         CasteDef Caste(string id, AntCaste caste, float health = 40f, float attack = 3f, float upkeep = 0f, float egg = 6f, float share = 0.1f,
@@ -281,9 +325,23 @@ namespace Antarium.Tests
 
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
-            ContentDB.Build(new[] { Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
+            ContentDB.Build(new[] { OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
                 new[] { Chitin, Bar, Seed, Ore }, null,
-                new[] { Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter }, Progression);
+                new[] { Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter }, Progression);
+
+        GeneticDef Genetic(string id, int column, int row, int cost, int costPerLevel, int maxLevel, params GeneticEffect[] effects)
+        {
+            var g = Make<GeneticDef>(id);
+            g.treePosition = new Vector2Int(column, row);
+            g.cost = cost;
+            g.costPerLevel = costPerLevel;
+            g.maxLevel = maxLevel;
+            g.effects.AddRange(effects);
+            return g;
+        }
+
+        public int GeneticIndex(GeneticDef def) => DB.TryGetGeneticIndex(def.Id, out int i) ? i : -1;
+        public int ModifierIndex(WorldModifierDef def) => DB.TryGetModifierIndex(def.Id, out int i) ? i : -1;
 
         BuildingDef Building(string id, BuildingKind kind, int order)
         {

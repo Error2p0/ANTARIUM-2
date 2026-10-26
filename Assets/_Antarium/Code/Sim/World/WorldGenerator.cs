@@ -49,16 +49,22 @@ namespace Antarium.Sim
             public float2 Offset;
         }
 
-        public static WorldGrid Create(ContentDB content, uint seed)
+        public static WorldGrid Create(ContentDB content, uint seed) => Create(content, seed, WorldTweaks.None);
+
+        /// <summary>Generates a world changed by world modifiers (<paramref name="tweaks"/>).</summary>
+        public static WorldGrid Create(ContentDB content, uint seed, in WorldTweaks tweaks)
         {
             var gen = content.WorldGen;
             var world = new WorldGrid(gen.widthInChunks, gen.heightInChunks);
-            Generate(world, content, seed);
+            Generate(world, content, seed, tweaks);
             return world;
         }
 
-        public static void Generate(WorldGrid world, ContentDB content, uint seed)
+        public static void Generate(WorldGrid world, ContentDB content, uint seed) => Generate(world, content, seed, WorldTweaks.None);
+
+        public static void Generate(WorldGrid world, ContentDB content, uint seed, in WorldTweaks tweaks)
         {
+            float scale = tweaks.BiomeScale > 0f ? tweaks.BiomeScale : 1f;
             var gen = content.WorldGen;
             var rng = new Random(seed == 0 ? 0x9E3779B9u : seed);
             float2 NextOffset() => rng.NextFloat2(-5000f, 5000f);
@@ -91,13 +97,14 @@ namespace Antarium.Sim
                 {
                     var b = gen.biomes[i];
                     bool last = i == gen.biomes.Count - 1;
+                    int thickness = ContentDB.BiomeThickness(b, scale);
                     biomes[i] = new BiomeGen
                     {
                         Top = top,
-                        Bottom = last ? float.MaxValue : top + b.thickness,
+                        Bottom = last ? float.MaxValue : top + thickness,
                         BaseMaterial = content.GetMaterialIndex(b.baseMaterial),
                         CaveScale = b.caveScale,
-                        CaveThreshold = b.caveThreshold,
+                        CaveThreshold = b.caveThreshold + tweaks.CaveThreshold,
                         DepositStart = depositIndex,
                         DepositCount = b.deposits.Count,
                         PocketStart = pocketIndex,
@@ -107,16 +114,17 @@ namespace Antarium.Sim
                         RoomChance = b.roomChance,
                         RoomSeed = rng.NextUInt() | 1u,
                     };
-                    top += b.thickness;
+                    top += thickness;
                     foreach (var d in b.deposits)
                     {
+                        ushort material = content.GetMaterialIndex(d.material);
                         deposits[depositIndex++] = new DepositGen
                         {
-                            Material = content.GetMaterialIndex(d.material),
+                            Material = material,
                             Scale = d.scale,
-                            Threshold = d.threshold,
-                            MinDepth = d.minDepth,
-                            MaxDepth = d.maxDepth > 0 ? d.maxDepth : float.MaxValue,
+                            Threshold = d.threshold + (IsOre(content, material) ? tweaks.OreThreshold : 0f),
+                            MinDepth = d.minDepth * scale,
+                            MaxDepth = d.maxDepth > 0 ? d.maxDepth * scale : float.MaxValue,
                             Offset = NextOffset(),
                         };
                     }
@@ -126,7 +134,7 @@ namespace Antarium.Sim
                         {
                             Kind = p.kind,
                             Scale = p.scale,
-                            Threshold = p.threshold,
+                            Threshold = p.threshold + tweaks.PocketThreshold(p.kind),
                             Offset = NextOffset(),
                         };
                     }
@@ -173,6 +181,13 @@ namespace Antarium.Sim
 
             CarveNest(world, gen);
             world.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightRecompute);
+        }
+
+        /// <summary>Ore: a material that drops an item that is not food (world modifiers make these richer or rarer).</summary>
+        public static bool IsOre(ContentDB content, ushort material)
+        {
+            ushort drop = content.MaterialSim[material].DropItem;
+            return drop != ContentDB.NoItem && !content.Items[drop].IsFood;
         }
 
         /// <summary>Starting hole: a shaft from the surface down into a small oval chamber at the world centre.</summary>

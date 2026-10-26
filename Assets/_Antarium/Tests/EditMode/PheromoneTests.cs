@@ -251,7 +251,7 @@ namespace Antarium.Tests
             SaveGame.Save(Sim, stream, new DateTime(2026, 10, 23, 0, 0, 0, DateTimeKind.Utc));
             stream.Position = 0;
             using var loaded = SaveGame.Load(stream, C.DB, C.Config, out var header);
-            Assert.AreEqual(3, header.Version);
+            Assert.AreEqual(SaveGame.Version, header.Version);
             for (int k = 0; k < Pheromones.Count; k++)
                 Assert.AreEqual(Sim.Pheromones.Cells[k], loaded.Pheromones.Cells[k], ((PheromoneKind)k).ToString());
             Assert.AreEqual(Sim.Pheromones.Get(PheromoneKind.Trail, start), loaded.Pheromones.Get(PheromoneKind.Trail, start));

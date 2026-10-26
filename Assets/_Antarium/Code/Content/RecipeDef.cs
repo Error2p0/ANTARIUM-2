@@ -27,5 +27,7 @@ namespace Antarium.Content
         [Min(0.1f)] public float duration = 5f;
         [Tooltip("Knowledge added to the colony per craft (studying). A recipe needs outputs or knowledge.")]
         [Min(0f)] public float knowledge;
+        [Tooltip("Princesses raised per craft (Nuptial Flight). Machines pause while the colony has as many as count.")]
+        [Min(0)] public int princesses;
     }
 }
