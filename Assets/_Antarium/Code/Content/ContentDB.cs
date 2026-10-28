@@ -96,6 +96,7 @@ namespace Antarium.Content
         public IReadOnlyList<CasteDef> Castes;
         public IReadOnlyList<GeneticDef> Genetics;
         public IReadOnlyList<WorldModifierDef> WorldModifiers;
+        public IReadOnlyList<AchievementDef> Achievements;
     }
 
     /// <summary>Baked genetic trait: dense indices.</summary>
@@ -141,6 +142,16 @@ namespace Antarium.Content
         public int[] RewardCounts;
     }
 
+    /// <summary>Baked achievement: dense indices.</summary>
+    public sealed class AchievementData
+    {
+        public AchievementDef Def;
+        /// <summary>Item for Deliver / Craft, else <see cref="ContentDB.NoItem"/>.</summary>
+        public ushort Item;
+        /// <summary>Building for Build, else -1.</summary>
+        public int Building;
+    }
+
     public sealed class RandomEventData
     {
         public RandomEventDef Def;
@@ -179,6 +190,8 @@ namespace Antarium.Content
         public readonly AbilityDef[] Abilities;
         public readonly ContractData[] Contracts;
         public readonly RandomEventData[] Events;
+        /// <summary>Achievements in list order.</summary>
+        public readonly AchievementData[] Achievements;
         public readonly EnemyData[] Enemies;
         /// <summary>Genetic traits ordered by tree position.</summary>
         public readonly GeneticData[] Genetics;
@@ -275,6 +288,7 @@ namespace Antarium.Content
             for (int i = 0; i < Modifiers.Length; i++) _modifierIndex.Add(Modifiers[i].Id, i);
             ModifierStartsLocked = new bool[Modifiers.Length];
             Genetics = BakeGenetics(progression.Genetics);
+            Achievements = BakeAchievements(progression.Achievements);
 
             Biomes = new BiomeData[worldGen.biomes.Count];
             for (int i = 0; i < Biomes.Length; i++)
@@ -543,6 +557,28 @@ namespace Antarium.Content
             return result;
         }
 
+        AchievementData[] BakeAchievements(IReadOnlyList<AchievementDef> defs)
+        {
+            var sorted = Sorted(defs, "achievement", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
+            var result = new AchievementData[sorted.Length];
+            var apiNames = new HashSet<string>();
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                if (string.IsNullOrWhiteSpace(def.apiName)) throw new ArgumentException($"Achievement '{def.Id}' has no API name.");
+                if (!apiNames.Add(def.apiName)) throw new ArgumentException($"Duplicate achievement API name '{def.apiName}'.");
+                var data = new AchievementData { Def = def, Item = NoItem, Building = -1 };
+                if (def.kind == AchievementKind.Deliver || def.kind == AchievementKind.Craft)
+                {
+                    if (def.item == null) throw new ArgumentException($"Achievement '{def.Id}' needs an item.");
+                    data.Item = GetItemIndex(def.item);
+                }
+                if (def.kind == AchievementKind.Build) data.Building = GetBuildingIndex(def.building);
+                result[i] = data;
+            }
+            return result;
+        }
+
         RandomEventData[] BakeEvents(IReadOnlyList<RandomEventDef> defs)
         {
             var sorted = Sorted(defs, "event", (a, b) => string.CompareOrdinal(a.Id, b.Id));
@@ -670,6 +706,7 @@ namespace Antarium.Content
                     Castes = database.castes,
                     Genetics = database.genetics,
                     WorldModifiers = database.worldModifiers,
+                    Achievements = database.achievements,
                 });
         }
 

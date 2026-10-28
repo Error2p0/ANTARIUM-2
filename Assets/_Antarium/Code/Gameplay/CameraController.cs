@@ -9,6 +9,10 @@ namespace Antarium.Gameplay
     {
         readonly PixelCamera _camera;
         readonly GameInput _input;
+        const float EdgePixels = 6f;
+
+        /// <summary>Player setting: pan when the pointer touches the edge of the screen.</summary>
+        public bool EdgePan;
 
         public CameraController(PixelCamera camera, GameInput input)
         {
@@ -20,6 +24,7 @@ namespace Antarium.Gameplay
         public void Update(float deltaTime, bool allowPan = true)
         {
             Vector2 pan = _input.Pan.ReadValue<Vector2>();
+            if (allowPan && EdgePan && Application.isFocused) pan += EdgeDirection();
             if (allowPan && pan.sqrMagnitude > 0f)
                 _camera.PanWorld((float2)pan * _camera.PanSpeed * deltaTime);
 
@@ -29,6 +34,14 @@ namespace Antarium.Gameplay
             float scroll = _input.Zoom.ReadValue<float>();
             if (math.abs(scroll) > 0.01f && PointerInsideScreen())
                 _camera.ZoomBy((int)math.sign(scroll), _input.Pointer);
+        }
+
+        Vector2 EdgeDirection()
+        {
+            var p = _input.Pointer;
+            if (!PointerInsideScreen()) return Vector2.zero;
+            return new Vector2(p.x < EdgePixels ? -1f : p.x >= Screen.width - EdgePixels ? 1f : 0f,
+                p.y < EdgePixels ? -1f : p.y >= Screen.height - EdgePixels ? 1f : 0f);
         }
 
         bool PointerInsideScreen()

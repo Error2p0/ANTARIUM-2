@@ -92,6 +92,12 @@ MonoBehaviour:
     seismicShake: 0.5
     meteoriteShake: 0.8
     maxShakePerHit: 0.25
+    popSeconds: 1.1
+    popRise: 1.6
+    popMergeSeconds: 0.4
+    popMergeCells: 3
+    maxPops: 48
+    machinePuffSeconds: 0.35
   colony:
     startingWorkers: 6
     startingFood: 40

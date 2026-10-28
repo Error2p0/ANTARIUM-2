@@ -194,6 +194,39 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e9aa835fe267a6c40b14d56d061b0df4, type: 2}
   - {fileID: 11400000, guid: 61bb07b76288d2245a5e92a2976732a9, type: 2}
   - {fileID: 11400000, guid: 824d9d727c2d91943ae8060c31070099, type: 2}
+  achievements:
+  - {fileID: 11400000, guid: 70a0966db449344449c028dd6452d724, type: 2}
+  - {fileID: 11400000, guid: d004208b9b268ae45b837541dc810103, type: 2}
+  - {fileID: 11400000, guid: 2620232894fe01e469fe50e2319089f9, type: 2}
+  - {fileID: 11400000, guid: 0a90c6fee0865274fa44d11b1de8c722, type: 2}
+  - {fileID: 11400000, guid: 51e7bc5ca087a6a4db6e65d8b656f4d8, type: 2}
+  - {fileID: 11400000, guid: 95b8f1f93a54bb847825948e586e1e74, type: 2}
+  - {fileID: 11400000, guid: 83f854d45ca00c8469774e8e09f45f5a, type: 2}
+  - {fileID: 11400000, guid: 0e0743a21134db94c8c80460ce73552a, type: 2}
+  - {fileID: 11400000, guid: d5313f269c4e5364da4d82ef8b1be819, type: 2}
+  - {fileID: 11400000, guid: 5b2da73f061c3bb448372e7c17dae96f, type: 2}
+  - {fileID: 11400000, guid: 83e7ec7de0b92e0498af160d357fec30, type: 2}
+  - {fileID: 11400000, guid: 08dbdfecd98bd3c4ca7c4c4197896456, type: 2}
+  - {fileID: 11400000, guid: 7636747bea2838042ade35f6970d6341, type: 2}
+  - {fileID: 11400000, guid: 9180cf4246e296c489b9c7855869790b, type: 2}
+  - {fileID: 11400000, guid: 22732c934b7c4154f9207ff69c0f81de, type: 2}
+  - {fileID: 11400000, guid: 2081c1b0fb930d941822b53a1725f5a5, type: 2}
+  - {fileID: 11400000, guid: 8e955d9f5ae53bd4fa10cfc3540638fc, type: 2}
+  - {fileID: 11400000, guid: 6197887989f984146b57861686e4da58, type: 2}
+  - {fileID: 11400000, guid: 5b93256682c4b6d4993859737dd225d8, type: 2}
+  - {fileID: 11400000, guid: 5012fcec9e5269841b2b88d4da81b17e, type: 2}
+  - {fileID: 11400000, guid: 5a220b6256942244db78cc21e72f0b07, type: 2}
+  - {fileID: 11400000, guid: 6974a8ffbcd0e1b4aaedff1af8d96413, type: 2}
+  - {fileID: 11400000, guid: 5bc1ae5da60153f428832c49d52d1883, type: 2}
+  - {fileID: 11400000, guid: 9098c8ecf5d087b48a1417d536947afd, type: 2}
+  - {fileID: 11400000, guid: 19ef0f0cdec5fb94bb6d78ebbd15929c, type: 2}
+  - {fileID: 11400000, guid: 4668a63eb3a489945b0ed81b018f502b, type: 2}
+  - {fileID: 11400000, guid: f58798e3c9370f844bff423e456cfc28, type: 2}
+  - {fileID: 11400000, guid: 90a6c91bc9642234a87ef820484fb737, type: 2}
+  - {fileID: 11400000, guid: abd091c3c25d3844c8885b00627d2e88, type: 2}
+  - {fileID: 11400000, guid: b2d51a19fcc33144f92d6ae11f3fffc6, type: 2}
+  - {fileID: 11400000, guid: 247ff5834dbacc1409a741bca3ae0e6f, type: 2}
+  - {fileID: 11400000, guid: bcf1a01ba4a844a4ea716dd5719c92c2, type: 2}
   raiders:
   - {fileID: 11400000, guid: 251f2d335b33e28458b46d21998fce55, type: 2}
   worldGen: {fileID: 11400000, guid: a3d636bbb984f0744b89ea11c673b5d7, type: 2}
