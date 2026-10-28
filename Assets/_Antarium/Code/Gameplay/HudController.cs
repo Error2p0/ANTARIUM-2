@@ -4,6 +4,7 @@ using Antarium.Content;
 using Antarium.Core;
 using Antarium.Sim;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Antarium.Gameplay
@@ -24,6 +25,12 @@ namespace Antarium.Gameplay
         readonly VisualElement _palette;
         readonly Label _alert, _info, _toast;
         readonly Button[] _toolButtons = new Button[5];
+        readonly VisualElement _hudRoot;
+        readonly GameInput _input;
+        /// <summary>Buttons whose label starts with a hotkey: refreshed when bindings change.</summary>
+        readonly System.Collections.Generic.List<(Button Button, InputAction Action, string Name)> _keyed = new();
+        int _keysVersion = -1;
+        Button _hovered;
         readonly VisualElement _scentPalette;
         readonly Button[] _scentButtons = new Button[Pheromones.Count];
         readonly Button _possessButton, _castesButton;
@@ -56,6 +63,14 @@ namespace Antarium.Gameplay
         public WelcomeBackDialog WelcomeBack { get; }
         public GeneticPanel Genetics { get; }
         public FlightDialog Flight { get; }
+        public SettingsDialog Settings { get; }
+        public AchievementsDialog AchievementsPanel { get; }
+        public HelpDialog Help { get; }
+        public TitleScreen Title { get; }
+        /// <summary>A button was clicked / hovered, a dialog opened or closed, a toast appeared (for interface sounds).</summary>
+        public event Action UiClicked, UiHovered, ModalOpened, ModalClosed, ToastShown;
+        /// <summary>Help text of the HUD element under the pointer, or null.</summary>
+        public string HoverTip { get; private set; }
         public event Action ResearchToggled;
         public event Action GeneticsToggled;
         public event Action FlightToggled;
@@ -70,11 +85,12 @@ namespace Antarium.Gameplay
         public event Action PossessClicked;
         public event Action CastesClicked;
 
-        public HudController(UIDocument document, ContentDB content, RenderConfig render, float autosaveSeconds)
+        public HudController(UIDocument document, ContentDB content, RenderConfig render, float autosaveSeconds, GameInput input)
         {
             _document = document;
             _content = content;
             _render = render;
+            _input = input;
             if (document == null || document.rootVisualElement == null) return;
 
             var root = document.rootVisualElement;
@@ -92,6 +108,7 @@ namespace Antarium.Gameplay
             var events = root.Q<VisualElement>("events");
             var abilities = root.Q<VisualElement>("abilities");
             _modal = root.Q<VisualElement>("modal");
+            _hudRoot = root.Q<VisualElement>("hud");
             if (_resources == null || toolbar == null || _palette == null || _info == null || _toast == null
                 || contracts == null || events == null || abilities == null || _modal == null || _scentPalette == null || castes == null)
             {
@@ -120,25 +137,25 @@ namespace Antarium.Gameplay
                 _itemEntries[i].AddToClassList("hidden");
             }
 
-            AddTool(toolbar, ToolMode.Dig, "1  Dig");
-            AddTool(toolbar, ToolMode.Mine, "2  Mine");
-            AddTool(toolbar, ToolMode.Storage, "3  Storage");
-            AddTool(toolbar, ToolMode.Build, "4  Build");
-            AddTool(toolbar, ToolMode.Pheromone, "5  Scent");
-            _possessButton = Toggle(toolbar, "F  Possess", () => PossessClicked?.Invoke());
-            _castesButton = Toggle(toolbar, "K  Castes", () => CastesClicked?.Invoke());
+            AddTool(toolbar, ToolMode.Dig, "Dig", input.ToolDig, "Dig: hold the mouse on rock to dig it out yourself. Combos dig faster.");
+            AddTool(toolbar, ToolMode.Mine, "Mine", input.ToolMine, "Mine orders: paint rock for workers to dig. Right drag erases.");
+            AddTool(toolbar, ToolMode.Storage, "Storage", input.ToolStorage, "Storage zones: paint dug-out cells where workers store items.");
+            AddTool(toolbar, ToolMode.Build, "Build", input.ToolBuild, "Build: belts, lifts, machines and defenses. Q / E pick, R rotates.");
+            AddTool(toolbar, ToolMode.Pheromone, "Scent", input.ToolPheromone, "Scent: paint pheromones that steer the ants. They fade unless an emitter keeps them.");
+            _possessButton = Toggle(toolbar, "Possess", () => PossessClicked?.Invoke(), input.Possess, "Possess: take control of an ant and dig, carry and fight yourself.");
+            _castesButton = Toggle(toolbar, "Castes", () => CastesClicked?.Invoke(), input.Castes, "Castes: choose which kinds of ants the queen lays.");
             _castesButton.AddToClassList("hidden");
-            _researchButton = Toggle(toolbar, "T  Research", () => ResearchToggled?.Invoke());
-            _overlayButton = Toggle(toolbar, "O  Flow", () => OverlayClicked?.Invoke());
-            _geneticsButton = Toggle(toolbar, "G  Genes", () => GeneticsToggled?.Invoke());
+            _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
+            _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "Flow overlay: belt traffic, jams, machine status and idle workers.");
+            _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "Genetic Memory: permanent traits for every colony of your bloodline.");
             _geneticsButton.AddToClassList("hidden");
-            _flightButton = Toggle(toolbar, "N  Flight", () => FlightToggled?.Invoke());
+            _flightButton = Toggle(toolbar, "Flight", () => FlightToggled?.Invoke(), input.Flight, "Nuptial Flight: send princesses to found a new colony and earn Genetic Memory.");
             _flightButton.AddToClassList("hidden");
             _raisesPrincesses = new bool[content.Buildings.Length];
             for (int i = 0; i < content.Buildings.Length; i++)
                 foreach (int r in content.Buildings[i].Recipes)
                     if (content.Recipes[r].Princesses > 0) _raisesPrincesses[i] = true;
-            Abilities = new AbilityBar(abilities, content);
+            Abilities = new AbilityBar(abilities, content, input.Abilities);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
             Castes = new CastesPanel(castes, content);
 
@@ -158,6 +175,25 @@ namespace Antarium.Gameplay
             WelcomeBack = new WelcomeBackDialog(content);
             Genetics = new GeneticPanel(content);
             Flight = new FlightDialog(content);
+            Settings = new SettingsDialog(input);
+            AchievementsPanel = new AchievementsDialog(content);
+            Help = new HelpDialog(input);
+            Title = new TitleScreen();
+            Title.Root.AddToClassList("hidden");
+            _hudRoot?.Insert(_hudRoot.IndexOf(_modal), Title.Root);
+
+            // Interface sounds: every button click and hover, wherever it is.
+            root.RegisterCallback<ClickEvent>(e =>
+            {
+                if (e.target is VisualElement v && v.GetFirstOfType<Button>() != null) UiClicked?.Invoke();
+            }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerOverEvent>(e =>
+            {
+                var button = (e.target as VisualElement)?.GetFirstOfType<Button>();
+                if (button == _hovered) return;
+                _hovered = button;
+                if (button != null && button.enabledInHierarchy) UiHovered?.Invoke();
+            }, TrickleDown.TrickleDown);
             SetActiveTool(ToolMode.Dig);
             SetSelectedBuilding(0);
         }
@@ -180,23 +216,51 @@ namespace Antarium.Gameplay
             return label;
         }
 
-        void AddTool(VisualElement toolbar, ToolMode mode, string text)
+        void AddTool(VisualElement toolbar, ToolMode mode, string name, InputAction action, string tip)
         {
-            var button = new Button(() => ToolClicked?.Invoke(mode)) { text = text, focusable = false };
+            var button = new Button(() => ToolClicked?.Invoke(mode)) { focusable = false };
             button.AddToClassList("tool");
             button.AddToClassList("tool--narrow");
             toolbar.Add(button);
             _toolButtons[(int)mode] = button;
+            _keyed.Add((button, action, name));
+            Tip(button, tip);
         }
 
-        static Button Toggle(VisualElement toolbar, string text, Action clicked)
+        Button Toggle(VisualElement toolbar, string name, Action clicked, InputAction action, string tip)
         {
-            var button = new Button(clicked) { text = text, focusable = false };
+            var button = new Button(clicked) { focusable = false };
             button.AddToClassList("tool");
             button.AddToClassList("tool--narrow");
             button.AddToClassList("tool--toggle");
             toolbar.Add(button);
+            _keyed.Add((button, action, name));
+            Tip(button, tip);
             return button;
+        }
+
+        /// <summary>Shows <paramref name="tip"/> in the info panel while the pointer is over <paramref name="element"/>.</summary>
+        public void Tip(VisualElement element, string tip)
+        {
+            element.RegisterCallback<PointerEnterEvent>(_ => HoverTip = tip);
+            element.RegisterCallback<PointerLeaveEvent>(_ => { if (HoverTip == tip) HoverTip = null; });
+        }
+
+        /// <summary>"[key] Name" labels follow the current key bindings.</summary>
+        void RefreshKeyLabels()
+        {
+            if (_input == null || _keysVersion == _input.BindingsVersion) return;
+            _keysVersion = _input.BindingsVersion;
+            foreach (var (button, action, name) in _keyed)
+                button.text = KeyLabel(action, name);
+            Abilities?.RefreshKeys();
+        }
+
+        /// <summary>The key in a muted colour (rich text), then the name.</summary>
+        public static string KeyLabel(InputAction action, string name)
+        {
+            string key = GameInput.KeyName(action);
+            return string.IsNullOrEmpty(key) ? name : $"<color=#a89070>{key}</color> {name}";
         }
 
         static readonly string[] ScentNames = { "Trail", "Dig here", "Gather", "Defend", "Avoid" };
@@ -301,16 +365,37 @@ namespace Antarium.Gameplay
         public void ShowModal(VisualElement panel)
         {
             if (_modal == null || panel == null) return;
+            bool was = ModalOpen;
             _modal.Clear();
             _modal.Add(panel);
             _modal.RemoveFromClassList("hidden");
+            // Pop in: start small and transparent, let the USS transition run from the next frame.
+            panel.AddToClassList("pop-enter");
+            panel.schedule.Execute(() => panel.RemoveFromClassList("pop-enter")).StartingIn(16);
+            HoverTip = null;
+            if (!was) ModalOpened?.Invoke();
         }
 
         public void HideModal()
         {
             if (_modal == null) return;
+            bool was = ModalOpen;
+            Settings?.CancelRebind();
             _modal.Clear();
             _modal.AddToClassList("hidden");
+            if (was) ModalClosed?.Invoke();
+        }
+
+        public bool TitleShowing => Title != null && !Title.Root.ClassListContains("hidden");
+
+        /// <summary>Shows the title screen (the HUD hides behind it) or hides it.</summary>
+        public void SetTitle(bool show)
+        {
+            if (Title == null) return;
+            Title.Root.EnableInClassList("hidden", !show);
+            _hudRoot?.EnableInClassList("hud--title", show);
+            HoverTip = null;
+            if (show) HideModal();
         }
 
         /// <summary>A new colony or a loaded save: show its own event cards, close dialogs.</summary>
@@ -332,8 +417,14 @@ namespace Antarium.Gameplay
         {
             if (_toast == null) return;
             _toast.text = text;
-            _toast.RemoveFromClassList("hidden");
+            if (_toast.ClassListContains("hidden"))
+            {
+                _toast.RemoveFromClassList("hidden");
+                _toast.AddToClassList("toast--enter");
+                _toast.schedule.Execute(() => _toast.RemoveFromClassList("toast--enter")).StartingIn(16);
+            }
             _toastTimer = ToastSeconds;
+            ToastShown?.Invoke();
         }
 
         /// <summary>True when the pointer is over an interactive HUD element.</summary>
@@ -517,11 +608,15 @@ namespace Antarium.Gameplay
         /// <param name="menuStatus">Line shown in the Esc menu (seed, play time, last save).</param>
         public void Update(float dt, Simulation sim, int targeting, string menuStatus, bool possessing = false, bool targetingPossess = false)
         {
+            RefreshKeyLabels();
+            if (TitleShowing) Title.Update(dt);
+            if (Settings != null && IsShowing(Settings.Root)) Settings.Update(dt);
             if (_possessButton != null)
             {
                 _possessButton.EnableInClassList("tool--possessing", possessing);
                 _possessButton.EnableInClassList("tool--targeting", targetingPossess);
-                _possessButton.text = possessing ? "F  Let go" : "F  Possess";
+                string label = KeyLabel(_input.Possess, possessing ? "Let go" : "Possess");
+                if (_possessButton.text != label) _possessButton.text = label;
             }
             if (_resources == null) return;
             if (_toastTimer > 0f)

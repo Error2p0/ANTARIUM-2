@@ -3,6 +3,7 @@ Shader "Antarium/ColonySprite"
     // Pixel sprites (ants, queen, eggs, items, buildings). Each vertex carries the world point where the sprite
     // samples the grid light map, so a whole sprite is lit uniformly, like the terrain cell it stands in.
     // Vertex alpha below 1 is drawn as an ordered dither on the art-pixel grid (blueprints, placement previews).
+    // A light point far below the world (y < -10000) means "unlit": drawn at full brightness (number pops).
     Properties
     {
         [NoScaleOffset] _MainTex("Atlas", 2D) = "white" {}
@@ -80,6 +81,7 @@ Shader "Antarium/ColonySprite"
 
                 // Sprites never drop below a minimum brightness so the colony stays watchable in dark tunnels.
                 float3 light = max(light2D + QuantizedGridLight(input.lightPos), Perceptual(_AntSpriteMinLight.x));
+                if (input.lightPos.y < -10000) light = 1;
                 return half4(c.rgb * light, 1);
             }
             ENDHLSL

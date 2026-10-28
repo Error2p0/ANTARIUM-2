@@ -11,8 +11,12 @@ namespace Antarium.Core
     {
         static readonly string[] Suffixes = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc" };
 
+        /// <summary>Player setting: show every number from 1000 up in scientific notation.</summary>
+        public static bool PreferScientific;
+
         public static string Format(double value, bool scientific = false)
         {
+            scientific |= PreferScientific;
             if (double.IsNaN(value)) return "NaN";
             if (double.IsInfinity(value)) return value > 0 ? "∞" : "-∞";
 

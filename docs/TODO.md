@@ -119,8 +119,29 @@
 - [x] 125 EditMode tests (12 new: content baking, buying traits (cost, levels, prerequisites, memory, max level), inherited research now and in new colonies, starting bonuses, princess chamber limit, flight estimate and the next legacy, locked modifiers / slots / princess limit, modifiers shaping world gen and stats, raid size, Vein Instinct, legacy save round trip, loading a save without `LGCY`)
 - Measured in the editor: founding a colony (world, fluid settling, traits, 3 modifiers) ~630 ms, the same as a plain one; the flight shows a short hitch when the new colony appears.
 
+## Milestone 8 — Polish ✅
+- [x] Decisions (asked and confirmed): sounds **synthesized in code** (replaceable by recorded clips per cue), **OFL pixel fonts**, **key rebinding** now, **game speed** debug only
+- [x] Audio: `SoundBank` (45 cues with synth patches or clips, buses, volume, pitch spread, cooldown, voices; ambience per biome + surface; music settings), `Synth` (one-shots, plucked strings, pads, seamless ambience loops), `VoiceLimiter`, `AudioDirector` (events → cues merged per frame, in-view placement: pan, edge and zoom falloff; interface sounds; ambience crossfade by the biome under the camera; mute in background), `MusicPlayer` (generative pad + pentatonic plucks on the DSP clock, in waves, key by depth); `ContentSetup` creates the bank; *Antarium → Audio → Export Sounds to WAV*
+- [x] Juice: `NumberPops` (deliveries, food, crafts, knowledge; merged; unlit pixel digits), machine puffs in `DigFeedback`, dialog pop-in, toast slide-in, pressed buttons; `GameConfig.feedback` pop / puff numbers
+- [x] UI: VT323 + Silkscreen font assets and a generated 9-slice skin (*Antarium → Setup → Create UI Skin*), HUD restyled (sizes on the font grid, no synthetic bold), title screen, settings dialog (Audio / Display / Gameplay / Controls), achievements dialog, controls and help (F1), Esc menu entries (settings, achievements, help, back to title), key labels from the bindings, toolbar hover tips, dark scrollbars; version 0.8.0 on the title screen
+- [x] Settings: `GameSettings` + `SettingsStore` (`settings.json`, sanitized), applied live (volumes, display, UI scale on a copy of the panel settings, shake, edge pan, pops, scientific numbers, autosave); interactive rebinding (`GameInput.Rebindables`, overrides saved in the settings); Erase all progress
+- [x] Platform hooks: `IPlatformServices`, `LocalPlatform` (`profile.json`), `PlatformServices.Create`; saves go to the platform's save folder; the game pauses while a store overlay is open
+- [x] Achievements: `AchievementDef` (18 kinds, Steam API name, hidden, optional stat), baked into `ContentDB` (API names unique), `AchievementProgress`, `AchievementTracker`; 32 achievements in `Content/Achievements`; unlock toast and chime
+- [x] Recorded music: `MusicSettings` track slots (per biome, title, raid, genetic tree, flight and discovery cues, volumes, crossfade), `MusicPlayer` plays them (biome waves with rests and nearest-biome fallback, looping sets crossfaded by `MusicMode`, cues), generative music only where no track is assigned; *Antarium → Audio → Assign Audio Files* + import rules for `Assets/_Antarium/Audio`; `docs/SUNO_PROMPTS.md` with prompts for every track, bed and stinger
+- [x] Balancing: `Autopilot` + `BalanceRun` (headless colony, a row per game minute, CSV), *Antarium → Balance* window (headless runs and cost tables: research, contracts, castes, genetics, prestige), F4 game speed ×1/×2/×4/×8 in dev builds
+- [x] Title flow: the saved colony waits paused behind the title; offline progress is credited on Continue (title time counts); nothing is saved while the title is up
+- [x] 138 EditMode tests (13 new: music set selection, synth waves / determinism / limiting, ambience loop and pad, voice limiter, every cue and biome has a sound, settings sanitize / round trip / broken file, UI scale, scientific numbers, binding overrides round trip, local platform, achievements bake / unlock once / stats / per player, bad achievement content, balance run)
+- Measured in the editor: synthesizing the sound bank takes ~1.5 s of CPU (67 one-shot variants 0.34 s, 8 ambience loops 1.1 s, music 0.12 s), so it runs on a worker thread at startup and sounds start once it is done (behind the title screen); a headless balance run takes ~1.5 s per game minute including world generation; audio, pops and puffs run outside the sim tick.
+
 ## Known limits / follow-ups
-- **Hands-on feel pass pending** (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: painting walls and gates, raid / creature cards and Go; M6: painting scents, the castes panel buttons, steering a possessed ant with WASD and biting with the mouse, aiming the Pheromone Burst; M7: clicking modifiers, the double-click Take flight, buying traits in the genetic tree). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- **Hands-on feel pass pending**, now including M8: listening to every sound and the music (only checked as numbers and exported WAVs, never heard), clicking through the title screen and settings, rebinding keys, the feel of number pops and puffs, the UI at 1440p / 4K scale (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: painting walls and gates, raid / creature cards and Go; M6: painting scents, the castes panel buttons, steering a possessed ant with WASD and biting with the mouse, aiming the Pheromone Burst; M7: clicking modifiers, the double-click Take flight, buying traits in the genetic tree). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
+- Sounds and music are synthesized placeholders until recorded files are assigned (the pipeline is ready, no files yet). The bank's synth patches are first-pass. Biome music changes only between tracks (moving the camera never cuts a track); there is no music for combat with cave creatures, only raids. Positional sounds ignore walls (a sound in view is heard even behind rock).
+- Fixed key letters still appear in some messages and hints (e.g. *castes panel (K)*, *flight screen (N)*); buttons follow the bindings, messages don't yet. The gamepad layout can't be rebound.
+- Key names follow the keyboard layout (Czech: number row + ě š č ř); a bound key with no printable label shows its Input System name.
+- UI scale is whole numbers only (pixel fonts); at 1440p *Auto* picks 2×, which is big; 1× is small. Window mode and resolution apply only in builds.
+- Hover tips exist only for the toolbar buttons. The debug readout (dev builds) stays visible over the title screen.
+- Achievements: kept locally (`profile.json`) until Steam; debug keys (F6–F12, dev builds only) can unlock them; *Erase all progress* can't reset Steam achievements. Most achievements count within one colony.
+- Balance autopilot never builds, researches only the cheapest node and digs one fixed pattern: it measures the hand-run early game, not a skilled player.
 - Prestige balance is first-pass (score weights and the square root, princess recipe and limit, trait costs and effects, modifier numbers). A first flight after a full colony earns tens of memory; check that tier 1–2 traits don't trivialise the next start.
 - Genetic Memory can't be refunded (no respec) and there is no "new bloodline" option: a fresh legacy needs the save deleted.
 - Princesses are a colony counter, not ants: they don't walk or eat, a chamber shows at most 3 (more princesses with *Royal Lineage* need more chambers to be seen), and removing chambers keeps them. Chambers don't raise princesses while the game is closed (offline progress replays items, food and knowledge only).
@@ -157,7 +178,7 @@
 - The belt step is plain C# (fine at 6,000 cells); move it to Burst when networks get much bigger.
 - The flow overlay shows colours only; exact rates are in the hover panel. No numbers drawn in the world.
 - Offline progress replays the last 5 minutes of net production: it does not notice mining orders running out or machines running dry, and more workers hatched offline do not raise income. Fine at 50%; revisit if players exploit it.
-- One save slot (+ backup); no slot picker, no Steam cloud yet. The save folder depends on Player Settings → Company Name (still `DefaultCompany`): set it before the first public build, since changing it later orphans saves.
+- One save slot (+ backup); no slot picker, no Steam cloud yet. The save folder (and `settings.json` / `profile.json`) depends on Player Settings → Company Name (still `DefaultCompany`): set it in Milestone 9 before the first public build, since changing it later orphans saves.
 - Research is bought instantly (no research time, no Archive requirement); there is no respec. The tree has no lines between nodes; prerequisites show in the hover text.
 - Contracts can't be skipped or rerolled. Contract progress counts everything after a contract appears, including offline deliveries.
 - Random events only start while the game runs; meteorites always land near the nest. The golden beetle can't be caught with a gamepad unless the pointer is moved onto it.
@@ -175,8 +196,40 @@
 - Light falloff and fog use Bayer dithering; tune `lightBands` if it reads too noisy.
 - Sky has no day/night yet (GDD 2.8).
 
-## Next: Milestone 8 — Polish
-Audio, juice, UI polish, balancing tools, settings, Steam hooks (GDD §4).
+## Next: Milestone 9 — Steam release
+Steamworks integration, store page and the first build on Steam (GDD §4). Many steps need your Steamworks account, money and identity; those are marked **(you)**. Requirements and image sizes below are the ones known at the time of writing: check the current Steamworks documentation when doing each step.
+
+**Account and app (you)**
+- [ ] Steamworks partner account (partner.steamgames.com): legal entity / name, identity verification, tax interview, bank details. Verification can take days, so start first.
+- [ ] Pay the Steam Direct fee (USD 100 per app, recouped after USD 1,000 in revenue) and create the app: note the **App ID**.
+- [ ] Decide the developer / publisher name. It also becomes Player Settings → **Company Name**, which sets the save folder (see Known limits).
+- [ ] Price, release date (or "Coming soon"), languages (English), whether there is a demo / Next Fest.
+
+**Steamworks integration (code)**
+- [ ] Add Steamworks.NET (UPM git package) behind a scripting define (`ANTARIUM_STEAM`); `SteamPlatform : IPlatformServices` (init with `RestartAppIfNecessary`, run callbacks in `Tick`, achievements and stats via `SteamUserStats`, `StoreStats` in `Flush`, overlay callback → pause); fall back to `LocalPlatform` without Steam. `steam_appid.txt` for development only.
+- [ ] Achievements and stats on Steamworks: the 32 API names from `Content/Achievements` and the stats `STAT_MAX_DEPTH`, `STAT_MAX_ANTS`, `STAT_FLIGHTS`; an editor tool that lists them (names, descriptions, hidden flags) for entering in the Steamworks UI; 64×64 achievement icons (unlocked + grey locked), generated from the pixel art.
+- [ ] Copy local achievements to Steam on the first Steam launch.
+- [ ] Steam Cloud: Auto-Cloud for the save folder (`LocalLow/<Company>/ANTARIUM 2/Saves`, `colony.sav` + `.bak`, and `settings.json` / `profile.json`), with quota; test the conflict dialog with two machines.
+- [ ] Rich presence (*Generation 3, 420 cells deep*) and the overlay pausing the game.
+- [ ] Steam Deck / controller pass: stick aiming for the cursor, gamepad glyphs, readable text at 1280×800, Steam Input default layout; aim for *Playable* or *Verified*.
+
+**Release build (code)**
+- [ ] *Antarium → Build → Windows Release* (x86_64, IL2CPP if it holds up, else Mono; non-development, no debug keys), version from a single place, build into `Builds/` (git-ignored).
+- [ ] Icon, splash (Unity Personal shows the Unity splash), product name, Company Name, default window mode.
+- [ ] Crash-safe logging location documented; check the first-run experience on a clean Windows account.
+- [ ] SteamPipe: `app_build_<appid>.vdf` + `depot_build_<depotid>.vdf` and an `upload` script using `steamcmd` with a builder account (you add the account and Steam Guard); `beta` branch first, then `default`.
+
+**Store page**
+- [ ] Capsule art (from in-game captures and the logo): header 920×430, small 462×174, main 1232×706, vertical 748×896; library capsule 600×900, library hero 3840×1240, library logo 1280×720 (transparent), page background (optional). Rendered at integer scale from the pixel art.
+- [ ] At least 5 screenshots at 1920×1080 (colony, automation, a deep biome, a raid, the genetic tree).
+- [ ] Trailer (30–90 s): capture sequences with a scripted camera; you edit / approve it.
+- [ ] Short description (up to 300 characters), long description with feature list and GIFs, tags (Colony Sim, Automation, Incremental, Pixel Graphics, Base Building, Idler, Strategy, Simulation, 2D, Singleplayer), system requirements (Windows 10 64-bit, a DX11 GPU, 4 GB RAM, ~500 MB disk; confirm after measuring a build), supported languages.
+- [ ] Content survey / age rating questionnaire; privacy policy (only needed if anything is collected: nothing is); EULA (Steam's default is fine).
+- [ ] **(you)** Submit the store page for review (several business days). The *Coming Soon* page must be public for at least 2 weeks before release; wishlists start then.
+
+**First upload and release**
+- [ ] Upload the first build to the `beta` branch, install it through Steam on a clean machine, test achievements, cloud saves, overlay and offline progress.
+- [ ] **(you)** Submit the build for review; set the release date; release (or keep it in Coming Soon / playtest).
 
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
@@ -205,18 +258,17 @@ Things the current build is still missing, grouped by area. Many are planned for
 **Gameplay layers**
 - Events: no golden aphid (needs aphids).
 - Research: no conveyor tiers; no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
-- One save slot; no settings menu, no Steam cloud saves.
+- One save slot; no Steam cloud saves yet (Milestone 9).
 - Threats: termite raids and one cave creature per deep biome; no birds, surface spiders or rival ant colonies, no enemies that dig.
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
 - Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
 
 **Presentation**
 - All art is placeholder generated in code (ant/queen/egg sprites, terrain textures).
-- No audio.
-- No pixel font or pixel-art UI skin; default font.
-- No queen panel or settings menu. Tooltips are limited to the hover info panel (and research hover details).
+- Sounds and music are synthesized placeholders; no recorded audio or composed music.
+- UI skin is generated bevels over flat colours; no hand-drawn UI art or icons.
+- No queen panel. Tooltips are limited to the hover info panel, the toolbar and the research hover details.
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
 - One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).
 - Caste sprites are palette swaps of the worker; nursery and emitter sprites are generated placeholders.
-- No number pops when items are delivered or crafted.
-- Buildings have no sounds or particles (smelter smoke, garden spores).
+- No Steam integration, store page or release build yet (Milestone 9).

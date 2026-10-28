@@ -19,6 +19,14 @@ namespace Antarium.Presentation
         /// <summary>Unsnapped focus point in world units.</summary>
         public float2 Position;
         public int Zoom { get; private set; }
+        /// <summary>Player setting: camera shake strength (0 = off).</summary>
+        public float ShakeScale = 1f;
+
+        /// <summary>Zoom steps between the current zoom and the closest one.</summary>
+        public int StepsOut => _config.maxZoom - Zoom;
+
+        /// <summary>Half the visible area in world units.</summary>
+        public float2 HalfViewSize => new float2(Screen.width, Screen.height) * 0.5f * UnitsPerScreenPixel;
 
         public PixelCamera(Camera camera, CameraConfig config)
         {
@@ -47,7 +55,7 @@ namespace Antarium.Presentation
 
         public float PanSpeed => _config.panSpeed / Zoom;
 
-        public void AddTrauma(float amount) => _trauma = math.saturate(_trauma + amount);
+        public void AddTrauma(float amount) => _trauma = math.saturate(_trauma + amount * ShakeScale);
 
         public float2 ScreenToWorld(Vector2 screen)
         {

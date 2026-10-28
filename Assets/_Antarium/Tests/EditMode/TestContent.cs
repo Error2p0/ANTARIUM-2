@@ -34,6 +34,8 @@ namespace Antarium.Tests
         public readonly ContractDef DigIntro, DeliverOre;
         public readonly RandomEventDef MeteorEvent, VeinEvent, BeetleEvent, TrappedEvent;
         public readonly ProgressionContent Progression;
+        /// <summary>AchDig: dig out 5 cells. AchFlight: one Nuptial Flight (pushes the stat STAT_FLIGHTS).</summary>
+        public readonly AchievementDef AchDig, AchFlight;
         public readonly WorldGenSettings WorldGen;
         public readonly GameConfig Config;
         public readonly ContentDB DB;
@@ -249,8 +251,20 @@ namespace Antarium.Tests
             GeneStrange = Genetic("gene_strange", 1, 1, 1, 0, 1, GeneticEffect.Unlock(ModHard));
             GeneGain = Genetic("gene_gain", 1, 2, 1, 0, 1, GeneticEffect.Add(StatKind.GeneticGain, 1f));
 
+            AchDig = Make<AchievementDef>("ach_dig");
+            AchDig.apiName = "ACH_DIG";
+            AchDig.kind = AchievementKind.DigCells;
+            AchDig.amount = 5;
+            AchFlight = Make<AchievementDef>("ach_flight");
+            AchFlight.apiName = "ACH_FLIGHT";
+            AchFlight.kind = AchievementKind.Flights;
+            AchFlight.amount = 1;
+            AchFlight.statName = "STAT_FLIGHTS";
+            AchFlight.order = 1;
+
             Progression = new ProgressionContent
             {
+                Achievements = new[] { AchFlight, AchDig },
                 Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch },
                 Abilities = new[] { Decree, Frenzy, Seismic, Burst },
                 Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste },

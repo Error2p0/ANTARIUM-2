@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 342fb1d62877af54a865c762aecac089, type: 3}
+  m_Name: nuptial_flight
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.AchievementDef
+  id: nuptial_flight
+  displayName: Nuptial Flight
+  apiName: ACH_FIRST_FLIGHT
+  description: Send princesses on a Nuptial Flight.
+  kind: 14
+  item: {fileID: 0}
+  building: {fileID: 0}
+  caste: 0
+  amount: 1
+  hidden: 0
+  statName: STAT_FLIGHTS
+  order: 28

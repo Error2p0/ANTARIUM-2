@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 342fb1d62877af54a865c762aecac089, type: 3}
+  m_Name: archaeologist
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.AchievementDef
+  id: archaeologist
+  displayName: Archaeologist
+  apiName: ACH_RELICS_5
+  description: Bring 5 relics into the stock.
+  kind: 6
+  item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+  building: {fileID: 0}
+  caste: 0
+  amount: 5
+  hidden: 1
+  statName: 
+  order: 25

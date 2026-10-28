@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 342fb1d62877af54a865c762aecac089, type: 3}
+  m_Name: factory_floor
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.AchievementDef
+  id: factory_floor
+  displayName: Factory Floor
+  apiName: ACH_BELTS_200
+  description: Build 200 silk belts in one colony.
+  kind: 5
+  item: {fileID: 0}
+  building: {fileID: 11400000, guid: 55d5aea9213b29842b1039a9ec98ae7a, type: 2}
+  caste: 0
+  amount: 200
+  hidden: 0
+  statName: 
+  order: 11

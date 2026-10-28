@@ -2,6 +2,7 @@ using System;
 using Antarium.Content;
 using Antarium.Sim;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Antarium.Gameplay
@@ -9,18 +10,20 @@ namespace Antarium.Gameplay
     /// <summary>Ability buttons at the end of the toolbar: hotkey, name, and the time left to recharge or run.</summary>
     public sealed class AbilityBar
     {
-        static readonly string[] Keys = { "Z", "X", "C", "V" };
-
         readonly ContentDB _content;
+        readonly InputAction[] _actions;
+        readonly string[] _keys;
         readonly Button[] _buttons;
         readonly string[] _texts;
 
         public event Action<int> Clicked;
 
-        public AbilityBar(VisualElement container, ContentDB content)
+        public AbilityBar(VisualElement container, ContentDB content, InputAction[] actions)
         {
             _content = content;
+            _actions = actions;
             int n = content.Abilities.Length;
+            _keys = new string[n];
             _buttons = new Button[n];
             _texts = new string[n];
             for (int i = 0; i < n; i++)
@@ -36,6 +39,17 @@ namespace Antarium.Gameplay
             }
         }
 
+        /// <summary>Re-reads the hotkeys after the bindings changed.</summary>
+        public void RefreshKeys()
+        {
+            for (int i = 0; i < _keys.Length; i++)
+            {
+                string key = i < _actions.Length ? GameInput.KeyName(_actions[i]) : "";
+                _keys[i] = string.IsNullOrEmpty(key) ? "" : $"<color=#a89070>{key}</color> ";
+                _texts[i] = null;
+            }
+        }
+
         public void Refresh(Simulation sim, int targeting)
         {
             var abilities = sim.Abilities;
@@ -45,7 +59,7 @@ namespace Antarium.Gameplay
                 bool unlocked = sim.Colony.AbilityUnlocked[i];
                 button.EnableInClassList("hidden", !unlocked);
                 if (!unlocked) continue;
-                string key = i < Keys.Length ? Keys[i] + "  " : "";
+                string key = _keys[i] ?? "";
                 string name = _content.Abilities[i].DisplayName;
                 float running = abilities.Remaining[i], cooldown = abilities.Cooldown[i];
                 string text = running > 0f ? $"{key}{name}  {Mathf.CeilToInt(running)}s"

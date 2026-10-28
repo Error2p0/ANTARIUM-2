@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Antarium.Editor
 {
     /// <summary>Creates the default content (terrain, items, buildings, recipes) and keeps the ContentDatabase in sync.</summary>
-    public static class ContentSetup
+    public static partial class ContentSetup
     {
         public const string Root = "Assets/_Antarium/Content";
         public const string MaterialsFolder = Root + "/Materials";
@@ -24,6 +24,7 @@ namespace Antarium.Editor
         public const string CastesFolder = Root + "/Castes";
         public const string GeneticsFolder = Root + "/Genetics";
         public const string ModifiersFolder = Root + "/WorldModifiers";
+        public const string AchievementsFolder = Root + "/Achievements";
         public const string DatabasePath = Root + "/ContentDatabase.asset";
         public const string WorldGenPath = Root + "/WorldGenSettings.asset";
         public const string ConfigPath = Root + "/GameConfig.asset";
@@ -47,6 +48,7 @@ namespace Antarium.Editor
             EnsureFolder(CastesFolder);
             EnsureFolder(GeneticsFolder);
             EnsureFolder(ModifiersFolder);
+            EnsureFolder(AchievementsFolder);
 
             var copperItem = Item("copper_ore", "Copper Ore", "#d47a3c");
             var ironItem = Item("iron_ore", "Iron Ore", "#cfc8c0");
@@ -127,6 +129,8 @@ namespace Antarium.Editor
                 fungusItem, copperBar, crystal, iron, coal, amber);
             CreateCastesAndPheromones(copperItem, copperBar, ironBar);
             CreatePrestige(copperItem, copperBar, ironBar, amberItem, fungusItem);
+            CreateAchievements(copperBar, ironBar, fungusItem);
+            CreateSoundBank();
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);
             if (database.surfaceForage.Count == 0)
@@ -804,13 +808,14 @@ namespace Antarium.Editor
             database.castes = FindAll<CasteDef>();
             database.genetics = FindAll<GeneticDef>();
             database.worldModifiers = FindAll<WorldModifierDef>();
+            database.achievements = FindAll<AchievementDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
                       $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
                       $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events, " +
                       $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes, " +
-                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers.");
+                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers, {database.achievements.Count} achievements.");
         }
 
         static List<T> FindAll<T>() where T : Object

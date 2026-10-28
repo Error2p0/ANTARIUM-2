@@ -464,5 +464,18 @@ namespace Antarium.Content
         [Min(0f)] public float seismicShake = 0.5f;
         [Min(0f)] public float meteoriteShake = 0.8f;
         [Min(0f)] public float maxShakePerHit = 0.25f;
+
+        [Header("Number pops and machine puffs (Milestone 8)")]
+        [Tooltip("Seconds a number pop stays up.")]
+        [Min(0.1f)] public float popSeconds = 1.1f;
+        [Tooltip("Cells a number pop rises over its life.")]
+        [Min(0f)] public float popRise = 1.6f;
+        [Tooltip("Deliveries of the same kind close together within this many seconds merge into one pop.")]
+        [Min(0f)] public float popMergeSeconds = 0.4f;
+        [Tooltip("Deliveries within this many cells of each other merge.")]
+        [Min(0)] public int popMergeCells = 3;
+        [Min(1)] public int maxPops = 48;
+        [Tooltip("Seconds between puffs from working machines (0 = none).")]
+        [Min(0f)] public float machinePuffSeconds = 0.35f;
     }
 }
