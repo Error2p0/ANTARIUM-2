@@ -665,6 +665,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "GameSpeed",
+                    "type": "Button",
+                    "id": "9a2d0250-1ade-490b-a647-e9272e474d94",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -742,6 +751,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "GivePrestige",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "764163cf-7a36-4506-b06f-a1db344051dc",
+                    "path": "<Keyboard>/f4",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "GameSpeed",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -885,6 +905,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Help",
+                    "type": "Button",
+                    "id": "ac6acf90-05c0-4b93-a3f8-5b7f1e0ff80d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -929,6 +958,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "QuickLoad",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "facab2bd-c32f-4975-a99f-dd9468cb2ca6",
+                    "path": "<Keyboard>/f1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Help",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

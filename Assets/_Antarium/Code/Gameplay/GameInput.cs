@@ -47,6 +47,25 @@ namespace Antarium.Gameplay
         public readonly InputAction FinishBuilds;
         public readonly InputAction GiveItems;
         public readonly InputAction GivePrestige;
+        /// <summary>F1: controls and help.</summary>
+        public readonly InputAction Help;
+        /// <summary>F4 (dev builds): cycle the game speed.</summary>
+        public readonly InputAction GameSpeed;
+
+        /// <summary>A keyboard / mouse binding the player may change in the settings.</summary>
+        public readonly struct Rebindable
+        {
+            public readonly string Group, Name;
+            public readonly InputAction Action;
+            public readonly int Binding;
+            public Rebindable(string group, string name, InputAction action, int binding) { Group = group; Name = name; Action = action; Binding = binding; }
+        }
+
+        /// <summary>Every binding shown in the controls list, in display order.</summary>
+        public readonly Rebindable[] Rebindables;
+
+        /// <summary>Changes whenever bindings change, so cached key labels know to refresh.</summary>
+        public int BindingsVersion { get; private set; }
 
         public GameInput(InputActionAsset asset)
         {
@@ -90,8 +109,115 @@ namespace Antarium.Gameplay
             FinishBuilds = asset.FindAction("Debug/FinishBuilds", true);
             GiveItems = asset.FindAction("Debug/GiveItems", true);
             GivePrestige = asset.FindAction("Debug/GivePrestige", true);
+            Help = asset.FindAction("System/Help", true);
+            GameSpeed = asset.FindAction("Debug/GameSpeed", true);
+            Rebindables = BuildRebindables();
             asset.Enable();
         }
+
+        Rebindable[] BuildRebindables()
+        {
+            var list = new System.Collections.Generic.List<Rebindable>();
+            void Add(string group, string name, InputAction action, int binding = -1)
+            {
+                if (binding < 0) binding = FirstPointerOrKey(action);
+                if (binding >= 0) list.Add(new Rebindable(group, name, action, binding));
+            }
+            // The WASD composite: its parts follow it (up, down, left, right).
+            int wasd = -1;
+            for (int i = 0; i < Pan.bindings.Count && wasd < 0; i++)
+                if (Pan.bindings[i].isComposite) wasd = i;
+            if (wasd >= 0)
+            {
+                string[] parts = { "Camera / ant up", "Camera / ant down", "Camera / ant left", "Camera / ant right" };
+                for (int i = 0; i < parts.Length && wasd + 1 + i < Pan.bindings.Count; i++)
+                    Add("Camera", parts[i], Pan, wasd + 1 + i);
+            }
+            Add("Camera", "Drag the view", DragPan);
+            Add("Tools", "Use tool / bite", Primary);
+            Add("Tools", "Erase / cancel / pick up", Secondary);
+            Add("Tools", "Dig tool", ToolDig);
+            Add("Tools", "Mine orders", ToolMine);
+            Add("Tools", "Storage zones", ToolStorage);
+            Add("Tools", "Build", ToolBuild);
+            Add("Tools", "Scent (pheromones)", ToolPheromone);
+            Add("Tools", "Rotate / pick scent", Rotate);
+            Add("Tools", "Next building / scent", NextBuilding);
+            Add("Tools", "Previous building / scent", PrevBuilding);
+            Add("Tools", "Possess an ant / let go", Possess);
+            Add("Tools", "Possessed ant: pick up / drop", Interact);
+            for (int i = 0; i < Abilities.Length; i++) Add("Abilities", $"Ability {i + 1}", Abilities[i]);
+            Add("Panels", "Flow overlay", Overlay);
+            Add("Panels", "Research", Research);
+            Add("Panels", "Castes", Castes);
+            Add("Panels", "Genetic Memory", Genetics);
+            Add("Panels", "Nuptial Flight", Flight);
+            Add("Game", "Menu / back", Menu);
+            Add("Game", "Controls and help", Help);
+            Add("Game", "Quick save", QuickSave);
+            Add("Game", "Quick load", QuickLoad);
+            return list.ToArray();
+        }
+
+        static int FirstPointerOrKey(InputAction action)
+        {
+            for (int i = 0; i < action.bindings.Count; i++)
+            {
+                var b = action.bindings[i];
+                if (b.isComposite || b.isPartOfComposite) continue;
+                string path = b.path ?? "";
+                if (path.StartsWith("<Keyboard>") || path.StartsWith("<Mouse>")) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>Short name of the key bound to an action (keyboard / mouse), e.g. "F" or "LMB"; empty if none.</summary>
+        public static string KeyName(InputAction action)
+        {
+            int i = FirstPointerOrKey(action);
+            return i < 0 ? "" : KeyName(action, i);
+        }
+
+        public static string KeyName(InputAction action, int binding)
+        {
+            string text = action.GetBindingDisplayString(binding, InputBinding.DisplayStringOptions.DontIncludeInteractions);
+            return text switch
+            {
+                "Left Button" => "LMB",
+                "Right Button" => "RMB",
+                "Middle Button" => "MMB",
+                "Escape" => "Esc",
+                _ => text,
+            };
+        }
+
+        public string SaveOverrides() => _asset.SaveBindingOverridesAsJson();
+
+        public void LoadOverrides(string json)
+        {
+            _asset.RemoveAllBindingOverrides();
+            if (!string.IsNullOrEmpty(json))
+            {
+                try
+                {
+                    _asset.LoadBindingOverridesFromJson(json);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Could not apply the saved key bindings: {e.Message}");
+                }
+            }
+            BindingsVersion++;
+        }
+
+        public void ResetOverrides()
+        {
+            _asset.RemoveAllBindingOverrides();
+            BindingsVersion++;
+        }
+
+        /// <summary>Call after an interactive rebind finished.</summary>
+        public void BindingsChanged() => BindingsVersion++;
 
         public Vector2 Pointer => PointerPosition.ReadValue<Vector2>();
 

@@ -84,6 +84,14 @@ namespace Antarium.Gameplay
             else File.Move(temp, MainPath);
         }
 
+        /// <summary>Deletes the save and its backup (Settings → Erase all progress).</summary>
+        public void Delete()
+        {
+            Wait();
+            foreach (var path in new[] { MainPath, BackupPath, MainPath + ".tmp" })
+                if (File.Exists(path)) File.Delete(path);
+        }
+
         public SaveHeader ReadHeader()
         {
             string path = File.Exists(MainPath) ? MainPath : BackupPath;

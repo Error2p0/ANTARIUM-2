@@ -31,6 +31,7 @@ namespace Antarium.Editor
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
             ContentSetup.CreateDefaultContent();
+            UiSetup.CreateUiSkin();
             EnsureMaterial(TerrainMaterialPath, "Antarium/Terrain");
             EnsureMaterial(ParticleMaterialPath, "Antarium/PixelParticle");
             EnsureMaterial(SpriteMaterialPath, "Antarium/ColonySprite");
@@ -42,6 +43,7 @@ namespace Antarium.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var content = Load<ContentDatabase>(ContentSetup.DatabasePath);
             var config = Load<GameConfig>(ContentSetup.ConfigPath);
+            var sounds = Load<SoundBank>(ContentSetup.SoundBankPath);
             var input = Load<InputActionAsset>(InputPath);
             var terrainMaterial = Load<Material>(TerrainMaterialPath);
             var particleMaterial = Load<Material>(ParticleMaterialPath);
@@ -76,6 +78,7 @@ namespace Antarium.Editor
             so.FindProperty("content").objectReferenceValue = content;
             so.FindProperty("config").objectReferenceValue = config;
             so.FindProperty("inputActions").objectReferenceValue = input;
+            so.FindProperty("sounds").objectReferenceValue = sounds;
             so.FindProperty("worldCamera").objectReferenceValue = camera;
             so.FindProperty("globalLight").objectReferenceValue = globalLight;
             so.FindProperty("hudDocument").objectReferenceValue = hud;

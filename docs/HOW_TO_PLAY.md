@@ -1,8 +1,10 @@
 # How to play Antarium 2
 
-This covers everything that exists in the current build (Milestones 1–7). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
+This covers everything that exists in the current build (Milestones 1–8). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
 
-To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene is missing, run **Antarium → Setup → Create Main Scene** in the editor menu. The game continues your saved colony if there is one (see *Saving and offline progress*); to always start fresh, untick **Continue Last Save** on the `GameBootstrap` object.
+To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene is missing, run **Antarium → Setup → Create Main Scene** in the editor menu. The game opens on the **title screen** over your saved colony (see *Title screen, settings and achievements*). To always start fresh, untick **Continue Last Save** on the `GameBootstrap` object; to skip the title screen while developing, untick **Show Title**.
+
+The keys below are the **defaults**. Every keyboard and mouse key can be changed in **Settings → Controls**. The buttons on screen always show your current keys, written the way your keyboard layout labels them (on a Czech layout the number row reads + ě š č ř, for example).
 
 ---
 
@@ -16,7 +18,7 @@ To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene
 | Drag the view | Hold **middle mouse button** and move | — |
 | Zoom in / out (toward the cursor) | **Mouse wheel** | — |
 
-Zoom works in whole steps (×1 to ×8) so the pixel art stays crisp. ×1 is the overview. While you control an ant (see *Controlling an ant*), the pan keys move the ant instead and the camera follows it.
+With **Pan at the screen edge** turned on in the settings, touching the edge of the screen with the pointer pans too. Zoom works in whole steps (×1 to ×8) so the pixel art stays crisp. ×1 is the overview. While you control an ant (see *Controlling an ant*), the pan keys move the ant instead and the camera follows it.
 
 ### Tools
 
@@ -94,7 +96,8 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
-| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, Save and quit). The game is **paused** while the menu is open. |
+| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, Settings, Achievements, Controls and help, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements or the help are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
+| **F1** | Controls and help: every key as it is bound now, the mouse controls and a few tips |
 | **F5** | Save now |
 | **F9** | Load the last save (no offline progress) |
 
@@ -102,6 +105,7 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
+| **F4** | Cycle the game speed ×1 / ×2 / ×4 / ×8 (for testing and balancing; never in release builds) |
 | **F3** | Show/hide the debug readout (FPS, zoom, seed, the cell under the cursor, light, tool, combo, ant/pile/order counts) |
 | **F6** | Spawn 50 workers in the royal chamber |
 | **F7** | Finish every blueprint immediately |
@@ -127,7 +131,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Event cards (left):** random events with the time left to act, a **Go** button that moves the camera there and **x** to dismiss the card. When an event ends, its card says how it went and fades after a few seconds.
   - **Raid** cards are red: first a warning with the time until the raiders arrive, then how many are left. **Go** jumps to the raiders. The card turns green if the raid is repelled.
   - A card also appears when you break into a cave where **creatures** live (which kind and how many).
-- **Toolbar (bottom):** Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
+- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
 - **Build palette** (above the toolbar, Build tool only): every building with its cost. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
@@ -137,6 +141,8 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Research tree (T):** see *Research*.
 - **Nuptial Flight screen (N)** and **Genetic Memory tree (G):** see *Nuptial Flight and Genetic Memory*.
 - **Welcome back** (after the game was closed): what the colony did while you were away.
+- **Achievement unlocked** messages appear (with a chime) the moment you reach one.
+- Dialogs pop open with a short scale-in; buttons press down when clicked.
 - **In the world:**
   - Orange **diagonal stripes** are mining orders (also visible over unexplored darkness).
   - A **teal checker** marks storage zones.
@@ -156,6 +162,8 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - An **amber arch** over three silk beds is a princess chamber: royal jelly glows and drips under the arch while a princess is being raised, and **golden winged princesses** rest on the beds (two on the floor, one on a raised ledge).
   - **Pheromones** are scattered speckles in the scent's colour: yellow **Trail**, orange **Dig here**, green **Gather**, red **Defend**, violet **Avoid**. They thin out as they fade and show more clearly while the Scent tool is active. **Enemies**: pale termites with brown heads (raiders), long red-brown centipedes, purple cave spiders, small pink fungal mites, black fire beetles with glowing stripes, grey stone ruin guardians with a cyan eye.
   - A short **bar** above an ant (green) or enemy (red) shows its health once it is hurt; a sprite **flashes red** when it is hit.
+  - **Number pops** float up where things arrive: *+3* in the item's colour where items are stored (deliveries close together merge into one growing number), green food points where food is delivered, the product over a machine when it finishes, and violet knowledge over a studying Archive. Turn them off in **Settings → Gameplay**.
+  - Working machines **puff**: grey smoke (and the odd spark) from smelters, drifting spores from fungus gardens, pale sparkles from Archives and golden ones from princess chambers.
   - A **resin lattice** across a tunnel is a gate (it turns redder as it is damaged); **resin with bone teeth** on the floor is a trap (jaws open = armed); a **red banner** is a guard post; a **packed earth block** is a wall blueprint.
 - **Flow overlay (O):**
   - Belts and lifts go from **grey** (nothing moving) to **green** (busy). **Red** = jammed: full and not moving.
@@ -417,8 +425,8 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
 - Make **chokepoints**: a few gates across a tunnel stop raiders while soldiers and traps work on them.
 
 ### Saving and offline progress
-- The game **saves automatically every 2 minutes**, when you quit, and when you press **F5** or use *Save* in the menu. There is one save slot; the previous save is kept as a backup and used if the main file is damaged. Saves live in the game's data folder (`%USERPROFILE%/AppData/LocalLow/<company>/ANTARIUM 2/Saves` on Windows).
-- When you start the game, it **continues** the saved colony. If it has been closed for **at least a minute**, the colony gets **offline progress**:
+- The game **saves automatically every 2 minutes** (change it in **Settings → Gameplay**: off, 1, 2, 5 or 10 minutes), when you quit, and when you press **F5** or use *Save* in the menu. Nothing is saved while the title screen is up. There is one save slot; the previous save is kept as a backup and used if the main file is damaged. Saves live in the game's data folder (`%USERPROFILE%/AppData/LocalLow/<company>/ANTARIUM 2/Saves` on Windows).
+- When you start the game, the saved colony waits (paused) behind the title screen. When you press **Continue**, and it has been closed for **at least a minute** (the time on the title screen counts too), the colony gets **offline progress**:
   - It runs at **50% of its recent pace** (75% with *Dormancy*) for up to **8 hours** (12 with *Dormancy*).
   - "Recent pace" is what the stock gained over the last 5 minutes you played: items delivered minus items taken out for machines, food brought in, and knowledge studied. Items only arrive while storage has room.
   - The colony also eats at that pace. The queen keeps laying while there is food to spare (she keeps 10 minutes of upkeep in reserve), and the eggs hatch into workers.
@@ -484,6 +492,20 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 
 ---
 
+### Title screen, settings and achievements
+- **Title screen:** the colony drifts paused in the background. **Continue** (with the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world, keeping your Genetic Memory; if a save exists it asks for a second click. **Settings**, **Achievements**, **Controls and help** and **Quit**. The version is in the bottom right corner. *Save and return to title* in the Esc menu brings you back here.
+- **Settings** (title screen or Esc menu). Every change applies at once and is saved when you close the dialog, in `settings.json` next to the saves (settings are not part of the colony save).
+  - **Audio:** master, music, effects, ambience and interface volume (off to 100% in steps of 10%), *Mute when in the background*.
+  - **Display:** window (borderless fullscreen, exclusive fullscreen, windowed), resolution (*Native* or any your display offers), v-sync, frame limit without v-sync (30 to 240 fps or unlimited), interface size (*Auto*: 1× below 1440 lines, 2× from 1440, 3× from 3240; or 1× to 4×). Window and resolution changes only take effect in a built game, not in the editor.
+  - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes the colony save and its backup, your Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
+  - **Controls:** every keyboard / mouse action with its key. Click a key, then press the new key or mouse button (**Esc** cancels). **Reset to defaults** restores them all. The gamepad keeps its own fixed layout.
+- **Achievements** (title screen or Esc menu): 32 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and the hidden *Lost Civilization* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer for now and go to Steam once the game is on Steam.
+
+### Sound
+- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. Research, contracts, events, abilities, traits, princesses, the flight and achievements each have their own chime.
+- **Ambience** follows the camera: wind and the odd bird above ground, then drips in the topsoil and clay, a low hum in the stone, ringing crystals in the caverns, bubbling spores in the fungal depths, a rumbling bubbling magma zone and a hollow drone in the ruins. It crossfades as you move between layers.
+- **Music** is generated too: a soft pad and sparse plucked notes that play for a few minutes, then rest for a minute or two. Its key drops the deeper the camera is, and from the crystal caverns down it turns minor.
+
 ## A first session
 
 The **contracts** on the right walk you through the first steps; this is the same path with a little more detail.
@@ -510,4 +532,4 @@ The **contracts** on the right walk you through the first steps; this is the sam
 
 ## Not in the game yet
 
-Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, a settings menu, several save slots, and a way to put stored items onto belts. See `docs/TODO.md` for the full list of what's missing.
+Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, several save slots, a way to put stored items onto belts, recorded sounds and music, and Steam (achievements, cloud saves; Milestone 9). See `docs/TODO.md` for the full list of what's missing.

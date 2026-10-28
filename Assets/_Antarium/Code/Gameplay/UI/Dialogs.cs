@@ -7,7 +7,10 @@ using UnityEngine.UIElements;
 
 namespace Antarium.Gameplay
 {
-    /// <summary>Esc menu: resume, save, load, start a new colony (confirmed by a second click), quit.</summary>
+    /// <summary>
+    /// Esc menu: resume, save, load, start a new colony (confirmed by a second click), settings, achievements, help,
+    /// back to the title screen, quit.
+    /// </summary>
     public sealed class MenuDialog
     {
         const float ConfirmSeconds = 3f;
@@ -17,7 +20,7 @@ namespace Antarium.Gameplay
         float _confirm;
 
         public VisualElement Root { get; }
-        public event Action Resume, Save, Load, NewGame, Quit;
+        public event Action Resume, Save, Load, NewGame, Settings, Achievements, Help, MainMenu, Quit;
 
         public MenuDialog(float autosaveSeconds)
         {
@@ -35,6 +38,10 @@ namespace Antarium.Gameplay
                 }
                 else _confirm = ConfirmSeconds;
             });
+            Dialogs.Button(Root, "Settings", () => Settings?.Invoke());
+            Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
+            Dialogs.Button(Root, "Controls and help (F1)", () => Help?.Invoke());
+            Dialogs.Button(Root, "Save and return to title", () => MainMenu?.Invoke());
             Dialogs.Button(Root, "Save and quit", () => Quit?.Invoke());
             Dialogs.Text(Root, (autosaveSeconds > 0f ? $"The game saves itself every {HudText.Duration(autosaveSeconds)} and when you quit. "
                                                        : "The game saves when you quit. ")
