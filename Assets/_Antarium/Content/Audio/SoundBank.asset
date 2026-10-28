@@ -1296,6 +1296,15 @@ MonoBehaviour:
       twinkles: 0.1
       gain: 0.7
   music:
+    biomeTracks: []
+    titleTracks: []
+    raidTracks: []
+    geneticsTracks: []
+    flightCue: {fileID: 0}
+    discoveryCue: {fileID: 0}
+    trackVolume: 0.8
+    cueVolume: 0.9
+    crossfadeSeconds: 3
     bpm: 72
     rootNote: 57
     dropPerBiome: 1

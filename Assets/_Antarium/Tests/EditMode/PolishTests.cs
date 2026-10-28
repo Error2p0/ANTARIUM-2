@@ -83,6 +83,39 @@ namespace Antarium.Tests
         }
 
         [Test]
+        public void Music_PicksTheBiomeSetOrTheNearestAbove()
+        {
+            var clips = new AudioClip[3];
+            for (int i = 0; i < clips.Length; i++) clips[i] = AudioClip.Create($"t{i}", 100, 1, 8000, false);
+            var deep = ScriptableObject.CreateInstance<BiomeDef>();
+            deep.EditorSetIdentity("deep", "Deep");
+            try
+            {
+                var settings = new MusicSettings();
+                settings.biomeTracks.Add(new BiomeTracks { biome = null, tracks = new() { clips[0], null } });
+                settings.biomeTracks.Add(new BiomeTracks { biome = deep, tracks = new() { clips[1], clips[2] } });
+                var ids = new[] { "topsoil", "clay", "deep", "magma" };
+                var sets = MusicPlayer.BiomeSets(settings, ids);
+                Assert.AreEqual(5, sets.Length, "surface + one per biome");
+                CollectionAssert.AreEqual(new[] { clips[0] }, sets[0], "empty clip slots are skipped");
+                Assert.AreEqual(2, sets[3].Count);
+                Assert.AreEqual(0, MusicPlayer.PickSet(sets, 0), "surface");
+                Assert.AreEqual(0, MusicPlayer.PickSet(sets, 2), "clay has none: the nearest set above");
+                Assert.AreEqual(3, MusicPlayer.PickSet(sets, 3), "its own set");
+                Assert.AreEqual(3, MusicPlayer.PickSet(sets, 4), "magma falls back to deep");
+
+                var onlyDeep = MusicPlayer.BiomeSets(new MusicSettings { biomeTracks = { new BiomeTracks { biome = deep, tracks = new() { clips[1] } } } }, ids);
+                Assert.AreEqual(3, MusicPlayer.PickSet(onlyDeep, 1), "nothing above: the nearest set below");
+                Assert.AreEqual(-1, MusicPlayer.PickSet(MusicPlayer.BiomeSets(new MusicSettings(), ids), 2), "no tracks at all: generative music");
+            }
+            finally
+            {
+                foreach (var c in clips) Object.DestroyImmediate(c);
+                Object.DestroyImmediate(deep);
+            }
+        }
+
+        [Test]
         public void SoundBank_HasEveryCueAndBiome()
         {
             var bank = AssetDatabase.LoadAssetAtPath<SoundBank>("Assets/_Antarium/Content/Audio/SoundBank.asset");

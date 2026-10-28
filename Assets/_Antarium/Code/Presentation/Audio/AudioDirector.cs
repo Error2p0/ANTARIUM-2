@@ -166,7 +166,10 @@ namespace Antarium.Presentation
             }
             for (int slot = 0; slot < r.Ambience.Length; slot++)
                 if (r.Ambience[slot] != null) _ambienceClips[slot] = Own(Synth.ToClip($"Ambience_{slot}", r.Ambience[slot], _sampleRate));
-            _music = new MusicPlayer(_bank.music, Own(Synth.ToClip("MusicPluck", r.Pluck, _sampleRate)), Own(Synth.ToClip("MusicPad", r.Pad, _sampleRate)), _root.transform);
+            var biomeIds = new string[_content.Biomes.Length];
+            for (int b = 0; b < biomeIds.Length; b++) biomeIds[b] = _content.Biomes[b].Def != null ? _content.Biomes[b].Def.Id : "";
+            _music = new MusicPlayer(_bank.music, Own(Synth.ToClip("MusicPluck", r.Pluck, _sampleRate)), Own(Synth.ToClip("MusicPad", r.Pad, _sampleRate)),
+                biomeIds, _root.transform);
             _ambienceKey = int.MinValue; // start the bed for the current biome
         }
 
@@ -395,9 +398,13 @@ namespace Antarium.Presentation
 
         // ---------------------------------------------------------------- ambience and music
 
+        /// <summary>Plays a recorded music cue over the music (the Nuptial Flight, a new biome reached).</summary>
+        public void PlayMusicCue(AudioClip clip) => _music?.PlayCue(clip, Bus(SoundBus.Music));
+
         /// <param name="biome">Biome index under the camera, -1 above the surface.</param>
         /// <param name="muted">Silence everything (the game is in the background and the player asked for that).</param>
-        public void Update(float dt, int biome, bool muted)
+        /// <param name="music">What the game is doing (title, raid, genetic tree, flight) for the music.</param>
+        public void Update(float dt, int biome, bool muted, MusicMode music = MusicMode.Play)
         {
             AudioListener.volume = muted ? 0f : 1f;
             FinishRendering();
@@ -425,7 +432,7 @@ namespace Antarium.Presentation
             old.volume = bed * (1f - _fade);
             if (_fade >= 1f && old.isPlaying) old.Stop();
 
-            _music?.Update(dt, Bus(SoundBus.Music), math.max(0, biome));
+            _music?.Update(dt, Bus(SoundBus.Music), biome, music);
         }
 
         public void Dispose()

@@ -106,10 +106,43 @@ namespace Antarium.Content
         public AmbiencePatch synth;
     }
 
-    /// <summary>Generative background music: a soft pad and sparse plucked notes on a pentatonic scale, in waves with rests between.</summary>
+    /// <summary>Recorded music tracks for one biome (empty biome = the surface / topsoil set).</summary>
+    [Serializable]
+    public sealed class BiomeTracks
+    {
+        [Tooltip("Empty = above ground (also used for the first biome if it has no own tracks).")]
+        public BiomeDef biome;
+        public List<AudioClip> tracks = new();
+    }
+
+    /// <summary>
+    /// Background music. Recorded tracks are used where they are assigned: per biome in waves with rests between,
+    /// looping sets for the title screen, raids and the genetic tree, and one-shot cues for the flight and for reaching
+    /// a new biome. Wherever no track is assigned, the generative music plays instead: a soft pad and sparse plucked
+    /// notes on a pentatonic scale.
+    /// </summary>
     [Serializable]
     public sealed class MusicSettings
     {
+        [Header("Recorded tracks (optional)")]
+        [Tooltip("Played in waves while playing, picked by the biome under the camera (or the nearest biome above it with tracks).")]
+        public List<BiomeTracks> biomeTracks = new();
+        [Tooltip("Loops on the title screen.")]
+        public List<AudioClip> titleTracks = new();
+        [Tooltip("Loops while a raid is on.")]
+        public List<AudioClip> raidTracks = new();
+        [Tooltip("Loops while the genetic tree is open.")]
+        public List<AudioClip> geneticsTracks = new();
+        [Tooltip("Plays once when the princesses take off.")]
+        public AudioClip flightCue;
+        [Tooltip("Plays once when the colony first digs into a deeper biome.")]
+        public AudioClip discoveryCue;
+        [Range(0f, 1f)] public float trackVolume = 0.8f;
+        [Range(0f, 1f)] public float cueVolume = 0.9f;
+        [Tooltip("Seconds to crossfade between tracks (and to fade the generative music in and out).")]
+        [Min(0.1f)] public float crossfadeSeconds = 3f;
+
+        [Header("Generative music")]
         [Min(20f)] public float bpm = 72f;
         [Tooltip("MIDI note of the key's root near the surface; the key drops with depth.")]
         [Range(36, 72)] public int rootNote = 57;

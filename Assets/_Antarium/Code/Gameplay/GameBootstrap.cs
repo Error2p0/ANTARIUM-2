@@ -88,6 +88,8 @@ namespace Antarium.Gameplay
         bool _focused = true, _overlayOpen;
         int _speed;
         float _titleTime;
+        /// <summary>Deepest biome the colony has dug into (for the discovery cue); -1 until a session starts.</summary>
+        int _biomeReached = -1;
         (FullScreenMode Mode, int W, int H, bool Vsync, int Cap) _display = (FullScreenMode.MaximizedWindow, -1, -1, false, -1);
 
         /// <summary>The Nuptial Flight being shown: princesses fly up from the nest before the next colony is founded.</summary>
@@ -283,6 +285,7 @@ namespace Antarium.Gameplay
             LookAt(sim.Colony.QueenCell + new int2(0, 4));
             _autosaveTimer = AutosaveSeconds;
             _speed = 0;
+            _biomeReached = sim.BiomeAtDepth(sim.Colony.Stats.MaxDepth);
         }
 
         void EndSession()
@@ -485,7 +488,7 @@ namespace Antarium.Gameplay
             if (_flight != null)
             {
                 UpdateFlight(dt);
-                UpdateAudio(dt);
+                UpdateAudio(dt, MusicMode.Flight);
                 return;
             }
 
@@ -538,7 +541,10 @@ namespace Antarium.Gameplay
                 : _hoverInfo.Text);
             UpdatePossessLight(alpha);
             _debugHud.Update(dt, _sim, pointerWorld, _camera.Zoom, _tools);
-            UpdateAudio(dt);
+            UpdateAudio(dt, title ? MusicMode.Title
+                : _hud.IsShowing(_hud.Genetics?.Root) ? MusicMode.Genetics
+                : _sim.Enemies.ActiveRaid != 0 ? MusicMode.Raid
+                : MusicMode.Play);
             events.Flush();
             if (!title) _achievements.Update(dt, _sim);
 
@@ -551,13 +557,21 @@ namespace Antarium.Gameplay
             if (error != null) _hud.ShowToast("Saving failed: " + error);
         }
 
-        void UpdateAudio(float dt)
+        void UpdateAudio(float dt, MusicMode music)
         {
             if (_audio == null) return;
             _audio.SetView(_camera.Position, _camera.HalfViewSize, _camera.StepsOut);
             int2 cell = WorldGrid.WorldToCell(_camera.Position);
             int depth = _sim.World.Depth(cell.x, cell.y);
-            _audio.Update(dt, depth < 0 ? -1 : _sim.BiomeAtDepth(depth), _settings.muteInBackground && !_focused);
+            _audio.Update(dt, depth < 0 ? -1 : _sim.BiomeAtDepth(depth), _settings.muteInBackground && !_focused, music);
+
+            // The first dig into a deeper biome gets the discovery cue.
+            int reached = _sim.BiomeAtDepth(_sim.Colony.Stats.MaxDepth);
+            if (reached > _biomeReached)
+            {
+                if (_biomeReached >= 0 && sounds != null) _audio.PlayMusicCue(sounds.music.discoveryCue);
+                _biomeReached = reached;
+            }
         }
 
         void DebugKeys()
@@ -696,6 +710,7 @@ namespace Antarium.Gameplay
             if (_possessLight != null) _possessLight.gameObject.SetActive(false);
             _colonyView.PrincessesFlown = true;
             _audio?.Play(SoundCue.Flight);
+            if (sounds != null) _audio?.PlayMusicCue(sounds.music.flightCue);
             _hud.ShowToast("The Nuptial Flight! The princesses take to the sky to found a new colony...");
         }
 
