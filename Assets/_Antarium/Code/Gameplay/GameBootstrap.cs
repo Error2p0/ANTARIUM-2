@@ -113,7 +113,7 @@ namespace Antarium.Gameplay
             }
 
             _content = ContentDB.Build(content);
-            _platform = PlatformServices.Create(Application.persistentDataPath);
+            _platform = PlatformServices.Create(Application.persistentDataPath, AchievementNames(), StatNames());
             _platform.OverlayChanged += open => _overlayOpen = open;
             _store = new SaveStore(_platform.SaveDirectory);
             _settingsStore = new SettingsStore(Application.persistentDataPath);
@@ -148,6 +148,16 @@ namespace Antarium.Gameplay
             if (!(continueLastSave && TryLoad(applyOffline: !showTitle)))
                 StartNewColony(randomSeed ? (uint)Environment.TickCount | 1u : seedOverride != 0 ? seedOverride : _content.WorldGen.defaultSeed, announce: !showTitle);
             if (showTitle) ShowTitle();
+        }
+
+        string[] AchievementNames() => Array.ConvertAll(_content.Achievements, a => a.Def.apiName);
+
+        string[] StatNames()
+        {
+            var names = new System.Collections.Generic.List<string>();
+            foreach (var a in _content.Achievements)
+                if (!string.IsNullOrEmpty(a.Def.statName) && !names.Contains(a.Def.statName)) names.Add(a.Def.statName);
+            return names.ToArray();
         }
 
         void WireHud()
@@ -371,7 +381,7 @@ namespace Antarium.Gameplay
                 _hud.ShowToast("Could not delete the save: " + e.Message);
                 return;
             }
-            if (_platform is LocalPlatform local) local.Reset();
+            _platform.ResetProgress();
             _achievements.Refresh();
             StartNewColony(NewSeed(), announce: false);
             ShowTitle();
@@ -485,6 +495,9 @@ namespace Antarium.Gameplay
             float dt = Time.deltaTime;
             double now = Time.timeAsDouble;
             ApplyUiScale();
+            _platform.SetPresence(_flight != null ? new Presence(PresenceState.Flight)
+                : _hud.TitleShowing ? new Presence(PresenceState.Title)
+                : new Presence(PresenceState.Colony, _sim.Legacy.Flights + 1, _sim.Colony.Stats.MaxDepth));
             if (_flight != null)
             {
                 UpdateFlight(dt);

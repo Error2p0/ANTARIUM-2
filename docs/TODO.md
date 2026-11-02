@@ -140,7 +140,7 @@
 - Key names follow the keyboard layout (Czech: number row + ě š č ř); a bound key with no printable label shows its Input System name.
 - UI scale is whole numbers only (pixel fonts); at 1440p *Auto* picks 2×, which is big; 1× is small. Window mode and resolution apply only in builds.
 - Hover tips exist only for the toolbar buttons. The debug readout (dev builds) stays visible over the title screen.
-- Achievements: kept locally (`profile.json`) until Steam; debug keys (F6–F12, dev builds only) can unlock them; *Erase all progress* can't reset Steam achievements. Most achievements count within one colony.
+- Achievements: kept locally (`profile.json`) and merged with Steam both ways; debug keys (F6–F12, dev builds only) can unlock them, and with *Use Steam in Editor* those reach the real Steam account; *Erase all progress* can't reset Steam achievements (the next merge brings them back). Most achievements count within one colony.
 - Balance autopilot never builds, researches only the cheapest node and digs one fixed pattern: it measures the hand-run early game, not a skilled player.
 - Prestige balance is first-pass (score weights and the square root, princess recipe and limit, trait costs and effects, modifier numbers). A first flight after a full colony earns tens of memory; check that tier 1–2 traits don't trivialise the next start.
 - Genetic Memory can't be refunded (no respec) and there is no "new bloodline" option: a fresh legacy needs the save deleted.
@@ -178,7 +178,7 @@
 - The belt step is plain C# (fine at 6,000 cells); move it to Burst when networks get much bigger.
 - The flow overlay shows colours only; exact rates are in the hover panel. No numbers drawn in the world.
 - Offline progress replays the last 5 minutes of net production: it does not notice mining orders running out or machines running dry, and more workers hatched offline do not raise income. Fine at 50%; revisit if players exploit it.
-- One save slot (+ backup); no slot picker, no Steam cloud yet. The save folder (and `settings.json` / `profile.json`) depends on Player Settings → Company Name (still `DefaultCompany`): set it in Milestone 9 before the first public build, since changing it later orphans saves.
+- One save slot (+ backup); no slot picker. The save folder depends on Player Settings → Company Name (*Elevate Studios* since 0.9; the old `DefaultCompany` folder is copied once): never change it again, it would orphan saves and Steam Cloud files.
 - Research is bought instantly (no research time, no Archive requirement); there is no respec. The tree has no lines between nodes; prerequisites show in the hover text.
 - Contracts can't be skipped or rerolled. Contract progress counts everything after a contract appears, including offline deliveries.
 - Random events only start while the game runs; meteorites always land near the nest. The golden beetle can't be caught with a gamepad unless the pointer is moved onto it.
@@ -196,28 +196,33 @@
 - Light falloff and fog use Bayer dithering; tune `lightBands` if it reads too noisy.
 - Sky has no day/night yet (GDD 2.8).
 
-## Next: Milestone 9 — Steam release
+## Milestone 9 — Steam release 🟡
 Steamworks integration, store page and the first build on Steam (GDD §4). Many steps need your Steamworks account, money and identity; those are marked **(you)**. Requirements and image sizes below are the ones known at the time of writing: check the current Steamworks documentation when doing each step.
 
 **Account and app (you)**
-- [ ] Steamworks partner account (partner.steamgames.com): legal entity / name, identity verification, tax interview, bank details. Verification can take days, so start first.
-- [ ] Pay the Steam Direct fee (USD 100 per app, recouped after USD 1,000 in revenue) and create the app: note the **App ID**.
-- [ ] Decide the developer / publisher name. It also becomes Player Settings → **Company Name**, which sets the save folder (see Known limits).
+- [x] Steamworks partner account, Steam Direct fee, app created: **App ID 4453940**.
+- [x] Developer / publisher: **Elevate Studios** = Player Settings → Company Name (save folder `LocalLow/Elevate Studios/ANTARIUM 2`; the old `DefaultCompany` folder is copied over once).
 - [ ] Price, release date (or "Coming soon"), languages (English), whether there is a demo / Next Fest.
 
 **Steamworks integration (code)**
-- [ ] Add Steamworks.NET (UPM git package) behind a scripting define (`ANTARIUM_STEAM`); `SteamPlatform : IPlatformServices` (init with `RestartAppIfNecessary`, run callbacks in `Tick`, achievements and stats via `SteamUserStats`, `StoreStats` in `Flush`, overlay callback → pause); fall back to `LocalPlatform` without Steam. `steam_appid.txt` for development only.
-- [ ] Achievements and stats on Steamworks: the 32 API names from `Content/Achievements` and the stats `STAT_MAX_DEPTH`, `STAT_MAX_ANTS`, `STAT_FLIGHTS`; an editor tool that lists them (names, descriptions, hidden flags) for entering in the Steamworks UI; 64×64 achievement icons (unlocked + grey locked), generated from the pixel art.
-- [ ] Copy local achievements to Steam on the first Steam launch.
-- [ ] Steam Cloud: Auto-Cloud for the save folder (`LocalLow/<Company>/ANTARIUM 2/Saves`, `colony.sav` + `.bak`, and `settings.json` / `profile.json`), with quota; test the conflict dialog with two machines.
-- [ ] Rich presence (*Generation 3, 420 cells deep*) and the overlay pausing the game.
+- [x] Steamworks.NET 2025.165.0 (UPM git package); the Gameplay assembly defines `ANTARIUM_STEAM` while it is installed (`versionDefines`). `StorePlatform` (plain C#: merge, stats, presence) over `SteamClient : IStoreClient` (init with `RestartAppIfNecessary` in builds, `InitEx`, callbacks in `Tick`, `SteamUserStats`, overlay callback → pause); `LocalPlatform` without Steam or with `-nosteam`. Editor opt-in *Antarium → Steam → Use Steam in Editor*. `steam_appid.txt` (4453940) in the project root and in development builds only.
+- [x] *Antarium → Steam → Export Achievements and Icons*: `steam/achievements.md` (3 stats, 32 achievements with names, descriptions, hidden flags, progress stats) and 64 icons in `steam/achievement_icons/` (32×32 pixel art ×2: category plate, sprite or glyph, amount for tiers; grey locked twin).
+- [ ] **(you)** Enter the stats and achievements on Steamworks and publish (`docs/STEAM.md` §1).
+- [x] Local achievements and stats are merged with Steam both ways on every Steam launch (not only the first), once Steam has the user's stats; stats only go up.
+- [ ] **(you)** Steam Cloud Auto-Cloud: `Saves/*` and `profile.json` (not `settings.json`: display settings belong to the machine), quota (`docs/STEAM.md` §3); then test the conflict dialog with two machines.
+- [x] Rich presence (*In the main menu*, *Founding a colony, N cells deep*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*; `steam/rich_presence_english.vdf`) and the overlay pausing the game. **(you)** upload the tokens file (`docs/STEAM.md` §2).
+- [ ] Verify against the real Steam client: init, achievements, stats, presence, overlay pause.
 - [ ] Steam Deck / controller pass: stick aiming for the cursor, gamepad glyphs, readable text at 1280×800, Steam Input default layout; aim for *Playable* or *Verified*.
 
 **Release build (code)**
-- [ ] *Antarium → Build → Windows Release* (x86_64, IL2CPP if it holds up, else Mono; non-development, no debug keys), version from a single place, build into `Builds/` (git-ignored).
-- [ ] Icon, splash (Unity Personal shows the Unity splash), product name, Company Name, default window mode.
-- [ ] Crash-safe logging location documented; check the first-run experience on a clean Windows account.
-- [ ] SteamPipe: `app_build_<appid>.vdf` + `depot_build_<depotid>.vdf` and an `upload` script using `steamcmd` with a builder account (you add the account and Steam Guard); `beta` branch first, then `default`.
+- [x] *Antarium → Build → Windows Release / Windows Development* (x86_64, IL2CPP when the module is installed, else Mono; one scene; release has no debug keys and no `steam_appid.txt`; Burst / IL2CPP debug folders moved to `Builds/Symbols/<version>`). Version: Player Settings → Version only (0.9.0).
+- [ ] **(you)** Install *Windows Build Support (IL2CPP)* and the VS *Desktop development with C++* workload; then a first IL2CPP build.
+- [x] *Antarium → Build → Apply Release Player Settings*: Company Name, product name, bundle id `com.elevatestudios.antarium2`, fullscreen window at native resolution, resizable, single instance, no Unity splash, minimal stripping.
+- [ ] App icon (exe + Steam client icon).
+- [ ] Check the first-run experience on a clean Windows account.
+- [x] SteamPipe: `steam/upload.ps1` writes `app_build_4453940.vdf` + `depot_build_4453941.vdf` to `steam/output/` (git-ignored) and runs `steamcmd +run_app_build` (sets live on `beta`, `-Preview` for a dry run). **(you)** depot id check, `beta` branch, launch option, upload account and steamcmd in `tools/steamcmd/` (`docs/STEAM.md` §4–5).
+- [x] Logging location documented in `docs/STEAM.md` (Player.log, crash dumps, symbols).
+- [x] 143 EditMode tests (5 new: store merge both ways, waiting for the store's stats, giving up and resetting locally, rich presence only on change, moving the old save folder once).
 
 **Store page**
 - [ ] Capsule art (from in-game captures and the logo): header 920×430, small 462×174, main 1232×706, vertical 748×896; library capsule 600×900, library hero 3840×1240, library logo 1280×720 (transparent), page background (optional). Rendered at integer scale from the pixel art.
@@ -258,7 +263,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 **Gameplay layers**
 - Events: no golden aphid (needs aphids).
 - Research: no conveyor tiers; no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
-- One save slot; no Steam cloud saves yet (Milestone 9).
+- One save slot (synced by Steam Cloud).
 - Threats: termite raids and one cave creature per deep biome; no birds, surface spiders or rival ant colonies, no enemies that dig.
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
 - Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
@@ -271,4 +276,4 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
 - One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).
 - Caste sprites are palette swaps of the worker; nursery and emitter sprites are generated placeholders.
-- No Steam integration, store page or release build yet (Milestone 9).
+- No store page, Steam Deck pass or public build yet (Milestone 9).

@@ -78,6 +78,8 @@ namespace Antarium.Gameplay
             }
         }
 
+        public bool HasStat(string apiName) => _profile.statNames.Contains(apiName);
+
         public int GetStat(string apiName)
         {
             int i = _profile.statNames.IndexOf(apiName);
@@ -100,7 +102,7 @@ namespace Antarium.Gameplay
         }
 
         /// <summary>Forgets every achievement and stat (Settings → Erase all progress).</summary>
-        public void Reset()
+        public void ResetProgress()
         {
             _unlocked.Clear();
             _profile.achievements.Clear();
@@ -110,15 +112,8 @@ namespace Antarium.Gameplay
             Flush();
         }
 
-        public void Dispose() => Flush();
-    }
+        public void SetPresence(Presence presence) { }
 
-    public static class PlatformServices
-    {
-        /// <summary>
-        /// The platform for this run. Milestone 9 adds the Steam implementation here (behind a scripting define), with
-        /// <see cref="LocalPlatform"/> as the fallback when Steam is not running.
-        /// </summary>
-        public static IPlatformServices Create(string dataDirectory) => new LocalPlatform(dataDirectory);
+        public void Dispose() => Flush();
     }
 }

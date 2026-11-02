@@ -218,7 +218,7 @@ namespace Antarium.Tests
             Assert.IsTrue(again.IsAchievementUnlocked("ACH_A"), "kept in profile.json");
             Assert.IsFalse(again.IsAchievementUnlocked("ACH_B"));
             Assert.AreEqual(5, again.GetStat("STAT"), "stats keep their highest value");
-            again.Reset();
+            again.ResetProgress();
             Assert.IsFalse(new LocalPlatform(_dir).IsAchievementUnlocked("ACH_A"), "erased");
         }
 
