@@ -1296,10 +1296,34 @@ MonoBehaviour:
       twinkles: 0.1
       gain: 0.7
   music:
-    biomeTracks: []
-    titleTracks: []
-    raidTracks: []
-    geneticsTracks: []
+    biomeTracks:
+    - biome: {fileID: 11400000, guid: e34003af733857549a27adcfc89a230d, type: 2}
+      tracks:
+      - {fileID: 8300000, guid: 00b132b3a95b9c7479d3a380220a1dc9, type: 3}
+    - biome: {fileID: 11400000, guid: bbdd45a9d3d3da6439706d3305f9878d, type: 2}
+      tracks:
+      - {fileID: 8300000, guid: 7a2a8e0c862564e43b56ccb7a29b374f, type: 3}
+    - biome: {fileID: 11400000, guid: b3eeca26cf81ea4499940dbcea578f82, type: 2}
+      tracks:
+      - {fileID: 8300000, guid: 6652ba454a097384a8b1b70ccc3c7a5f, type: 3}
+    - biome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+      tracks:
+      - {fileID: 8300000, guid: 0b0ec4fd5bfa1da43bab331555baacca, type: 3}
+    - biome: {fileID: 11400000, guid: c8d83ae3be2ca6247a25fd543867015a, type: 2}
+      tracks:
+      - {fileID: 8300000, guid: cdd91f6aca2e67a4ca7038a7a713ecb7, type: 3}
+    - biome: {fileID: 11400000, guid: 6dd87aa3e609aa848bd80e10513cee77, type: 2}
+      tracks:
+      - {fileID: 8300000, guid: f038c6689ea1cf7409ccaaa611763998, type: 3}
+    - biome: {fileID: 0}
+      tracks:
+      - {fileID: 8300000, guid: d259c6ac29e8b344e9085a0bed90d54c, type: 3}
+    titleTracks:
+    - {fileID: 8300000, guid: 7c1231b1c9d50f046a25ee8f91d97fef, type: 3}
+    raidTracks:
+    - {fileID: 8300000, guid: 0d8d60ed5b8c1e34a91e9530bcd685aa, type: 3}
+    geneticsTracks:
+    - {fileID: 8300000, guid: d8553c75b12ca0047aa98673dfdfea2e, type: 3}
     flightCue: {fileID: 0}
     discoveryCue: {fileID: 0}
     trackVolume: 0.8
