@@ -103,7 +103,9 @@ namespace Antarium.Gameplay
             public float Time;
         }
 
-        void Awake()
+        // Start, not Awake: in a player the UIDocument only creates its root in OnEnable, which the -100 execution
+        // order puts after this script's Awake (the editor hides this, its UIDocument already has a root).
+        void Start()
         {
             if (content == null || config == null || inputActions == null || worldCamera == null || terrainMaterial == null || spriteMaterial == null)
             {

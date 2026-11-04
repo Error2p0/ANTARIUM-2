@@ -233,7 +233,8 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [ ] **(you)** Submit the store page for review (several business days). The *Coming Soon* page must be public for at least 2 weeks before release; wishlists start then.
 
 **First upload and release**
-- [ ] Upload the first build to the `beta` branch, install it through Steam on a clean machine, test achievements, cloud saves, overlay and offline progress.
+- [ ] Upload the first build to the `beta` branch, install it through Steam on a clean machine, test achievements, cloud saves, overlay and offline progress. Uploaded 0.9.0 (BuildID 26441965), but it has the startup bug fixed afterwards (`GameBootstrap` set up the UI before the `UIDocument` had a root): replace it with a new version on `beta` and `default`, then test.
+- [ ] Release build log noise: `Hidden/Universal Render Pipeline/GaussianDepthOfField` "stripped from the build" is logged repeatedly (22 times in a 15 s run of the Development build), and "More than one global light" is logged during builds although `Main.unity` has one global light and no player run has logged it. Neither has a known visible effect; look into both.
 - [ ] **(you)** Submit the build for review; set the release date; release (or keep it in Coming Soon / playtest).
 
 ## Missing / not built yet

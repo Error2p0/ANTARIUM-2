@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using Antarium.Gameplay;
 using UnityEditor;
 using UnityEditor.Build;
@@ -22,6 +23,9 @@ namespace Antarium.Editor
         public const string ExeName = "Antarium2.exe";
         public const string MainScene = "Assets/_Antarium/Scenes/Main.unity";
         public const string BuildRoot = "Builds";
+
+        static readonly TimeSpan MoveTimeout = TimeSpan.FromMinutes(2);
+        const int MoveRetryMilliseconds = 500;
 
         public static string ReleaseFolder => Path.Combine(BuildRoot, "Windows", "Release");
         public static string DevelopmentFolder => Path.Combine(BuildRoot, "Windows", "Development");
@@ -119,7 +123,43 @@ namespace Antarium.Editor
                 string target = Path.Combine(symbols, name);
                 if (Directory.Exists(target)) Directory.Delete(target, true);
                 Directory.CreateDirectory(symbols);
-                Directory.Move(dir, target);
+                MoveWhenFree(dir, target);
+            }
+        }
+
+        /// <summary>
+        /// Unity's symbol uploader (usymtool) keeps reading the IL2CPP backup folder after BuildPlayer returns, and
+        /// Windows refuses the move until it lets go, so keep trying. A failed move is not fatal: the upload script
+        /// excludes these folders anyway.
+        /// </summary>
+        static void MoveWhenFree(string from, string to)
+        {
+            var deadline = DateTime.UtcNow + MoveTimeout;
+            EditorUtility.DisplayProgressBar("Antarium build", $"Moving {Path.GetFileName(from)} to {to}", 1f);
+            try
+            {
+                while (true)
+                {
+                    try
+                    {
+                        Directory.Move(from, to);
+                        return;
+                    }
+                    catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                    {
+                        if (DateTime.UtcNow >= deadline)
+                        {
+                            Debug.LogWarning($"Could not move {from} to {to}, it stays in the build folder ({e.Message}). " +
+                                             "Copy it by hand to keep the symbols: the next build deletes it.");
+                            return;
+                        }
+                        Thread.Sleep(MoveRetryMilliseconds);
+                    }
+                }
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
             }
         }
 
