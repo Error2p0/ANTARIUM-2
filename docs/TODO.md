@@ -232,13 +232,14 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [x] **(you)** Capsule art: header, small, main, vertical, library capsule, library hero, library logo.
 - [x] Media capture in the game (`docs/STEAM.md` → *Store page media and text*): `ShowcaseColony` (fixed seed; nest with light wells, storage hall, nurseries, factory hall fed by an ore room through a belt and a root lift, every machine, a shaft to the ruins with an outpost per deep biome, all castes and research) built with the instant edits in `Simulation.Showcase.cs`; scripted shots (`GameBootstrap.Shots.cs`) rendered offscreen by `CaptureRig` at 1920×1080 and a fixed 60 fps, with a drawn cursor; *Antarium → Capture* menu, `-capture` in development builds; `tools/media/make_gifs.py` and `make_trailer.py` (Pillow + imageio-ffmpeg).
 - [x] Screenshots: 16 stills at 1920×1080 with the HUD in `Captures/stills` (colony, factory, flow overlay, ore room, queen and storage, the four deep biomes, raid, possession, research, castes, flight screen, genetic tree).
-- [x] Trailer: `Captures/trailer/antarium2_trailer.mp4` (~75 s, 1080p60, cards in Silkscreen, `music_title.wav`). End card with the game logo and the Elevate Studios logo from `Assets/_Antarium/Icon`. Thumbnail `Captures/trailer/antarium2_trailer_thumbnail.png` (`tools/media/make_thumbnail.py`). **(you)** watch it, adjust the `EDIT` list if needed, upload.
+- [x] Trailer: `Captures/trailer/antarium2_trailer.mp4` (~75 s, 1080p60, cards in Silkscreen, `music_title.wav`). End card with the game logo and the Elevate Studios logo from `Assets/_Antarium/Icon`. Thumbnail `Captures/trailer/antarium2_trailer_thumbnail.png` (`tools/media/make_thumbnail.py`).
 - [x] **(you)** Tags, system requirements and supported languages entered.
 - [x] Short description (252 characters) and *About This Game* (BBCode with 7 GIF slots) in `steam/store/`; 7 GIFs (640×360, 15 fps, ~10 MB together) in `Captures/gifs`.
-- [ ] **(you)** Pick 5–10 screenshots and upload them, upload the GIFs and the trailer, paste the texts; check the GIF paths Steam inserts.
-- [ ] Content survey: the music was made with Suno, so declare **pre-generated AI content** (Steamworks → *Content Survey* → AI disclosure).
-- [ ] Content survey / age rating questionnaire; privacy policy (only needed if anything is collected: nothing is); EULA (Steam's default is fine).
-- [ ] **(you)** Submit the store page for review (several business days). The *Coming Soon* page must be public for at least 2 weeks before release; wishlists start then.
+- [x] **(you)** Screenshots, GIFs and the trailer uploaded; store texts in place.
+- [x] **(you)** Content survey completed, including the AI disclosure (pre-generated AI content: the music, made with Suno).
+- [ ] Privacy policy (only needed if anything is collected: nothing is) and EULA (Steam's default is fine): confirm nothing else is asked for.
+- [x] **(you)** Store page submitted for review (2026-11-08; review takes several business days).
+- [ ] **(you)** After approval: make the *Coming Soon* page public. It must be public for at least 2 weeks before release; wishlists start then.
 
 **First upload and release**
 - [ ] Upload the first build to the `beta` branch, install it through Steam on a clean machine, test achievements, cloud saves, overlay and offline progress. Uploaded 0.9.0 (BuildID 26441965), but it has the startup bug fixed afterwards (`GameBootstrap` set up the UI before the `UIDocument` had a root): replace it with a new version on `beta` and `default`, then test.
@@ -285,4 +286,4 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
 - One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).
 - Caste sprites are palette swaps of the worker; nursery and emitter sprites are generated placeholders.
-- Store page texts and media are ready but not uploaded; no Steam Deck pass or public build yet (Milestone 9).
+- Store page is in review, not public yet; no Steam Deck pass or public build yet (Milestone 9).
