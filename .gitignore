@@ -119,3 +119,4 @@ InitTestScene*.unity*
 
 # Store media capture output (Antarium → Capture)
 /[Cc]aptures/
+__pycache__/
