@@ -116,3 +116,6 @@ InitTestScene*.unity*
 # Steam (SteamPipe output and the local steamcmd install)
 /steam/output/
 /tools/steamcmd/
+
+# Store media capture output (Antarium → Capture)
+/[Cc]aptures/

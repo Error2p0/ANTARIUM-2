@@ -1,0 +1,65 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+
+You are the mind of an ant colony. It begins with a queen and a handful of workers in a hole under the grass. It grows into a living machine: tunnels, silk belts and busy chambers reaching down through crystal caves and lava to the ruins of a lost civilization. Then your princesses take to the sky, and it all begins again, stronger.
+
+[b]Antarium 2[/b] is an active incremental game and a colony automation sim in one. Dig by hand when you want to, automate it when you have mastered it, and watch hundreds of ants carry your colony forward.
+
+[h2]Dig, and the colony follows[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[list]
+[*][b]Click and hold to dig[/b] yourself: debris flies, the screen shakes and a combo builds while you keep breaking rock.
+[*][b]Paint orders, not ants.[/b] Mark rock for mining and paint storage zones; workers take the jobs, haul every find home and climb walls and ceilings to get there.
+[*]Every item is physical: ore piles up where it falls, sits on storage shelves and rides on belts.
+[/list]
+
+[h2]Build a living machine[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[list]
+[*][b]Silk belts, root lifts, splitters and filters[/b] move ore from the mining front to your machines, and items visibly ride along.
+[*][b]Smelters, fungus gardens, archives, nurseries and princess chambers[/b] turn raw finds into copper, iron, food, knowledge and royalty.
+[*]A [b]flow overlay[/b] shows what is moving, what is jammed and which ants are idle, so tuning your lines feels like a puzzle.
+[*][b]Eight castes:[/b] workers, miners, haulers, builders, nurses, scouts, engineers and soldiers. Set the mix and the queen lays it.
+[/list]
+
+[h2]Seven layers, each stranger than the last[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[list]
+[*]Topsoil, clay and groundwater, stone strata, [b]glowing crystal caverns[/b], [b]fungal depths[/b], the [b]magma zone[/b] and the [b]ancient ruins[/b] at the bottom of the world.
+[*]Water floods careless tunnels, sand caves in, spore gas creeps along ceilings, and lava turns to obsidian where it meets water.
+[*]Light matters: sunlight fades as you dig, and only crystals, giant fungi and magma light the deep.
+[/list]
+
+[h2]Defend the nest[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[list]
+[*]Rival [b]termite raids[/b] march in from the surface for your food stores.
+[*]Every deep layer has its own creature waiting in the dark: centipedes, cave spiders, fungal mite swarms, fire beetles and ruin guardians.
+[*]Raise soldiers, build resin gates, traps and earth walls, and design chokepoints that hold.
+[/list]
+
+[h2]Take control[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[list]
+[*][b]Possess any ant[/b] and play it yourself: run, tunnel, carry and fight, with a warm light in the dark.
+[*][b]Paint pheromones:[/b] trails that speed ants up, scents that pull them to digging or gathering, and areas to avoid. Emitters keep them alive.
+[*][b]Abilities:[/b] Frenzy, Seismic Sense, Royal Decree and Pheromone Burst.
+[*][b]Random events[/b] reward attention: meteorite strikes, rich ore veins, a golden beetle to catch, trapped ants to rescue.
+[/list]
+
+[h2]Then the colony takes flight[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[list]
+[*]A research tree of [b]31 discoveries[/b] unlocks castes, buildings, abilities and upgrades, and a contract board always shows the next goal.
+[*]Raise princesses and send them on the [b]Nuptial Flight[/b]: the colony ends, its [b]Genetic Memory[/b] lives on.
+[*]Spend it on [b]19 permanent genetic traits[/b] that change how every later colony plays, from bigger broods to ants that follow ore veins on their own.
+[*]Choose [b]world modifiers[/b] for the next world: rich veins, hollow earth, volcanic depths or swarming raids, harder worlds for a bigger legacy.
+[/list]
+
+[h2]Features[/h2]
+[list]
+[*]Crisp pixel art on a strict pixel grid, with light that fades through tunnels and glows in the caves
+[*]Hundreds of individual ants, each with a job, climbing every surface of your tunnels
+[*]Offline progress: your colony keeps working while you are away (up to 8 hours)
+[*]Music that changes with every layer you reach
+[*]32 Steam achievements, Steam Cloud saves, fully rebindable controls
+[/list]

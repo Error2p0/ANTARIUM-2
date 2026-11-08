@@ -43,6 +43,14 @@ namespace Antarium.Sim
             Changed = true;
         }
 
+        /// <summary>Removes every pile (showcase building).</summary>
+        public void Clear()
+        {
+            _piles.Clear();
+            _lookup.Clear();
+            Changed = true;
+        }
+
         public int CountAt(int2 cell, ushort item) =>
             _lookup.TryGetValue(Key(cell, item), out int index) ? _piles[index].Count : 0;
 

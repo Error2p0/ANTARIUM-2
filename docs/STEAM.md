@@ -100,6 +100,25 @@ This only had to be done once. **BuildID 26441965 has a startup bug and must be 
 
 Logs: `steam/output/log/app_build_4453940.log` (the commit result), `steam/output/log/depot_build_4453941.log` (files and chunks), `tools/steamcmd/logs/console_log.txt` (the whole steamcmd session). The first two are overwritten by each run.
 
+## Store page media and text
+
+Screenshots, GIFs and the trailer are rendered by the game itself, so they can be redone after any change.
+
+**Text** (`steam/store/`): `short_description.txt` (252 of 300 characters) goes in *Store Page Admin → Description → Short description*; `about_this_game.txt` (Steam BBCode) goes in *About This Game*. Its GIF slots read `[img]{STEAM_APP_IMAGE}/extras/<name>.gif[/img]`: upload the GIFs first with the editor's image button, check that Steam kept the file names (otherwise put the path it inserts in place of the slot), and preview before publishing.
+
+**Capturing** (editor):
+1. *Antarium → Capture → Rebuild Showcase and Run All Shots* (or *Run All Shots* to reuse the last showcase colony). Play mode starts, runs every shot and stops by itself, about 5 minutes. **Keep the Unity window in front** meanwhile: play mode only runs while the editor has focus.
+2. Output in `Captures/` (git-ignored): `stills/*.png` (1920×1080 with the HUD, for the screenshots), `clips/<name>/NNNNN.png` (1080p, 60 fps), `capture_log.txt`.
+3. GIFs: `python tools/media/make_gifs.py` → `Captures/gifs/*.gif` (640×360, 15 fps, about 3 MB each).
+4. Trailer: `python tools/media/make_trailer.py` → `Captures/trailer/antarium2_trailer.mp4` (1920×1080, 60 fps, H.264 + AAC, music `music_title.wav`). `--logo <png>` puts your transparent library logo on the end card instead of the title text; `--music <wav>` picks another track. The edit (clips, cards, lengths) is the `EDIT` list at the top of the script.
+5. The scripts need Python 3 with `pip install pillow imageio-ffmpeg` (imageio-ffmpeg brings its own ffmpeg).
+
+**How it works:** `ShowcaseColony` (Sim) builds a fixed-seed colony with the instant showcase edits in `Simulation.Showcase.cs`: nest with light wells, storage hall, nurseries, a factory hall (ore room → belt → root lift → smelter → archive, gardens, princess chamber), a shaft to the ruins with an outpost in each deep biome, every caste and research; then it runs 90 s so the colony is busy, and is saved to `Captures/_showcase/`. The shots (`GameBootstrap.Shots.cs`) load it, move the camera, act like a player (digging with a drawn cursor, possessing an ant, abilities, a raid, the Nuptial Flight, the research and genetics screens) and record through `CaptureRig`, which renders world and UI into render textures at a fixed size and frame rate (independent of the window), so every clip is smooth however long a frame takes. A capture run never touches the player's save, settings, profile or Steam, and unlocks no achievements. *Antarium → Capture → Write Showcase Map* writes the whole showcase world as one image for planning shots.
+
+A development build runs the same capture from the command line: `Antarium2.exe -nosteam -capture stills,raid -captureOut D:/media [-rebuildShowcase]`.
+
+**Steam limits** (checked November 2026): screenshots at least 1920×1080 (at least 5); trailer up to 1920×1080, 30 or 60 fps, 5000+ kbps, `.mp4`/`.mov`/`.wmv`; GIFs in the description have no hard limit, but Valve may remove very heavy ones (around 15 MB per page or more), so they are kept small.
+
 ## Logs and crashes
 
 - Player log: `%USERPROFILE%/AppData/LocalLow/Elevate Studios/ANTARIUM 2/Player.log` (`Player-prev.log` for the previous run).

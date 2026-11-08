@@ -134,6 +134,7 @@
 - Measured in the editor: synthesizing the sound bank takes ~1.5 s of CPU (67 one-shot variants 0.34 s, 8 ambience loops 1.1 s, music 0.12 s), so it runs on a worker thread at startup and sounds start once it is done (behind the title screen); a headless balance run takes ~1.5 s per game minute including world generation; audio, pops and puffs run outside the sim tick.
 
 ## Known limits / follow-ups
+- Media capture: play mode only advances while the Unity window has focus, so a capture run (~5 min) needs the editor in front. Game toasts (cave-ins, raids) show up in HUD stills as they happen. The Pheromone Burst clip (`t13_rally`) is weak and left out of the trailer. The near-surface nest is lit by light wells because sky light only reaches ~32 open cells; deeper nests look much darker.
 - **Hands-on feel pass pending**, now including M8: listening to every sound and the music (only checked as numbers and exported WAVs, never heard), clicking through the title screen and settings, rebinding keys, the feel of number pops and puffs, the UI at 1440p / 4K scale (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: painting walls and gates, raid / creature cards and Go; M6: painting scents, the castes panel buttons, steering a possessed ant with WASD and biting with the mouse, aiming the Pheromone Burst; M7: clicking modifiers, the double-click Take flight, buying traits in the genetic tree). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
 - Sound effects and ambience are synthesized placeholders until recorded files are assigned; music has 10 recorded tracks (title, surface, clay, stone strata, crystal caverns, fungal depths, magma zone, ancient ruins, raid, genetic tree); no stingers yet. The bank's synth patches are first-pass. Biome music changes only between tracks (moving the camera never cuts a track); there is no music for combat with cave creatures, only raids. Positional sounds ignore walls (a sound in view is heard even behind rock).
 - Fixed key letters still appear in some messages and hints (e.g. *castes panel (K)*, *flight screen (N)*); buttons follow the bindings, messages don't yet. The gamepad layout can't be rebound.
@@ -225,14 +226,17 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [ ] Check the first-run experience on a clean Windows account.
 - [x] SteamPipe: `steam/upload.ps1` writes `app_build_4453940.vdf` + `depot_build_4453941.vdf` to `steam/output/` (git-ignored) and runs `steamcmd +run_app_build` (sets live on `beta`, `-Preview` for a dry run). **(you)** depot id check, `beta` branch, launch option, upload account and steamcmd in `tools/steamcmd/` (`docs/STEAM.md` §4–5).
 - [x] Logging location documented in `docs/STEAM.md` (Player.log, crash dumps, symbols).
-- [x] 143 EditMode tests (5 new: store merge both ways, waiting for the store's stats, giving up and resetting locally, rich presence only on change, moving the old save folder once).
+- [x] 148 EditMode tests (10 new: store merge both ways, waiting for the store's stats, giving up and resetting locally, rich presence only on change, moving the old save folder once; carving into the fog, placing without paying, research all, capture request round trip, the showcase colony builds complete).
 
 **Store page**
 - [x] **(you)** Capsule art: header, small, main, vertical, library capsule, library hero, library logo.
-- [ ] At least 5 screenshots at 1920×1080 (colony, automation, a deep biome, a raid, the genetic tree).
-- [ ] Trailer (30–90 s): capture sequences with a scripted camera; you edit / approve it.
+- [x] Media capture in the game (`docs/STEAM.md` → *Store page media and text*): `ShowcaseColony` (fixed seed; nest with light wells, storage hall, nurseries, factory hall fed by an ore room through a belt and a root lift, every machine, a shaft to the ruins with an outpost per deep biome, all castes and research) built with the instant edits in `Simulation.Showcase.cs`; scripted shots (`GameBootstrap.Shots.cs`) rendered offscreen by `CaptureRig` at 1920×1080 and a fixed 60 fps, with a drawn cursor; *Antarium → Capture* menu, `-capture` in development builds; `tools/media/make_gifs.py` and `make_trailer.py` (Pillow + imageio-ffmpeg).
+- [x] Screenshots: 16 stills at 1920×1080 with the HUD in `Captures/stills` (colony, factory, flow overlay, ore room, queen and storage, the four deep biomes, raid, possession, research, castes, flight screen, genetic tree).
+- [x] Trailer: `Captures/trailer/antarium2_trailer.mp4` (~75 s, 1080p60, cards in Silkscreen, `music_title.wav`). **(you)** watch it, swap in the library logo (`--logo`), adjust the `EDIT` list if needed, upload.
 - [x] **(you)** Tags, system requirements and supported languages entered.
-- [ ] Short description (up to 300 characters), long description with feature list and GIFs.
+- [x] Short description (252 characters) and *About This Game* (BBCode with 7 GIF slots) in `steam/store/`; 7 GIFs (640×360, 15 fps, ~10 MB together) in `Captures/gifs`.
+- [ ] **(you)** Pick 5–10 screenshots and upload them, upload the GIFs and the trailer, paste the texts; check the GIF paths Steam inserts.
+- [ ] Content survey: the music was made with Suno, so declare **pre-generated AI content** (Steamworks → *Content Survey* → AI disclosure).
 - [ ] Content survey / age rating questionnaire; privacy policy (only needed if anything is collected: nothing is); EULA (Steam's default is fine).
 - [ ] **(you)** Submit the store page for review (several business days). The *Coming Soon* page must be public for at least 2 weeks before release; wishlists start then.
 
@@ -281,4 +285,4 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
 - One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).
 - Caste sprites are palette swaps of the worker; nursery and emitter sprites are generated placeholders.
-- No store page, Steam Deck pass or public build yet (Milestone 9).
+- Store page texts and media are ready but not uploaded; no Steam Deck pass or public build yet (Milestone 9).

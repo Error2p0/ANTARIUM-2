@@ -21,7 +21,7 @@ namespace Antarium.Gameplay
     /// Scene" to create a scene with this wired up.
     /// </summary>
     [DefaultExecutionOrder(-100)]
-    public sealed class GameBootstrap : MonoBehaviour
+    public sealed partial class GameBootstrap : MonoBehaviour
     {
         static readonly float[] DebugSpeeds = { 1f, 2f, 4f, 8f };
 
@@ -115,11 +115,14 @@ namespace Antarium.Gameplay
             }
 
             _content = ContentDB.Build(content);
-            _platform = PlatformServices.Create(Application.persistentDataPath, AchievementNames(), StatNames());
+            var capture = CaptureRequest.Get();
+            // Media capture never touches the player's profile, saves, settings or Steam.
+            _platform = capture != null ? new LocalPlatform(capture.ScratchDirectory)
+                : PlatformServices.Create(Application.persistentDataPath, AchievementNames(), StatNames());
             _platform.OverlayChanged += open => _overlayOpen = open;
             _store = new SaveStore(_platform.SaveDirectory);
             _settingsStore = new SettingsStore(Application.persistentDataPath);
-            _settings = _settingsStore.Load();
+            _settings = capture != null ? new GameSettings() : _settingsStore.Load();
             if (globalLight != null) globalLight.intensity = config.render.ambient;
             if (hudDocument != null && hudDocument.panelSettings != null)
             {
@@ -132,10 +135,11 @@ namespace Antarium.Gameplay
             _input = new GameInput(inputActions);
             _input.LoadOverrides(_settings.bindingOverrides);
             _cameraController = new CameraController(_camera, _input);
-            _audio = sounds != null ? new AudioDirector(sounds, _content, transform) : null;
+            _audio = sounds != null && capture == null ? new AudioDirector(sounds, _content, transform) : null;
             _achievements = new AchievementTracker(_content, _platform);
             _achievements.Unlocked += a =>
             {
+                if (Capturing) return; // media capture: no achievement toasts in the frames
                 _hud.ShowToast($"Achievement unlocked: {a.Def.DisplayName}! {a.Def.description}");
                 _audio?.Play(SoundCue.Achievement);
             };
@@ -147,6 +151,11 @@ namespace Antarium.Gameplay
             _possessLight = CreatePossessLight();
             ApplySettings(_settings);
 
+            if (capture != null)
+            {
+                BeginCapture(capture);
+                return;
+            }
             if (!(continueLastSave && TryLoad(applyOffline: !showTitle)))
                 StartNewColony(randomSeed ? (uint)Environment.TickCount | 1u : seedOverride != 0 ? seedOverride : _content.WorldGen.defaultSeed, announce: !showTitle);
             if (showTitle) ShowTitle();
@@ -320,7 +329,7 @@ namespace Antarium.Gameplay
 
         void Save(bool background, bool announce)
         {
-            if (_sim == null) return;
+            if (_sim == null || Capturing) return;
             try
             {
                 var snapshot = SaveGame.Capture(_sim, DateTime.UtcNow);
@@ -349,6 +358,7 @@ namespace Antarium.Gameplay
 
         void Quit()
         {
+            if (Capturing) return;
             if (CanSave) Save(background: false, announce: false);
             _quitSaved = true;
             _settingsStore.Save(_settings);
@@ -362,6 +372,7 @@ namespace Antarium.Gameplay
 
         void OnApplicationQuit()
         {
+            if (Capturing) return;
             if (_flight != null) FinishFlight(); // the flight was confirmed: found the new colony before saving
             _platform?.Flush();
             if (_quitSaved || _sim == null || !CanSave) return;
@@ -484,7 +495,7 @@ namespace Antarium.Gameplay
         void ApplyUiScale()
         {
             if (_panelSettings == null) return;
-            float scale = _settings.EffectiveUiScale(Screen.height);
+            float scale = _settings.EffectiveUiScale(_rig != null ? _rig.Height : Screen.height);
             if (!Mathf.Approximately(_panelSettings.scale, scale)) _panelSettings.scale = scale;
         }
 
@@ -507,12 +518,13 @@ namespace Antarium.Gameplay
                 return;
             }
 
-            HandleSystemKeys();
+            if (!Capturing) HandleSystemKeys();
             bool title = _hud.TitleShowing;
-            bool paused = title || _overlayOpen || _hud.IsShowing(_hud.Menu?.Root) || SystemDialogOpen;
+            bool paused = Capturing ? _shotPaused : title || _overlayOpen || _hud.IsShowing(_hud.Menu?.Root) || SystemDialogOpen;
 
             bool possessing = _tools.Possessing;
-            if (title) DriftTitleCamera(dt);
+            if (Capturing) DriveShot(dt, paused);
+            else if (title) DriftTitleCamera(dt);
             else
             {
                 _cameraController.Update(dt, allowPan: !possessing);
@@ -522,9 +534,9 @@ namespace Antarium.Gameplay
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
             _pointerCell = WorldGrid.WorldToCell(pointerWorld);
 
-            bool overUi = _hud.IsPointerOverUi(_input.Pointer);
-            if (!paused) _tools.Update(_sim, _input, pointerWorld, overUi, dt, now);
-            if (!title)
+            bool overUi = !Capturing && _hud.IsPointerOverUi(_input.Pointer);
+            if (!paused && !Capturing) _tools.Update(_sim, _input, pointerWorld, overUi, dt, now);
+            if (!title && !Capturing)
             {
                 if (_input.Overlay.WasPressedThisFrame()) ToggleOverlay();
                 if (_input.ToggleHud.WasPressedThisFrame()) _debugHud.Visible = !_debugHud.Visible;
@@ -548,6 +560,7 @@ namespace Antarium.Gameplay
             _hud.Consume(events, _sim);
             _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null, _tools.Possessing, _tools.TargetingPossess);
             if (_hud.IsShowing(_hud.AchievementsPanel.Root)) _hud.AchievementsPanel.Refresh(_achievements, title ? null : _sim);
+            if (Capturing) pointerWorld = _shotPointer;
             _hoverInfo.Update(dt, _sim, WorldGrid.WorldToCell(pointerWorld), _tools, overUi);
             _hud.SetInfo(title ? null
                 : _tools.TargetingAbility >= 0 ? _targetingHints[_tools.TargetingAbility]
@@ -561,9 +574,9 @@ namespace Antarium.Gameplay
                 : _sim.Enemies.ActiveRaid != 0 ? MusicMode.Raid
                 : MusicMode.Play);
             events.Flush();
-            if (!title) _achievements.Update(dt, _sim);
+            if (!title && !Capturing) _achievements.Update(dt, _sim);
 
-            if (!paused && AutosaveSeconds > 0f)
+            if (!paused && AutosaveSeconds > 0f && !Capturing)
             {
                 _autosaveTimer -= dt;
                 if (_autosaveTimer <= 0f) Save(background: true, announce: false);
@@ -817,6 +830,7 @@ namespace Antarium.Gameplay
         void OnDestroy()
         {
             _store?.Wait();
+            _rig?.Dispose();
             _input?.Dispose();
             EndSession();
             _audio?.Dispose();

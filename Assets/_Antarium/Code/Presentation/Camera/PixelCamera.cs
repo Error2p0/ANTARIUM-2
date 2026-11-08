@@ -26,7 +26,7 @@ namespace Antarium.Presentation
         public int StepsOut => _config.maxZoom - Zoom;
 
         /// <summary>Half the visible area in world units.</summary>
-        public float2 HalfViewSize => new float2(Screen.width, Screen.height) * 0.5f * UnitsPerScreenPixel;
+        public float2 HalfViewSize => ScreenSize * 0.5f * UnitsPerScreenPixel;
 
         public PixelCamera(Camera camera, CameraConfig config)
         {
@@ -38,12 +38,27 @@ namespace Antarium.Presentation
 
         float UnitsPerScreenPixel => 1f / (WorldConstants.PixelsPerUnit * Zoom);
 
+        /// <summary>Size of what the camera renders into: the screen, or its render texture (media capture).</summary>
+        float2 ScreenSize => _camera.targetTexture != null
+            ? new float2(_camera.targetTexture.width, _camera.targetTexture.height)
+            : new float2(Screen.width, Screen.height);
+
+        /// <summary>Sets the zoom directly (clamped), keeping <see cref="Position"/>.</summary>
+        public void SetZoom(int zoom) => Zoom = math.clamp(zoom, _config.minZoom, _config.maxZoom);
+
+        /// <summary>World position → pixel in the rendered image (origin bottom left).</summary>
+        public float2 WorldToScreen(float2 world)
+        {
+            var p = _camera.WorldToScreenPoint(new Vector3(world.x, world.y, 0f));
+            return new float2(p.x, p.y);
+        }
+
         /// <summary>Changes zoom by <paramref name="steps"/>, keeping the world point under <paramref name="anchorScreen"/> fixed.</summary>
         public void ZoomBy(int steps, Vector2 anchorScreen)
         {
             int next = math.clamp(Zoom + steps, _config.minZoom, _config.maxZoom);
             if (next == Zoom) return;
-            float2 offset = (float2)anchorScreen - new float2(Screen.width, Screen.height) * 0.5f;
+            float2 offset = (float2)anchorScreen - ScreenSize * 0.5f;
             float2 anchorWorld = Position + offset * UnitsPerScreenPixel;
             Zoom = next;
             Position = anchorWorld - offset * UnitsPerScreenPixel;
@@ -66,7 +81,7 @@ namespace Antarium.Presentation
         /// <summary>Clamps to the world, applies shake and writes the camera transform and size.</summary>
         public void Apply(float deltaTime, float2 worldSize)
         {
-            float2 half = new float2(Screen.width, Screen.height) * 0.5f * UnitsPerScreenPixel;
+            float2 half = ScreenSize * 0.5f * UnitsPerScreenPixel;
             for (int axis = 0; axis < 2; axis++)
             {
                 Position[axis] = worldSize[axis] <= half[axis] * 2f
@@ -74,7 +89,7 @@ namespace Antarium.Presentation
                     : math.clamp(Position[axis], half[axis], worldSize[axis] - half[axis]);
             }
 
-            _camera.orthographicSize = Screen.height * 0.5f * UnitsPerScreenPixel;
+            _camera.orthographicSize = ScreenSize.y * 0.5f * UnitsPerScreenPixel;
 
             const float ppu = WorldConstants.PixelsPerUnit;
             float2 snapped = math.round(Position * ppu) / ppu;
@@ -86,8 +101,8 @@ namespace Antarium.Presentation
                 snapped += math.round(_rng.NextFloat2(-shake, shake)) / ppu;
 
             // With an odd screen size the centre falls on a pixel centre; shift half a screen pixel.
-            if ((Screen.width & 1) == 1) snapped.x += 0.5f * UnitsPerScreenPixel;
-            if ((Screen.height & 1) == 1) snapped.y += 0.5f * UnitsPerScreenPixel;
+            if (((int)ScreenSize.x & 1) == 1) snapped.x += 0.5f * UnitsPerScreenPixel;
+            if (((int)ScreenSize.y & 1) == 1) snapped.y += 0.5f * UnitsPerScreenPixel;
 
             _camera.transform.position = new Vector3(snapped.x, snapped.y, -10f);
         }
