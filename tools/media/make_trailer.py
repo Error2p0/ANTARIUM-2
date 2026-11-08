@@ -1,12 +1,13 @@
 """Assembles the Steam trailer from the captured clips.
 
 Usage (from the project root, after Antarium -> Capture -> Run All Shots):
-    python tools/media/make_trailer.py [--music Assets/_Antarium/Audio/Music/music_title.wav] [--logo path/to/logo.png]
+    python tools/media/make_trailer.py [--music Assets/_Antarium/Audio/Music/music_title.wav] [--logo game_logo.png] [--studio studio_logo.png]
                                        [--out Captures/trailer/antarium2_trailer.mp4]
 
 The edit is the EDIT list below: clip segments (1080p60 PNG frames from Captures/clips) and title cards drawn in the
-game's Silkscreen font, joined with short crossfades, with one music track faded in and out. --logo puts a transparent
-logo (e.g. the 1280x720 library logo) on the end card instead of the title text. Output: H.264 1920x1080 60 fps,
+game's Silkscreen font, joined with short crossfades, with one music track faded in and out. The end card shows the
+game logo (--logo, default Assets/_Antarium/Icon/shortcut.png) over the wishlist line and the studio logo (--studio,
+default Assets/_Antarium/Icon/elevate_white_logo.png); a missing logo falls back to text. Output: H.264 1920x1080 60 fps,
 AAC 48 kHz, which matches Steam's trailer requirements (up to 1920x1080, 30 or 60 fps, 5000+ kbps, .mp4).
 Needs Pillow and imageio-ffmpeg (pip install pillow imageio-ffmpeg).
 """
@@ -23,6 +24,7 @@ FPS = 60
 SIZE = (1920, 1080)
 FADE = 0.25  # seconds of crossfade between segments
 FONT = os.path.join("Assets", "_Antarium", "UI", "Fonts", "Silkscreen-Regular.ttf")
+ICONS = os.path.join("Assets", "_Antarium", "Icon")
 AMBER = (247, 190, 110)
 DIM = (170, 150, 125)
 
@@ -71,27 +73,37 @@ def card(lines, size=72):
     return im
 
 
-def end_card(logo):
+def paste_logo(im, path, box):
+    """Pastes a transparent logo (trimmed to its visible pixels) centred in box = (left, top, width, height)."""
+    mark = Image.open(path).convert("RGBA")
+    mark = mark.crop(mark.split()[-1].getbbox())
+    scale = min(box[2] / mark.width, box[3] / mark.height)
+    mark = mark.resize((int(mark.width * scale), int(mark.height * scale)), Image.LANCZOS)
+    im.paste(mark, (box[0] + (box[2] - mark.width) // 2, box[1] + (box[3] - mark.height) // 2), mark)
+
+
+def end_card(logo, studio):
+    """The game logo, the wishlist line and the studio logo (text in the game's font where a logo is missing)."""
     im = Image.new("RGB", SIZE, (0, 0, 0))
     d = ImageDraw.Draw(im)
-    if logo:
-        mark = Image.open(logo).convert("RGBA")
-        scale = min(1100 / mark.width, 560 / mark.height)
-        mark = mark.resize((int(mark.width * scale), int(mark.height * scale)), Image.LANCZOS)
-        im.paste(mark, ((SIZE[0] - mark.width) // 2, 170 + (560 - mark.height) // 2), mark)
-    else:
-        f = font(150)
-        title = "ANTARIUM 2"
-        w = d.textlength(title, font=f)
-        d.text(((SIZE[0] - w) // 2, 360), title, font=f, fill=AMBER)
-    for text, y, size, color in (("WISHLIST NOW ON STEAM", 790, 52, AMBER), ("ELEVATE STUDIOS", 900, 30, DIM)):
+
+    def centred(text, y, size, color):
         f = font(size)
-        w = d.textlength(text, font=f)
-        d.text(((SIZE[0] - w) // 2, y), text, font=f, fill=color)
+        d.text(((SIZE[0] - d.textlength(text, font=f)) // 2, y), text, font=f, fill=color)
+
+    if logo and os.path.exists(logo):
+        paste_logo(im, logo, (0, 50, SIZE[0], 610))
+    else:
+        centred("ANTARIUM 2", 280, 150, AMBER)
+    centred("WISHLIST NOW ON STEAM", 715, 52, AMBER)
+    if studio and os.path.exists(studio):
+        paste_logo(im, studio, (0, 850, SIZE[0], 150))
+    else:
+        centred("ELEVATE STUDIOS", 900, 30, DIM)
     return im
 
 
-def segment_frames(kind, data, start, seconds, clips, tmp, logo, index):
+def segment_frames(kind, data, start, seconds, clips, tmp, logo, studio, index):
     """Paths of this segment's frames (clip frames are used in place; cards are written once)."""
     count = int(round(seconds * FPS))
     if kind == "clip":
@@ -102,7 +114,7 @@ def segment_frames(kind, data, start, seconds, clips, tmp, logo, index):
         if missing:
             raise FileNotFoundError(f"{data}: {len(missing)} of {count} frames missing (first {missing[0]})")
         return paths
-    im = card(data) if kind == "card" else end_card(logo)
+    im = card(data) if kind == "card" else end_card(logo, studio)
     path = os.path.join(tmp, f"card_{index:02d}.png")
     im.save(path)
     return [path] * count
@@ -112,7 +124,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--clips", default=os.path.join("Captures", "clips"))
     parser.add_argument("--music", default=os.path.join("Assets", "_Antarium", "Audio", "Music", "music_title.wav"))
-    parser.add_argument("--logo", default="")
+    parser.add_argument("--logo", default=os.path.join(ICONS, "shortcut.png"), help="game logo on the end card")
+    parser.add_argument("--studio", default=os.path.join(ICONS, "elevate_white_logo.png"), help="studio logo under it")
     parser.add_argument("--out", default=os.path.join("Captures", "trailer", "antarium2_trailer.mp4"))
     parser.add_argument("--bitrate", default="12M", help="video bitrate; Steam asks for 5000+ kbps")
     args = parser.parse_args()
@@ -125,10 +138,10 @@ def main():
         for i, item in enumerate(EDIT):
             if item[0] == "clip":
                 _, name, start, seconds = item
-                segments.append(segment_frames("clip", name, start, seconds, args.clips, tmp, args.logo, i))
+                segments.append(segment_frames("clip", name, start, seconds, args.clips, tmp, args.logo, args.studio, i))
             else:
                 kind, data, seconds = item
-                segments.append(segment_frames(kind, data, 0, seconds, args.clips, tmp, args.logo, i))
+                segments.append(segment_frames(kind, data, 0, seconds, args.clips, tmp, args.logo, args.studio, i))
 
         # Lay the segments end to end; each joint is a crossfade of FADE seconds (black at both ends).
         fade = int(round(FADE * FPS))
