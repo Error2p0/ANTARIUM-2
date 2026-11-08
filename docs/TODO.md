@@ -135,7 +135,7 @@
 
 ## Known limits / follow-ups
 - **Hands-on feel pass pending**, now including M8: listening to every sound and the music (only checked as numbers and exported WAVs, never heard), clicking through the title screen and settings, rebinding keys, the feel of number pops and puffs, the UI at 1440p / 4K scale (mouse dig, painting orders/zones, pan/zoom, laying belts by dragging, placing machines; M4: clicking Claim / research nodes / ability buttons, aiming Seismic Sense, catching the beetle with the mouse, Esc / F5 / F9; M5: painting walls and gates, raid / creature cards and Go; M6: painting scents, the castes panel buttons, steering a possessed ant with WASD and biting with the mouse, aiming the Pheromone Burst; M7: clicking modifiers, the double-click Take flight, buying traits in the genetic tree). Automated checks drive the sim, tools and panels directly; tuning lives in `GameConfig.asset` and the content assets.
-- Sounds and music are synthesized placeholders until recorded files are assigned (the pipeline is ready, no files yet). The bank's synth patches are first-pass. Biome music changes only between tracks (moving the camera never cuts a track); there is no music for combat with cave creatures, only raids. Positional sounds ignore walls (a sound in view is heard even behind rock).
+- Sound effects and ambience are synthesized placeholders until recorded files are assigned; music has 10 recorded tracks (title, surface, clay, stone strata, crystal caverns, fungal depths, magma zone, ancient ruins, raid, genetic tree); no stingers yet. The bank's synth patches are first-pass. Biome music changes only between tracks (moving the camera never cuts a track); there is no music for combat with cave creatures, only raids. Positional sounds ignore walls (a sound in view is heard even behind rock).
 - Fixed key letters still appear in some messages and hints (e.g. *castes panel (K)*, *flight screen (N)*); buttons follow the bindings, messages don't yet. The gamepad layout can't be rebound.
 - Key names follow the keyboard layout (Czech: number row + ě š č ř); a bound key with no printable label shows its Input System name.
 - UI scale is whole numbers only (pixel fonts); at 1440p *Auto* picks 2×, which is big; 1× is small. Window mode and resolution apply only in builds.
@@ -202,33 +202,37 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 **Account and app (you)**
 - [x] Steamworks partner account, Steam Direct fee, app created: **App ID 4453940**.
 - [x] Developer / publisher: **Elevate Studios** = Player Settings → Company Name (save folder `LocalLow/Elevate Studios/ANTARIUM 2`; the old `DefaultCompany` folder is copied over once).
-- [ ] Price, release date (or "Coming soon"), languages (English), whether there is a demo / Next Fest.
+- [x] Supported languages (English), tags and system requirements entered on the store page.
+- [ ] Price, release date (or "Coming soon"), whether there is a demo / Next Fest.
 
 **Steamworks integration (code)**
 - [x] Steamworks.NET 2025.165.0 (UPM git package); the Gameplay assembly defines `ANTARIUM_STEAM` while it is installed (`versionDefines`). `StorePlatform` (plain C#: merge, stats, presence) over `SteamClient : IStoreClient` (init with `RestartAppIfNecessary` in builds, `InitEx`, callbacks in `Tick`, `SteamUserStats`, overlay callback → pause); `LocalPlatform` without Steam or with `-nosteam`. Editor opt-in *Antarium → Steam → Use Steam in Editor*. `steam_appid.txt` (4453940) in the project root and in development builds only.
 - [x] *Antarium → Steam → Export Achievements and Icons*: `steam/achievements.md` (3 stats, 32 achievements with names, descriptions, hidden flags, progress stats) and 64 icons in `steam/achievement_icons/` (32×32 pixel art ×2: category plate, sprite or glyph, amount for tiers; grey locked twin).
-- [ ] **(you)** Enter the stats and achievements on Steamworks and publish (`docs/STEAM.md` §1).
+- [x] **(you)** Stats and achievements entered on Steamworks (`docs/STEAM.md` §1).
 - [x] Local achievements and stats are merged with Steam both ways on every Steam launch (not only the first), once Steam has the user's stats; stats only go up.
-- [ ] **(you)** Steam Cloud Auto-Cloud: `Saves/*` and `profile.json` (not `settings.json`: display settings belong to the machine), quota (`docs/STEAM.md` §3); then test the conflict dialog with two machines.
+- [x] **(you)** Steam Cloud Auto-Cloud entered: `Saves/*` and `profile.json` (not `settings.json`: display settings belong to the machine), quota (`docs/STEAM.md` §3).
+- [ ] Test Steam Cloud: a save syncs to a second machine, and the conflict dialog.
 - [x] Rich presence (*In the main menu*, *Founding a colony, N cells deep*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*; `steam/rich_presence_english.vdf`) and the overlay pausing the game. **(you)** upload the tokens file (`docs/STEAM.md` §2).
 - [ ] Verify against the real Steam client: init, achievements, stats, presence, overlay pause.
 - [ ] Steam Deck / controller pass: stick aiming for the cursor, gamepad glyphs, readable text at 1280×800, Steam Input default layout; aim for *Playable* or *Verified*.
 
 **Release build (code)**
 - [x] *Antarium → Build → Windows Release / Windows Development* (x86_64, IL2CPP when the module is installed, else Mono; one scene; release has no debug keys and no `steam_appid.txt`; Burst / IL2CPP debug folders moved to `Builds/Symbols/<version>`). Version: Player Settings → Version only (0.9.0).
-- [ ] **(you)** Install *Windows Build Support (IL2CPP)* and the VS *Desktop development with C++* workload; then a first IL2CPP build.
+- [x] **(you)** *Windows Build Support (IL2CPP)* and the VS *Desktop development with C++* workload installed.
+- [ ] A first IL2CPP release build (check it starts outside the editor and `Player.log` is clean).
 - [x] *Antarium → Build → Apply Release Player Settings*: Company Name, product name, bundle id `com.elevatestudios.antarium2`, fullscreen window at native resolution, resizable, single instance, no Unity splash, minimal stripping.
-- [ ] App icon (exe + Steam client icon).
+- [x] App icon set in Player Settings (exe); Steam client icon and shortcut icon uploaded on Steamworks.
 - [ ] Check the first-run experience on a clean Windows account.
 - [x] SteamPipe: `steam/upload.ps1` writes `app_build_4453940.vdf` + `depot_build_4453941.vdf` to `steam/output/` (git-ignored) and runs `steamcmd +run_app_build` (sets live on `beta`, `-Preview` for a dry run). **(you)** depot id check, `beta` branch, launch option, upload account and steamcmd in `tools/steamcmd/` (`docs/STEAM.md` §4–5).
 - [x] Logging location documented in `docs/STEAM.md` (Player.log, crash dumps, symbols).
 - [x] 143 EditMode tests (5 new: store merge both ways, waiting for the store's stats, giving up and resetting locally, rich presence only on change, moving the old save folder once).
 
 **Store page**
-- [ ] Capsule art (from in-game captures and the logo): header 920×430, small 462×174, main 1232×706, vertical 748×896; library capsule 600×900, library hero 3840×1240, library logo 1280×720 (transparent), page background (optional). Rendered at integer scale from the pixel art.
+- [x] **(you)** Capsule art: header, small, main, vertical, library capsule, library hero, library logo.
 - [ ] At least 5 screenshots at 1920×1080 (colony, automation, a deep biome, a raid, the genetic tree).
 - [ ] Trailer (30–90 s): capture sequences with a scripted camera; you edit / approve it.
-- [ ] Short description (up to 300 characters), long description with feature list and GIFs, tags (Colony Sim, Automation, Incremental, Pixel Graphics, Base Building, Idler, Strategy, Simulation, 2D, Singleplayer), system requirements (Windows 10 64-bit, a DX11 GPU, 4 GB RAM, ~500 MB disk; confirm after measuring a build), supported languages.
+- [x] **(you)** Tags, system requirements and supported languages entered.
+- [ ] Short description (up to 300 characters), long description with feature list and GIFs.
 - [ ] Content survey / age rating questionnaire; privacy policy (only needed if anything is collected: nothing is); EULA (Steam's default is fine).
 - [ ] **(you)** Submit the store page for review (several business days). The *Coming Soon* page must be public for at least 2 weeks before release; wishlists start then.
 
@@ -271,7 +275,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 
 **Presentation**
 - All art is placeholder generated in code (ant/queen/egg sprites, terrain textures).
-- Sounds and music are synthesized placeholders; no recorded audio or composed music.
+- Sound effects and ambience are synthesized placeholders; music is recorded (10 tracks), no flight / discovery stingers yet.
 - UI skin is generated bevels over flat colours; no hand-drawn UI art or icons.
 - No queen panel. Tooltips are limited to the hover info panel, the toolbar and the research hover details.
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
