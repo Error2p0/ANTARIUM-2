@@ -11,8 +11,8 @@ namespace Antarium.Gameplay
 {
     /// <summary>
     /// Cards on the left: random events (what happened, the time left to act), raids (warning countdown,
-    /// raiders left, outcome), creatures found in a newly opened cave, and the surface: weather, a circling bird and
-    /// spiders out at night. A Go button moves the camera there.
+    /// raiders left, outcome), creatures found in a newly opened cave, the surface: weather, a circling bird and
+    /// spiders out at night, and fires (cells burning). A Go button moves the camera there.
     /// Finished cards stay a few seconds with their outcome.
     /// </summary>
     public sealed class EventFeed
@@ -20,7 +20,7 @@ namespace Antarium.Gameplay
         const float InstantLinger = 30f;
         const float EndedLinger = 8f;
 
-        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders }
+        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders, Fire }
 
         sealed class Card
         {
@@ -65,6 +65,11 @@ namespace Antarium.Gameplay
             if (surface.Weather == WeatherKind.Rain) OnSurface(new SurfaceEvent(SurfaceEventKind.RainStarted, sim.Colony.QueenCell));
             else if (surface.Weather == WeatherKind.Drought) OnSurface(new SurfaceEvent(SurfaceEventKind.DroughtStarted, sim.Colony.QueenCell));
             if (surface.Bird == BirdPhase.Circling) OnSurface(new SurfaceEvent(SurfaceEventKind.BirdCircling, (int2)surface.BirdPos));
+            if (sim.Fire.Count > 0)
+            {
+                var c = GridIndex.ToCell(sim.Fire.Burning[0], sim.World.ChunksX);
+                OnFire(new FireEvent(FireEventKind.Started, c, sim.World[c.x, c.y].Material));
+            }
         }
 
         /// <summary>Adds cards for new events and marks finished ones. Returns a toast for the newest change, or null.</summary>
@@ -92,7 +97,27 @@ namespace Antarium.Gameplay
                 toast = OnCreatures(e);
             foreach (var e in events.Read<SurfaceEvent>())
                 toast = OnSurface(e) ?? toast;
+            foreach (var e in events.Read<FireEvent>())
+                toast = OnFire(e) ?? toast;
             return toast;
+        }
+
+        /// <summary>A new fire opens (or moves) the fire card; returns a toast for new fires, or null.</summary>
+        string OnFire(in FireEvent e)
+        {
+            if (e.Kind != FireEventKind.Started) return null;
+            string what = e.Material < _content.Materials.Length ? _content.Materials[e.Material].DisplayName : "Something";
+            foreach (var c in _cards)
+                if (c.Kind == CardKind.Fire && !c.Ended)
+                {
+                    c.Cell = e.Cell;
+                    return $"{what} caught fire!";
+                }
+            var card = NewCard(CardKind.Fire, _nextSurfaceCard++, -1, e.Cell, "Fire!",
+                $"{what} is burning. Fire spreads along coal, roots and fungus that touch open air, gives off smoke and burns ants next to it; " +
+                "burnt cells turn to ash. Water puts it out: pump some in, or dig the burning cells out.");
+            card.Root.AddToClassList("event--danger");
+            return $"Fire! {what} caught fire.";
         }
 
         string NightHunterName(int count)
@@ -348,6 +373,15 @@ namespace Antarium.Gameplay
                         }
                         End(card, "Dawn: the hunters are gone.", "Gone", true);
                     }
+                    else if (card.Kind == CardKind.Fire)
+                    {
+                        if (sim.Fire.Count > 0)
+                        {
+                            card.Timer.text = HudText.Plural(sim.Fire.Count, "cell") + " burning";
+                            continue;
+                        }
+                        End(card, "The fire is out.", "Out", true);
+                    }
                     if (card.Kind == CardKind.Raid)
                     {
                         var threats = sim.Enemies;
@@ -387,6 +421,8 @@ namespace Antarium.Gameplay
                     foreach (var enemy in _sim.Enemies.Enemies)
                         if (_content.Enemies[enemy.Def].Def.behavior == EnemyBehavior.NightHunter) return enemy.Cell;
                     return card.Cell;
+                case CardKind.Fire:
+                    return _sim.Fire.Count > 0 ? GridIndex.ToCell(_sim.Fire.Burning[0], _sim.World.ChunksX) : card.Cell;
                 default:
                     return card.Cell;
             }

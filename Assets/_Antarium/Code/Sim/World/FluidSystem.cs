@@ -362,6 +362,7 @@ namespace Antarium.Sim
                                     UpdateLiquid(i, x, y, f, LavaMinDiff, LavaThickness, leftToRight);
                                     break;
                                 case FluidKind.Gas:
+                                case FluidKind.Smoke:
                                     UpdateGas(i, x, y, f, leftToRight);
                                     break;
                             }
@@ -410,7 +411,7 @@ namespace Antarium.Sim
                                 level -= move;
                             }
                         }
-                        else if (b.Kind == FluidKind.Gas)
+                        else if (b.Kind.IsGas())
                         {
                             // Liquid sinks through gas: swap.
                             Set(bi, x, y - 1, new FluidCell(f.Kind, (byte)level));
@@ -440,7 +441,7 @@ namespace Antarium.Sim
                         var n = Fluid[ni];
                         if (n.Level != 0 && n.Kind != f.Kind)
                         {
-                            if (n.Kind != FluidKind.Gas)
+                            if (!n.Kind.IsGas())
                             {
                                 React(i, x, y, f.Kind, level, ni, nx, y, n);
                                 return;
@@ -491,12 +492,12 @@ namespace Antarium.Sim
                     if (Cells[ai].HoldsFluid)
                     {
                         var a = Fluid[ai];
-                        if (a.Level == 0 || a.Kind == FluidKind.Gas)
+                        if (a.Level == 0 || a.Kind == f.Kind)
                         {
                             int move = math.min(level, Full - a.Level);
                             if (move > 0)
                             {
-                                Set(ai, x, y + 1, new FluidCell(FluidKind.Gas, (byte)(a.Level + move)));
+                                Set(ai, x, y + 1, new FluidCell(f.Kind, (byte)(a.Level + move)));
                                 Stamp[ai] = StampValue;
                                 level -= move;
                             }
@@ -516,7 +517,7 @@ namespace Antarium.Sim
                         int ni = Idx(nx, y);
                         if (!Cells[ni].HoldsFluid) continue;
                         var n = Fluid[ni];
-                        if (n.Level != 0 && n.Kind != FluidKind.Gas) continue;
+                        if (n.Level != 0 && n.Kind != f.Kind) continue;
                         if (level - n.Level < 2) continue;
                         if (na < 0) { na = ni; la = n.Level; }
                         else { nb = ni; lb = n.Level; }
@@ -524,23 +525,23 @@ namespace Antarium.Sim
                     if (na >= 0 && nb >= 0)
                     {
                         int ma = (level - la) / 3, mb = (level - lb) / 3;
-                        Give(na, ma, FluidKind.Gas, la, false);
-                        Give(nb, mb, FluidKind.Gas, lb, false);
+                        Give(na, ma, f.Kind, la, false);
+                        Give(nb, mb, f.Kind, lb, false);
                         level -= ma + mb;
                     }
                     else if (na >= 0)
                     {
                         int m = (level - la) / 2;
-                        Give(na, m, FluidKind.Gas, la, false);
+                        Give(na, m, f.Kind, la, false);
                         level -= m;
                     }
                 }
 
-                // 3. Gas that reached the colony's tunnels slowly thins out.
-                if (level > 0 && (Cells[i].Flags & CellFlags.Explored) != 0 && Roll(i, GasDecayChance))
+                // 3. Gas that reached the colony's tunnels slowly thins out; smoke thins out anywhere.
+                if (level > 0 && (f.Kind == FluidKind.Smoke || (Cells[i].Flags & CellFlags.Explored) != 0) && Roll(i, GasDecayChance))
                     level--;
 
-                if (level != f.Level) Set(i, x, y, new FluidCell(FluidKind.Gas, (byte)level));
+                if (level != f.Level) Set(i, x, y, new FluidCell(f.Kind, (byte)level));
             }
 
             /// <summary>

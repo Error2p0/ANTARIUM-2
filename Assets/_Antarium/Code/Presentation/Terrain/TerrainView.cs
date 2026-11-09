@@ -42,6 +42,7 @@ namespace Antarium.Presentation
         static readonly int WaterSurfaceId = Shader.PropertyToID("_AntWaterSurface");
         static readonly int LavaId = Shader.PropertyToID("_AntLava");
         static readonly int LavaHotId = Shader.PropertyToID("_AntLavaHot");
+        static readonly int SmokeId = Shader.PropertyToID("_AntSmoke");
         static readonly int FireId = Shader.PropertyToID("_AntFire");
         static readonly int FireHotId = Shader.PropertyToID("_AntFireHot");
         static readonly int EmberId = Shader.PropertyToID("_AntEmber");
@@ -135,6 +136,7 @@ namespace Antarium.Presentation
             Shader.SetGlobalColor(WaterSurfaceId, ToWorkingAlpha(render.waterSurfaceColor));
             Shader.SetGlobalColor(LavaId, ToWorkingAlpha(render.lavaColor));
             Shader.SetGlobalColor(LavaHotId, ToWorkingAlpha(render.lavaHotColor));
+            Shader.SetGlobalColor(SmokeId, ToWorkingAlpha(render.smokeColor));
             Shader.SetGlobalColor(FireId, ToWorkingAlpha(render.fireColor));
             Shader.SetGlobalColor(FireHotId, ToWorkingAlpha(render.fireHotColor));
             Shader.SetGlobalColor(EmberId, ToWorkingAlpha(render.emberColor));

@@ -93,7 +93,8 @@ namespace Antarium.Tests
             Assert.AreEqual((int)math.ceil(_c.Config.fire.burnSeconds / Step), levels);
             Run(levels - 1);
             Assert.AreEqual(1, _fire.Count, "still burning");
-            Assert.Greater(_fluids.Total(FluidKind.Gas), 0, "smoke rose into the tunnel");
+            Assert.Greater(_fluids.Total(FluidKind.Smoke), 0, "smoke rose into the tunnel");
+            Assert.Greater(At(20, 20).Level + At(21, 20).Level + At(19, 20).Level, 0, "it gathers above the fire");
             _fluids.Step();
             _fire.Step(_fluids, Step);
             Assert.AreEqual(1, _fire.BurntOut.Count, "burnt out");
@@ -112,6 +113,16 @@ namespace Antarium.Tests
             Assert.AreEqual(FluidKind.None, At(20, 19).Kind);
             Assert.AreEqual(200 - _c.Config.fire.extinguishWater, At(20, 20).Level, "some water hissed away");
             Assert.IsFalse(_fire.CanBurn(new int2(20, 19)), "under water nothing burns");
+        }
+
+        [Test]
+        public void AMeteorite_LightsWhatBurnsAroundItsCrater_AsOneNewFire()
+        {
+            for (int x = 15; x <= 25; x++) Coal(x, 19);
+            int lit = _fire.IgniteAround(new float2(20.5f, 20.5f), 3f, Step);
+            Assert.AreEqual(5, lit, "the coal cells whose centres lie within 3 cells of the impact (x 18..22)");
+            Assert.AreEqual(1, _fire.Started.Count, "one new fire to announce, not one per cell");
+            Assert.IsFalse(Burning(15, 19), "out of reach");
         }
 
         [Test]

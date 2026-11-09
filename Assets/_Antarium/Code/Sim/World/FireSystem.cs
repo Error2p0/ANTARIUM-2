@@ -222,7 +222,7 @@ namespace Antarium.Sim
             return false;
         }
 
-        /// <summary>Smoke rises into the open cell above (else beside, else below) unless it holds a liquid.</summary>
+        /// <summary>Smoke rises into the open cell above (else beside, else below) unless it holds a liquid or spore gas.</summary>
         void Smoke(FluidSystem fluids, int2 c)
         {
             if (_config.smokePerStep <= 0) return;
@@ -233,10 +233,10 @@ namespace Antarium.Sim
                 int ni = _world.Index(n.x, n.y);
                 if (!_world.Cells[ni].HoldsFluid) continue;
                 var f = _world.Fluid[ni];
-                if (f.Level > 0 && f.Kind != FluidKind.Gas) continue;
+                if (f.Level > 0 && f.Kind != FluidKind.Smoke) continue;
                 int level = math.min(FluidCell.Full, f.Level + _config.smokePerStep);
                 if (level == f.Level) return;
-                _world.Fluid[ni] = new FluidCell(FluidKind.Gas, (byte)level);
+                _world.Fluid[ni] = new FluidCell(FluidKind.Smoke, (byte)level);
                 _world.MarkChanged(n.x, n.y, ChunkFlags.FluidUpload);
                 fluids?.Wake(n);
                 return;

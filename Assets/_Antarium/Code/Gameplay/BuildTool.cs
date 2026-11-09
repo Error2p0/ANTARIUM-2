@@ -68,7 +68,7 @@ namespace Antarium.Gameplay
             {
                 BuildingKind.Belt => new int2(-Dir.x, 0),
                 BuildingKind.Lift => new int2(0, -Dir.y),
-                BuildingKind.Filter or BuildingKind.Unloader => new int2(Dir.y, -Dir.x),
+                BuildingKind.Filter or BuildingKind.Unloader or BuildingKind.Pump => new int2(Dir.y, -Dir.x),
                 _ => Dir,
             };
             Dir = BuildingSystem.NormalizeDir(def.kind, Dir);

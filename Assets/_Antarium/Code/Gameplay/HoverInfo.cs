@@ -75,6 +75,7 @@ namespace Antarium.Gameplay
             {
                 DescribeStock(sim, cell);
                 if (_sb.Length == 0) DescribeFluid(sim, cell);
+                if (_sb.Length == 0) DescribeFire(sim, cell);
             }
             if (!pointerOverUi) AppendScents(sim, cell);
             return _sb.Length > 0 ? _sb.ToString() : null;
@@ -194,11 +195,28 @@ namespace Antarium.Gameplay
                 case FluidKind.Lava:
                     _sb.Append("Lava  -  burns ants and blocks their paths. Where it meets water it turns into obsidian.");
                     break;
+                case FluidKind.Smoke:
+                    _sb.Append("Smoke ").Append(percent).Append('%');
+                    _sb.Append("  -  from a fire. It rises, hurts ants when thick and clears away on its own; a pump can blow it out.");
+                    break;
                 case FluidKind.Gas:
                     _sb.Append("Spore gas ").Append(percent).Append('%');
                     _sb.Append(deep ? "  -  too thick to walk through; it hurts ants inside." : "  -  hurts ants; it thins out over time in your tunnels.");
                     break;
             }
+        }
+
+        /// <summary>A burning solid cell.</summary>
+        void DescribeFire(Simulation sim, int2 cell)
+        {
+            if (!IsVisible(sim, cell)) return;
+            var c = sim.World[cell.x, cell.y];
+            var f = sim.World.Fluid[sim.World.Index(cell.x, cell.y)];
+            if (c.IsOpen || f.Kind != FluidKind.Fire || f.Level == 0) return;
+            float left = f.Level * sim.TickDuration * Mathf.Max(1, sim.Config.fluids.ticksPerStep);
+            _sb.Append(_content.Materials[c.Material].DisplayName).Append("  -  burning (").Append(Mathf.CeilToInt(left)).Append(" s left)")
+                .Append("\nIt spreads to what burns next to it, gives off smoke and burns ants beside it, then turns to ash.")
+                .Append("\nWater next to it puts it out (pump some in); digging it out ends it too.");
         }
 
         void DescribeBuilding(Simulation sim, int id)
@@ -265,6 +283,35 @@ namespace Antarium.Gameplay
                     _sb.Append("\n").Append(_hud.ConfigureKey).Append(": pick the item. R turns new ones.");
                     return;
                 }
+                case BuildingKind.Pump:
+                {
+                    var intake = buildings.PumpIntake(b);
+                    var fi = sim.World.Fluid[sim.World.Index(intake.x, intake.y)];
+                    _sb.Append("  -  ").Append(b.Status switch
+                    {
+                        MachineStatus.Working => "pumping " + (fi.Kind == FluidKind.Smoke ? "smoke" : fi.Kind == FluidKind.Gas ? "gas" : "water"),
+                        MachineStatus.OutputBlocked => "stopped: no room in front (full, or another fluid there)",
+                        _ when fi.Level > 0 && fi.Kind == FluidKind.Lava => "lava is too thick to pump",
+                        _ => "nothing to pump behind it",
+                    });
+                    _sb.Append("\nMoves ").Append(Rate(b.Rate / FluidCell.Full)).Append(" cells of fluid/min from behind it to the way its spout points. ")
+                        .Append("It reaches ").Append(sim.Config.waterworks.pumpReach).Append(" cells back and pushes up to ")
+                        .Append(sim.Config.waterworks.pumpReach).Append(" cells ahead.")
+                        .Append("\nFluid can't pass through it; ants can. R turns new ones; chain pumps to lift water higher.");
+                    return;
+                }
+                case BuildingKind.WaterWheel:
+                {
+                    var def = data.Def;
+                    int boosted = buildings.MachinesBoostedBy(id);
+                    _sb.Append("  -  ").Append(b.Craft > 0.05f ? $"turning ({Mathf.RoundToInt(b.Craft * 100f)}% power)" : "still");
+                    if (b.Craft > 0.05f)
+                        _sb.Append("\nSpeeds up ").Append(boosted).Append(boosted == 1 ? " machine" : " machines").Append(" within ")
+                            .Append(def.boostRadius.ToString("0")).Append(" cells by +").Append(Mathf.RoundToInt(b.Craft * def.machineBoost * 100f)).Append('%');
+                    _sb.Append("\nWater has to pour onto it from above and drain away below (up to +")
+                        .Append(Mathf.RoundToInt(def.machineBoost * 100f)).Append("% at full flow). A pump can keep it turning.");
+                    return;
+                }
             }
 
             if (b.IsTransport)
@@ -302,6 +349,17 @@ namespace Antarium.Gameplay
                     .Append("   they wait here for the Nuptial Flight (N)");
             if (m.Tenders > 0)
                 _sb.Append(", tended by an engineer (+").Append(Mathf.RoundToInt(buildings.EngineerBoost * m.Tenders * 100f)).Append("%)");
+            var mdef = m.Data.Def;
+            if (mdef.heatBonus > 0f)
+                _sb.Append(m.Heated
+                    ? $"\nHeated: +{Mathf.RoundToInt(mdef.heatBonus * 100f)}% speed and no fuel needed"
+                    : "\nNot heated: build it next to lava or magma rock to skip the coal and work faster");
+            if (mdef.irrigationBonus > 0f)
+                _sb.Append(m.Irrigated
+                    ? $"\nIrrigated: +{Mathf.RoundToInt(mdef.irrigationBonus * 100f)}% output (it drinks a little water per batch)"
+                    : $"\nDry: water in or next to it gives +{Mathf.RoundToInt(mdef.irrigationBonus * 100f)}% output");
+            if (m.WheelBoost > 0f)
+                _sb.Append("\nWater wheel nearby: +").Append(Mathf.RoundToInt(m.WheelBoost * 100f)).Append("% speed");
             if (m.Recipe >= 0)
             {
                 var recipe = _content.Recipes[m.Recipe];

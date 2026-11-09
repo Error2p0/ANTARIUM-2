@@ -52,9 +52,9 @@ namespace Antarium.Content
     public sealed class FireConfig
     {
         [Tooltip("Seconds a cell burns before it turns to ash.")]
-        [Min(0.5f)] public float burnSeconds = 12f;
+        [Min(0.5f)] public float burnSeconds = 15f;
         [Tooltip("Chance per second that a burning cell lights each flammable neighbour (if it touches open air).")]
-        [Range(0f, 1f)] public float spreadPerSecond = 0.12f;
+        [Range(0f, 1f)] public float spreadPerSecond = 0.25f;
         [Tooltip("Chance per lava step that moving lava lights a flammable cell next to it.")]
         [Range(0f, 1f)] public float lavaIgniteChance = 0.05f;
         [Tooltip("Smoke (gas, of 255) a burning cell gives off per fluid step into the open cell above or beside it.")]
@@ -549,6 +549,8 @@ namespace Antarium.Content
         public Color lavaHotColor = new(1f, 0.85f, 0.35f, 1f);
         [Tooltip("Gas tint; alpha = cover at full density.")]
         public Color gasColor = new(0.62f, 0.85f, 0.3f, 0.55f);
+        [Tooltip("Smoke tint; alpha = cover at full density.")]
+        public Color smokeColor = new(0.42f, 0.4f, 0.4f, 0.6f);
         [Tooltip("Burning cells: flames on their edge (and the hot flicker), embers inside.")]
         public Color fireColor = new(1f, 0.5f, 0.12f, 1f);
         public Color fireHotColor = new(1f, 0.9f, 0.45f, 1f);

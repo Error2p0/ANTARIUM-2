@@ -129,6 +129,8 @@ namespace Antarium.Presentation
                 case BuildingKind.Wall: v.Rect = BuildingSprites.WallRect; break;
                 case BuildingKind.Nursery: v.Rect = BuildingSprites.NurseryRect; break;
                 case BuildingKind.Emitter: v.Rect = BuildingSprites.EmitterRect; break;
+                case BuildingKind.Pump: v.Rect = BuildingSprites.PumpRect; v.Frames = 2; break;
+                case BuildingKind.WaterWheel: v.Rect = BuildingSprites.WheelRect; v.Frames = BuildingSprites.AnimFrames; break;
                 default:
                     v.Rect = def.art switch
                     {
@@ -302,6 +304,21 @@ namespace Antarium.Presentation
                     SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.ItemSize), new int2(0, 1), 1, rects[BuildingSprites.ItemRect], dot, light);
                     break;
                 }
+                case BuildingKind.Pump:
+                {
+                    // Turned like the filter: the spout points along Dir. The impeller turns while it pumps.
+                    var up = new int2(-b.Dir.y, b.Dir.x);
+                    int frame = b.State == BuildingState.Active && b.Status == MachineStatus.Working ? (int)(time * 8f) & 1 : 0;
+                    SpriteQuads.WriteQuad(v, quad, cellCenter, cell, up, 1, rects[vis.Rect + frame], color, light);
+                    break;
+                }
+                case BuildingKind.WaterWheel:
+                {
+                    // Craft = power: the wheel turns as fast as water pours through it (backwards: water falls on its left side).
+                    int frame = (int)(time * 10f * b.Craft) & (BuildingSprites.AnimFrames - 1);
+                    SpriteQuads.WriteUpright(v, quad, origin, vis.SizePx, rects[vis.Rect + ((BuildingSprites.AnimFrames - frame) & (BuildingSprites.AnimFrames - 1))], color, light);
+                    break;
+                }
                 case BuildingKind.Emitter:
                 {
                     SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect], color, light);
@@ -375,7 +392,7 @@ namespace Antarium.Presentation
                     float hurt = 1f - math.saturate(b.Health / math.max(1f, Defs[b.Def].MaxHealth));
                     return Lerp(new Color32(255, 255, 255, 255), new Color32(255, 110, 90, 255), hurt);
                 }
-                if (b.Kind == BuildingKind.Unloader && Overlay)
+                if ((b.Kind == BuildingKind.Unloader || b.Kind == BuildingKind.Pump || b.Kind == BuildingKind.WaterWheel) && Overlay)
                     return b.Status == MachineStatus.Working ? Colors.Working : b.Status == MachineStatus.OutputBlocked ? Colors.Jam : Colors.Idle;
                 if (b.Kind > BuildingKind.Processor) return new Color32(255, 255, 255, 255);
                 if (!Overlay) return new Color32(255, 255, 255, 255);

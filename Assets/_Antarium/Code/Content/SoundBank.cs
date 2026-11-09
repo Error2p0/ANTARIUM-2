@@ -22,6 +22,8 @@ namespace Antarium.Content
         UiClick, UiHover, UiOpen, UiClose, Refused, Toast,
         // the surface (Milestone 10.2; appended so saved banks keep their cues)
         BirdCry, BirdStrike, Rain, Dusk, Dawn,
+        // the living world (Milestone 10.3)
+        FireIgnite,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }

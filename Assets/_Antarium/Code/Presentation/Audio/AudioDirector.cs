@@ -319,6 +319,7 @@ namespace Antarium.Presentation
                     if (e.Broken) Queue(SoundCue.AntDig, e.Cell);
             foreach (var e in events.Read<CaveInEvent>()) Queue(SoundCue.CaveIn, e.Cell);
             foreach (var e in events.Read<FluidReactionEvent>()) Queue(SoundCue.Sizzle, e.Cell);
+            foreach (var e in events.Read<FireEvent>()) Queue(e.Kind == FireEventKind.Started ? SoundCue.FireIgnite : SoundCue.Sizzle, e.Cell);
             foreach (var e in events.Read<WallBuiltEvent>()) Queue(SoundCue.WallBuilt, e.Cell);
 
             foreach (var e in events.Read<ItemDeliveredEvent>()) Queue(SoundCue.Deliver, e.Cell);

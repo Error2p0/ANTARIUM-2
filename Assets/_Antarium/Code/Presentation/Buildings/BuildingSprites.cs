@@ -62,7 +62,12 @@ namespace Antarium.Presentation
         /// <summary>Aphid Ranch (4×2 cells): 2 frames, grazing and with honeydew drops. The aphids themselves are drawn moving.</summary>
         public const int RanchRect = CrusherRect + 2;
         public const int RanchWidth = 32, RanchHeight = 16;
-        const int RectCount = RanchRect + 2;
+        /// <summary>Pump: 2 frames (its impeller turned an eighth), outlet to the right (drawn turned like the filter).</summary>
+        public const int PumpRect = RanchRect + 2;
+        /// <summary>Water wheel (2×2 cells): 4 frames turning an eighth of a paddle each.</summary>
+        public const int WheelRect = PumpRect + 2;
+        public const int WheelSize = 16;
+        const int RectCount = WheelRect + AnimFrames;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -82,6 +87,7 @@ namespace Antarium.Presentation
         static readonly Color32 Gland = Hex(0xd8b8a0), GlandHigh = Hex(0xf4e2d0), GlandDark = Hex(0x8a6a58), Vent = Hex(0x4a3428);
         static readonly Color32 IronHigh = Hex(0xe4eaf2), IronMid = Hex(0xaeb8c6), IronDark = Hex(0x6e7884), IronShadow = Hex(0x454c56), Rivet = Hex(0x2e333a);
         static readonly Color32 Stone = Hex(0x8b8f99), StoneDark = Hex(0x5d6068), StoneHigh = Hex(0xb4b8c0), Dust = Hex(0xd8ccb4);
+        static readonly Color32 Water = Hex(0x4a90dc), WaterHigh = Hex(0xa8d8ff);
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
@@ -169,6 +175,17 @@ namespace Antarium.Presentation
             PaintRanch(96, 64, working: true);
             Rects[RanchRect] = Rect(64, 64, RanchWidth, RanchHeight);
             Rects[RanchRect + 1] = Rect(96, 64, RanchWidth, RanchHeight);
+
+            // Pump: an iron housing with an impeller and a spout on the right (the outlet); frame 1 turns the impeller.
+            Blit(88, 24, new[] { "KKKKKK..", "KiiiiK..", "KiIiiKu.", "KIIIiKuu", "KiIiiKuu", "KiiiiKu.", "KiiiiK..", "KKKKKK.." });
+            Blit(96, 24, new[] { "KKKKKK..", "KiiiiK..", "KIiIiKU.", "KiIiiKUU", "KIiIiKUU", "KiiiiKU.", "KiiiiK..", "KKKKKK.." });
+            Rects[PumpRect] = Rect(88, 24, Cell, Cell);
+            Rects[PumpRect + 1] = Rect(96, 24, Cell, Cell);
+            for (int f = 0; f < AnimFrames; f++)
+            {
+                PaintWheel(64 + f * WheelSize, 80, f);
+                Rects[WheelRect + f] = Rect(64 + f * WheelSize, 80, WheelSize, WheelSize);
+            }
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -304,6 +321,35 @@ namespace Antarium.Presentation
                 for (int y = 2; y < 8; y++) Set(ox + fx, oy + y, Root);
             for (int x = 0; x < RanchWidth; x++)
                 if (x % 4 != 2) Set(ox + x, oy + 6, RootHigh);
+        }
+
+        /// <summary>
+        /// Water wheel: a wooden rim on an iron hub with eight paddles; each frame turns it a quarter of the gap between
+        /// paddles, so four frames loop smoothly. Wet paddle tips catch the water.
+        /// </summary>
+        void PaintWheel(int ox, int oy, int frame)
+        {
+            float2 center = new float2(7.5f, 7.5f);
+            for (int y = 0; y < WheelSize; y++)
+            for (int x = 0; x < WheelSize; x++)
+            {
+                float2 d = new float2(x + 0.5f, y + 0.5f) - center;
+                float r = math.length(d);
+                if (r > 7.6f) continue;
+                if (r > 6.6f) Set(ox + x, oy + y, WoodDark);
+                else if (r < 1.6f) Set(ox + x, oy + y, r < 0.8f ? Rivet : IronDark);
+            }
+            for (int k = 0; k < 8; k++)
+            {
+                float a = (k + frame / 4f) * math.PI / 4f;
+                float2 dir = new float2(math.cos(a), math.sin(a));
+                for (float t = 1.6f; t <= 7.4f; t += 0.35f)
+                {
+                    float2 q = center + dir * t;
+                    var c = t > 6.2f ? (k % 2 == 0 ? WaterHigh : Water) : t > 4.5f ? WoodHigh : Wood;
+                    Set(ox + (int)math.floor(q.x), oy + (int)math.floor(q.y), c);
+                }
+            }
         }
 
         /// <summary>Two root rails with a silk strand between them; rungs travel up one pixel per frame.</summary>
@@ -576,6 +622,8 @@ namespace Antarium.Presentation
                         case 'i': c = IronMid; break;
                         case 'P': c = WoodHigh; break;
                         case 'W': c = WoodDark; break;
+                        case 'u': c = Water; break;
+                        case 'U': c = WaterHigh; break;
                         default: continue;
                     }
                     Set(ox + x, y, c);

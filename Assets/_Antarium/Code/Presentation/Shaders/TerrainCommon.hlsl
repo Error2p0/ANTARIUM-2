@@ -86,18 +86,25 @@ struct Neighborhood
 float4 _AntOverlay; // rgb = mining order colour
 float4 _AntStorageColor;
 
-// Fluid plane: two cells per uint, each 16 bits = level (8) | kind (8). Kind: 1 water, 2 lava, 3 gas.
+// Fluid plane: two cells per uint, each 16 bits = level (8) | kind (8). Kind: 1 water, 2 lava, 3 gas, 4 fire (on a solid cell),
+// 5 smoke.
 StructuredBuffer<uint> _AntFluid;
 float4 _AntWater;        // rgb tint, a = cover
 float4 _AntWaterSurface;
 float4 _AntLava;
 float4 _AntLavaHot;
 float4 _AntGas;          // rgb tint, a = cover at full density
+float4 _AntSmoke;        // rgb tint, a = cover at full density
+float4 _AntFire;         // flames
+float4 _AntFireHot;      // flame flicker
+float4 _AntEmber;        // glowing embers inside a burning cell
 float _AntTime;
 
 #define ANT_FLUID_WATER 1u
 #define ANT_FLUID_LAVA 2u
 #define ANT_FLUID_GAS 3u
+#define ANT_FLUID_FIRE 4u
+#define ANT_FLUID_SMOKE 5u
 
 uint FluidWord(int2 c)
 {
@@ -170,8 +177,8 @@ float RevealedAt(Neighborhood n, float2 p)
     return n.revealed[i] * w.x + n.revealed[i + 1] * w.y + n.revealed[i + 3] * w.z + n.revealed[i + 4] * w.w;
 }
 
-// Material of a solid pixel: the neighbouring cell contributing the most density.
-uint SolidMaterial(Neighborhood n, float2 p)
+// The neighbouring cell contributing the most density to a solid pixel (index into the neighbourhood).
+int SolidIndex(Neighborhood n, float2 p)
 {
     int i; float4 w;
     Bilinear(n, p, i, w);
@@ -180,7 +187,19 @@ uint SolidMaterial(Neighborhood n, float2 p)
     if (s.y > bestScore) { best = i + 1; bestScore = s.y; }
     if (s.z > bestScore) { best = i + 3; bestScore = s.z; }
     if (s.w > bestScore) { best = i + 4; }
-    return n.material[best];
+    return best;
+}
+
+// Material of a solid pixel: the neighbouring cell contributing the most density.
+uint SolidMaterial(Neighborhood n, float2 p)
+{
+    return n.material[SolidIndex(n, p)];
+}
+
+// Flicker in 0..1 that changes several times a second per art pixel.
+float FireFlicker(int2 px)
+{
+    return Hash21(px + int2((int)(_AntTime * 9.0) * 131, (int)(_AntTime * 6.0) * 37));
 }
 
 float3 LightAt(float2 p)
@@ -267,12 +286,13 @@ void ApplyFluid(inout TerrainSurface s, Neighborhood n, PixelInfo p)
     }
     uint kind = FluidKindOf(f);
     float level = FluidLevelOf(f);
-    if (kind == 0u || level <= 0.0) return;
+    if (kind == 0u || kind == ANT_FLUID_FIRE || level <= 0.0) return;
 
-    if (kind == ANT_FLUID_GAS)
+    if (kind == ANT_FLUID_GAS || kind == ANT_FLUID_SMOKE)
     {
-        if (Bayer4(p.px + int2((int)(_AntTime * 2.0), 0)) < level * _AntGas.a * 1.6)
-            s.albedo = lerp(s.albedo, _AntGas.rgb, 0.55);
+        float4 tint = kind == ANT_FLUID_GAS ? _AntGas : _AntSmoke;
+        if (Bayer4(p.px + int2((int)(_AntTime * 2.0), 0)) < level * tint.a * 1.6)
+            s.albedo = lerp(s.albedo, tint.rgb, 0.55);
         return;
     }
 
@@ -342,7 +362,8 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
     if (solid)
     {
         int jc = JitteredCell(n, p.cellPos, p.px);
-        uint m = n.density[jc] >= 0.5 ? n.material[jc] : SolidMaterial(n, p.cellPos);
+        int mi = n.density[jc] >= 0.5 ? jc : SolidIndex(n, p.cellPos);
+        uint m = n.material[mi];
         AntMaterial mat = _AntMaterials[m];
         float3 c = LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & 31, m).rgb;
 
@@ -374,6 +395,23 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
 
         s.albedo = c;
         s.glow = max(s.glow, mat.params.y);
+
+        // Burning cell: flickering flames on its open edges, a charred face with sparkling embers inside.
+        if (FluidKindOf(FluidWord(n.origin + int2(mi % 3, mi / 3))) == ANT_FLUID_FIRE)
+        {
+            float flick = FireFlicker(p.px);
+            if (!up || !down || !left || !right)
+            {
+                s.albedo = flick > 0.5 ? _AntFireHot.rgb : _AntFire.rgb;
+                s.unlit = true;
+            }
+            else
+            {
+                s.albedo = lerp(s.albedo, _AntEmber.rgb, 0.7);
+                if (flick > 0.82) s.albedo = _AntFire.rgb;
+                s.glow = max(s.glow, 0.6);
+            }
+        }
     }
     else
     {
@@ -410,6 +448,20 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
             if ((n.flags[4] & ANT_FLAG_STORAGE) != 0 && ((p.px.x ^ p.px.y) & 2) == 0)
                 s.albedo = lerp(s.albedo, _AntStorageColor.rgb, 0.35);
             ApplyFluid(s, n, p);
+        }
+
+        // Flames lick up from a burning cell below (a ragged band a few art pixels high).
+        int2 below = (int2)floor(p.cellPos) - int2(0, 1);
+        if (FluidKindOf(FluidWord(below)) == ANT_FLUID_FIRE)
+        {
+            float flick = FireFlicker(int2(p.px.x, 0));
+            float height = (1.0 + 3.0 * flick) * p.step;
+            float local = frac(p.cellPos.y);
+            if (local < height && Hash21(p.px + int2((int)(_AntTime * 9.0), 7)) > 0.25)
+            {
+                s.albedo = local < height * 0.5 ? _AntFireHot.rgb : _AntFire.rgb;
+                s.unlit = true;
+            }
         }
     }
 

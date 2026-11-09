@@ -395,7 +395,7 @@ namespace Antarium.Sim
             {
                 if (f.Kind == FluidKind.Lava && !def.lavaImmune) Hurt(ref e, _combat.lavaDamage * dt);
                 else if (f.Kind == FluidKind.Water && f.Level >= nav.DeepFluid && !def.swims) Hurt(ref e, _combat.drownDamage * dt);
-                else if (f.Kind == FluidKind.Gas && f.Level >= _fluids.gasHarmLevel && !def.gasImmune) Hurt(ref e, _combat.gasDamage * dt);
+                else if (f.Kind.IsGas() && f.Level >= _fluids.gasHarmLevel && !def.gasImmune) Hurt(ref e, _combat.gasDamage * dt);
                 if (e.IsDead) return;
             }
 
@@ -455,7 +455,7 @@ namespace Antarium.Sim
             }
             var f = nav.FluidAt(c);
             bool comfortable = (f.Kind == FluidKind.Lava && def.lavaImmune) || (f.Kind == FluidKind.Water && def.swims)
-                               || (f.Kind == FluidKind.Gas && def.gasImmune);
+                               || (f.Kind.IsGas() && def.gasImmune);
             if (nav.IsFlooded(c) && !comfortable)
             {
                 Escape(ref e, nav);
@@ -625,7 +625,7 @@ namespace Antarium.Sim
                 StartStep(ref e, c + d);
                 return;
             }
-            int2 up = new int2(0, nav.FluidAt(c).Kind == FluidKind.Gas ? -1 : 1);
+            int2 up = new int2(0, nav.FluidAt(c).Kind.IsGas() ? -1 : 1);
             if (nav.CanSwim(c, up)) StartStep(ref e, c + up);
         }
 

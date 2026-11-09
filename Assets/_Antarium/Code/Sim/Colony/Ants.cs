@@ -606,6 +606,7 @@ namespace Antarium.Sim
                     case FluidKind.Lava: cause = DeathCause.Burned; return LavaDamage;
                     case FluidKind.Water when f.Level >= Nav.DeepFluid: cause = DeathCause.Drowned; return DrownDamage;
                     case FluidKind.Gas when f.Level >= GasHarmLevel: cause = DeathCause.Gassed; return GasDamage;
+                    case FluidKind.Smoke when f.Level >= GasHarmLevel: cause = DeathCause.Gassed; return GasDamage;
                 }
                 // A burning cell next to the ant scorches it.
                 if (FireDamage > 0f)
@@ -645,7 +646,7 @@ namespace Antarium.Sim
                     StartStep(ref a, best);
                     return;
                 }
-                int2 pref = Nav.FluidAt(c).Kind == FluidKind.Gas ? new int2(0, -1) : new int2(0, 1);
+                int2 pref = Nav.FluidAt(c).Kind.IsGas() ? new int2(0, -1) : new int2(0, 1);
                 if (Nav.CanSwim(c, pref))
                 {
                     StartStep(ref a, c + pref);

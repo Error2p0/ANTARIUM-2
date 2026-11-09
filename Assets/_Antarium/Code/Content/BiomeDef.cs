@@ -18,6 +18,14 @@ namespace Antarium.Content
         /// it is saved and drawn with the fluids; the fluid automaton leaves it alone.
         /// </summary>
         Fire,
+        /// <summary>From fires: behaves like gas (rises, hurts ants in dense clouds) but is grey and thins out everywhere.</summary>
+        Smoke,
+    }
+
+    public static class FluidKinds
+    {
+        /// <summary>Gas or smoke: rises, spreads under ceilings, hurts ants when thick.</summary>
+        public static bool IsGas(this FluidKind kind) => kind == FluidKind.Gas || kind == FluidKind.Smoke;
     }
 
     /// <summary>A depth band of the world with its own materials, deposits, caves, fluids and creatures.</summary>
