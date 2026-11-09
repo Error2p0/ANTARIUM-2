@@ -249,10 +249,10 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 ## Milestone 10 — Content complete (planned)
 Build what is still on the *Missing / not built yet* list below, while M9 waits for Steam's approvals. Branch `milestone-10` (off `milestone-9`; builds for Steam keep coming from `milestone-9` until M10 is merged, because M10 changes the save format). Each phase ends playable, verified in the editor (play mode + captures), with tests, docs (GDD / TODO / HOW_TO_PLAY) and its own commits. Save format 5 grows section by section (one version byte per section, older saves keep loading). Phases are ordered so later ones build on earlier ones; each can ship alone.
 
-**Proposed decisions** (open ones are asked before the phase that needs them)
+**Decisions** (asked and confirmed 2026-11-09; the rest are asked before the phase that needs them)
 - *Per-ant hunger / rest* is **not built**: the colony-wide upkeep per caste already makes food matter, and per-ant needs with thousands of ants add micromanagement and cost without a visible decision for the player. Ant XP (10.4) gives individual ants their character instead.
 - *Pheromone diffusion* and a *Haul to* scent stay out (decided in M6: sharp, predictable scents; storage zones do *Haul to*).
-- Hand-drawn art and recorded sound effects can't come from code. M10 builds the **drop-in pipeline** (PNGs / WAVs by naming convention override the generated ones, like the terrain `textureOverride` and *Assign Audio Files*) and better generated placeholders; the art itself is **(you)** or an artist.
+- Hand-drawn art and recorded sound effects can't come from code. M10 builds the **drop-in pipeline** (PNGs / WAVs by naming convention override the generated ones, like the terrain `textureOverride` and *Assign Audio Files*) and better generated placeholders; the art itself is **(you)** or an artist. Both are built: the pipeline *and* better generated art.
 - No power network: water wheels and magma heat **boost machines next to them** instead of introducing a power grid (keeps building simple, gives fluids a use).
 
 **10.1 Logistics completion** (no open questions)
@@ -272,12 +272,12 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - [ ] **Roots** in the topsoil as a cave feature (tough material ants dig around; drops root fibre for silk / recipes) — fills GDD 2.2.
 - [ ] **Surface threats**: **birds** (daytime, pick off ants on the open surface; warning shadow) and **surface spiders** (hunt near the nest entrance at night). Raids stay as they are.
 
-**10.3 Living world: fluids and materials** (open: fluid pressure)
+**10.3 Living world: fluids and materials** (no open questions)
 - [ ] **Pump** (moves fluid from its intake side to its outlet side; no pipes, pumps chain through dug tunnels): drain a flooded shaft, fill a moat.
 - [ ] **Water wheel** (in flowing / falling water: machines within N cells +speed) and **irrigation** (water next to a Fungus Garden / Aphid Ranch: +output).
 - [ ] **Magma heat**: a Smelter (or a new *Magma Forge*) next to lava or magma rock needs no coal and works faster.
 - [ ] **Flammable**: coal, mycelium, giant fungus and roots catch fire next to lava; fire spreads cell by cell, burns into smoke (gas) and ash; ants take burn damage. **Conductive**: copper ore / crystals carry crystal resonance (10.5).
-- [ ] **Fluid pressure** (optional, see question): water rises through U-bends to the level of its source.
+- Fluid pressure is **not built** (decided): pumps give the player control over water, and lakes / floods stay predictable.
 - [ ] Save `FLUD` 3 (fire), `WRLD` (roots, ash).
 
 **10.4 Colony depth** (open: queen evolution currency)
@@ -301,7 +301,7 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - [ ] **Prestige-only mechanics**: traits that unlock a caste from the start, biome variants (world modifiers that swap a biome's palette / creature), a building only known through flights (e.g. *Queen's Throne*).
 - [ ] **Save slots**: 3 slots + backups, slot picker on the title screen (generation, depth, play time from the header), Steam Cloud keeps working (`Saves/*`).
 
-**10.7 Presentation** (open: whether art is commissioned)
+**10.7 Presentation** (no open questions)
 - [ ] **Art override pipeline**: `Assets/_Antarium/Art/` PNGs by naming convention replace generated sprites (ants per caste and frame, queen, eggs, items, buildings, enemies, UI icons); editor menu *Antarium → Art → Import Overrides*; generated art stays the fallback.
 - [ ] Distinct generated **caste silhouettes** (not just palette swaps), better nursery / emitter / new building sprites; **UI item icons** in the resource bar, palettes and hover panel.
 - [ ] **Overlays**: light overlay and a full ore-scan overlay (revealed ore by type, toggle).
