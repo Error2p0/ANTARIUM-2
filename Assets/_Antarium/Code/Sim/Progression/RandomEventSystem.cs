@@ -501,6 +501,8 @@ namespace Antarium.Sim
                 }
                 Reveal.Around(world, new int2(x, top), reach + 3);
                 _sim.LiftAntsOutOfSolid(new int2(x - reach, top - reach), new int2(x + reach, top + reach));
+                // The hot rock sets roots (and anything else that burns) around the crater alight.
+                _sim.IgniteAround(impact, crater + _sim.Config.fire.meteoriteIgniteRadius);
                 cell = new int2(x, top);
                 return true;
             }

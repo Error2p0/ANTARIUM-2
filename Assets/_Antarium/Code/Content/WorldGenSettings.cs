@@ -37,6 +37,8 @@ namespace Antarium.Content
         [Header("Fluids")]
         [Tooltip("What lava turns into where it meets water.")]
         public TerrainMaterialDef fluidReactionMaterial;
+        [Tooltip("What a burnt-out flammable cell turns into (none = it stays as it is).")]
+        public TerrainMaterialDef ashMaterial;
 
         [Header("Surface plants and roots")]
         [Tooltip("Columns between surface plants (random in this range). Each plant drops leaves and has roots.")]

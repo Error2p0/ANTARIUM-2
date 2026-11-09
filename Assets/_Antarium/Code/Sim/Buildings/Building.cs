@@ -149,15 +149,25 @@ namespace Antarium.Sim
         public int Tenders;
         /// <summary>The only recipe it runs (index into <see cref="BuildingData.Recipes"/>), or -1 for any it can.</summary>
         public int Choice { get; private set; } = -1;
-        /// <summary>Bit per item it takes in now: every input, or only the chosen recipe's.</summary>
+        /// <summary>Bit per item it takes in now: every input, or only the chosen recipe's (fuel left out while heated).</summary>
         public ulong ActiveMask { get; private set; }
+        /// <summary>Lava, magma rock or fire touches it (machines with a heat bonus only): faster, and fuel is not needed.</summary>
+        public bool Heated { get; private set; }
+        /// <summary>Water stands in or next to it (machines with an irrigation bonus; shown in the hover panel, crafts check again).</summary>
+        public bool Irrigated;
+        /// <summary>Extra speed from the best turning water wheel nearby (0.5 = +50%).</summary>
+        public float WheelBoost;
+        /// <summary>Irrigation bonus not paid out yet (a whole extra batch comes every 1 / bonus crafts).</summary>
+        public float IrrigationCarry;
+        ulong _choiceMask;
+        ulong _fuelMask;
 
         public Machine(int building, BuildingData data)
         {
             Building = building;
             Data = data;
             Inputs = new int[data.InputItems.Length];
-            ActiveMask = data.InputMask;
+            ActiveMask = _choiceMask = data.InputMask;
         }
 
         /// <summary>Runs only recipe <paramref name="choice"/> (index into the building's recipes; -1 = any). Its other inputs stay buffered.</summary>
@@ -165,15 +175,28 @@ namespace Antarium.Sim
         {
             if (choice < -1 || choice >= Data.Recipes.Length) choice = -1;
             Choice = choice;
-            if (choice < 0)
+            if (choice < 0) _choiceMask = Data.InputMask;
+            else
             {
-                ActiveMask = Data.InputMask;
-                return;
+                ulong mask = 0;
+                foreach (ushort item in content.Recipes[Data.Recipes[choice]].InputItems) mask |= 1ul << item;
+                _choiceMask = mask;
             }
-            ulong mask = 0;
-            foreach (ushort item in content.Recipes[Data.Recipes[choice]].InputItems) mask |= 1ul << item;
-            ActiveMask = mask;
+            ActiveMask = _choiceMask & ~(Heated ? _fuelMask : 0ul);
         }
+
+        /// <summary>Heat on or off (fuel items stop or start being taken in). Returns true if it changed.</summary>
+        public bool SetHeated(bool heated, ulong fuelMask)
+        {
+            if (heated == Heated && fuelMask == _fuelMask) return false;
+            Heated = heated;
+            _fuelMask = fuelMask;
+            ActiveMask = _choiceMask & ~(Heated ? _fuelMask : 0ul);
+            return true;
+        }
+
+        /// <summary>A fuel input the machine skips while heated.</summary>
+        public bool SkipsFuel(ushort item) => Heated && (_fuelMask & (1ul << item)) != 0;
 
         public int InputIndex(ushort item) => System.Array.IndexOf(Data.InputItems, item);
 

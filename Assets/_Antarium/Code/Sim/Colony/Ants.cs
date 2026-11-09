@@ -438,6 +438,7 @@ namespace Antarium.Sim
                 DrownDamage = _combat.drownDamage * resist,
                 LavaDamage = _combat.lavaDamage * resist,
                 GasDamage = _combat.gasDamage * resist,
+                FireDamage = _combat.fireDamage * resist,
                 GasHarmLevel = (byte)math.clamp(_fluids.gasHarmLevel, 1, 255),
                 SwimFactor = _combat.swimSpeedFactor,
                 SoldierRange = (int)(_combat.soldierRange * FlowFields.StraightCost),
@@ -510,6 +511,7 @@ namespace Antarium.Sim
             public float DrownDamage;
             public float LavaDamage;
             public float GasDamage;
+            public float FireDamage;
             public byte GasHarmLevel;
             public float SwimFactor;
             /// <summary>Soldiers: enemy field distance (field units) they react to / stay within of their post.</summary>
@@ -599,13 +601,21 @@ namespace Antarium.Sim
             {
                 cause = DeathCause.None;
                 var f = Nav.FluidAt(c);
-                if (f.Level == 0) return 0f;
-                switch (f.Kind)
+                switch (f.Level == 0 ? FluidKind.None : f.Kind)
                 {
                     case FluidKind.Lava: cause = DeathCause.Burned; return LavaDamage;
                     case FluidKind.Water when f.Level >= Nav.DeepFluid: cause = DeathCause.Drowned; return DrownDamage;
                     case FluidKind.Gas when f.Level >= GasHarmLevel: cause = DeathCause.Gassed; return GasDamage;
                 }
+                // A burning cell next to the ant scorches it.
+                if (FireDamage > 0f)
+                    for (int d = 0; d < 4; d++)
+                    {
+                        int2 n = c + (d == 0 ? new int2(1, 0) : d == 1 ? new int2(-1, 0) : d == 2 ? new int2(0, 1) : new int2(0, -1));
+                        if (Nav.FluidAt(n).Kind != FluidKind.Fire) continue;
+                        cause = DeathCause.Burned;
+                        return FireDamage;
+                    }
                 return 0f;
             }
 

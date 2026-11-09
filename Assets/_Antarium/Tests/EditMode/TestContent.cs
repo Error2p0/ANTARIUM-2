@@ -14,6 +14,15 @@ namespace Antarium.Tests
     public sealed class TestContent : IDisposable
     {
         public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root;
+        /// <summary>10.3: CoalRock burns (drops coal), Magma is hot, Ash is what burnt cells become (falls like sand).</summary>
+        public readonly TerrainMaterialDef CoalRock, Magma, Ash;
+        /// <summary>Coal is fuel: a heated Forge runs without it.</summary>
+        public readonly ItemDef Coal;
+        /// <summary>
+        /// Pump: 2 cells of fluid a second. Wheel: 2×2, 2 cells a second per column, +50% within 6 cells. Forge: 2×2, 2 ore + 1 coal
+        /// -> 1 bar (2 s), +100% when heated. Farm: 2×1, 1 seed -> 2 leaves (1 s), +50% output when irrigated.
+        /// </summary>
+        public readonly BuildingDef Pump, Wheel, Forge, Farm;
         public readonly BiomeDef Topsoil, Deep;
         public readonly ItemDef Ore, Seed, Bar, Chitin;
         /// <summary>Surface (10.2): leaves fall from plants, honeydew is the queen's treat, roots drop fibre.</summary>
@@ -62,6 +71,8 @@ namespace Antarium.Tests
             Leaf = Make<ItemDef>("leaf");
             Honeydew = Make<ItemDef>("honeydew");
             Fibre = Make<ItemDef>("fibre");
+            Coal = Make<ItemDef>("coal");
+            Coal.fuel = true;
 
             Smelt = Make<RecipeDef>("smelt");
             Smelt.inputs.Add(new ItemAmount(Ore, 2));
@@ -100,8 +111,12 @@ namespace Antarium.Tests
             Packed = Mat("packed", 1f);
             OreRock = Mat("ore_rock", 2f);
             OreRock.drop = Ore;
-            Root = Mat("root", 4f);
+            Root = Mat("root", 4f, MaterialFlags.Flammable);
             Root.drop = Fibre;
+            CoalRock = Mat("coal_rock", 3f, MaterialFlags.Flammable);
+            CoalRock.drop = Coal;
+            Magma = Mat("magma", 6f, MaterialFlags.Hot);
+            Ash = Mat("ash", 0.3f, MaterialFlags.Unstable);
 
             Gate = Building("gate", BuildingKind.Gate, 6);
             Gate.maxHealth = 40f;
@@ -150,6 +165,33 @@ namespace Antarium.Tests
             Ranch.size = new Vector2Int(2, 1);
             Ranch.recipes.Add(herd);
             Ranch.art = PlaceholderArt.Ranch;
+
+            Pump = Building("pump", BuildingKind.Pump, 18);
+            Pump.speed = 2f;
+            Wheel = Building("wheel", BuildingKind.WaterWheel, 19);
+            Wheel.size = new Vector2Int(2, 2);
+            Wheel.speed = 2f;
+            Wheel.machineBoost = 0.5f;
+            Wheel.boostRadius = 6f;
+            var fire = Make<RecipeDef>("fire_smelt");
+            fire.inputs.Add(new ItemAmount(Ore, 2));
+            fire.inputs.Add(new ItemAmount(Coal, 1));
+            fire.outputs.Add(new ItemAmount(Bar, 1));
+            fire.duration = 2f;
+            Forge = Building("forge", BuildingKind.Processor, 20);
+            Forge.size = new Vector2Int(2, 2);
+            Forge.recipes.Add(fire);
+            Forge.heatBonus = 1f;
+            var grow = Make<RecipeDef>("grow");
+            grow.inputs.Add(new ItemAmount(Seed, 1));
+            grow.outputs.Add(new ItemAmount(Leaf, 2));
+            grow.duration = 1f;
+            Farm = Building("farm", BuildingKind.Processor, 21);
+            Farm.size = new Vector2Int(2, 1);
+            Farm.recipes.Add(grow);
+            Farm.irrigationBonus = 0.5f;
+            Farm.inputBatches = 10;
+            Farm.outputLimit = 50;
 
             // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
             WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
@@ -355,6 +397,7 @@ namespace Antarium.Tests
             WorldGen.nestDepth = 8;
             WorldGen.nestRadius = new Vector2(4, 2);
             WorldGen.fluidReactionMaterial = Obsidian;
+            WorldGen.ashMaterial = Ash;
 
             Config = Make<GameConfig>("config");
             Config.progression.firstEventDelay = 1e9f; // events only when a test triggers them
@@ -366,9 +409,10 @@ namespace Antarium.Tests
             Config.surface.firstSpiderSeconds = 1e9f;
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root }, WorldGen,
-                new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre }, null,
-                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch },
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash },
+                WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal }, null,
+                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch,
+                    Pump, Wheel, Forge, Farm },
                 Progression);
         }
 
@@ -396,9 +440,10 @@ namespace Antarium.Tests
 
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
-            ContentDB.Build(new[] { Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
-                new[] { Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
-                new[] { Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
+            ContentDB.Build(new[] { Ash, Magma, CoalRock, Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
+                new[] { Coal, Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
+                new[] { Farm, Forge, Wheel, Pump, Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter,
+                    Lift, Belt, Smelter },
                 Progression);
 
         GeneticDef Genetic(string id, int column, int row, int cost, int costPerLevel, int maxLevel, params GeneticEffect[] effects)

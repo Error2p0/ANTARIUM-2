@@ -263,6 +263,23 @@ namespace Antarium.Sim
         public readonly int2 Cell;
         public WallBuiltEvent(int2 cell) { Cell = cell; }
     }
+
+    public enum FireEventKind : byte
+    {
+        /// <summary>A new fire (lava or a meteorite lit a flammable cell; spreading fires don't count).</summary>
+        Started,
+        /// <summary>Water put a burning cell out.</summary>
+        Doused,
+    }
+
+    /// <summary>A fire started or was put out at <see cref="Cell"/> (<see cref="Material"/>: what burns there).</summary>
+    public readonly struct FireEvent
+    {
+        public readonly FireEventKind Kind;
+        public readonly int2 Cell;
+        public readonly ushort Material;
+        public FireEvent(FireEventKind kind, int2 cell, ushort material) { Kind = kind; Cell = cell; Material = material; }
+    }
 }
 
 namespace Antarium.Sim

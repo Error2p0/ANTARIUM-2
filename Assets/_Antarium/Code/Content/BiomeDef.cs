@@ -13,6 +13,11 @@ namespace Antarium.Content
         Lava,
         /// <summary>Rises and spreads; harms ants in dense clouds; fades once it reaches the colony's tunnels.</summary>
         Gas,
+        /// <summary>
+        /// Not a fluid: a burning solid cell (flammable material), the level is the burn time left. Kept in the fluid plane so
+        /// it is saved and drawn with the fluids; the fluid automaton leaves it alone.
+        /// </summary>
+        Fire,
     }
 
     /// <summary>A depth band of the world with its own materials, deposits, caves, fluids and creatures.</summary>

@@ -79,6 +79,8 @@ namespace Antarium.Sim
         public readonly ContractSystem Contracts;
         public readonly RandomEventSystem RandomEvents;
         public readonly FluidSystem Fluids;
+        /// <summary>Burning flammable cells (10.3).</summary>
+        public readonly FireSystem Fire;
         public readonly EnemySystem Enemies;
         public readonly PheromoneSystem Pheromones;
 
@@ -142,9 +144,15 @@ namespace Antarium.Sim
                 Fluids.Settle(config.fluids.settleSteps);
                 Reveal.Initial(World, content.MaterialSim, config.dig.revealRadius);
             }
+            // Lava lights flammable cells only once the game runs (never while world generation settles the fluids).
+            Fluids.SetMaterials(content.MaterialSim);
+            Fluids.IgniteChance = config.fire.lavaIgniteChance;
+            Fire = new FireSystem(World, config.fire, content.MaterialSim, content.AshMaterial);
             Light = new LightSystem(World, config.light);
             var lava = config.fluids.lavaLight;
             Light.LavaEmission = new float3(lava.r, lava.g, lava.b) * config.fluids.lavaLightStrength;
+            var fire = config.fire.light;
+            Light.FireEmission = new float3(fire.r, fire.g, fire.b) * config.fire.lightStrength;
             Light.RecomputeAll(World, content.MaterialSim);
 
             _broken = new NativeList<int2>(64, Allocator.Persistent);
@@ -154,7 +162,8 @@ namespace Antarium.Sim
             Colony = new Colony(content, config.colony, config.castes);
             Colony.QueenCell = FindQueenCell();
             FindRoyalDisplayCells();
-            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat);
+            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat, config.waterworks);
+            Buildings.SetFluids(Fluids);
             Buildings.EngineerBoost = content.Caste(AntCaste.Engineer).machineBoost;
             int slots = content.ConsumerSlotCount;
             Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
@@ -219,6 +228,7 @@ namespace Antarium.Sim
             RefreshFields(force: true);
             World.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload);
             Fluids.WakeAllWithFluid();
+            Fire.Rebuild();
             Ants.CountCastes(_alive, _aliveWithEggs);
             ValidateNurseryEggs();
             _anySheltering = true; // released on the first tick unless a bird circles
@@ -591,6 +601,7 @@ namespace Antarium.Sim
 
             Reveal.Around(World, c, Config.dig.revealRadius);
             if (_veinInstinct) FollowVein(c);
+            Fire.Remove(c);
             Fluids.Wake(c);
             CheckUnstableAbove(c);
             AddBreach(c + new int2(1, 0));

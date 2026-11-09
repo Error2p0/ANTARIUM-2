@@ -19,6 +19,8 @@ namespace Antarium.Sim
         Blueprint = 1 << 4,
         /// <summary>Found by Seismic Sense or a rich vein: drawn with a faint glow so it can be spotted in the dark.</summary>
         Scanned = 1 << 5,
+        /// <summary>Open cell taken by a pump or water wheel: fluid can't flow into it (ants still walk through).</summary>
+        FluidBlock = 1 << 6,
     }
 
     /// <summary>
@@ -46,6 +48,8 @@ namespace Antarium.Sim
         public bool IsEmpty => Density == 0;
         public bool IsOpen => Density < OpenThreshold;
         public bool IsRevealed => (Flags & CellFlags.Revealed) != 0;
+        /// <summary>Open and not blocked by a pump or water wheel: fluid can be here.</summary>
+        public bool HoldsFluid => Density < OpenThreshold && (Flags & CellFlags.FluidBlock) == 0;
     }
 
     /// <summary>

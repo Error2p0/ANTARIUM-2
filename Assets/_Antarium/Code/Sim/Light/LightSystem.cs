@@ -25,6 +25,8 @@ namespace Antarium.Sim
         public NativeArray<uint> Light;
         /// <summary>Light emitted by a cell holding lava (fraction of the max level per channel).</summary>
         public float3 LavaEmission;
+        /// <summary>Light emitted by a burning cell (fraction of the max level per channel).</summary>
+        public float3 FireEmission;
 
         public LightSystem(WorldGrid world, LightConfig config)
         {
@@ -106,6 +108,7 @@ namespace Antarium.Sim
                     Cells = world.Cells,
                     Fluid = world.Fluid,
                     Lava = LavaEmission,
+                    Fire = FireEmission,
                     Materials = materials,
                     Light = Light,
                     ChunksX = world.ChunksX,
@@ -146,6 +149,7 @@ namespace Antarium.Sim
             [ReadOnly] public NativeArray<MaterialSim> Materials;
             public NativeArray<uint> Light;
             public float3 Lava;
+            public float3 Fire;
 
             public int ChunksX;
             public int4 Src; // xMin, yMin, xMax (exclusive), yMax (exclusive)
@@ -231,6 +235,7 @@ namespace Antarium.Sim
                 float e = m.IsAir || cell.IsEmpty ? 0f : m.Emission[channel];
                 var f = Fluid[index];
                 if (f.Kind == FluidKind.Lava && f.Level > 0) e = math.max(e, Lava[channel]);
+                else if (f.Kind == FluidKind.Fire && f.Level > 0) e = math.max(e, Fire[channel]);
                 return (byte)math.clamp((int)math.round(e * MaxLevel), 0, MaxLevel);
             }
 

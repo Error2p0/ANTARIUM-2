@@ -26,6 +26,51 @@ namespace Antarium.Content
         public PossessionConfig possession = new();
         public PrestigeConfig prestige = new();
         public SurfaceConfig surface = new();
+        public WaterworksConfig waterworks = new();
+        public FireConfig fire = new();
+    }
+
+    /// <summary>Pumps, water wheels, irrigation and magma heat (10.3). Per-building numbers are on the building assets.</summary>
+    [Serializable]
+    public sealed class WaterworksConfig
+    {
+        [Tooltip("A pump draws from the first cell holding fluid up to this many cells behind it (a hose), so a pump above a flooded " +
+                 "shaft drains it.")]
+        [Min(1)] public int pumpReach = 8;
+        [Tooltip("Seconds between checks of which machines are irrigated, heated or near a turning water wheel.")]
+        [Min(0.05f)] public float checkSeconds = 0.5f;
+        [Tooltip("Share of the new value a water wheel's power takes each fluid step (smooths it over about a second).")]
+        [Range(0.01f, 1f)] public float wheelSmoothing = 0.1f;
+        [Tooltip("Water (of 255) a cell in or next to a machine needs for the machine to count as irrigated.")]
+        [Range(1, 255)] public int irrigationMinLevel = 24;
+        [Tooltip("Water (of 255) an irrigated machine drinks per craft.")]
+        [Range(0, 255)] public int irrigationWater = 48;
+    }
+
+    /// <summary>Burning flammable cells (10.3).</summary>
+    [Serializable]
+    public sealed class FireConfig
+    {
+        [Tooltip("Seconds a cell burns before it turns to ash.")]
+        [Min(0.5f)] public float burnSeconds = 12f;
+        [Tooltip("Chance per second that a burning cell lights each flammable neighbour (if it touches open air).")]
+        [Range(0f, 1f)] public float spreadPerSecond = 0.12f;
+        [Tooltip("Chance per lava step that moving lava lights a flammable cell next to it.")]
+        [Range(0f, 1f)] public float lavaIgniteChance = 0.05f;
+        [Tooltip("Smoke (gas, of 255) a burning cell gives off per fluid step into the open cell above or beside it.")]
+        [Range(0, 255)] public int smokePerStep = 4;
+        [Tooltip("Water (of 255) next to a burning cell that puts it out.")]
+        [Range(1, 255)] public int extinguishLevel = 32;
+        [Tooltip("Water lost as steam when it puts out a fire.")]
+        [Range(0, 255)] public int extinguishWater = 16;
+        [Tooltip("At most this many cells burn at once (new fires wait).")]
+        [Min(1)] public int maxBurning = 2000;
+        [Tooltip("Meteorite impacts light flammable cells this many cells around the crater.")]
+        [Min(0f)] public float meteoriteIgniteRadius = 3f;
+        [Tooltip("Colour of the light fire gives off.")]
+        [ColorUsage(false)] public Color light = new(1f, 0.55f, 0.2f);
+        [Tooltip("Light emitted by a burning cell, as a fraction of the maximum light level.")]
+        [Range(0f, 1f)] public float lightStrength = 0.6f;
     }
 
     [Serializable]
@@ -238,6 +283,8 @@ namespace Antarium.Content
         [Min(0f)] public float drownDamage = 6f;
         [Min(0f)] public float lavaDamage = 40f;
         [Min(0f)] public float gasDamage = 4f;
+        [Tooltip("Damage per second to an ant next to a burning cell.")]
+        [Min(0f)] public float fireDamage = 10f;
         [Tooltip("Damage (once) to an ant buried by falling sand.")]
         [Min(0f)] public float caveInDamage = 25f;
         [Tooltip("Ants swim at this share of their walking speed.")]
@@ -502,6 +549,10 @@ namespace Antarium.Content
         public Color lavaHotColor = new(1f, 0.85f, 0.35f, 1f);
         [Tooltip("Gas tint; alpha = cover at full density.")]
         public Color gasColor = new(0.62f, 0.85f, 0.3f, 0.55f);
+        [Tooltip("Burning cells: flames on their edge (and the hot flicker), embers inside.")]
+        public Color fireColor = new(1f, 0.5f, 0.12f, 1f);
+        public Color fireHotColor = new(1f, 0.9f, 0.45f, 1f);
+        public Color emberColor = new(0.55f, 0.12f, 0.04f, 1f);
 
         [Header("Combat")]
         public Color healthBarColor = new(0.45f, 0.95f, 0.4f);

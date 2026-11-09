@@ -15,6 +15,8 @@ namespace Antarium.Content
         Conductive = 1 << 4,
         /// <summary>Falls when the cell below is dug out (sand): cave-ins.</summary>
         Unstable = 1 << 5,
+        /// <summary>Gives off heat (magma rock): a Smelter next to it needs no fuel and works faster.</summary>
+        Hot = 1 << 6,
     }
 
     /// <summary>Procedural pixel pattern used when no texture override is assigned.</summary>

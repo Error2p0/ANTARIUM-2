@@ -131,7 +131,7 @@ namespace Antarium.Sim
                 w.Write(n);
                 w.Write(level);
                 w.Write(kind);
-            });
+            }, 2);
         }
 
         /// <summary>Pheromone strengths, one plane per kind (mostly zeros: they compress to almost nothing).</summary>
@@ -657,7 +657,9 @@ namespace Antarium.Sim
             for (int i = 0; i < n; i++)
             {
                 var k = (FluidKind)kind[i];
-                fluid[i] = Enum.IsDefined(typeof(FluidKind), k) && world.Cells[i].IsOpen ? new FluidCell(k, level[i]) : FluidCell.Empty;
+                // Fluids live in open cells; fires (FLUD 2) on solid ones.
+                bool fits = Enum.IsDefined(typeof(FluidKind), k) && world.Cells[i].IsOpen == (k != FluidKind.Fire);
+                fluid[i] = fits ? new FluidCell(k, level[i]) : FluidCell.Empty;
             }
             world.Fluid.CopyFrom(fluid);
             fluid.Dispose();
@@ -713,7 +715,8 @@ namespace Antarium.Sim
                 {
                     int saved = materials[i * 2] | (materials[i * 2 + 1] << 8);
                     ushort material = saved < map.Material.Length ? map.Material[saved] : ContentDB.AirIndex;
-                    cells[i] = new Cell(material, density[i], (CellFlags)flags[i]);
+                    // Pumps and water wheels set their fluid block again when the buildings load.
+                    cells[i] = new Cell(material, density[i], (CellFlags)flags[i] & ~CellFlags.FluidBlock);
                 }
                 world.Cells.CopyFrom(cells);
                 cells.Dispose();

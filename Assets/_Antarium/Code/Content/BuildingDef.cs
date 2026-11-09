@@ -31,6 +31,10 @@ namespace Antarium.Content
         Chest,
         /// <summary>Takes items (its filter item, or any) out of the storage behind it and puts them onto the belt or machine its arrow points at.</summary>
         Unloader,
+        /// <summary>Moves water or gas from the cell behind it to the cell its arrow points at. Fluid can't pass through it; ants can.</summary>
+        Pump,
+        /// <summary>Multi-cell, no floor needed: water from above falls through it, and the flow speeds up machines nearby.</summary>
+        WaterWheel,
     }
 
     /// <summary>Which generated placeholder sprite a machine uses until real art exists.</summary>
@@ -50,6 +54,8 @@ namespace Antarium.Content
         Crusher,
         /// <summary>Aphid Ranch: a fenced leaf pasture (aphids are drawn walking in it).</summary>
         Ranch,
+        /// <summary>Water wheel (its own animated sprite).</summary>
+        Wheel,
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>
@@ -71,7 +77,8 @@ namespace Antarium.Content
         [Min(0.05f)] public float buildWork = 1f;
 
         [Header("Transport")]
-        [Tooltip("Cells per second items move along this cell. Unloader: items per second it puts out.")]
+        [Tooltip("Cells per second items move along this cell. Unloader: items per second it puts out. Pump: cells of fluid per second it moves. " +
+                 "Water wheel: cells of water per second each of its columns lets through.")]
         [Min(0.1f)] public float speed = 2f;
 
         [Tooltip("Belts, lifts and gates: 0 = silk / resin, 1 = iron (picks the sprite). Placing a building of the same kind " +
@@ -111,6 +118,16 @@ namespace Antarium.Content
         [Tooltip("Princess chamber: princesses shown resting in it.")]
         [Min(0)] public int princessSlots;
 
+        [Header("Water and heat")]
+        [Tooltip("Water wheel: extra speed (0.5 = +50%) for machines near it when water pours through at full rate.")]
+        [Min(0f)] public float machineBoost;
+        [Tooltip("Water wheel: machines within this many cells of it are sped up.")]
+        [Min(0f)] public float boostRadius = 8f;
+        [Tooltip("Machines: extra output (0.5 = +50%) while water stands in or next to them (irrigation). 0 = not irrigated.")]
+        [Min(0f)] public float irrigationBonus;
+        [Tooltip("Machines: extra speed (1 = +100%) while lava, magma rock or fire touches them; they then need no fuel. 0 = no heat.")]
+        [Min(0f)] public float heatBonus;
+
         [Header("Presentation")]
         [Tooltip("Colour of the palette swatch.")]
         public Color color = Color.white;
@@ -123,6 +140,10 @@ namespace Antarium.Content
         public bool IsDefense => kind >= BuildingKind.Gate && kind <= BuildingKind.Wall;
         /// <summary>Machines and nurseries: several cells on a flat floor.</summary>
         public bool IsChamber => kind == BuildingKind.Processor || kind == BuildingKind.Nursery;
-        public Vector2Int Footprint => IsChamber ? new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y)) : Vector2Int.one;
+        /// <summary>Several cells: machines, nurseries and water wheels (the only ones that use <see cref="size"/>).</summary>
+        public bool IsMultiCell => IsChamber || kind == BuildingKind.WaterWheel;
+        /// <summary>Pumps and water wheels: fluid can't flow through their cells.</summary>
+        public bool BlocksFluid => kind == BuildingKind.Pump || kind == BuildingKind.WaterWheel;
+        public Vector2Int Footprint => IsMultiCell ? new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y)) : Vector2Int.one;
     }
 }

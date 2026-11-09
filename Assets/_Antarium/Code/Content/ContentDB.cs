@@ -20,6 +20,8 @@ namespace Antarium.Content
         public bool IsAir => (Flags & MaterialFlags.Air) != 0;
         public bool IsIndestructible => (Flags & MaterialFlags.Indestructible) != 0;
         public bool IsUnstable => (Flags & MaterialFlags.Unstable) != 0;
+        public bool IsFlammable => (Flags & MaterialFlags.Flammable) != 0;
+        public bool IsHot => (Flags & MaterialFlags.Hot) != 0;
     }
 
     /// <summary>Blittable per-caste numbers for Burst jobs (see <see cref="CasteDef"/>).</summary>
@@ -217,6 +219,10 @@ namespace Antarium.Content
         public readonly BiomeData[] Biomes;
         /// <summary>Material lava turns into where it meets water.</summary>
         public readonly ushort FluidReactionMaterial;
+        /// <summary>Material a burnt-out cell turns into, or <see cref="AirIndex"/> (it opens).</summary>
+        public readonly ushort AshMaterial;
+        /// <summary>Bit per item that is fuel (coal): heated machines run without it.</summary>
+        public readonly ulong FuelMask;
         /// <summary>Per building / ability: true if some research unlocks it (it starts locked).</summary>
         public readonly bool[] BuildingStartsLocked;
         public readonly bool[] AbilityStartsLocked;
@@ -317,6 +323,9 @@ namespace Antarium.Content
             }
             FluidReactionMaterial = worldGen.fluidReactionMaterial != null && _materialIndex.TryGetValue(worldGen.fluidReactionMaterial.Id, out var reaction)
                 ? reaction : AirIndex;
+            AshMaterial = worldGen.ashMaterial != null && _materialIndex.TryGetValue(worldGen.ashMaterial.Id, out var ash) ? ash : AirIndex;
+            for (int i = 0; i < items.Length && i < 64; i++)
+                if (items[i].fuel) FuelMask |= 1ul << i;
         }
 
         /// <summary>

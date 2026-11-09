@@ -18,7 +18,7 @@ namespace Antarium.Sim
     /// as a pile for workers. Defense buildings (gates, traps, guard posts, walls) are single cells that
     /// never carry items.
     /// </summary>
-    public sealed class BuildingSystem : IDisposable
+    public sealed partial class BuildingSystem : IDisposable
     {
         public const int None = -1;
 
@@ -76,11 +76,12 @@ namespace Antarium.Sim
         public int ActiveCount { get; private set; }
 
         public BuildingSystem(ContentDB content, LogisticsConfig config, WorldGrid world, Colony colony, EventBus events,
-            CombatConfig combat = null)
+            CombatConfig combat = null, WaterworksConfig waterworks = null)
         {
             _content = content;
             _config = config;
             _combat = combat ?? new CombatConfig();
+            _water = waterworks ?? new WaterworksConfig();
             _world = world;
             _colony = colony;
             _events = events;
@@ -130,6 +131,7 @@ namespace Antarium.Sim
                 case BuildingKind.Lift: return new int2(0, dir.y < 0 ? -1 : 1);
                 case BuildingKind.Filter:
                 case BuildingKind.Unloader:
+                case BuildingKind.Pump:
                     if (dir.x == 0 && dir.y == 0) return new int2(1, 0);
                     return math.abs(dir.x) >= math.abs(dir.y) ? new int2((int)math.sign(dir.x), 0) : new int2(0, (int)math.sign(dir.y));
                 default: return int2.zero;
@@ -154,7 +156,8 @@ namespace Antarium.Sim
             int2 nd = NormalizeDir(bdef.kind, dir);
             var nav = new NavGrid(_world);
 
-            bool machine = bdef.IsChamber;
+            bool machine = bdef.IsMultiCell;
+            bool needsFloor = bdef.IsChamber || bdef.kind == BuildingKind.Trap;
             for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
@@ -179,7 +182,7 @@ namespace Antarium.Sim
                     }
                     else
                     {
-                        bool turns = bdef.IsTransport || bdef.kind == BuildingKind.Unloader;
+                        bool turns = bdef.IsTransport || bdef.kind == BuildingKind.Unloader || bdef.kind == BuildingKind.Pump;
                         if (!turns || e.Dir.Equals(nd)) return PlaceResult.Unchanged;
                         rotate = existing;
                     }
@@ -189,7 +192,7 @@ namespace Antarium.Sim
                     return PlaceResult.Protected;
                 if (bdef.kind == BuildingKind.Chest && (cell.Flags & CellFlags.Storage) != 0) return PlaceResult.Protected;
             }
-            if (machine || bdef.kind == BuildingKind.Trap)
+            if (needsFloor)
             {
                 for (int x = 0; x < size.x; x++)
                     if (!nav.IsSolid(origin + new int2(x, -1))) return PlaceResult.NeedsFloor;
@@ -354,6 +357,7 @@ namespace Antarium.Sim
                     DropoffChanged = true;
                     break;
             }
+            if (_content.Buildings[b.Def].Def.BlocksFluid) SetFluidBlock(b, true);
             _networkDirty = true;
             BlueprintsChanged = true;
             RecountBlueprints();
@@ -422,6 +426,7 @@ namespace Antarium.Sim
             if (b.Kind == BuildingKind.GuardPost) GuardsChanged = true;
             if (b.Kind == BuildingKind.Nursery) NurseriesChanged = true;
             if (b.Kind == BuildingKind.Processor) MachinesChanged = true;
+            if (!blueprint && data.Def.BlocksFluid) SetFluidBlock(b, false);
 
             var inv = _colony.Inventory;
             if (!b.Front.IsEmpty) { inv.CancelTransit(b.Front.Item); DropPile(b.Origin, b.Front.Item, 1); }
@@ -637,6 +642,12 @@ namespace Antarium.Sim
 
             TickUnloaders(dt);
             UpdateChestLooks();
+            _climateTimer += dt;
+            if (_climateTimer >= _water.checkSeconds)
+            {
+                _climateTimer = 0f;
+                UpdateClimate();
+            }
             TickMachines(dt);
             UpdateConsumerRoom();
 
@@ -646,6 +657,8 @@ namespace Antarium.Sim
                 float a = _config.rateSmoothing;
                 for (int i = 0; i < _order.Count; i++) UpdateRate(_order[i], a);
                 foreach (int u in _unloaders) UpdateRate(u, a);
+                foreach (int p in _pumps) UpdateRate(p, a);
+                foreach (int w in _wheels) UpdateRate(w, a);
                 _rateTimer = 0f;
             }
         }
@@ -906,14 +919,25 @@ namespace Antarium.Sim
                     if (m.Recipe >= 0)
                     {
                         var recipe = _content.Recipes[m.Recipe];
+                        var def = m.Data.Def;
                         m.Status = MachineStatus.Working;
-                        m.Progress += dt * speed * (1f + EngineerBoost * m.Tenders);
+                        m.Progress += dt * speed * (1f + EngineerBoost * m.Tenders) * (1f + m.WheelBoost) * (m.Heated ? 1f + def.heatBonus : 1f);
                         if (m.Progress >= recipe.Duration)
                         {
+                            // Irrigated: the machine drinks some water and every 1 / bonus crafts yields a whole extra batch.
+                            int batches = 1;
+                            if (def.irrigationBonus > 0f && recipe.OutputItems.Length > 0 && Irrigate(b))
+                            {
+                                m.IrrigationCarry += def.irrigationBonus;
+                                int extra = (int)m.IrrigationCarry;
+                                m.IrrigationCarry -= extra;
+                                batches += extra;
+                            }
                             for (int i = 0; i < recipe.OutputItems.Length; i++)
                             {
-                                stats.Crafted[recipe.OutputItems[i]] += recipe.OutputCounts[i];
-                                for (int n = 0; n < recipe.OutputCounts[i]; n++)
+                                int made = recipe.OutputCounts[i] * batches;
+                                stats.Crafted[recipe.OutputItems[i]] += made;
+                                for (int n = 0; n < made; n++)
                                     m.Pending.Add(recipe.OutputItems[i]);
                             }
                             if (recipe.Knowledge > 0f)
@@ -955,7 +979,7 @@ namespace Antarium.Sim
                 var recipe = _content.Recipes[recipes[ri]];
                 bool ok = true;
                 for (int i = 0; i < recipe.InputItems.Length && ok; i++)
-                    ok = m.Inputs[m.InputIndex(recipe.InputItems[i])] >= recipe.InputCounts[i];
+                    ok = m.SkipsFuel(recipe.InputItems[i]) || m.Inputs[m.InputIndex(recipe.InputItems[i])] >= recipe.InputCounts[i];
                 if (!ok) continue;
                 if (recipe.Princesses > 0 && _colony.Princesses + PrincessesInProgress() + recipe.Princesses > _colony.PrincessCap)
                 {
@@ -963,7 +987,8 @@ namespace Antarium.Sim
                     continue;
                 }
                 for (int i = 0; i < recipe.InputItems.Length; i++)
-                    m.Inputs[m.InputIndex(recipe.InputItems[i])] -= recipe.InputCounts[i];
+                    if (!m.SkipsFuel(recipe.InputItems[i]))
+                        m.Inputs[m.InputIndex(recipe.InputItems[i])] -= recipe.InputCounts[i];
                 m.Recipe = recipes[ri];
                 m.Progress = 0f;
                 m.NextRecipe = (ri + 1) % recipes.Length;
@@ -1033,6 +1058,8 @@ namespace Antarium.Sim
             int active = 0;
             _unloaders.Clear();
             _chests.Clear();
+            _pumps.Clear();
+            _wheels.Clear();
             for (int id = 0; id < n; id++)
             {
                 ref var b = ref Get(id);
@@ -1047,6 +1074,8 @@ namespace Antarium.Sim
                     _unloaders.Add(id);
                 }
                 else if (b.IsActive && b.Kind == BuildingKind.Chest) _chests.Add(id);
+                else if (b.IsActive && b.Kind == BuildingKind.Pump) _pumps.Add(id);
+                else if (b.IsActive && b.Kind == BuildingKind.WaterWheel) _wheels.Add(id);
             }
             ActiveCount = active;
 
