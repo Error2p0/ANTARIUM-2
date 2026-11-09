@@ -269,13 +269,14 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - [x] 157 EditMode tests (9 new: chest filling and its filter, chest refused on a zone, storage filters and acceptance, unloader into a machine with a reserve, unloader item onto a belt, recipe choice, iron belt upgrade keeping items, splitters side by side never handing back, save round trip of chests / filters / reserves / recipe choice / unloader / zone growth).
 - Verified in the editor: chest → unloader → iron belts → crusher → smelter → filtered chest runs (16 ore in, 8 copper in the copper-only chest after 25 s), splitter pair, iron lift and gates drawn, configure panel on a chest and on the smelter, research row 7, the wrapped palette; quitting saved format 5 and the next play loaded it intact. The belt step stays plain C#: its cost is per cell per tick, so faster tiers don't add to it.
 
-**10.2 Surface: day, weather, aphids** (open: day length; whether birds take ants)
-- [ ] **Day / night** cycle: sky colour and sky light in the light map (night = dim surface; the light map's sky source scales), forage spawns by day, rich presence untouched. Length in `GameConfig`.
+**10.2 Surface: day, weather, aphids** (decisions asked and confirmed 2026-11-09: a full day/night cycle lasts **12 minutes** of game time; **birds scare first, then kill**: see below)
+- [ ] **Day / night** cycle: sky colour and sky light in the light map (night = dim surface; the light map's sky source scales), forage spawns by day, rich presence untouched. A full cycle is **12 minutes** of game time (decided), set in `GameConfig`.
 - [ ] **Weather**: rain (water seeps into open tunnels near the surface for a while, floods dips) and drought (forage −50%), announced by event cards. Offline: no weather.
 - [ ] **Leaves** on surface plants as a second forage; **Fungus Garden** accepts leaves (better ratio than seeds).
 - [ ] **Aphid Ranch** (machine with live aphids drawn in it, fed leaves → *honeydew*, a high-value food and queen resource); **golden aphid** random event (appears in a ranch, click it).
 - [ ] **Roots** in the topsoil as a cave feature (tough material ants dig around; drops root fibre for silk / recipes) — fills GDD 2.2.
-- [ ] **Surface threats**: **birds** (daytime, pick off ants on the open surface; warning shadow) and **surface spiders** (hunt near the nest entrance at night). Raids stay as they are.
+- [ ] **Surface threats**: **birds** (daytime) and **surface spiders** (hunt near the nest entrance at night). Raids stay as they are.
+  - Birds (decided): a bird first **scares** ants on the open surface: its warning shadow appears, and every ant on the surface drops its job and runs for the nearest way underground. Ants that **don't get back in time** (because they were far from an entrance) are **killed** when the bird strikes. Near ants are safe if they react; far foragers are at risk, so entrances near forage matter.
 
 **10.3 Living world: fluids and materials** (no open questions)
 - [ ] **Pump** (moves fluid from its intake side to its outlet side; no pipes, pumps chain through dug tunnels): drain a flooded shaft, fill a moat.
