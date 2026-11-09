@@ -1038,3 +1038,71 @@
     background-color: rgb(96, 64, 42);
     border-color: rgb(140, 100, 64);
 }
+
+/* ---------------------------------------------------------------- Milestone 10: configure panel, stock view */
+
+.configure {
+    position: absolute;
+    right: 8px;
+    bottom: 136px;
+    width: 372px;
+}
+.configure__header {
+    flex-direction: row;
+    align-items: center;
+}
+.configure__title {
+    flex-grow: 1;
+}
+.configure__list {
+    flex-direction: column;
+}
+.configure__list--grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.configure__row {
+    flex-direction: row;
+    align-items: center;
+    height: 24px;
+    width: 100%;
+}
+.configure__list .configure__option {
+    width: 352px;
+    height: 24px;
+    margin: 1px;
+}
+.configure__list--grid .configure__option {
+    width: 174px;
+}
+.configure__option .building__swatch {
+    height: 14px;
+}
+.configure__name {
+    color: rgb(240, 230, 210);
+    font-size: 16px;
+    width: 140px;
+    margin: 0;
+    padding: 0;
+}
+.configure__value {
+    color: rgb(255, 210, 140);
+    font-size: 16px;
+    width: 120px;
+    margin: 0;
+    padding: 0;
+}
+.configure__hint {
+    color: rgb(170, 160, 140);
+    font-size: 16px;
+    white-space: normal;
+    margin: 4px 0 0 0;
+    padding: 0;
+}
+.resource--clickable:hover {
+    background-color: rgba(96, 64, 42, 0.6);
+}
+/* 20+ buildings: wrap the palette before it reaches the ability bar on the right. */
+.palette {
+    max-width: 990px;
+}

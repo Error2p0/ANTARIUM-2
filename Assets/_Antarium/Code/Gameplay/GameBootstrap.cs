@@ -192,6 +192,17 @@ namespace Antarium.Gameplay
                 {
                     if (_sim != null) _sim.EnqueueCasteShare(caste, _sim.Colony.CasteShare[(int)caste] + step * _sim.Colony.ShareStep);
                 };
+            if (_hud.Configure != null)
+            {
+                _hud.StockClicked += ToggleStock;
+                _hud.Configure.StorageFilterChanged += (cell, mask) => _sim?.EnqueueStorageFilter(cell, mask);
+                _hud.Configure.ItemPicked += (cell, item) => _sim?.EnqueueSetFilter(cell, item);
+                _hud.Configure.RecipePicked += (cell, choice) => _sim?.EnqueueRecipe(cell, choice);
+                _hud.Configure.ReserveStep += (item, step) =>
+                {
+                    if (_sim != null) _sim.EnqueueReserve(item, Math.Max(0, _sim.Colony.Inventory.Reserve[item] + step));
+                };
+            }
             if (_hud.Contracts == null) return;
             _hud.Contracts.ClaimClicked += slot => _sim?.EnqueueClaim(slot);
             _hud.EventFeed.GoClicked += cell => { if (_sim != null) LookAt(cell); };
@@ -639,6 +650,7 @@ namespace Antarium.Gameplay
                 else if (_hud.ModalOpen) _hud.HideModal();
                 else if (_hud.TitleShowing) { }
                 else if (_tools.Possessing) _sim.EnqueueRelease();
+                else if (_hud.Configure != null && _hud.Configure.Visible) _hud.Configure.Hide();
                 else _hud.ShowModal(_hud.Menu?.Root);
             }
             if (_input.Help.WasPressedThisFrame())
@@ -651,6 +663,7 @@ namespace Antarium.Gameplay
             if (_input.Genetics.WasPressedThisFrame()) ToggleGenetics();
             if (_input.Flight.WasPressedThisFrame()) ToggleFlight();
             if (_input.Castes.WasPressedThisFrame() && _hud.Castes != null && CastesPanel.HasSpecialists(_sim)) _hud.Castes.Toggle();
+            if (_input.Configure.WasPressedThisFrame()) ToggleConfigure();
             if (_input.QuickSave.WasPressedThisFrame()) Save(background: true, announce: true);
             if (_input.QuickLoad.WasPressedThisFrame() && !TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load.");
         }
@@ -674,6 +687,30 @@ namespace Antarium.Gameplay
         {
             string saved = _lastSaved.HasValue ? $"saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "not saved yet";
             return $"Seed {_sim.Seed}   played {HudText.Duration(_sim.PlayTime)}   {saved}";
+        }
+
+        /// <summary>I: configure what is under the pointer (again on the same thing closes the panel).</summary>
+        void ToggleConfigure()
+        {
+            var panel = _hud.Configure;
+            if (panel == null || _sim == null || _hud.ModalOpen) return;
+            if (panel.Visible && panel.Target != ConfigTarget.Stock && panel.Cell.Equals(_pointerCell))
+            {
+                panel.Hide();
+                return;
+            }
+            if (panel.Open(_sim, _pointerCell)) return;
+            if (panel.Visible) panel.Hide();
+            else _hud.ShowToast("Nothing to set up there. Point at a storage zone, chest, unloader, filter, emitter or a machine with several recipes.");
+        }
+
+        /// <summary>The stock view (keep items for building), from the resource bar.</summary>
+        void ToggleStock()
+        {
+            var panel = _hud.Configure;
+            if (panel == null || _sim == null) return;
+            if (panel.Visible && panel.Target == ConfigTarget.Stock) panel.Hide();
+            else panel.OpenStock(_sim);
         }
 
         void ToggleOverlay()

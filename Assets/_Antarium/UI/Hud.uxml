@@ -19,6 +19,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="abilities" class="abilities" picking-mode="Ignore" />
         <ui:VisualElement name="castes" class="panel castes hidden" />
+        <ui:VisualElement name="configure" class="panel configure hidden" />
         <ui:VisualElement name="modal" class="modal hidden" />
     </ui:VisualElement>
 </ui:UXML>

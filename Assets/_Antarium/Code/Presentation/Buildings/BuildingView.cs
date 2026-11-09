@@ -111,11 +111,19 @@ namespace Antarium.Presentation
             };
             switch (def.kind)
             {
-                case BuildingKind.Belt: v.Rect = BuildingSprites.BeltRect; v.Frames = BuildingSprites.AnimFrames; break;
-                case BuildingKind.Lift: v.Rect = BuildingSprites.LiftRect; v.Frames = BuildingSprites.AnimFrames; break;
+                case BuildingKind.Belt:
+                    v.Rect = def.tier > 0 ? BuildingSprites.IronBeltRect : BuildingSprites.BeltRect;
+                    v.Frames = BuildingSprites.AnimFrames;
+                    break;
+                case BuildingKind.Lift:
+                    v.Rect = def.tier > 0 ? BuildingSprites.IronLiftRect : BuildingSprites.LiftRect;
+                    v.Frames = BuildingSprites.AnimFrames;
+                    break;
                 case BuildingKind.Splitter: v.Rect = BuildingSprites.SplitterRect; break;
                 case BuildingKind.Filter: v.Rect = BuildingSprites.FilterRect; break;
-                case BuildingKind.Gate: v.Rect = BuildingSprites.GateRect; break;
+                case BuildingKind.Gate: v.Rect = def.tier > 0 ? BuildingSprites.IronGateRect : BuildingSprites.GateRect; break;
+                case BuildingKind.Chest: v.Rect = BuildingSprites.ChestRect; v.Frames = 2; break;
+                case BuildingKind.Unloader: v.Rect = BuildingSprites.UnloaderRect; break;
                 case BuildingKind.Trap: v.Rect = BuildingSprites.TrapRect; v.Frames = 2; break;
                 case BuildingKind.GuardPost: v.Rect = BuildingSprites.GuardPostRect; break;
                 case BuildingKind.Wall: v.Rect = BuildingSprites.WallRect; break;
@@ -128,6 +136,7 @@ namespace Antarium.Presentation
                         PlaceholderArt.Garden => BuildingSprites.GardenRect,
                         PlaceholderArt.Archive => BuildingSprites.ArchiveRect,
                         PlaceholderArt.PrincessChamber => BuildingSprites.PrincessChamberRect,
+                        PlaceholderArt.Crusher => BuildingSprites.CrusherRect,
                         _ => BuildingSprites.GenericRect,
                     };
                     v.Frames = def.art == PlaceholderArt.Block ? 1 : 2;
@@ -210,6 +219,7 @@ namespace Antarium.Presentation
                             if (cellIndex >= royalCells.Count) continue;
                             cell = royalCells[cellIndex];
                         }
+                        else if (container.IsChest) continue; // the chest sprite shows it
                         else
                         {
                             if (cellIndex > 0) continue; // a cell holding more than 8 shows 8
@@ -266,6 +276,29 @@ namespace Antarium.Presentation
                     dot.a = color.a;
                     float2 dotCenter = cellCenter - new float2(b.Dir) * (1f / WorldConstants.PixelsPerUnit);
                     SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.DotSize), new int2(0, 1), 1, rects[BuildingSprites.DotRect], dot, light);
+                    break;
+                }
+                case BuildingKind.Chest:
+                {
+                    // Craft = how full it is; Filter = the item it holds most of (set by the building system).
+                    bool goods = b.Craft > 0f;
+                    SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect + (goods ? 1 : 0)], color, light);
+                    if (!goods || b.Filter >= itemColors.Length) break;
+                    var dot = itemColors[b.Filter];
+                    dot.a = color.a;
+                    float2 dotCenter = cellCenter + new float2(0f, 2f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.ItemSize), new int2(0, 1), 1, rects[BuildingSprites.ItemRect], dot, light);
+                    break;
+                }
+                case BuildingKind.Unloader:
+                {
+                    var up = new int2(-b.Dir.y, b.Dir.x);
+                    SpriteQuads.WriteQuad(v, quad, cellCenter, cell, up, 1, rects[vis.Rect], color, light);
+                    if (b.Filter >= itemColors.Length) break; // takes any item
+                    var dot = itemColors[b.Filter];
+                    dot.a = color.a;
+                    float2 dotCenter = cellCenter - new float2(b.Dir) * (1f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.ItemSize), new int2(0, 1), 1, rects[BuildingSprites.ItemRect], dot, light);
                     break;
                 }
                 case BuildingKind.Emitter:
@@ -341,6 +374,8 @@ namespace Antarium.Presentation
                     float hurt = 1f - math.saturate(b.Health / math.max(1f, Defs[b.Def].MaxHealth));
                     return Lerp(new Color32(255, 255, 255, 255), new Color32(255, 110, 90, 255), hurt);
                 }
+                if (b.Kind == BuildingKind.Unloader && Overlay)
+                    return b.Status == MachineStatus.Working ? Colors.Working : b.Status == MachineStatus.OutputBlocked ? Colors.Jam : Colors.Idle;
                 if (b.Kind > BuildingKind.Processor) return new Color32(255, 255, 255, 255);
                 if (!Overlay) return new Color32(255, 255, 255, 255);
                 if (b.Kind == BuildingKind.Processor)

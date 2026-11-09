@@ -48,7 +48,18 @@ namespace Antarium.Presentation
         public const int PrincessChamberWidth = 32, PrincessChamberHeight = 24;
         /// <summary>Pixel positions of the princess beds from the chamber's bottom-left: two on the floor, one on a raised ledge.</summary>
         public static readonly int2[] PrincessBeds = { new(8, 0), new(24, 0), new(16, 9) };
-        const int RectCount = PrincessChamberRect + 2;
+        /// <summary>Iron tier of the belt and the lift (4 frames each) and the iron gate.</summary>
+        public const int IronBeltRect = PrincessChamberRect + 2;
+        public const int IronLiftRect = IronBeltRect + AnimFrames;
+        public const int IronGateRect = IronLiftRect + AnimFrames;
+        /// <summary>Chest: 2 frames (empty, holding goods); the top item shows as a tinted dot.</summary>
+        public const int ChestRect = IronGateRect + 1;
+        /// <summary>Unloader: a hopper with an arrow (drawn turned like the filter); its item shows as a dot.</summary>
+        public const int UnloaderRect = ChestRect + 2;
+        /// <summary>Crusher (2×2 cells): 2 frames, idle and grinding.</summary>
+        public const int CrusherRect = UnloaderRect + 1;
+        public const int CrusherWidth = 16, CrusherHeight = 16;
+        const int RectCount = CrusherRect + 2;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -66,6 +77,8 @@ namespace Antarium.Presentation
         static readonly Color32 Resin = Hex(0xc8902a), ResinDark = Hex(0x7a5218), ResinHigh = Hex(0xf0c060), Tooth = Hex(0xf0e8d8);
         static readonly Color32 Banner = Hex(0xc03a2a), BannerHigh = Hex(0xe8644a), Earth = Hex(0x5e4128), EarthHigh = Hex(0x7d583a), EarthDark = Hex(0x3e2a19);
         static readonly Color32 Gland = Hex(0xd8b8a0), GlandHigh = Hex(0xf4e2d0), GlandDark = Hex(0x8a6a58), Vent = Hex(0x4a3428);
+        static readonly Color32 IronHigh = Hex(0xe4eaf2), IronMid = Hex(0xaeb8c6), IronDark = Hex(0x6e7884), IronShadow = Hex(0x454c56), Rivet = Hex(0x2e333a);
+        static readonly Color32 Stone = Hex(0x8b8f99), StoneDark = Hex(0x5d6068), StoneHigh = Hex(0xb4b8c0), Dust = Hex(0xd8ccb4);
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
@@ -127,6 +140,28 @@ namespace Antarium.Presentation
             Rects[PrincessChamberRect] = Rect(0, 64, PrincessChamberWidth, PrincessChamberHeight);
             Rects[PrincessChamberRect + 1] = Rect(32, 64, PrincessChamberWidth, PrincessChamberHeight);
 
+            // Milestone 10: iron belts / lifts / gate, chest, unloader, crusher (row y = 48).
+            for (int f = 0; f < AnimFrames; f++)
+            {
+                PaintIronBelt(f * Cell, 48, f);
+                Rects[IronBeltRect + f] = Rect(f * Cell, 48, Cell, Cell);
+                PaintIronLift(32 + f * Cell, 48, f);
+                Rects[IronLiftRect + f] = Rect(32 + f * Cell, 48, Cell, Cell);
+            }
+            Blit(64, 48, new[] { "KIIIIIIK", "KiKiKiKK", "KiKiKiKK", "KIIIIIIK", "KiKiKiKK", "KiKiKiKK", "KIIIIIIK", "KKKKKKKK" });
+            Rects[IronGateRect] = Rect(64, 48, Cell, Cell);
+            Blit(72, 48, new[] { "........", ".pppppp.", "pPPPPPPp", "pWWWWWWp", "pPPhPPPp", "pPPdPPPp", "pPPPPPPp", "pppppppp" });
+            Rects[ChestRect] = Rect(72, 48, Cell, Cell);
+            Blit(72, 56, new[] { ".ggkwg..", "pwgkggwp", "pPPPPPPp", "pWWWWWWp", "pPPhPPPp", "pPPdPPPp", "pPPPPPPp", "pppppppp" });
+            Rects[ChestRect + 1] = Rect(72, 56, Cell, Cell);
+            // Hopper with the arrow pointing right (turned by the renderer like the filter).
+            Blit(80, 48, new[] { "KKKKKK..", "KiiiiK..", "KiIIiKI.", "KiIIiKII", "KiIIiKII", "KiIIiKI.", "KiiiiK..", "KKKKKK.." });
+            Rects[UnloaderRect] = Rect(80, 48, Cell, Cell);
+            PaintCrusher(96, 48, working: false);
+            PaintCrusher(112, 48, working: true);
+            Rects[CrusherRect] = Rect(96, 48, CrusherWidth, CrusherHeight);
+            Rects[CrusherRect + 1] = Rect(112, 48, CrusherWidth, CrusherHeight);
+
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
                 filterMode = FilterMode.Point,
@@ -153,6 +188,75 @@ namespace Antarium.Presentation
                 Set(ox + x, oy + 2, SilkHigh);
                 Set(ox + x, oy + 1, ((x - frame) & 3) == 0 ? SilkDark : SilkMid);
                 Set(ox + x, oy + 0, SilkShadow);
+            }
+        }
+
+        /// <summary>Riveted iron band along the bottom of the cell; plates travel right one pixel per frame (twice as busy as silk).</summary>
+        void PaintIronBelt(int ox, int oy, int frame)
+        {
+            for (int x = 0; x < Cell; x++)
+            {
+                Set(ox + x, oy + 3, IronDark);
+                Set(ox + x, oy + 2, IronHigh);
+                Set(ox + x, oy + 1, ((x - frame * 2) & 3) == 0 ? Rivet : IronMid);
+                Set(ox + x, oy + 0, IronShadow);
+            }
+        }
+
+        /// <summary>Iron rails with cross bars; bars travel up one pixel per frame.</summary>
+        void PaintIronLift(int ox, int oy, int frame)
+        {
+            for (int y = 0; y < Cell; y++)
+            {
+                Set(ox + 1, oy + y, IronShadow);
+                Set(ox + 6, oy + y, IronShadow);
+                Set(ox + 2, oy + y, IronHigh);
+                Set(ox + 5, oy + y, IronDark);
+                bool bar = ((y - frame) & 3) == 0;
+                for (int x = 3; x <= 4; x++) Set(ox + x, oy + y, bar ? IronHigh : IronMid);
+            }
+        }
+
+        /// <summary>Two grinding stones on an iron frame; the working frame turns their teeth and throws dust.</summary>
+        void PaintCrusher(int ox, int oy, bool working)
+        {
+            for (int x = 0; x < CrusherWidth; x++)
+            {
+                Set(ox + x, oy, IronShadow);
+                Set(ox + x, oy + 1, x % 5 == 0 ? Rivet : IronDark);
+            }
+            for (int y = 2; y < 12; y++)
+            {
+                Set(ox, oy + y, IronDark);
+                Set(ox + CrusherWidth - 1, oy + y, IronDark);
+            }
+            for (int x = 0; x < CrusherWidth; x++) Set(ox + x, oy + 12, IronMid);
+            // Hopper on top.
+            for (int y = 13; y < 16; y++)
+            for (int x = 3 - (y - 13); x < 13 + (y - 13); x++)
+                Set(ox + x, oy + y, y == 15 ? IronHigh : IronDark);
+            void Wheel(int cx, int cy, int phase)
+            {
+                for (int y = -4; y <= 4; y++)
+                for (int x = -4; x <= 4; x++)
+                {
+                    float r = math.length(new float2(x, y));
+                    if (r > 4.3f) continue;
+                    Color32 c = r > 3.3f ? StoneDark : (x + y) < -1 ? StoneHigh : Stone;
+                    if (r > 3.3f && ((x + y * 3 + phase) & 3) == 0) c = StoneHigh; // teeth
+                    Set(ox + cx + x, oy + cy + y, c);
+                }
+                Set(ox + cx, oy + cy, Rivet);
+            }
+            int p = working ? 2 : 0;
+            Wheel(4, 7, p);
+            Wheel(11, 7, -p);
+            if (working)
+            {
+                Set(ox + 7, oy + 3, Dust);
+                Set(ox + 8, oy + 2, Dust);
+                Set(ox + 6, oy + 2, Dust);
+                Set(ox + 9, oy + 4, Dust);
             }
         }
 
@@ -421,6 +525,11 @@ namespace Antarium.Presentation
                         case 'f': c = Gland; break;
                         case 'F': c = GlandHigh; break;
                         case 'v': c = Vent; break;
+                        case 'K': c = IronShadow; break;
+                        case 'I': c = IronHigh; break;
+                        case 'i': c = IronMid; break;
+                        case 'P': c = WoodHigh; break;
+                        case 'W': c = WoodDark; break;
                         default: continue;
                     }
                     Set(ox + x, y, c);

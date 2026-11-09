@@ -55,6 +55,9 @@ namespace Antarium.Gameplay
         float _caveInToastCooldown;
 
         public CastesPanel Castes { get; }
+        public ConfigurePanel Configure { get; }
+        /// <summary>An item in the resource bar was clicked (opens the stock view).</summary>
+        public event Action StockClicked;
         public ContractsPanel Contracts { get; }
         public EventFeed EventFeed { get; }
         public AbilityBar Abilities { get; }
@@ -102,6 +105,7 @@ namespace Antarium.Gameplay
             _palette = root.Q<VisualElement>("build-palette");
             _scentPalette = root.Q<VisualElement>("scent-palette");
             var castes = root.Q<VisualElement>("castes");
+            var configure = root.Q<VisualElement>("configure");
             DebugLabel = root.Q<Label>("debug");
             var toolbar = root.Q<VisualElement>("toolbar");
             var contracts = root.Q<VisualElement>("contracts");
@@ -110,7 +114,8 @@ namespace Antarium.Gameplay
             _modal = root.Q<VisualElement>("modal");
             _hudRoot = root.Q<VisualElement>("hud");
             if (_resources == null || toolbar == null || _palette == null || _info == null || _toast == null
-                || contracts == null || events == null || abilities == null || _modal == null || _scentPalette == null || castes == null)
+                || contracts == null || events == null || abilities == null || _modal == null || _scentPalette == null || castes == null
+                || configure == null)
             {
                 Debug.LogError("HUD layout is missing elements; assign Hud.uxml to the UIDocument.");
                 return;
@@ -135,7 +140,12 @@ namespace Antarium.Gameplay
                 if (content.Items[i].IsFood) continue;
                 _itemLabels[i] = AddEntry(content.Items[i].color, out _itemEntries[i], out _itemRates[i]);
                 _itemEntries[i].AddToClassList("hidden");
+                _itemEntries[i].AddToClassList("resource--clickable");
+                _itemEntries[i].RegisterCallback<ClickEvent>(_ => StockClicked?.Invoke());
+                Tip(_itemEntries[i], "Click to choose how much of each item the colony keeps for building.");
             }
+            _storageEntry.AddToClassList("resource--clickable");
+            _storageEntry.RegisterCallback<ClickEvent>(_ => StockClicked?.Invoke());
 
             AddTool(toolbar, ToolMode.Dig, "Dig", input.ToolDig, "Dig: hold the mouse on rock to dig it out yourself. Combos dig faster.");
             AddTool(toolbar, ToolMode.Mine, "Mine", input.ToolMine, "Mine orders: paint rock for workers to dig. Right drag erases.");
@@ -158,6 +168,7 @@ namespace Antarium.Gameplay
             Abilities = new AbilityBar(abilities, content, input.Abilities);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
             Castes = new CastesPanel(castes, content);
+            Configure = new ConfigurePanel(configure, content);
 
             _unlockedBy = new string[content.Buildings.Length];
             foreach (var r in content.Research)
@@ -245,6 +256,9 @@ namespace Antarium.Gameplay
             element.RegisterCallback<PointerEnterEvent>(_ => HoverTip = tip);
             element.RegisterCallback<PointerLeaveEvent>(_ => { if (HoverTip == tip) HoverTip = null; });
         }
+
+        /// <summary>The key currently bound to Configure (for hints).</summary>
+        public string ConfigureKey => _input != null ? GameInput.KeyName(_input.Configure) : "I";
 
         /// <summary>"[key] Name" labels follow the current key bindings.</summary>
         void RefreshKeyLabels()
@@ -402,6 +416,7 @@ namespace Antarium.Gameplay
         public void ResetSession(Simulation sim)
         {
             EventFeed?.Reset(sim);
+            Configure?.Hide();
             HideModal();
         }
 
@@ -581,7 +596,10 @@ namespace Antarium.Gameplay
             {
                 case PlaceResult.Hidden: return "You can only build where you can see.";
                 case PlaceResult.Flooded: return "Can't build in water, gas or lava.";
-                case PlaceResult.Protected: return "Walls can't go into the royal chamber or a storage zone.";
+                case PlaceResult.Protected:
+                    return data != null && data.Def.kind == BuildingKind.Chest
+                        ? "Chests can't go on a storage zone (erase the zone there first)."
+                        : "Walls can't go into the royal chamber or a storage zone.";
                 case PlaceResult.NotOpen:
                     if (data != null && data.Def.IsChamber) return "Machines and nurseries need dug-out space underground.";
                     return data != null && data.Def.IsDefense ? "Needs open space ants can walk on." : "Belts need dug-out space or the ground surface.";
@@ -642,6 +660,7 @@ namespace Antarium.Gameplay
             _castesButton.EnableInClassList("tool--on", Castes.Visible);
             if (!castes) Castes.Hide();
             Castes.Refresh(sim);
+            Configure.Refresh(sim);
             for (int k = 0; k < _scentButtons.Length; k++)
                 _scentButtons[k].EnableInClassList("building--locked", !ToolController.ScentAvailable(sim, (PheromoneKind)k));
             _eggs.text = $"Eggs {colony.Eggs.Count}";

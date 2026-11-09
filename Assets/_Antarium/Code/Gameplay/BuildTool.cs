@@ -31,8 +31,11 @@ namespace Antarium.Gameplay
         /// <summary>Pheromone new emitters give off (R cycles it).</summary>
         public PheromoneKind EmitterKind { get; private set; }
 
-        /// <summary>What a new building of the selected kind is set to: the filter item, or the emitter's pheromone.</summary>
-        ushort NewFilter => SelectedDef != null && SelectedDef.kind == BuildingKind.Emitter ? (ushort)EmitterKind : FilterItem;
+        /// <summary>What a new building of the selected kind is set to: the filter item, the emitter's pheromone, or any item (unloaders).</summary>
+        ushort NewFilter => SelectedDef == null ? FilterItem
+            : SelectedDef.kind == BuildingKind.Emitter ? (ushort)EmitterKind
+            : SelectedDef.kind == BuildingKind.Unloader ? ContentDB.NoItem
+            : FilterItem;
         public event Action<int> SelectionChanged;
 
         public BuildTool(ContentDB content) => _content = content;
@@ -65,7 +68,7 @@ namespace Antarium.Gameplay
             {
                 BuildingKind.Belt => new int2(-Dir.x, 0),
                 BuildingKind.Lift => new int2(0, -Dir.y),
-                BuildingKind.Filter => new int2(Dir.y, -Dir.x),
+                BuildingKind.Filter or BuildingKind.Unloader => new int2(Dir.y, -Dir.x),
                 _ => Dir,
             };
             Dir = BuildingSystem.NormalizeDir(def.kind, Dir);
@@ -144,7 +147,7 @@ namespace Antarium.Gameplay
                 while (!cell.Equals(_last))
                 {
                     _last += (int2)math.sign(cell - _last);
-                    sim.EnqueueBuild(Selected, _last, Dir, FilterItem);
+                    sim.EnqueueBuild(Selected, _last, Dir, NewFilter);
                 }
             }
             if (_stroke && line && !_strokeOnFilter)

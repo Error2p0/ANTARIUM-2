@@ -238,14 +238,38 @@ namespace Antarium.Gameplay
                 case BuildingKind.Emitter:
                     _sb.Append("  -  ").Append(HudController.ScentName((PheromoneKind)math.min(b.Filter, Pheromones.Count - 1)))
                         .Append("\nKeeps that scent from fading within ").Append(data.Def.emitterRadius.ToString("0")).Append(" cells (paint it first).")
-                        .Append(" Click it with the Emitter selected to change the scent; R picks the scent of new ones.");
+                        .Append(' ').Append(_hud.ConfigureKey).Append(": change the scent; R picks the scent of new ones.");
                     return;
+                case BuildingKind.Chest:
+                {
+                    var chest = sim.Colony.Inventory.ContainerAt(sim.World.Index(b.Origin.x, b.Origin.y));
+                    if (chest == null) return;
+                    _sb.Append("  -  ");
+                    AppendContents(chest);
+                    AppendAllowed(chest);
+                    _sb.Append("\n").Append(_hud.ConfigureKey).Append(": choose what it takes. Belts that end at it fill it.");
+                    return;
+                }
+                case BuildingKind.Unloader:
+                {
+                    var source = buildings.UnloaderSource(id);
+                    _sb.Append("  -  takes ").Append(b.Filter < _content.Items.Length ? _content.Items[b.Filter].DisplayName : "any item")
+                        .Append(" from ").Append(source == null ? "nothing (put storage, a chest or the royal chamber behind it)"
+                            : source.IsRoyal ? "the royal chamber" : source.IsChest ? "the chest behind it" : "the storage behind it");
+                    _sb.Append("\nFlow ").Append(Rate(b.Rate)).Append(" items/min  -  ").Append(b.Outputs.x < 0
+                        ? "nothing in front of its arrow: point it at a belt, lift or machine"
+                        : b.Status == MachineStatus.Working ? "unloading"
+                        : b.Status == MachineStatus.OutputBlocked ? "waiting: what it feeds is full or doesn't use the item"
+                        : "nothing to take (or only what is kept for building)");
+                    _sb.Append("\n").Append(_hud.ConfigureKey).Append(": pick the item. R turns new ones.");
+                    return;
+                }
             }
 
             if (b.IsTransport)
             {
                 if (b.Kind == BuildingKind.Filter)
-                    _sb.Append("  -  filter: ").Append(_content.Items[b.Filter].DisplayName).Append(" (click with the Filter tool to change)");
+                    _sb.Append("  -  filter: ").Append(_content.Items[b.Filter].DisplayName).Append(" (").Append(_hud.ConfigureKey).Append(" to change)");
                 _sb.Append("\nFlow ").Append(Rate(b.Rate)).Append(" items/min");
                 if (!b.Front.IsEmpty)
                 {
@@ -282,6 +306,9 @@ namespace Antarium.Gameplay
                 var recipe = _content.Recipes[m.Recipe];
                 _sb.Append("\n").Append(recipe.Def.DisplayName).Append(' ').Append((int)(b.Craft * 100f)).Append('%');
             }
+            if (m.Data.Recipes.Length > 1)
+                _sb.Append("\nRuns ").Append(m.Choice >= 0 ? "only: " + _content.Recipes[m.Data.Recipes[m.Choice]].Def.DisplayName : "any recipe it can")
+                    .Append("  (").Append(_hud.ConfigureKey).Append(" to choose)");
             _sb.Append("\nInputs: ");
             for (int i = 0; i < m.Inputs.Length; i++)
             {
@@ -310,6 +337,14 @@ namespace Antarium.Gameplay
                 _sb.Append("Royal chamber store ");
             }
             else return;
+            AppendContents(container);
+            AppendAllowed(container);
+            _sb.Append("\nWhole stock ").Append(inv.Stored).Append('/').Append(inv.Capacity).Append(". Workers fetch from here for machines that need it.");
+            if (!container.IsRoyal) _sb.Append("\n").Append(_hud.ConfigureKey).Append(": choose which items this storage zone takes.");
+        }
+
+        void AppendContents(StockContainer container)
+        {
             _sb.Append(container.Total).Append('/').Append(container.Capacity);
             bool first = true;
             for (int i = 0; i < container.Counts.Length; i++)
@@ -318,7 +353,21 @@ namespace Antarium.Gameplay
                 _sb.Append(first ? ":  " : ", ").Append(_content.Items[i].DisplayName).Append(' ').Append(container.Counts[i]);
                 first = false;
             }
-            _sb.Append("\nWhole stock ").Append(inv.Stored).Append('/').Append(inv.Capacity).Append(". Workers fetch from here for machines that need it.");
+        }
+
+        /// <summary>"Takes only: ..." for a filtered container.</summary>
+        void AppendAllowed(StockContainer container)
+        {
+            if (!container.Filtered) return;
+            _sb.Append("\nTakes only: ");
+            bool first = true;
+            for (int i = 0; i < _content.Items.Length && i < 64; i++)
+            {
+                if (_content.Items[i].IsFood || !container.Accepts((ushort)i)) continue;
+                _sb.Append(first ? "" : ", ").Append(_content.Items[i].DisplayName);
+                first = false;
+            }
+            if (first) _sb.Append("nothing");
         }
 
         void DescribeSelection(Simulation sim, int2 cell, ToolController tools)

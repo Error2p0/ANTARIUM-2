@@ -25,6 +25,8 @@ namespace Antarium.Gameplay
         public readonly InputAction Possess;
         /// <summary>Space: the possessed ant picks up / delivers / drops.</summary>
         public readonly InputAction Interact;
+        /// <summary>Configure what is under the pointer: storage filters, unloader / filter item, emitter scent, machine recipe.</summary>
+        public readonly InputAction Configure;
         public readonly InputAction Castes;
         public readonly InputAction Rotate;
         public readonly InputAction NextBuilding;
@@ -84,6 +86,7 @@ namespace Antarium.Gameplay
             ToolPheromone = asset.FindAction("Tools/ToolPheromone", true);
             Possess = asset.FindAction("Tools/Possess", true);
             Interact = asset.FindAction("Tools/Interact", true);
+            Configure = asset.FindAction("Tools/Configure", true);
             Castes = asset.FindAction("View/Castes", true);
             Rotate = asset.FindAction("Tools/Rotate", true);
             NextBuilding = asset.FindAction("Tools/NextBuilding", true);
@@ -142,6 +145,7 @@ namespace Antarium.Gameplay
             Add("Tools", "Build", ToolBuild);
             Add("Tools", "Scent (pheromones)", ToolPheromone);
             Add("Tools", "Rotate / pick scent", Rotate);
+            Add("Tools", "Configure (storage, unloader, machine)", Configure);
             Add("Tools", "Next building / scent", NextBuilding);
             Add("Tools", "Previous building / scent", PrevBuilding);
             Add("Tools", "Possess an ant / let go", Possess);
