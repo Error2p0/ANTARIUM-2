@@ -6,8 +6,8 @@ using Unity.Mathematics;
 namespace Antarium.Sim
 {
     /// <summary>
-    /// One place the stock is physically kept: the royal chamber (index 0 in <see cref="Inventory.Containers"/>)
-    /// or a single storage zone cell. Holds up to <see cref="Capacity"/> items of any type.
+    /// One place the stock is physically kept: the royal chamber (index 0 in <see cref="Inventory.Containers"/>),
+    /// a single storage zone cell or a chest. Holds up to <see cref="Capacity"/> items of the types it allows.
     /// </summary>
     public sealed class StockContainer
     {
@@ -18,17 +18,27 @@ namespace Antarium.Sim
         public int Capacity;
         public int Total;
         public readonly int[] Counts;
+        /// <summary>A chest building (not a painted storage zone cell).</summary>
+        public readonly bool IsChest;
+        /// <summary>Chests: items held (storage zone cells take theirs from the colony config).</summary>
+        public readonly int ChestCapacity;
+        /// <summary>Bit per item this container accepts (all set = no filter). Items already inside stay.</summary>
+        public ulong Allow = ulong.MaxValue;
 
-        public StockContainer(int2 cell, int worldIndex, int capacity, int itemTypes)
+        public StockContainer(int2 cell, int worldIndex, int capacity, int itemTypes, bool chest = false)
         {
             Cell = cell;
             WorldIndex = worldIndex;
             Capacity = capacity;
             Counts = new int[itemTypes];
+            IsChest = chest;
+            ChestCapacity = capacity;
         }
 
         public bool IsRoyal => WorldIndex < 0;
         public int Free => Capacity - Total;
+        public bool Accepts(ushort item) => (Allow & (1ul << item)) != 0;
+        public bool Filtered => Allow != ulong.MaxValue;
     }
 
     /// <summary>
@@ -57,11 +67,18 @@ namespace Antarium.Sim
         public float Food;
         /// <summary>Research currency: from studying in the Archive, contracts and events.</summary>
         public float Knowledge;
+        /// <summary>Per item: units machines (supply jobs) and unloaders leave in the stock, kept for building.</summary>
+        public readonly int[] Reserve;
         public int Capacity { get; private set; }
         public int Stored { get; private set; }
         public float FoodCapacity { get; private set; }
-        public int StorageCells => Containers.Count - 1;
+        /// <summary>Painted storage zone cells (chests not counted).</summary>
+        public int StorageCells { get; private set; }
         public StockContainer Royal => Containers[0];
+
+        /// <summary>Per item: free space in the containers that accept it (cached; see <see cref="RoomFor"/>).</summary>
+        readonly int[] _roomFor;
+        bool _roomDirty = true;
 
         /// <summary>Smoothed items (or food points for food) per minute delivered into the stock.</summary>
         public readonly float[] IncomePerMinute;
@@ -91,6 +108,8 @@ namespace Antarium.Sim
             InTransit = new int[n];
             ConsumerRoom = new int[n];
             IncomePerMinute = new float[n];
+            Reserve = new int[n];
+            _roomFor = new int[n];
             _delivered = new int[n];
             Food = config.startingFood;
             Containers.Add(new StockContainer(default, -1, 0, n));
@@ -102,15 +121,58 @@ namespace Antarium.Sim
         /// <summary>Re-reads capacities from the config and research (royal chamber, per storage cell, food).</summary>
         public void RefreshCapacity()
         {
-            int total = 0;
+            int total = 0, zones = 0;
             int royal = _config.baseItemCapacity + (int)_mods.Flat(StatKind.RoyalCapacity);
             foreach (var c in Containers)
             {
-                c.Capacity = c.IsRoyal ? royal : _config.storageItemsPerCell;
+                c.Capacity = c.IsRoyal ? royal : c.IsChest ? c.ChestCapacity : _config.storageItemsPerCell;
                 total += c.Capacity;
+                if (!c.IsRoyal && !c.IsChest) zones++;
             }
             Capacity = total;
-            FoodCapacity = _config.baseFoodCapacity + _mods.Flat(StatKind.FoodCapacity) + StorageCells * _config.storageFoodPerCell;
+            StorageCells = zones;
+            FoodCapacity = _config.baseFoodCapacity + _mods.Flat(StatKind.FoodCapacity) + zones * _config.storageFoodPerCell;
+            AcceptanceChanged = true;
+            _roomDirty = true;
+        }
+
+        /// <summary>Free space for one more <paramref name="item"/> over every container that accepts it.</summary>
+        public int RoomFor(ushort item)
+        {
+            if (_roomDirty)
+            {
+                _roomDirty = false;
+                Array.Clear(_roomFor, 0, _roomFor.Length);
+                int open = 0;
+                foreach (var c in Containers)
+                {
+                    int free = Math.Max(0, c.Free);
+                    if (free == 0) continue;
+                    if (!c.Filtered) { open += free; continue; }
+                    for (int i = 0; i < _roomFor.Length; i++)
+                        if ((c.Allow & (1ul << i)) != 0) _roomFor[i] += free;
+                }
+                for (int i = 0; i < _roomFor.Length; i++) _roomFor[i] += open;
+            }
+            return _roomFor[item];
+        }
+
+        /// <summary>Units of <paramref name="item"/> above the reserve: what machines and unloaders may take.</summary>
+        public int Available(ushort item) => Math.Max(0, Items[item] - Reserve[item]);
+
+        /// <summary>Keeps <paramref name="count"/> of <paramref name="item"/> in the stock for building (0 = none).</summary>
+        public void SetReserve(ushort item, int count)
+        {
+            if (item >= Reserve.Length) return;
+            Reserve[item] = Math.Max(0, count);
+        }
+
+        /// <summary>Limits a container to the items in <paramref name="allow"/> (all bits = anything). Items already inside stay.</summary>
+        public void SetAllow(StockContainer container, ulong allow)
+        {
+            if (container == null || container.Allow == allow) return;
+            container.Allow = allow;
+            _roomDirty = true;
             AcceptanceChanged = true;
         }
 
@@ -125,8 +187,20 @@ namespace Antarium.Sim
             RefreshCapacity();
         }
 
+        /// <summary>A finished chest becomes a container of <paramref name="capacity"/> items.</summary>
+        public StockContainer AddChest(int2 cell, int worldIndex, int capacity)
+        {
+            if (_containerAt.TryGetValue(worldIndex, out int existing)) return Containers[existing];
+            _containerAt.Add(worldIndex, Containers.Count);
+            var chest = new StockContainer(cell, worldIndex, Math.Max(1, capacity), Items.Length, chest: true);
+            Containers.Add(chest);
+            LocationsChanged = ulong.MaxValue;
+            RefreshCapacity();
+            return chest;
+        }
+
         /// <summary>
-        /// Removes a storage cell. Its items move to other containers with room (nearest first); what does not
+        /// Removes a storage cell or a chest. Its items move to other containers with room (nearest first); what does not
         /// fit is added to <paramref name="evicted"/> (one entry per unit) for the caller to drop as piles.
         /// </summary>
         public void RemoveStorageCell(int worldIndex, List<ushort> evicted)
@@ -169,7 +243,7 @@ namespace Antarium.Sim
             for (int i = 0; i < Containers.Count; i++)
             {
                 var c = Containers[i];
-                if (c.Total >= c.Capacity) continue;
+                if (c.Total >= c.Capacity || !c.Accepts(item)) continue;
                 int2 d = math.abs(c.Cell - near);
                 int score = d.x + d.y;
                 if (c.IsRoyal) score = math.max(0, score - _config.royalRadius);
@@ -191,6 +265,7 @@ namespace Antarium.Sim
             Items[item] += count;
             Stored += count;
             if (c.Counts[item] == 0) LocationsChanged |= 1ul << item;
+            _roomDirty = true;
         }
 
         /// <summary>Puts one non-food item into the stock near <paramref name="near"/>. False if the stock is full.</summary>
@@ -253,6 +328,15 @@ namespace Antarium.Sim
             return taken;
         }
 
+        /// <summary>An unloader takes one <paramref name="item"/> out of <paramref name="container"/> (it is then in transit).</summary>
+        public bool Unload(StockContainer container, ushort item)
+        {
+            if (!Take(container, item)) return false;
+            _meter.AddItem(item, -1f);
+            BeginTransit(item);
+            return true;
+        }
+
         /// <summary>Adds knowledge. <paramref name="studied"/> = produced by the colony (counts toward offline rates).</summary>
         public void AddKnowledge(float amount, bool studied)
         {
@@ -300,14 +384,16 @@ namespace Antarium.Sim
             var def = _content.Items[item];
             if (def.IsFood)
                 return FoodInTransit() + def.foodValue <= Math.Max(0f, FoodCapacity - Food) + ConsumerRoom[item] * def.foodValue + 1e-3f;
-            return Capacity - Stored - NonFoodInTransit() > 0 || InTransit[item] < ConsumerRoom[item];
+            // Free space overall, and in the containers that take this item, beyond what is already on its way.
+            bool stock = Capacity - Stored - NonFoodInTransit() > 0 && RoomFor(item) > InTransit[item];
+            return stock || InTransit[item] < ConsumerRoom[item];
         }
 
         /// <summary>True if the stock itself has room for one more <paramref name="item"/> right now.</summary>
         public bool StockAccepts(ushort item)
         {
             var def = _content.Items[item];
-            return def.IsFood ? Food + def.foodValue <= FoodCapacity + 1e-3f : Stored < Capacity;
+            return def.IsFood ? Food + def.foodValue <= FoodCapacity + 1e-3f : RoomFor(item) > 0;
         }
 
         public void BeginTransit(ushort item) => InTransit[item]++;
@@ -328,11 +414,27 @@ namespace Antarium.Sim
             }
             else if (!Store(item, at)) return false;
             else _meter.AddItem(item, 1f);
+            Delivered(item);
+            return true;
+        }
+
+        /// <summary>Puts a carried non-food item straight into <paramref name="container"/> (a chest a belt or ant reaches). False if it doesn't fit or isn't allowed.</summary>
+        public bool DeliverInto(StockContainer container, ushort item)
+        {
+            if (container == null || _content.Items[item].IsFood || !container.Accepts(item) || container.Free <= 0) return false;
+            Put(container, item, 1);
+            AcceptanceChanged = true;
+            _meter.AddItem(item, 1f);
+            Delivered(item);
+            return true;
+        }
+
+        void Delivered(ushort item)
+        {
             InTransit[item] = Math.Max(0, InTransit[item] - 1);
             _delivered[item]++;
             _stats.Delivered[item]++;
             if (!CanAccept(item)) AcceptanceChanged = true; // just filled up: stop hauling this type
-            return true;
         }
 
         /// <summary>A carried item left the colony's hands without reaching the stock; release the reservation.</summary>
@@ -393,6 +495,8 @@ namespace Antarium.Sim
             Royal.Total = 0;
             Array.Clear(Items, 0, Items.Length);
             Array.Clear(InTransit, 0, InTransit.Length);
+            Array.Clear(Reserve, 0, Reserve.Length);
+            Royal.Allow = ulong.MaxValue;
             Stored = 0;
             LocationsChanged = ulong.MaxValue;
             RefreshCapacity();

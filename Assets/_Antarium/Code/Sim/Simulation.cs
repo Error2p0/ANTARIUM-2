@@ -17,6 +17,7 @@ namespace Antarium.Sim
         {
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
+            ContainerFilter, Reserve, Recipe,
         }
 
         readonly struct Command
@@ -30,6 +31,8 @@ namespace Antarium.Sim
             public readonly int2 Cell;
             public readonly int2 Dir;
             public readonly ushort Item;
+            /// <summary>Storage filters: bit per allowed item.</summary>
+            public readonly ulong Mask;
 
             public Command(CommandKind kind, float2 cellPos, float radius, float power, bool set, int def = 0)
             {
@@ -42,19 +45,21 @@ namespace Antarium.Sim
                 Cell = default;
                 Dir = default;
                 Item = 0;
+                Mask = 0;
             }
 
-            public Command(CommandKind kind, int def, int2 cell, int2 dir, ushort item)
+            public Command(CommandKind kind, int def, int2 cell, int2 dir, ushort item, ulong mask = 0, bool set = true)
             {
                 Kind = kind;
                 CellPos = default;
                 Radius = 0f;
                 Power = 0f;
-                Set = true;
+                Set = set;
                 Def = def;
                 Cell = cell;
                 Dir = dir;
                 Item = item;
+                Mask = mask;
             }
         }
 
@@ -240,6 +245,19 @@ namespace Antarium.Sim
 
         public void EnqueueSetFilter(int2 cell, ushort item) => _pending.Add(new Command(CommandKind.SetFilter, 0, cell, default, item));
 
+        /// <summary>
+        /// Limits the storage at <paramref name="cell"/> to the items in <paramref name="allow"/> (all bits = anything): a chest,
+        /// or a storage zone with every storage cell connected to it (<paramref name="wholeZone"/>).
+        /// </summary>
+        public void EnqueueStorageFilter(int2 cell, ulong allow, bool wholeZone = true) =>
+            _pending.Add(new Command(CommandKind.ContainerFilter, 0, cell, default, 0, allow, wholeZone));
+
+        /// <summary>Keeps <paramref name="count"/> of <paramref name="item"/> in the stock: machines and unloaders leave them.</summary>
+        public void EnqueueReserve(ushort item, int count) => _pending.Add(new Command(CommandKind.Reserve, count, default, default, item));
+
+        /// <summary>The machine at <paramref name="cell"/> runs only its recipe <paramref name="choice"/> (-1 = any it can).</summary>
+        public void EnqueueRecipe(int2 cell, int choice) => _pending.Add(new Command(CommandKind.Recipe, choice, cell, default, 0));
+
         /// <summary>Researches node <paramref name="research"/> (index into <c>ContentDB.Research</c>) if affordable.</summary>
         public void EnqueueResearch(int research) => _pending.Add(new Command(CommandKind.Research, research, default, default, 0));
 
@@ -383,6 +401,9 @@ namespace Antarium.Sim
                 case CommandKind.Build: Buildings.Place(cmd.Def, cmd.Cell, cmd.Dir, cmd.Item); break;
                 case CommandKind.Remove: Buildings.Remove(cmd.Cell); break;
                 case CommandKind.SetFilter: Buildings.SetFilter(cmd.Cell, cmd.Item); break;
+                case CommandKind.ContainerFilter: SetStorageFilter(cmd.Cell, cmd.Mask, cmd.Set); break;
+                case CommandKind.Reserve: Colony.Inventory.SetReserve(cmd.Item, cmd.Def); break;
+                case CommandKind.Recipe: Buildings.SetRecipe(cmd.Cell, cmd.Def); break;
                 case CommandKind.Research: Research.Research(cmd.Def); break;
                 case CommandKind.Ability: UseAbility(cmd.Def, cmd.Cell); break;
                 case CommandKind.Claim: Contracts.Claim(cmd.Def); break;
@@ -455,7 +476,9 @@ namespace Antarium.Sim
                 else
                 {
                     flag = CellFlags.Storage;
-                    eligible = cell.IsOpen && !Content.MaterialSim[cell.Material].IsAir;
+                    int building = Buildings.At(new int2(x, y));
+                    eligible = cell.IsOpen && !Content.MaterialSim[cell.Material].IsAir
+                               && (building < 0 || Buildings.Get(building).Kind != BuildingKind.Chest);
                 }
 
                 bool has = (cell.Flags & flag) != 0;
@@ -473,12 +496,69 @@ namespace Antarium.Sim
                     continue;
                 }
                 _storageChanged = true;
-                if (cmd.Set) Colony.Inventory.AddStorageCell(new int2(x, y), index);
+                if (cmd.Set) AddStorageCell(new int2(x, y), index);
                 else EvictStorage(new int2(x, y), index);
             }
 
             if (!designate && _storageChanged)
                 Buildings.MarkNetworkDirty(); // belts ending in a storage zone deliver to the stock
+        }
+
+        /// <summary>
+        /// Storage filter: a chest, or the storage zone at <paramref name="c"/> together with every storage cell connected to it
+        /// (<paramref name="wholeZone"/>), only takes the items in <paramref name="allow"/>.
+        /// </summary>
+        void SetStorageFilter(int2 c, ulong allow, bool wholeZone)
+        {
+            if (!World.InBounds(c.x, c.y)) return;
+            var inv = Colony.Inventory;
+            var start = inv.ContainerAt(World.Index(c.x, c.y));
+            if (start == null) return;
+            if (start.IsChest || !wholeZone)
+            {
+                inv.SetAllow(start, allow);
+                return;
+            }
+            foreach (var cell in ZoneCells(c)) inv.SetAllow(inv.ContainerAt(World.Index(cell.x, cell.y)), allow);
+        }
+
+        /// <summary>A newly painted storage cell joins the zone next to it, filter included.</summary>
+        void AddStorageCell(int2 c, int index)
+        {
+            var inv = Colony.Inventory;
+            inv.AddStorageCell(c, index);
+            for (int d = 0; d < 4; d++)
+            {
+                var n = c + (d == 0 ? new int2(1, 0) : d == 1 ? new int2(-1, 0) : d == 2 ? new int2(0, 1) : new int2(0, -1));
+                if (!World.InBounds(n.x, n.y)) continue;
+                int ni = World.Index(n.x, n.y);
+                if (!Colony.StorageCells.Contains(ni) || ni == index) continue;
+                var neighbour = inv.ContainerAt(ni);
+                if (neighbour == null) continue;
+                inv.SetAllow(inv.ContainerAt(index), neighbour.Allow);
+                return;
+            }
+        }
+
+        /// <summary>The storage zone cell <paramref name="c"/> and every storage cell connected to it (4-way).</summary>
+        public List<int2> ZoneCells(int2 c)
+        {
+            var cells = new List<int2>();
+            if (!World.InBounds(c.x, c.y) || !Colony.StorageCells.Contains(World.Index(c.x, c.y))) return cells;
+            cells.Add(c);
+            var seen = new HashSet<int> { World.Index(c.x, c.y) };
+            for (int i = 0; i < cells.Count; i++)
+            {
+                for (int d = 0; d < 4; d++)
+                {
+                    var n = cells[i] + (d == 0 ? new int2(1, 0) : d == 1 ? new int2(-1, 0) : d == 2 ? new int2(0, 1) : new int2(0, -1));
+                    if (!World.InBounds(n.x, n.y)) continue;
+                    int index = World.Index(n.x, n.y);
+                    if (!Colony.StorageCells.Contains(index) || !seen.Add(index)) continue;
+                    cells.Add(n);
+                }
+            }
+            return cells;
         }
 
         /// <summary>Items in an erased storage cell move to other storage; what does not fit drops to the floor.</summary>
@@ -651,12 +731,16 @@ namespace Antarium.Sim
         int DeliverCarried(ref Ant ant, int2 c)
         {
             var inventory = Colony.Inventory;
-            bool stockCell = Colony.IsStockCell(c, World.Index(c.x, c.y));
+            int index = World.Index(c.x, c.y);
+            bool stockCell = Colony.IsStockCell(c, index);
+            var here = inventory.ContainerAt(index);
+            var chest = here != null && here.IsChest ? here : null;
             int delivered = 0;
             while (ant.IsCarrying)
             {
                 ushort carried = ant.Carry;
-                bool ok = Buildings.TryFeed(c, carried) || (stockCell && inventory.Deliver(carried, c)) || Buildings.TryLoad(c, carried);
+                bool ok = Buildings.TryFeed(c, carried) || inventory.DeliverInto(chest, carried) || (stockCell && inventory.Deliver(carried, c))
+                          || Buildings.TryLoad(c, carried);
                 if (!ok) break;
                 Events.Publish(new ItemDeliveredEvent(c, carried));
                 delivered++;
@@ -1017,8 +1101,8 @@ namespace Antarium.Sim
                 var sources = Fields.Sources(FieldKind.Dropoff);
                 sources.Clear();
                 AddRoyalCells(sources, Config.colony.royalRadius);
-                foreach (int index in Colony.StorageCells)
-                    sources.Add(GridIndex.ToCell(index, World.ChunksX));
+                foreach (var container in Colony.Inventory.Containers)
+                    if (!container.IsRoyal) sources.Add(container.Cell);
                 Buildings.AddDropoffSources(sources);
             }
             if (Fields.IsDirty(FieldKind.Build))

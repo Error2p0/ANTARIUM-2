@@ -17,7 +17,9 @@ namespace Antarium.Tests
         public readonly BiomeDef Topsoil, Deep;
         public readonly ItemDef Ore, Seed, Bar, Chitin;
         public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber;
-        public readonly RecipeDef Raise;
+        /// <summary>Chest: holds 4. Unloader: 10 items per second. IronBelt: a faster belt costing a bar. Mixer: Smelt or Press (chitin -> bar).</summary>
+        public readonly BuildingDef Chest, Unloader, IronBelt, Mixer;
+        public readonly RecipeDef Raise, Press;
         /// <summary>Brood: +2 starting workers per level (3 levels). Jaws (needs Brood): +50% worker digging. Start: food, knowledge, bars, reveal.</summary>
         public readonly GeneticDef GeneBrood, GeneJaws, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain;
         /// <summary>Rich: far more ore, raids twice as big. Shallow: biomes half as thick. Hard: locked behind GeneStrange.</summary>
@@ -113,6 +115,22 @@ namespace Antarium.Tests
             Chamber.size = new Vector2Int(2, 2);
             Chamber.recipes.Add(Raise);
             Chamber.princessSlots = 3;
+            Chest = Building("chest", BuildingKind.Chest, 13);
+            Chest.capacity = 4;
+            Unloader = Building("unloader", BuildingKind.Unloader, 14);
+            Unloader.speed = 10f;
+            IronBelt = Building("iron_belt", BuildingKind.Belt, 15);
+            IronBelt.speed = 8f;
+            IronBelt.tier = 1;
+            IronBelt.cost.Add(new ItemAmount(Bar, 1));
+            Press = Make<RecipeDef>("press");
+            Press.inputs.Add(new ItemAmount(Chitin, 1));
+            Press.outputs.Add(new ItemAmount(Bar, 1));
+            Press.duration = 1f;
+            Mixer = Building("mixer", BuildingKind.Processor, 16);
+            Mixer.size = new Vector2Int(2, 2);
+            Mixer.recipes.Add(Smelt);
+            Mixer.recipes.Add(Press);
 
             // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
             WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
@@ -312,7 +330,8 @@ namespace Antarium.Tests
             // Deliberately not air-first, to exercise ContentDB ordering.
             DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock }, WorldGen,
                 new[] { Ore, Seed, Bar, Chitin }, null,
-                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber }, Progression);
+                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer },
+                Progression);
         }
 
         CasteDef Caste(string id, AntCaste caste, float health = 40f, float attack = 3f, float upkeep = 0f, float egg = 6f, float share = 0.1f,
@@ -341,7 +360,8 @@ namespace Antarium.Tests
         public ContentDB BuildReordered() =>
             ContentDB.Build(new[] { OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
                 new[] { Chitin, Bar, Seed, Ore }, null,
-                new[] { Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter }, Progression);
+                new[] { Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
+                Progression);
 
         GeneticDef Genetic(string id, int column, int row, int cost, int costPerLevel, int maxLevel, params GeneticEffect[] effects)
         {

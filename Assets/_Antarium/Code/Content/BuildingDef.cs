@@ -27,6 +27,10 @@ namespace Antarium.Content
         Nursery,
         /// <summary>Keeps the pheromone of its kind (a <see cref="PheromoneKind"/> in the filter slot) from fading around it.</summary>
         Emitter,
+        /// <summary>One cell of storage (<see cref="BuildingDef.capacity"/> items) that can be limited to chosen items.</summary>
+        Chest,
+        /// <summary>Takes items (its filter item, or any) out of the storage behind it and puts them onto the belt or machine its arrow points at.</summary>
+        Unloader,
     }
 
     /// <summary>Which generated placeholder sprite a machine uses until real art exists.</summary>
@@ -43,6 +47,7 @@ namespace Antarium.Content
         Nursery,
         Emitter,
         PrincessChamber,
+        Crusher,
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>
@@ -64,8 +69,16 @@ namespace Antarium.Content
         [Min(0.05f)] public float buildWork = 1f;
 
         [Header("Transport")]
-        [Tooltip("Cells per second items move along this cell.")]
+        [Tooltip("Cells per second items move along this cell. Unloader: items per second it puts out.")]
         [Min(0.1f)] public float speed = 2f;
+
+        [Tooltip("Belts, lifts and gates: 0 = silk / resin, 1 = iron (picks the sprite). Placing a building of the same kind " +
+                 "over another one upgrades it in place.")]
+        [Min(0)] public int tier;
+
+        [Header("Storage")]
+        [Tooltip("Chest: items of any type it holds.")]
+        [Min(1)] public int capacity = 16;
 
         [Header("Processing")]
         public List<RecipeDef> recipes = new();

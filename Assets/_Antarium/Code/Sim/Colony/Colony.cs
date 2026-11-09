@@ -149,8 +149,8 @@ namespace Antarium.Sim
             }
         }
 
-        /// <summary>True inside the royal chamber or on a storage zone cell: items delivered here go into the stock.</summary>
-        public bool IsStockCell(int2 c, int worldIndex) => IsRoyalCell(c) || StorageCells.Contains(worldIndex);
+        /// <summary>True inside the royal chamber, on a storage zone cell or on a chest: items delivered here go into the stock.</summary>
+        public bool IsStockCell(int2 c, int worldIndex) => IsRoyalCell(c) || Inventory.ContainerAt(worldIndex) != null;
 
         /// <summary>Within the royal chamber (a square of <c>royalRadius</c> around the queen).</summary>
         public bool IsRoyalCell(int2 c)

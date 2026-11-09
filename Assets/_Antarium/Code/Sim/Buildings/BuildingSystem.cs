@@ -36,8 +36,18 @@ namespace Antarium.Sim
         readonly List<Machine> _machines = new();
         readonly Stack<int> _freeMachines = new();
         readonly List<int> _order = new();
+        /// <summary>Finished unloaders (rebuilt with the network).</summary>
+        readonly List<int> _unloaders = new();
+        /// <summary>Finished chests (rebuilt with the network).</summary>
+        readonly List<int> _chests = new();
         readonly List<ushort> _leftover = new();
         readonly int[] _room;
+        /// <summary>
+        /// Routers (splitters, filters): items each can deliver, per side the item came in from (5 per building: the four
+        /// neighbours, then "from nowhere"). Routers never hand an item back where it came from, so a router next to a router
+        /// only counts what the other one can deliver without going back.
+        /// </summary>
+        ulong[] _maskFrom = new ulong[0];
         bool _networkDirty = true;
         float _rateTimer;
         float _beltSpeed = 1f;
@@ -119,17 +129,23 @@ namespace Antarium.Sim
                 case BuildingKind.Belt: return new int2(dir.x < 0 ? -1 : 1, 0);
                 case BuildingKind.Lift: return new int2(0, dir.y < 0 ? -1 : 1);
                 case BuildingKind.Filter:
+                case BuildingKind.Unloader:
                     if (dir.x == 0 && dir.y == 0) return new int2(1, 0);
                     return math.abs(dir.x) >= math.abs(dir.y) ? new int2((int)math.sign(dir.x), 0) : new int2(0, (int)math.sign(dir.y));
                 default: return int2.zero;
             }
         }
 
-        public PlaceResult CanPlace(int def, int2 origin, int2 dir) => Check(def, origin, dir, out _);
+        public PlaceResult CanPlace(int def, int2 origin, int2 dir) => Check(def, origin, dir, out _, out _);
 
-        PlaceResult Check(int def, int2 origin, int2 dir, out int rotate)
+        /// <summary>
+        /// Placement rules. Over a building of the same kind: the same one with another direction is re-oriented
+        /// (<paramref name="rotate"/>); another tier of it (iron belt over silk belt) is upgraded in place (<paramref name="upgrade"/>).
+        /// </summary>
+        PlaceResult Check(int def, int2 origin, int2 dir, out int rotate, out int upgrade)
         {
             rotate = None;
+            upgrade = None;
             if (def < 0 || def >= _content.Buildings.Length) return PlaceResult.UnknownBuilding;
             if (!_colony.BuildingUnlocked[def]) return PlaceResult.Locked;
             var data = _content.Buildings[def];
@@ -154,13 +170,24 @@ namespace Antarium.Sim
                 if (existing >= 0)
                 {
                     var e = All[existing];
-                    if (machine || e.Def != def) return PlaceResult.Occupied;
-                    if (!bdef.IsTransport || e.Dir.Equals(nd)) return PlaceResult.Unchanged;
-                    rotate = existing;
+                    if (machine) return PlaceResult.Occupied;
+                    if (e.Def != def)
+                    {
+                        // Another tier of the same kind is swapped in place (chests keep their stock: never).
+                        if (e.Kind != bdef.kind || bdef.kind == BuildingKind.Chest) return PlaceResult.Occupied;
+                        upgrade = existing;
+                    }
+                    else
+                    {
+                        bool turns = bdef.IsTransport || bdef.kind == BuildingKind.Unloader;
+                        if (!turns || e.Dir.Equals(nd)) return PlaceResult.Unchanged;
+                        rotate = existing;
+                    }
                 }
                 if (!bdef.IsTransport && c.Equals(_colony.QueenCell)) return PlaceResult.Occupied;
                 if (bdef.kind == BuildingKind.Wall && (_colony.IsRoyalCell(c) || (cell.Flags & CellFlags.Storage) != 0))
                     return PlaceResult.Protected;
+                if (bdef.kind == BuildingKind.Chest && (cell.Flags & CellFlags.Storage) != 0) return PlaceResult.Protected;
             }
             if (machine || bdef.kind == BuildingKind.Trap)
             {
@@ -174,7 +201,7 @@ namespace Antarium.Sim
         /// <summary>Pays the cost and places a blueprint. Dragging a transport cell over one of the same type re-orients it.</summary>
         public PlaceResult Place(int def, int2 origin, int2 dir, ushort filter = 0)
         {
-            var result = Check(def, origin, dir, out int rotate);
+            var result = Check(def, origin, dir, out int rotate, out int upgrade);
             if (result == PlaceResult.Rotated)
             {
                 ref var r = ref Get(rotate);
@@ -188,11 +215,47 @@ namespace Antarium.Sim
                 _events.Publish(new PlaceFailedEvent(def, origin, result));
                 return result;
             }
+            if (upgrade >= 0)
+            {
+                Upgrade(upgrade, def, dir);
+                _events.Publish(new BuildingPlacedEvent(upgrade, def, origin));
+                return result;
+            }
 
             _colony.Inventory.Spend(_content.Buildings[def]);
             int id = Create(def, origin, dir, filter);
             _events.Publish(new BuildingPlacedEvent(id, def, origin));
             return result;
+        }
+
+        /// <summary>
+        /// Swaps a single-cell building for another tier of the same kind: the old one is refunded, the new one paid, and
+        /// it becomes a blueprint for workers to build. Items riding a belt stay on it.
+        /// </summary>
+        void Upgrade(int id, int def, int2 dir)
+        {
+            ref var b = ref Get(id);
+            _leftover.Clear();
+            _colony.Inventory.Refund(_content.Buildings[b.Def], b.State == BuildingState.Blueprint ? 1f : _config.refundFraction, b.Origin, _leftover);
+            foreach (ushort item in _leftover) DropPile(b.Origin, item, 1);
+            var data = _content.Buildings[def];
+            _colony.Inventory.Spend(data);
+            b.Def = def;
+            b.Dir = NormalizeDir(b.Kind, dir);
+            b.WorkLeft = b.WorkTotal = data.Def.buildWork;
+            b.State = BuildingState.Blueprint;
+            b.Jammed = false;
+            b.Stuck = 0f;
+            ForEachCell(b.Origin, b.Size, index =>
+            {
+                var cell = _world.Cells[index];
+                cell.Flags |= CellFlags.Blueprint;
+                _world.Cells[index] = cell;
+            });
+            if (b.Kind == BuildingKind.GuardPost) GuardsChanged = true;
+            _networkDirty = true;
+            BlueprintsChanged = true;
+            RecountBlueprints();
         }
 
         /// <summary>Adds a blueprint without paying or checking (placement and loading).</summary>
@@ -286,6 +349,10 @@ namespace Antarium.Sim
                 case BuildingKind.GuardPost: GuardsChanged = true; break;
                 case BuildingKind.Wall: CompletedWalls.Add(id); break;
                 case BuildingKind.Nursery: NurseriesChanged = true; break;
+                case BuildingKind.Chest:
+                    _colony.Inventory.AddChest(b.Origin, _world.Index(b.Origin.x, b.Origin.y), _content.Buildings[b.Def].Def.capacity);
+                    DropoffChanged = true;
+                    break;
             }
             _networkDirty = true;
             BlueprintsChanged = true;
@@ -341,6 +408,14 @@ namespace Antarium.Sim
             var b = All[id];
             var data = _content.Buildings[b.Def];
             bool blueprint = b.State == BuildingState.Blueprint;
+            if (b.Kind == BuildingKind.Chest && !blueprint)
+            {
+                // A chest's items move to other storage first; what does not fit drops where it stood.
+                _leftover.Clear();
+                _colony.Inventory.RemoveStorageCell(_world.Index(b.Origin.x, b.Origin.y), _leftover);
+                foreach (ushort item in _leftover) DropPile(b.Origin, item, 1);
+                DropoffChanged = true;
+            }
             _leftover.Clear();
             if (refund) _colony.Inventory.Refund(data, blueprint ? 1f : _config.refundFraction, b.Origin, _leftover);
             foreach (ushort item in _leftover) DropPile(b.Origin, item, 1); // the stock is full
@@ -393,10 +468,43 @@ namespace Antarium.Sim
                 Get(id).Filter = item;
                 return true;
             }
+            if (kind == BuildingKind.Unloader)
+            {
+                if (item >= _content.Items.Length && item != ContentDB.NoItem) return false;
+                Get(id).Filter = item;
+                return true;
+            }
             if (kind != BuildingKind.Filter || item >= _content.Items.Length) return false;
             Get(id).Filter = item;
             _networkDirty = true;
             return true;
+        }
+
+        /// <summary>
+        /// The machine covering <paramref name="cell"/> runs only its recipe <paramref name="choice"/> (index into its
+        /// recipes), or any it can (-1). False if there is no finished machine there.
+        /// </summary>
+        public bool SetRecipe(int2 cell, int choice)
+        {
+            int id = At(cell);
+            var m = id >= 0 ? MachineOf(id) : null;
+            if (m == null) return false;
+            if (m.Choice == choice) return true;
+            m.SetChoice(choice, _content);
+            // The current craft keeps going; what the machine takes in changes at once.
+            ConsumersChanged |= m.Data.InputMask;
+            _networkDirty = true;
+            return true;
+        }
+
+        /// <summary>Where the unloader <paramref name="id"/> takes items from (the cell behind its arrow), or null.</summary>
+        public StockContainer UnloaderSource(int id)
+        {
+            var b = All[id];
+            int2 behind = b.Origin - b.Dir;
+            if (!_world.InBounds(behind.x, behind.y)) return null;
+            var inv = _colony.Inventory;
+            return inv.ContainerAt(_world.Index(behind.x, behind.y)) ?? (_colony.IsRoyalCell(behind) ? inv.Royal : null);
         }
 
         void DropPile(int2 c, ushort item, int count)
@@ -434,7 +542,7 @@ namespace Antarium.Sim
         {
             int id = ActiveAt(cell);
             if (id < 0 || !All[id].IsTransport || (All[id].Mask & Bit(item)) == 0) return false;
-            if (!Insert(id, item, 0.5f, new float2(cell) + 0.5f)) return false;
+            if (!Insert(id, item, 0.5f, new float2(cell) + 0.5f, None)) return false;
             _colony.Inventory.BeginTransit(item);
             return true;
         }
@@ -444,7 +552,7 @@ namespace Antarium.Sim
         {
             int id = ActiveAt(cell);
             if (id < 0 || !All[id].IsTransport || (All[id].Mask & Bit(item)) == 0) return false;
-            return Insert(id, item, 0.5f, new float2(cell) + 0.5f);
+            return Insert(id, item, 0.5f, new float2(cell) + 0.5f, None);
         }
 
         /// <summary>A worker hands a carried item to the machine at <paramref name="cell"/>.</summary>
@@ -457,19 +565,51 @@ namespace Antarium.Sim
             return true;
         }
 
-        bool Insert(int id, ushort item, float t0, float2 prev)
+        bool Insert(int id, ushort item, float t0, float2 prev, int from)
         {
+            if (!CanInsert(id, t0)) return false;
             ref var b = ref Get(id);
-            if (!b.Back.IsEmpty) return false;
-            var slot = new ItemSlot { Item = item, T = t0, Prev = prev, Pos = SlotPos(b, t0) };
-            if (b.Front.IsEmpty)
-            {
-                b.Front = slot;
-                return true;
-            }
-            if (b.Front.T - t0 < _spacing - 1e-4f) return false;
-            b.Back = slot;
+            var slot = new ItemSlot { Item = item, T = t0, Prev = prev, Pos = SlotPos(b, t0), From = from };
+            if (b.Front.IsEmpty) b.Front = slot;
+            else b.Back = slot;
             return true;
+        }
+
+        bool CanInsert(int id, float t0)
+        {
+            var b = All[id];
+            if (!b.Back.IsEmpty) return false;
+            return b.Front.IsEmpty || b.Front.T - t0 >= _spacing - 1e-4f;
+        }
+
+        /// <summary>Where an item handed from <paramref name="from"/> starts on the transport cell <paramref name="t"/>.</summary>
+        static float EntryT(in Building t, int2 from) => t.IsLine && !from.Equals(t.Origin - t.Dir) ? 0.5f : 0f;
+
+        /// <summary>Items <paramref name="target"/> can deliver when handed one by building <paramref name="from"/> (routers exclude that side).</summary>
+        public ulong AcceptMask(int target, int from)
+        {
+            var t = All[target];
+            if (!t.IsRouter || from < 0) return t.Mask;
+            return _maskFrom.Length > target * 5 + 4 ? _maskFrom[target * 5 + SideOf(t.Origin, All[from])] : t.Mask;
+        }
+
+        /// <summary>Cardinal index of a 1×1 neighbour <paramref name="other"/> as seen from <paramref name="origin"/>, or 4 (not a direct neighbour).</summary>
+        static int SideOf(int2 origin, in Building other)
+        {
+            if (!other.Size.Equals(new int2(1, 1))) return 4;
+            int2 d = other.Origin - origin;
+            for (int k = 0; k < 4; k++)
+                if (d.Equals(Cardinals[k])) return k;
+            return 4;
+        }
+
+        /// <summary>True if <paramref name="target"/> (machine or transport) takes <paramref name="item"/> from building <paramref name="from"/> right now.</summary>
+        bool CanTake(int target, ushort item, int from)
+        {
+            var t = All[target];
+            if (!t.IsActive) return false;
+            if (t.Machine >= 0) return _machines[t.Machine].Room(item) > 0;
+            return (AcceptMask(target, from) & Bit(item)) != 0 && CanInsert(target, EntryT(t, All[from].Origin));
         }
 
         internal static float2 SlotPos(in Building b, float t)
@@ -495,6 +635,8 @@ namespace Antarium.Sim
             for (int i = 0; i < _order.Count; i++)
                 Step(_order[i], dt);
 
+            TickUnloaders(dt);
+            UpdateChestLooks();
             TickMachines(dt);
             UpdateConsumerRoom();
 
@@ -502,13 +644,81 @@ namespace Antarium.Sim
             if (_rateTimer >= 1f)
             {
                 float a = _config.rateSmoothing;
-                for (int i = 0; i < _order.Count; i++)
-                {
-                    ref var b = ref Get(_order[i]);
-                    b.Rate = math.lerp(b.Rate, b.Passed * 60f / _rateTimer, a);
-                    b.Passed = 0;
-                }
+                for (int i = 0; i < _order.Count; i++) UpdateRate(_order[i], a);
+                foreach (int u in _unloaders) UpdateRate(u, a);
                 _rateTimer = 0f;
+            }
+        }
+
+        /// <summary>What chests show: how full they are (<see cref="Building.Craft"/>) and the item they hold most of (<see cref="Building.Filter"/>).</summary>
+        void UpdateChestLooks()
+        {
+            var inv = _colony.Inventory;
+            foreach (int id in _chests)
+            {
+                ref var b = ref Get(id);
+                var c = inv.ContainerAt(_world.Index(b.Origin.x, b.Origin.y));
+                if (c == null) continue;
+                b.Craft = c.Capacity > 0 ? (float)c.Total / c.Capacity : 0f;
+                int best = -1;
+                for (int i = 0; i < c.Counts.Length; i++)
+                    if (c.Counts[i] > 0 && (best < 0 || c.Counts[i] > c.Counts[best])) best = i;
+                b.Filter = best >= 0 ? (ushort)best : ContentDB.NoItem;
+            }
+        }
+
+        void UpdateRate(int id, float smoothing)
+        {
+            ref var b = ref Get(id);
+            b.Rate = math.lerp(b.Rate, b.Passed * 60f / _rateTimer, smoothing);
+            b.Passed = 0;
+        }
+
+        /// <summary>
+        /// Unloaders take one item at a time (their filter item, or any) out of the storage behind them, as fast as their
+        /// speed allows and only while what they feed takes it. Items kept in reserve for building stay.
+        /// </summary>
+        void TickUnloaders(float dt)
+        {
+            var inv = _colony.Inventory;
+            int items = _content.Items.Length;
+            foreach (int id in _unloaders)
+            {
+                ref var b = ref Get(id);
+                if (!b.IsActive) continue;
+                int target = b.Outputs.x;
+                var source = UnloaderSource(id);
+                if (target < 0 || source == null)
+                {
+                    b.Status = MachineStatus.Idle;
+                    b.Craft = 0f;
+                    continue;
+                }
+                b.Craft = math.min(1f, b.Craft + _content.Buildings[b.Def].Def.speed * _beltSpeed * dt);
+                if (b.Craft < 1f) continue;
+
+                ushort picked = ContentDB.NoItem;
+                bool any = false;
+                for (int k = 0; k < items && picked == ContentDB.NoItem; k++)
+                {
+                    var item = (ushort)((b.RoundRobin + k) % items);
+                    if (b.Filter != ContentDB.NoItem && item != b.Filter) continue;
+                    if (source.Counts[item] <= 0 || inv.Available(item) <= 0) continue;
+                    any = true;
+                    if (CanTake(target, item, id)) picked = item;
+                }
+                if (picked == ContentDB.NoItem)
+                {
+                    b.Status = any ? MachineStatus.OutputBlocked : MachineStatus.Idle;
+                    continue;
+                }
+                inv.Unload(source, picked);
+                var cellCenter = new float2(b.Origin) + 0.5f;
+                Send(target, picked, id, b.Origin, cellCenter);
+                b.Craft -= 1f;
+                b.Passed++;
+                b.Status = MachineStatus.Working;
+                b.RoundRobin = (byte)((picked + 1) % math.max(1, math.min(items, 255)));
             }
         }
 
@@ -522,7 +732,7 @@ namespace Antarium.Sim
                 b.Front.T = math.min(1f, b.Front.T + dv);
                 if (b.Front.T >= 1f)
                 {
-                    if (Emit(ref b, b.Front)) emitted = true;
+                    if (Emit(id, ref b, b.Front)) emitted = true;
                     else b.Stuck += dt;
                 }
                 else b.Stuck = 0f;
@@ -551,15 +761,15 @@ namespace Antarium.Sim
             }
         }
 
-        bool Emit(ref Building b, in ItemSlot slot)
+        bool Emit(int id, ref Building b, in ItemSlot slot)
         {
             ushort item = slot.Item;
             switch (b.Kind)
             {
                 case BuildingKind.Belt:
                 case BuildingKind.Lift:
-                    if (b.Outputs.x >= 0) return Send(b.Outputs.x, item, b.Origin, slot.Pos);
-                    if (b.Sink == SinkKind.Stock && _colony.Inventory.Deliver(item, b.Origin))
+                    if (b.Outputs.x >= 0) return Send(b.Outputs.x, item, id, b.Origin, slot.Pos);
+                    if (b.Sink == SinkKind.Stock && DeliverToStock(b, item))
                     {
                         _events.Publish(new ItemDeliveredEvent(b.Origin, item));
                         return true;
@@ -571,19 +781,19 @@ namespace Antarium.Sim
                     {
                         int s = (b.RoundRobin + k) & 3;
                         int o = b.Outputs[s];
-                        if (o < 0 || !Send(o, item, b.Origin, slot.Pos)) continue;
+                        if (o < 0 || o == slot.From || !Send(o, item, id, b.Origin, slot.Pos)) continue;
                         b.RoundRobin = (byte)((s + 1) & 3);
                         return true;
                     }
                     return false;
 
                 case BuildingKind.Filter:
-                    if (item == b.Filter) return b.Outputs.x >= 0 && Send(b.Outputs.x, item, b.Origin, slot.Pos);
+                    if (item == b.Filter) return b.Outputs.x >= 0 && b.Outputs.x != slot.From && Send(b.Outputs.x, item, id, b.Origin, slot.Pos);
                     for (int k = 0; k < 3; k++)
                     {
                         int s = 1 + (b.RoundRobin + k) % 3;
                         int o = b.Outputs[s];
-                        if (o < 0 || !Send(o, item, b.Origin, slot.Pos)) continue;
+                        if (o < 0 || o == slot.From || !Send(o, item, id, b.Origin, slot.Pos)) continue;
                         b.RoundRobin = (byte)(s % 3);
                         return true;
                     }
@@ -592,8 +802,21 @@ namespace Antarium.Sim
             return false;
         }
 
-        /// <summary>Hands an item from a transport cell at <paramref name="from"/> to building <paramref name="target"/>.</summary>
-        bool Send(int target, ushort item, int2 from, float2 prev)
+        /// <summary>The end of a line: straight into a chest it points at (if the chest takes the item), else the nearest storage.</summary>
+        bool DeliverToStock(in Building b, ushort item)
+        {
+            var inv = _colony.Inventory;
+            int2 next = b.Origin + b.Dir;
+            if (_world.InBounds(next.x, next.y))
+            {
+                var chest = inv.ContainerAt(_world.Index(next.x, next.y));
+                if (chest != null && chest.IsChest && inv.DeliverInto(chest, item)) return true;
+            }
+            return inv.Deliver(item, b.Origin);
+        }
+
+        /// <summary>Hands an item from building <paramref name="fromId"/> at <paramref name="from"/> to building <paramref name="target"/>.</summary>
+        bool Send(int target, ushort item, int fromId, int2 from, float2 prev)
         {
             var t = All[target];
             if (!t.IsActive) return false;
@@ -603,11 +826,9 @@ namespace Antarium.Sim
                 _colony.Inventory.CancelTransit(item);
                 return true;
             }
-            if ((t.Mask & Bit(item)) == 0) return false;
-            bool line = t.Kind == BuildingKind.Belt || t.Kind == BuildingKind.Lift;
+            if ((AcceptMask(target, fromId) & Bit(item)) == 0) return false;
             // Entering a belt from behind starts at its beginning; joining from the side starts mid-cell.
-            float t0 = line && !from.Equals(t.Origin - t.Dir) ? 0.5f : 0f;
-            return Insert(target, item, t0, prev);
+            return Insert(target, item, EntryT(t, from), prev, fromId);
         }
 
         /// <summary>Traps re-arm; intact gates slowly mend.</summary>
@@ -730,6 +951,7 @@ namespace Antarium.Sim
             for (int k = 0; k < recipes.Length; k++)
             {
                 int ri = (m.NextRecipe + k) % recipes.Length;
+                if (m.Choice >= 0 && ri != m.Choice) continue;
                 var recipe = _content.Recipes[recipes[ri]];
                 bool ok = true;
                 for (int i = 0; i < recipe.InputItems.Length && ok; i++)
@@ -763,9 +985,9 @@ namespace Antarium.Sim
             if (m.OutputBelt >= 0)
             {
                 var belt = All[m.OutputBelt];
-                if (belt.IsActive && (belt.Mask & Bit(item)) != 0)
+                if (belt.IsActive && (AcceptMask(m.OutputBelt, m.Building) & Bit(item)) != 0)
                 {
-                    if (!Insert(m.OutputBelt, item, 0f, SlotPos(belt, 0f))) return false;
+                    if (!Insert(m.OutputBelt, item, 0f, SlotPos(belt, 0f), m.Building)) return false;
                     _colony.Inventory.BeginTransit(item);
                     return true;
                 }
@@ -784,8 +1006,8 @@ namespace Antarium.Sim
                 if (m == null) continue;
                 for (int i = 0; i < m.Inputs.Length; i++)
                 {
-                    int free = math.max(0, m.Data.InputCaps[i] - m.Inputs[i]);
                     ushort item = m.Data.InputItems[i];
+                    int free = m.Room(item);
                     _room[item] += free;
                     // A machine joins or leaves the consumer field when its buffer fills up or frees.
                     bool needs = free > 0;
@@ -809,6 +1031,8 @@ namespace Antarium.Sim
             _networkDirty = false;
             int n = All.Length;
             int active = 0;
+            _unloaders.Clear();
+            _chests.Clear();
             for (int id = 0; id < n; id++)
             {
                 ref var b = ref Get(id);
@@ -817,6 +1041,12 @@ namespace Antarium.Sim
                 b.Outputs = new int4(None);
                 b.Sink = SinkKind.None;
                 if (b.IsActive && b.IsTransport) Link(ref b);
+                else if (b.IsActive && b.Kind == BuildingKind.Unloader)
+                {
+                    LinkUnloader(ref b);
+                    _unloaders.Add(id);
+                }
+                else if (b.IsActive && b.Kind == BuildingKind.Chest) _chests.Add(id);
             }
             ActiveCount = active;
 
@@ -849,8 +1079,8 @@ namespace Antarium.Sim
                 return;
             }
 
-            // Splitter / filter: every neighbour that is not feeding into it is an output. Splitters and
-            // filters never connect directly to each other (items would bounce between them).
+            // Splitter / filter: every neighbour that is not feeding into it is an output. Neighbouring splitters and
+            // filters are outputs of each other; an item never goes back to the router it came from.
             int free = b.Kind == BuildingKind.Filter ? 1 : 0;
             for (int k = 0; k < 4; k++)
             {
@@ -858,14 +1088,20 @@ namespace Antarium.Sim
                 int t = ActiveAt(b.Origin + d);
                 if (t < 0 || All[t].Kind > BuildingKind.Processor) continue;
                 var tb = All[t];
-                if (tb.IsTransport)
-                {
-                    if (tb.Kind == BuildingKind.Splitter || tb.Kind == BuildingKind.Filter) continue;
-                    if (tb.Dir.Equals(-d)) continue;
-                }
+                if (tb.IsLine && tb.Dir.Equals(-d)) continue;
                 if (b.Kind == BuildingKind.Filter && d.Equals(b.Dir)) b.Outputs.x = t;
                 else if (free < 4) b.Outputs[free++] = t;
             }
+        }
+
+        /// <summary>An unloader feeds the belt, lift, router or machine its arrow points at.</summary>
+        void LinkUnloader(ref Building b)
+        {
+            int t = ActiveAt(b.Origin + b.Dir);
+            if (t < 0) return;
+            var tb = All[t];
+            if (tb.Machine >= 0) b.Outputs.x = t;
+            else if (tb.IsTransport && !(tb.IsLine && tb.Dir.Equals(-b.Dir))) b.Outputs.x = t;
         }
 
         void LinkMachine(Machine m)
@@ -928,6 +1164,9 @@ namespace Antarium.Sim
 
         void ComputeMasks()
         {
+            int n = All.Length;
+            if (_maskFrom.Length < n * 5) _maskFrom = new ulong[math.max(n * 5, _maskFrom.Length * 2)];
+            else Array.Clear(_maskFrom, 0, _maskFrom.Length);
             for (int i = 0; i < _order.Count; i++) Get(_order[i]).Mask = 0;
             // Downstream-first order converges in one pass without loops; masks only grow, so loops settle too.
             for (int pass = 0; pass < 256; pass++)
@@ -935,8 +1174,21 @@ namespace Antarium.Sim
                 bool changed = false;
                 for (int i = 0; i < _order.Count; i++)
                 {
-                    ref var b = ref Get(_order[i]);
-                    ulong m = MaskOf(b);
+                    int id = _order[i];
+                    ref var b = ref Get(id);
+                    if (b.IsRouter)
+                    {
+                        for (int side = 0; side < 5; side++)
+                        {
+                            ulong rm = RouterMask(id, b, side);
+                            if (rm == _maskFrom[id * 5 + side]) continue;
+                            _maskFrom[id * 5 + side] = rm;
+                            changed = true;
+                        }
+                        b.Mask = _maskFrom[id * 5 + 4];
+                        continue;
+                    }
+                    ulong m = b.Outputs.x >= 0 ? EdgeMask(id, b.Outputs.x) : b.Sink == SinkKind.Stock ? AllItems : 0;
                     if (m == b.Mask) continue;
                     b.Mask = m;
                     changed = true;
@@ -945,31 +1197,29 @@ namespace Antarium.Sim
             }
         }
 
-        ulong MaskOf(in Building b)
+        /// <summary>
+        /// Items router <paramref name="id"/> can deliver when the item came in from side <paramref name="side"/>
+        /// (0–3: <see cref="Cardinals"/>; 4: from nowhere, e.g. loaded by an ant): every output but that side.
+        /// </summary>
+        ulong RouterMask(int id, in Building b, int side)
         {
-            switch (b.Kind)
-            {
-                case BuildingKind.Belt:
-                case BuildingKind.Lift:
-                    if (b.Outputs.x >= 0) return OutMask(b.Outputs.x);
-                    return b.Sink == SinkKind.Stock ? AllItems : 0;
-                case BuildingKind.Splitter:
-                    return OutMask(b.Outputs.x) | OutMask(b.Outputs.y) | OutMask(b.Outputs.z) | OutMask(b.Outputs.w);
-                case BuildingKind.Filter:
-                {
-                    ulong bit = Bit(b.Filter);
-                    ulong rest = OutMask(b.Outputs.y) | OutMask(b.Outputs.z) | OutMask(b.Outputs.w);
-                    return (OutMask(b.Outputs.x) & bit) | (rest & ~bit);
-                }
-            }
-            return 0;
+            int back = side < 4 ? At(b.Origin + Cardinals[side]) : None;
+            ulong Out(int o) => o >= 0 && o != back ? EdgeMask(id, o) : 0;
+            if (b.Kind == BuildingKind.Splitter)
+                return Out(b.Outputs.x) | Out(b.Outputs.y) | Out(b.Outputs.z) | Out(b.Outputs.w);
+            ulong bit = Bit(b.Filter);
+            ulong rest = Out(b.Outputs.y) | Out(b.Outputs.z) | Out(b.Outputs.w);
+            return (Out(b.Outputs.x) & bit) | (rest & ~bit);
         }
 
-        ulong OutMask(int o)
+        /// <summary>Items building <paramref name="from"/> can get delivered by handing them to its output <paramref name="o"/>.</summary>
+        ulong EdgeMask(int from, int o)
         {
             if (o < 0) return 0;
             var t = All[o];
-            return t.Machine >= 0 ? _machines[t.Machine].Data.InputMask : t.Mask;
+            if (t.Machine >= 0) return _machines[t.Machine].ActiveMask;
+            if (t.IsRouter) return _maskFrom[o * 5 + SideOf(t.Origin, All[from])];
+            return t.Mask;
         }
 
         // ---------------------------------------------------------------- flow field sources

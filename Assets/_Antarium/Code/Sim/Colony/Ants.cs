@@ -250,7 +250,7 @@ namespace Antarium.Sim
             int total = 0;
             for (int i = 0; i < SupplyNeed.Length && i < inventory.Items.Length; i++)
             {
-                int need = SupplyField[i] < 0 ? 0 : math.min(inventory.Items[i] - _supplySeeking[i],
+                int need = SupplyField[i] < 0 ? 0 : math.min(inventory.Available((ushort)i) - _supplySeeking[i],
                     inventory.ConsumerRoom[i] - _supplyCarried[i] - _supplySeeking[i]);
                 SupplyNeed[i] = math.max(0, need);
                 total += SupplyNeed[i];
