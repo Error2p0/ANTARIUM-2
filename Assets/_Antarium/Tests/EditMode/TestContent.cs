@@ -13,9 +13,15 @@ namespace Antarium.Tests
     /// </summary>
     public sealed class TestContent : IDisposable
     {
-        public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock;
+        public readonly TerrainMaterialDef Air, Grass, Dirt, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root;
         public readonly BiomeDef Topsoil, Deep;
         public readonly ItemDef Ore, Seed, Bar, Chitin;
+        /// <summary>Surface (10.2): leaves fall from plants, honeydew is the queen's treat, roots drop fibre.</summary>
+        public readonly ItemDef Leaf, Honeydew, Fibre;
+        /// <summary>Ranch: 2 leaves -> 1 honeydew (art Ranch, so the golden aphid can appear in it).</summary>
+        public readonly BuildingDef Ranch;
+        public readonly EnemyDef WolfSpider;
+        public readonly RandomEventDef AphidEvent;
         public readonly BuildingDef Belt, Lift, Splitter, Filter, Smelter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber;
         /// <summary>Chest: holds 4. Unloader: 10 items per second. IronBelt: a faster belt costing a bar. Mixer: Smelt or Press (chitin -> bar).</summary>
         public readonly BuildingDef Chest, Unloader, IronBelt, Mixer;
@@ -53,6 +59,9 @@ namespace Antarium.Tests
             Seed.foodValue = 2f;
             Bar = Make<ItemDef>("bar");
             Chitin = Make<ItemDef>("chitin");
+            Leaf = Make<ItemDef>("leaf");
+            Honeydew = Make<ItemDef>("honeydew");
+            Fibre = Make<ItemDef>("fibre");
 
             Smelt = Make<RecipeDef>("smelt");
             Smelt.inputs.Add(new ItemAmount(Ore, 2));
@@ -91,6 +100,8 @@ namespace Antarium.Tests
             Packed = Mat("packed", 1f);
             OreRock = Mat("ore_rock", 2f);
             OreRock.drop = Ore;
+            Root = Mat("root", 4f);
+            Root.drop = Fibre;
 
             Gate = Building("gate", BuildingKind.Gate, 6);
             Gate.maxHealth = 40f;
@@ -131,6 +142,14 @@ namespace Antarium.Tests
             Mixer.size = new Vector2Int(2, 2);
             Mixer.recipes.Add(Smelt);
             Mixer.recipes.Add(Press);
+            var herd = Make<RecipeDef>("herd");
+            herd.inputs.Add(new ItemAmount(Leaf, 2));
+            herd.outputs.Add(new ItemAmount(Honeydew, 1));
+            herd.duration = 1f;
+            Ranch = Building("ranch", BuildingKind.Processor, 17);
+            Ranch.size = new Vector2Int(2, 1);
+            Ranch.recipes.Add(herd);
+            Ranch.art = PlaceholderArt.Ranch;
 
             // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
             WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
@@ -167,6 +186,12 @@ namespace Antarium.Tests
             Spider.aggroRadius = 10f;
             Spider.knowledge = 3f;
             Spider.drops.Add(new ItemAmount(Chitin, 2));
+            WolfSpider = Make<EnemyDef>("wolf_spider");
+            WolfSpider.behavior = EnemyBehavior.NightHunter;
+            WolfSpider.health = 30f;
+            WolfSpider.damage = 5f;
+            WolfSpider.speed = 3f;
+            WolfSpider.aggroRadius = 8f;
 
             // Progression: three research nodes, three abilities, two contracts, one event of each kind.
             Frenzy = Make<AbilityDef>("frenzy");
@@ -244,6 +269,11 @@ namespace Antarium.Tests
             TrappedEvent.duration = 60f;
             TrappedEvent.radius = 4f;
             TrappedEvent.count = 3;
+            AphidEvent = Make<RandomEventDef>("golden_aphid");
+            AphidEvent.kind = RandomEventKind.GoldenAphid;
+            AphidEvent.duration = 30f;
+            AphidEvent.rewardKnowledge = 4f;
+            AphidEvent.rewards.Add(new ItemAmount(Honeydew, 3));
 
             // Prestige: world modifiers and genetic traits.
             ModRich = Make<WorldModifierDef>("mod_rich");
@@ -287,11 +317,14 @@ namespace Antarium.Tests
                 Abilities = new[] { Decree, Frenzy, Seismic, Burst },
                 Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste },
                 Contracts = new[] { DeliverOre, DigIntro },
-                Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent },
+                Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent, AphidEvent },
                 Enemies = new[] { Spider, Raider },
                 Raiders = new[] { Raider },
                 Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain },
                 WorldModifiers = new[] { ModHard, ModRich, ModShallow },
+                PlantForage = new[] { Leaf },
+                RoyalTreat = Honeydew,
+                NightHunters = new[] { WolfSpider },
             };
 
             Topsoil = Make<BiomeDef>("topsoil");
@@ -326,11 +359,16 @@ namespace Antarium.Tests
             Config = Make<GameConfig>("config");
             Config.progression.firstEventDelay = 1e9f; // events only when a test triggers them
             Config.threats.firstRaidSeconds = 1e9f;    // raids too
+            // The surface stays quiet unless a test asks: no leaves, weather, birds or spiders.
+            Config.surface.leafInterval = 1e9f;
+            Config.surface.firstWeatherSeconds = 1e9f;
+            Config.surface.firstBirdSeconds = 1e9f;
+            Config.surface.firstSpiderSeconds = 1e9f;
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock }, WorldGen,
-                new[] { Ore, Seed, Bar, Chitin }, null,
-                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer },
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root }, WorldGen,
+                new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre }, null,
+                new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch },
                 Progression);
         }
 
@@ -358,9 +396,9 @@ namespace Antarium.Tests
 
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
-            ContentDB.Build(new[] { OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
-                new[] { Chitin, Bar, Seed, Ore }, null,
-                new[] { Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
+            ContentDB.Build(new[] { Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
+                new[] { Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
+                new[] { Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
                 Progression);
 
         GeneticDef Genetic(string id, int column, int row, int cost, int costPerLevel, int maxLevel, params GeneticEffect[] effects)

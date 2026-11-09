@@ -46,6 +46,9 @@ namespace Antarium.Sim
         public bool Starving;
         /// <summary>Raiders are in the royal chamber: the queen does not lay.</summary>
         public bool QueenDisturbed;
+        /// <summary>The queen is eating honeydew: she lays <see cref="FedLayingBonus"/> faster and needs no food of her own.</summary>
+        public bool QueenFed;
+        public float FedLayingBonus = 0.5f;
         /// <summary>Princesses raised in princess chambers, waiting for the Nuptial Flight.</summary>
         public int Princesses;
         /// <summary>Princesses that count toward a flight; princess chambers stop raising more at this many.</summary>
@@ -73,7 +76,7 @@ namespace Antarium.Sim
         }
 
         /// <summary>Seconds between eggs while fed.</summary>
-        public float EggInterval => _config.eggInterval / Mods.Mult(StatKind.LayingSpeed);
+        public float EggInterval => _config.eggInterval / Mods.Mult(StatKind.LayingSpeed) / (QueenFed ? 1f + FedLayingBonus : 1f);
         /// <summary>Eggs that may wait next to the queen at once (eggs in nurseries don't count).</summary>
         public int MaxEggs => _config.maxEggs + (int)Mods.Flat(StatKind.MaxEggs);
 
@@ -104,7 +107,7 @@ namespace Antarium.Sim
         /// <summary>Food eaten per minute by the ants (<paramref name="alive"/> per caste) and the queen.</summary>
         public float UpkeepPerMinute(IReadOnlyList<int> alive)
         {
-            float total = _config.queenUpkeep;
+            float total = QueenFed ? 0f : _config.queenUpkeep;
             for (int c = 0; c < alive.Count && c < Castes.Count; c++) total += alive[c] * _content.CasteDefs[c].upkeep;
             return total;
         }

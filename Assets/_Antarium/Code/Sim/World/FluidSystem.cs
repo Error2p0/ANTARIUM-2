@@ -38,7 +38,13 @@ namespace Antarium.Sim
         NativeList<int> _active;
         NativeList<int2> _reactions;
         NativeArray<int> _counters;
+        NativeArray<int> _surfaceY;
         uint _step;
+
+        /// <summary>Water this many cells below the surface (or less) soaks into the ground by <see cref="SoakChance"/> (0 = never).</summary>
+        public int SoakDepth;
+        /// <summary>Chance per step that a wet cell within <see cref="SoakDepth"/> of the surface loses one level.</summary>
+        public float SoakChance;
         byte _stampValue;
 
         public FluidSystem(WorldGrid world, FluidConfig config)
@@ -51,6 +57,7 @@ namespace Antarium.Sim
             _active = new NativeList<int>(64, Allocator.Persistent);
             _reactions = new NativeList<int2>(16, Allocator.Persistent);
             _counters = new NativeArray<int>(3, Allocator.Persistent);
+            _surfaceY = new NativeArray<int>(world.SurfaceY, Allocator.Persistent);
         }
 
         /// <summary>Chunks processed by the last step.</summary>
@@ -161,6 +168,9 @@ namespace Antarium.Sim
                 SteamLoss = _config.steamLoss,
                 AwakeSteps = (byte)math.clamp(_config.awakeSteps, 1, 255),
                 SkipHidden = !includeHidden,
+                SurfaceY = _surfaceY,
+                SoakDepth = SoakChance > 0f ? SoakDepth : -1,
+                SoakChance = (uint)(math.saturate(SoakChance) * 65535f),
             }.Run();
             return new FluidStepResult { Changed = _counters[0], NavChanged = _counters[1] > 0, Reactions = _reactions.Length };
         }
@@ -192,6 +202,30 @@ namespace Antarium.Sim
             Wake(c);
         }
 
+        /// <summary>
+        /// Rain: adds <paramref name="amount"/> water to the open cell <paramref name="c"/>, spilling into the open cells above
+        /// when it is full. Cells holding another fluid take nothing. Returns the water added.
+        /// </summary>
+        public int AddWater(int2 c, int amount)
+        {
+            int added = 0;
+            for (int y = c.y; y < _world.Height && amount > 0; y++)
+            {
+                int i = _world.Index(c.x, y);
+                if (!_world.Cells[i].IsOpen) break;
+                var f = _world.Fluid[i];
+                if (f.Level != 0 && f.Kind != FluidKind.Water) break;
+                int move = math.min(amount, FluidCell.Full - f.Level);
+                if (move <= 0) continue;
+                _world.Fluid[i] = new FluidCell(FluidKind.Water, (byte)(f.Level + move));
+                _world.MarkChanged(c.x, y, ChunkFlags.FluidUpload);
+                amount -= move;
+                added += move;
+            }
+            if (added > 0) Wake(c);
+            return added;
+        }
+
         /// <summary>Puts fluid into an open cell (tests, events, debug).</summary>
         public void Set(int2 c, FluidKind kind, byte level)
         {
@@ -217,6 +251,7 @@ namespace Antarium.Sim
             if (_active.IsCreated) _active.Dispose();
             if (_reactions.IsCreated) _reactions.Dispose();
             if (_counters.IsCreated) _counters.Dispose();
+            if (_surfaceY.IsCreated) _surfaceY.Dispose();
         }
 
         [BurstCompile]
@@ -245,6 +280,10 @@ namespace Antarium.Sim
             public int SteamLoss;
             public byte AwakeSteps;
             public bool SkipHidden;
+            [ReadOnly] public NativeArray<int> SurfaceY;
+            /// <summary>Water at most this deep below the surface soaks away (-1 = off).</summary>
+            public int SoakDepth;
+            public uint SoakChance;
 
             const int Full = FluidCell.Full;
 
@@ -388,6 +427,11 @@ namespace Antarium.Sim
                 // 3. Thin water films in explored tunnels evaporate.
                 if (f.Kind == FluidKind.Water && level > 0 && level <= EvaporateBelow
                     && (Cells[i].Flags & CellFlags.Explored) != 0 && Roll(i, EvaporateChance))
+                    level--;
+
+                // 4. Water near the surface (rain) soaks into the ground, so floods there drain again.
+                if (f.Kind == FluidKind.Water && level > 0 && SurfaceY[x] - y <= SoakDepth
+                    && (math.hash(new uint3((uint)i, Step, 0x50A6u)) & 0xFFFF) < SoakChance)
                     level--;
 
                 if (level != f.Level) Set(i, x, y, new FluidCell(f.Kind, (byte)level));

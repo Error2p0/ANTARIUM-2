@@ -171,6 +171,7 @@ namespace Antarium.Sim
             Contracts = new ContractSystem(content, config.progression, this, seed);
             RandomEvents = new RandomEventSystem(content, config.progression, this, seed);
             Enemies = new EnemySystem(content, config, this, seed);
+            InitSurface();
             ApplyLegacyEffects();
             if (!fresh) return;
 
@@ -220,6 +221,8 @@ namespace Antarium.Sim
             Fluids.WakeAllWithFluid();
             Ants.CountCastes(_alive, _aliveWithEggs);
             ValidateNurseryEggs();
+            _anySheltering = true; // released on the first tick unless a bird circles
+            _shelterDirty = true;
             Contracts.Tick();
         }
 
@@ -316,6 +319,7 @@ namespace Antarium.Sim
             _pending.Clear();
 
             PlayTime += dt;
+            UpdateSurface(dt);
             UpdateColony(dt);
             Abilities.Tick(dt);
             UpdateEngineers();
@@ -904,8 +908,9 @@ namespace Antarium.Sim
         void UpdateForage(float dt)
         {
             var cfg = Config.colony;
-            if (Content.SurfaceForage.Length == 0) return;
-            float forage = Colony.Mods.Mult(StatKind.ForageRate);
+            if (Content.SurfaceForage.Length == 0 || !Surface.IsDay) return; // seeds appear by day
+            float forage = Colony.Mods.Mult(StatKind.ForageRate) * WeatherForage;
+            if (forage <= 0f) return;
             Colony.ForageTimer += dt;
             if (Colony.ForageTimer < cfg.forageInterval / forage) return;
             Colony.ForageTimer = 0f;
@@ -1040,6 +1045,7 @@ namespace Antarium.Sim
             if ((scents & Bit(PheromoneKind.Gather)) != 0) Fields.MarkDirty(FieldKind.Items);
             if ((scents & Bit(PheromoneKind.Defend)) != 0) Fields.MarkDirty(FieldKind.Guard);
             MarkCasteFieldsDirty();
+            MarkSurfaceFieldsDirty();
 
             _terrainChanged = _designationsChanged = _storageChanged = false;
             Buildings.DropoffChanged = Buildings.BlueprintsChanged = Buildings.GuardsChanged = false;
@@ -1156,6 +1162,7 @@ namespace Antarium.Sim
                 Pheromones.AddCells(PheromoneKind.Defend, sources);
             }
             FillCasteSources();
+            FillSurfaceSources();
             if (Fields.IsDirty(FieldKind.Ants))
             {
                 var sources = Fields.Sources(FieldKind.Ants);

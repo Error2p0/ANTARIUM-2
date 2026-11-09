@@ -11,7 +11,9 @@ namespace Antarium.Sim
     /// <summary>
     /// Grid light map. Light spreads from the sky (open Air cells) and from emissive materials, losing
     /// <c>openCost</c> per open cell and <c>solidCost</c> per solid cell. Stored chunk-major, one packed
-    /// RGBA8 uint per cell (alpha unused), so it uploads to the GPU the same way as the cells.
+    /// RGBA8 uint per cell, so it uploads to the GPU the same way as the cells: RGB is the light of emissive
+    /// materials and lava, alpha the sky light (a level, coloured and scaled by the time of day in the shaders,
+    /// so day and night never need a relight).
     ///
     /// Because light reach is bounded (maxLevel / openCost cells, measured as Chebyshev distance since every
     /// step, straight or diagonal, costs at least openCost), a change only affects cells within that radius,
@@ -70,13 +72,19 @@ namespace Antarium.Sim
             return true;
         }
 
-        /// <summary>Light at a cell as 0..1 RGB.</summary>
-        public float3 Sample(WorldGrid world, int x, int y)
+        /// <summary>Light at a cell as 0..1 RGB, with the sky at <paramref name="daylight"/> (1 = full sky light).</summary>
+        public float3 Sample(WorldGrid world, int x, int y, float daylight = 1f)
         {
             if (!world.InBounds(x, y)) return 0f;
             uint v = Light[world.Index(x, y)];
-            return new float3(v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF) / 255f;
+            var sky = _config.skyLight;
+            float3 emitted = new float3(v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF) / 255f;
+            return math.max(emitted, ((v >> 24) & 0xFF) / 255f * daylight * new float3(sky.r, sky.g, sky.b));
         }
+
+        /// <summary>Sky light level at a cell (0..1), before the time of day.</summary>
+        public float SkyAt(WorldGrid world, int x, int y) =>
+            world.InBounds(x, y) ? ((Light[world.Index(x, y)] >> 24) & 0xFF) / 255f : 0f;
 
         void Compute(WorldGrid world, NativeArray<MaterialSim> materials, int4 src, int4 dst)
         {
@@ -87,7 +95,6 @@ namespace Antarium.Sim
             var nodes = new NativeList<int2>(count / 4 + 64, Allocator.TempJob);
             try
             {
-                var sky = _config.skyLight;
                 new PropagateJob
                 {
                     Cells = world.Cells,
@@ -101,7 +108,6 @@ namespace Antarium.Sim
                     MaxLevel = _config.maxLevel,
                     OpenCost = (byte)math.min(_config.openCost, 255),
                     SolidCost = (byte)math.min(_config.solidCost, 255),
-                    Sky = new float3(sky.r, sky.g, sky.b),
                     Level = level,
                     Cost = cost,
                     Heads = heads,
@@ -141,7 +147,6 @@ namespace Antarium.Sim
             public int MaxLevel;
             public byte OpenCost;
             public byte SolidCost;
-            public float3 Sky;
 
             public NativeArray<byte> Level;
             public NativeArray<byte> Cost;
@@ -160,7 +165,7 @@ namespace Antarium.Sim
                     Cost[ly * w + lx] = cell.IsOpen ? OpenCost : SolidCost;
                 }
 
-                for (int channel = 0; channel < 3; channel++)
+                for (int channel = 0; channel < 4; channel++)
                 {
                     Nodes.Clear();
                     for (int i = 0; i < Heads.Length; i++) Heads[i] = -1;
@@ -215,9 +220,9 @@ namespace Antarium.Sim
             {
                 var cell = Cells[index];
                 var m = Materials[cell.Material];
-                float e;
-                if (m.IsAir) e = cell.IsOpen ? Sky[channel] : 0f;
-                else e = cell.IsEmpty ? 0f : m.Emission[channel];
+                // Channel 3 is the sky: open air cells at full level. 0-2 are emissive materials and lava.
+                if (channel == 3) return m.IsAir && cell.IsOpen ? (byte)MaxLevel : (byte)0;
+                float e = m.IsAir || cell.IsEmpty ? 0f : m.Emission[channel];
                 var f = Fluid[index];
                 if (f.Kind == FluidKind.Lava && f.Level > 0) e = math.max(e, Lava[channel]);
                 return (byte)math.clamp((int)math.round(e * MaxLevel), 0, MaxLevel);

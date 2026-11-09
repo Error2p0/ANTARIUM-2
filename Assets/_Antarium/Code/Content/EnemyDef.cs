@@ -9,6 +9,8 @@ namespace Antarium.Content
         CaveDweller,
         /// <summary>Comes from the surface in a raid, heads for the royal chamber, eats food and leaves when full.</summary>
         Raider,
+        /// <summary>Comes out on the surface near the nest at night, hunts ants nearby and slinks off at dawn.</summary>
+        NightHunter,
     }
 
     /// <summary>Which generated placeholder sprite an enemy uses until real art exists.</summary>
@@ -20,6 +22,7 @@ namespace Antarium.Content
         Mite,
         FireBeetle,
         Guardian,
+        WolfSpider,
     }
 
     /// <summary>A hostile creature: deep-cave dwellers per biome, and raiders from the surface.</summary>

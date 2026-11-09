@@ -28,5 +28,11 @@ namespace Antarium.Content
         public WorldGenSettings worldGen;
         [Tooltip("Food items that appear on the surface over time for workers to forage.")]
         public List<ItemDef> surfaceForage = new();
+        [Tooltip("Items that fall from surface plants by day (leaves).")]
+        public List<ItemDef> plantForage = new();
+        [Tooltip("Item the queen eats from the stock to lay faster (honeydew).")]
+        public ItemDef royalTreat;
+        [Tooltip("Creatures that hunt on the surface at night.")]
+        public List<EnemyDef> nightHunters = new();
     }
 }

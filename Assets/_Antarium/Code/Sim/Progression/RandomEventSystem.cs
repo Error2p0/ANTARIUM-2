@@ -141,7 +141,15 @@ namespace Antarium.Sim
         bool Qualifies(int index)
         {
             var def = _content.Events[index].Def;
+            if (def.kind == RandomEventKind.GoldenAphid && !HasRanch()) return false;
             return def.weight > 0f && def.minDepth <= _sim.Colony.Stats.MaxDepth;
+        }
+
+        bool HasRanch()
+        {
+            foreach (var b in _sim.Buildings.All)
+                if (b.IsActive && _content.Buildings[b.Def].Def.art == PlaceholderArt.Ranch) return true;
+            return false;
         }
 
         /// <summary>Starts event <paramref name="index"/> now (also debug and tests). False if no place for it was found.</summary>
@@ -158,6 +166,7 @@ namespace Antarium.Sim
                 case RandomEventKind.RichVein: ok = TryVein(data, out cell); break;
                 case RandomEventKind.GoldenBeetle: ok = TryBeetle(index, id, out cell); break;
                 case RandomEventKind.TrappedAnts: ok = TryTrapped(index, id, out cell); break;
+                case RandomEventKind.GoldenAphid: ok = TryGoldenAphid(index, id, out cell); break;
                 default: return false;
             }
             if (!ok) return false;
@@ -235,10 +244,18 @@ namespace Antarium.Sim
                         c.Progress = 0f;
                     }
                 }
-                if (!c.IsMoving) StepCritter(ref c, nav);
+                if (!c.IsMoving && !IsResting(c.EventId)) StepCritter(ref c, nav);
                 c.Pos = math.lerp(new float2(c.From), new float2(c.Cell), c.Progress) + 0.5f;
                 Critters[i] = c;
             }
+        }
+
+        /// <summary>The golden aphid stays in its ranch.</summary>
+        bool IsResting(int eventId)
+        {
+            foreach (var e in Active)
+                if (e.Id == eventId) return e.Kind == RandomEventKind.GoldenAphid;
+            return false;
         }
 
         /// <summary>Wanders: keeps its heading while it can, otherwise turns at random; falls when unsupported.</summary>
@@ -302,6 +319,32 @@ namespace Antarium.Sim
             Active.Add(new ActiveEvent
             {
                 Id = id, Def = index, Kind = RandomEventKind.GoldenBeetle, Cell = cell,
+                TimeLeft = math.max(5f, data.Def.duration), Count = 1,
+            });
+            float2 pos = new float2(cell) + 0.5f;
+            Critters.Add(new Critter
+            {
+                EventId = id, Cell = cell, From = cell, StepLength = 1f, PrevPos = pos, Pos = pos,
+                Heading = new int2(Rng.NextBool() ? 1 : -1, 0),
+            });
+            return true;
+        }
+
+        /// <summary>A golden aphid appears on the floor of a random finished Aphid Ranch. False without a ranch.</summary>
+        bool TryGoldenAphid(int index, int id, out int2 cell)
+        {
+            cell = default;
+            var ranches = new List<int>();
+            var all = _sim.Buildings.All;
+            for (int b = 0; b < all.Length; b++)
+                if (all[b].Alive && all[b].IsActive && _content.Buildings[all[b].Def].Def.art == PlaceholderArt.Ranch) ranches.Add(b);
+            if (ranches.Count == 0) return false;
+            var ranch = all[ranches[Rng.NextInt(ranches.Count)]];
+            cell = ranch.Origin + new int2(Rng.NextInt(math.max(1, ranch.Size.x)), 0);
+            var data = _content.Events[index];
+            Active.Add(new ActiveEvent
+            {
+                Id = id, Def = index, Kind = RandomEventKind.GoldenAphid, Cell = cell,
                 TimeLeft = math.max(5f, data.Def.duration), Count = 1,
             });
             float2 pos = new float2(cell) + 0.5f;

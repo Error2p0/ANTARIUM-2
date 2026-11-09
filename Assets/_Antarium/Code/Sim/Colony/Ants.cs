@@ -43,6 +43,8 @@ namespace Antarium.Sim
         Tending,
         /// <summary>Answering a Pheromone Burst: hurrying to its spot for <see cref="Ant.Timer"/> seconds.</summary>
         Rallying,
+        /// <summary>A bird circles: running underground and staying there until the simulation lets it go.</summary>
+        Sheltering,
     }
 
     public enum DeathCause : byte
@@ -54,6 +56,8 @@ namespace Antarium.Sim
         Crushed,
         /// <summary>Killed by an enemy (<see cref="Ant.Killer"/>).</summary>
         Killed,
+        /// <summary>Taken by a bird on the surface.</summary>
+        Bird,
     }
 
     /// <summary>Where a carrying ant decided to take its load.</summary>
@@ -526,6 +530,7 @@ namespace Antarium.Sim
             const int MachinesField = (int)FieldKind.Machines;
             const int CrittersField = (int)FieldKind.Critters;
             const int RallyField = (int)FieldKind.Rally;
+            const int ShelterField = (int)FieldKind.Shelter;
 
             float Dt => Tick.Dt;
 
@@ -680,6 +685,13 @@ namespace Antarium.Sim
                     ushort r = F(RallyField, ci);
                     if (a.Timer <= 0f || r == Unreachable || r <= Tick.RallyArrive || !StepDown(ref a, RallyField, r)) a.State = AntState.Idle;
                     else return;
+                }
+                if (a.State == AntState.Sheltering)
+                {
+                    // Down the shelter field until underground; then wait there (the simulation releases it).
+                    ushort s = F(ShelterField, ci);
+                    if (s != Unreachable && s != 0) StepDown(ref a, ShelterField, s);
+                    return;
                 }
                 if (a.IsSoldier)
                 {

@@ -13,6 +13,8 @@ namespace Antarium.Content
         GoldenBeetle,
         /// <summary><see cref="RandomEventDef.count"/> ants are trapped in a pocket near the tunnels; dig them out in time.</summary>
         TrappedAnts,
+        /// <summary>A golden aphid sits in an Aphid Ranch for <see cref="RandomEventDef.duration"/>; click it for the reward. Needs a ranch.</summary>
+        GoldenAphid,
     }
 
     /// <summary>A random event that rewards attention. The event system picks one every few minutes by weight.</summary>
@@ -35,7 +37,7 @@ namespace Antarium.Content
         [Tooltip("Meteorite: the lump. Rich vein: ore per layer, top to bottom (the last repeats deeper down).")]
         public List<TerrainMaterialDef> materials = new();
 
-        [Header("Rewards (beetle)")]
+        [Header("Rewards (beetle, golden aphid)")]
         [Min(0f)] public float rewardKnowledge;
         [Min(0f)] public float rewardFood;
         public List<ItemAmount> rewards = new();

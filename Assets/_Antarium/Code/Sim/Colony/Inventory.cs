@@ -316,6 +316,14 @@ namespace Antarium.Sim
             return true;
         }
 
+        /// <summary>Uses up one <paramref name="item"/> from the stock (the queen eating honeydew).</summary>
+        public bool Consume(ushort item)
+        {
+            if (!Take(item, 1)) return false;
+            _meter.AddItem(item, -1f);
+            return true;
+        }
+
         /// <summary>
         /// A worker at <paramref name="cell"/> takes <paramref name="item"/> out of the storage cell it stands on,
         /// or out of the royal chamber when it stands in it.

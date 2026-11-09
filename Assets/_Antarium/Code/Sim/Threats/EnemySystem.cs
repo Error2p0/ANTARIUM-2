@@ -211,6 +211,45 @@ namespace Antarium.Sim
             if (spawned > 0) _sim.Events.Publish(new CreaturesFoundEvent(firstDef, spawned, firstCell));
         }
 
+        // ---------------------------------------------------------------- night hunters
+
+        /// <summary>
+        /// A night hunter comes out on the surface <paramref name="distance"/> (min, max) cells from the nest, lurking until
+        /// an ant comes close. False if no spot reachable from the nest was found.
+        /// </summary>
+        public bool SpawnOnSurface(int def, int2 distance)
+        {
+            var world = _sim.World;
+            var queen = _sim.Colony.QueenCell;
+            var nav = new NavGrid(world);
+            int lo = math.max(1, distance.x), hi = math.max(lo, distance.y);
+            for (int attempt = 0; attempt < 16; attempt++)
+            {
+                int x = math.clamp(queen.x + (Rng.NextBool() ? 1 : -1) * Rng.NextInt(lo, hi + 1), 6, world.Width - 7);
+                var c = GroundAt(x);
+                if (!nav.IsWalkable(c) || _sim.Fields.Get(FieldKind.Home, world, c) == FlowFields.Unreachable) continue;
+                Spawn(def, c, EnemyState.Dormant);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Dawn: every night hunter slinks off (no loot). Returns how many.</summary>
+        public int DismissNightHunters()
+        {
+            int n = 0;
+            for (int i = 0; i < Enemies.Count; i++)
+            {
+                var e = Enemies[i];
+                if (e.IsDead || _content.Enemies[e.Def].Def.behavior != EnemyBehavior.NightHunter) continue;
+                e.Escaped = true;
+                Enemies[i] = e;
+                n++;
+            }
+            if (n > 0) RemoveDead();
+            return n;
+        }
+
         // ---------------------------------------------------------------- raids
 
         /// <summary>Raiders the next raid brings: grows with the colony and with the depth reached.</summary>

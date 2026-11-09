@@ -47,7 +47,8 @@ namespace Antarium.Sim
         /// Version 3 (Milestone 6): COLN 3 (caste shares, nursery eggs), ANTS 3 (carried counts and eggs) and PHER exist.
         /// Version 4 (Milestone 7): COLN 4 (princesses) and LGCY (Genetic Memory, genetic traits, world modifiers) exist.
         /// Version 5 (Milestone 10): COLN 5 (storage filters, item reserves; chests are no longer in the container list) and
-        /// BLDG 3 (chest contents and filter, machine recipe choice, unloaders).
+        /// BLDG 3 (chest contents and filter, machine recipe choice, unloaders); 10.2 adds SURF (time of day, weather, the
+        /// bird, night spiders still to come, the queen's honeydew).
         /// </summary>
         public const int Version = 5;
 
@@ -83,6 +84,7 @@ namespace Antarium.Sim
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
             snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim))));
             snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim))));
+            snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim))));
             return snap;
         }
 
@@ -477,6 +479,49 @@ namespace Antarium.Sim
             }
         }
 
+        static void WriteSurface(BinaryWriter w, Simulation sim)
+        {
+            var s = sim.Surface;
+            w.Write(s.Rng.state);
+            w.Write(s.Clock);
+            w.Write((byte)s.Weather);
+            w.Write(s.WeatherLeft);
+            w.Write(s.WeatherLength);
+            w.Write(s.WeatherTimer);
+            w.Write((byte)s.Bird);
+            w.Write(s.BirdTimer);
+            w.Write(s.BirdPos.x);
+            w.Write(s.BirdPos.y);
+            w.Write(s.BirdCooldown);
+            w.Write(s.SpidersToSpawn);
+            w.Write(s.SpiderTimer);
+            w.Write(s.LeafTimer);
+            w.Write(s.RoyalFeast);
+        }
+
+        static void ReadSurface(BinaryReader r, Simulation sim)
+        {
+            var s = sim.Surface;
+            uint state = r.ReadUInt32();
+            if (state != 0) s.Rng = new Unity.Mathematics.Random { state = state };
+            s.Clock = math.max(0.0, r.ReadDouble());
+            var weather = (WeatherKind)r.ReadByte();
+            s.Weather = Enum.IsDefined(typeof(WeatherKind), weather) ? weather : WeatherKind.Clear;
+            s.WeatherLeft = r.ReadSingle();
+            s.WeatherLength = r.ReadSingle();
+            s.WeatherTimer = r.ReadSingle();
+            var bird = (BirdPhase)r.ReadByte();
+            s.Bird = Enum.IsDefined(typeof(BirdPhase), bird) ? bird : BirdPhase.None;
+            s.BirdTimer = r.ReadSingle();
+            s.BirdPos = new float2(r.ReadSingle(), r.ReadSingle());
+            s.BirdCooldown = r.ReadSingle();
+            s.SpidersToSpawn = math.max(0, r.ReadInt32());
+            s.SpiderTimer = r.ReadSingle();
+            s.LeafTimer = r.ReadSingle();
+            s.RoyalFeast = math.max(0f, r.ReadSingle());
+            sim.UpdateDaylight();
+        }
+
         static void WriteThreats(BinaryWriter w, Simulation sim)
         {
             var t = sim.Enemies;
@@ -545,6 +590,7 @@ namespace Antarium.Sim
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, _) => ReadThreats(r, sim, map));
                 Read(sections, "LGCY", (r, _) => ReadLegacy(r, sim));
+                Read(sections, "SURF", (r, _) => ReadSurface(r, sim));
                 PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
                 return sim;

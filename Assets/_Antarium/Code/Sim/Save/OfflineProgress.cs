@@ -148,6 +148,7 @@ namespace Antarium.Sim
             report.Knowledge = inv.Knowledge - knowledge0;
             sim.Abilities.Tick((float)report.CreditedSeconds);
             sim.RandomEvents.SkipTime((float)report.AwaySeconds);
+            sim.SkipSurfaceTime((float)report.AwaySeconds);
             inv.AcceptanceChanged = true;
             return report;
         }

@@ -39,6 +39,8 @@ namespace Antarium.Sim
         Critters,
         /// <summary>Where a Pheromone Burst calls the ants.</summary>
         Rally,
+        /// <summary>The way underground (cells a little below the surface): ants run here when a bird circles.</summary>
+        Shelter,
     }
 
     /// <summary>
@@ -56,7 +58,7 @@ namespace Antarium.Sim
     {
         public const ushort Unreachable = ushort.MaxValue;
         /// <summary>Number of <see cref="FieldKind"/> fields; consumer fields follow them.</summary>
-        public const int KindCount = 15;
+        public const int KindCount = 16;
         /// <summary>Distance units per straight step; a diagonal step costs <see cref="DiagonalCost"/> (≈ √2 ratio).</summary>
         public const int StraightCost = 2;
         public const int DiagonalCost = 3;

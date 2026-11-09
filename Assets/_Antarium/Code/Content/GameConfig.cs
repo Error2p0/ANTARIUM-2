@@ -25,6 +25,83 @@ namespace Antarium.Content
         public PheromoneConfig pheromones = new();
         public PossessionConfig possession = new();
         public PrestigeConfig prestige = new();
+        public SurfaceConfig surface = new();
+    }
+
+    [Serializable]
+    public sealed class SurfaceConfig
+    {
+        [Header("Day and night (time of day: 0 = midnight, 0.5 = noon)")]
+        [Tooltip("Seconds of game time for a full day and night.")]
+        [Min(10f)] public float dayLengthSeconds = 720f;
+        [Tooltip("Share of the cycle from sunrise to sunset.")]
+        [Range(0.2f, 0.95f)] public float dayShare = 0.65f;
+        [Tooltip("Share of the cycle a sunrise or sunset takes.")]
+        [Range(0.005f, 0.2f)] public float twilight = 0.06f;
+        [Tooltip("Time of day a new colony starts at.")]
+        [Range(0f, 1f)] public float startTime = 0.3f;
+
+        [Header("Weather")]
+        [Tooltip("No weather before this many seconds into a colony.")]
+        [Min(0f)] public float firstWeatherSeconds = 600f;
+        [Min(1f)] public float weatherIntervalMin = 360f;
+        [Min(1f)] public float weatherIntervalMax = 600f;
+        [Tooltip("Chance that the next weather is rain (else a drought).")]
+        [Range(0f, 1f)] public float rainChance = 0.6f;
+        public Vector2 rainSeconds = new(60f, 100f);
+        public Vector2 droughtSeconds = new(180f, 300f);
+        [Tooltip("Forage spawns this much as often during a drought.")]
+        [Range(0f, 1f)] public float droughtForage = 0.5f;
+        [Tooltip("Rain falls this many cells either side of the nest.")]
+        [Min(8)] public int rainRange = 150;
+        [Tooltip("Columns that get a raindrop per fluid step.")]
+        [Min(0)] public int rainDropsPerStep = 10;
+        [Tooltip("Water (of 255) one raindrop adds.")]
+        [Range(1, 255)] public int rainDropLevel = 24;
+        [Tooltip("Water this close to the surface (cells) slowly soaks into the ground, so rain floods drain again.")]
+        [Min(0)] public int soakDepth = 40;
+        [Tooltip("Chance per fluid step that a wet cell near the surface loses one level.")]
+        [Range(0f, 1f)] public float soakChance = 0.3f;
+
+        [Header("Leaves")]
+        [Tooltip("Seconds between leaves falling from a surface plant (by day; forage research and droughts change it).")]
+        [Min(0.1f)] public float leafInterval = 6f;
+        [Tooltip("No new leaves while this many lie on the surface.")]
+        [Min(0)] public int maxSurfaceLeaves = 10;
+
+        [Header("Honeydew")]
+        [Tooltip("The queen eats one honeydew from the stock every this many seconds (while there is any).")]
+        [Min(1f)] public float honeydewSeconds = 20f;
+        [Tooltip("While fed honeydew she lays this much faster (0.5 = +50%) and her own upkeep is free.")]
+        [Min(0f)] public float honeydewLaying = 0.5f;
+
+        [Header("Birds (by day)")]
+        [Min(0f)] public float firstBirdSeconds = 480f;
+        [Min(1f)] public float birdIntervalMin = 150f;
+        [Min(1f)] public float birdIntervalMax = 300f;
+        [Tooltip("Seconds between the bird's shadow appearing and its strike: ants on the surface run for cover.")]
+        [Min(1f)] public float birdWarningSeconds = 8f;
+        [Tooltip("The strike kills exposed ants within this many cells of the bird.")]
+        [Min(0.5f)] public float birdStrikeRadius = 3f;
+        [Min(1)] public int birdMaxKills = 4;
+        [Tooltip("Cells per second the bird's shadow follows its prey.")]
+        [Min(0.5f)] public float birdSpeed = 6f;
+        [Tooltip("Sheltering ants stay inside this many seconds after the strike.")]
+        [Min(0f)] public float birdShelterSeconds = 4f;
+
+        [Header("Surface spiders (at night)")]
+        [Tooltip("No spiders before this many seconds into a colony (the first night is quiet).")]
+        [Min(0f)] public float firstSpiderSeconds = 900f;
+        [Tooltip("No spiders while the colony has fewer ants than this.")]
+        [Min(0)] public int spiderMinAnts = 15;
+        [Min(0f)] public float spidersBase = 1f;
+        [Tooltip("Extra spiders per ant in the colony.")]
+        [Min(0f)] public float spidersPerAnt = 0.02f;
+        [Min(0)] public int spidersMax = 4;
+        [Tooltip("Spiders appear on the surface this far (cells) from the nest.")]
+        public Vector2Int spiderDistance = new(12, 40);
+        [Tooltip("Spiders come out over this many seconds after nightfall.")]
+        [Min(0f)] public float spiderSpawnWindow = 60f;
     }
 
     [Serializable]
@@ -379,6 +456,20 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float ambient = 0.025f;
         public Color skyTop = new(0.36f, 0.62f, 0.86f);
         public Color skyHorizon = new(0.72f, 0.86f, 0.93f);
+        [Header("Day, night and weather")]
+        public Color nightSkyTop = new(0.03f, 0.04f, 0.12f);
+        public Color nightSkyHorizon = new(0.1f, 0.12f, 0.26f);
+        [Tooltip("Horizon at sunrise and sunset.")]
+        public Color duskSkyHorizon = new(0.95f, 0.55f, 0.35f);
+        [Tooltip("Sky colour mixed in while it rains.")]
+        public Color rainSky = new(0.42f, 0.46f, 0.52f);
+        [Tooltip("Colour and strength of the sky light at night (moonlight).")]
+        [ColorUsage(false)] public Color nightLight = new(0.55f, 0.65f, 1f);
+        [Range(0f, 1f)] public float nightLightStrength = 0.3f;
+        [Tooltip("Sky light while it rains (fraction of daylight).")]
+        [Range(0f, 1f)] public float rainLight = 0.7f;
+        public Color starColor = new(0.9f, 0.92f, 1f);
+        public Color rainColor = new(0.65f, 0.75f, 0.95f, 0.7f);
         [Tooltip("Ants, queen and items never render darker than this, so the colony stays watchable in dark tunnels.")]
         [Range(0f, 1f)] public float spriteMinLight = 0.85f;
         [Tooltip("Stripes on cells ordered for mining.")]

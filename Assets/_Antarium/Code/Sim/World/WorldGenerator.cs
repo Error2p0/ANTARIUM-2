@@ -179,6 +179,7 @@ namespace Antarium.Sim
                 surface.Dispose();
             }
 
+            GrowRoots(world, content, seed);
             CarveNest(world, gen);
             world.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightRecompute);
         }
@@ -188,6 +189,51 @@ namespace Antarium.Sim
         {
             ushort drop = content.MaterialSim[material].DropItem;
             return drop != ContentDB.NoItem && !content.Items[drop].IsFood;
+        }
+
+        /// <summary>
+        /// Roots: from every surface plant a tough strand grows down through the topsoil (a random walk with a few side
+        /// branches). It replaces plain soil only (not ore or other finds) and stops at caves.
+        /// </summary>
+        static void GrowRoots(WorldGrid world, ContentDB content, uint seed)
+        {
+            var gen = content.WorldGen;
+            if (gen.rootMaterial == null) return;
+            ushort root = content.GetMaterialIndex(gen.rootMaterial);
+            ushort bedrock = content.GetMaterialIndex(gen.bedrock);
+            var rng = new Random(math.hash(new uint2(seed, 0x2007u)) | 1u);
+            var tips = new System.Collections.Generic.List<int4>(); // x, y, cells left, sideways drift
+            foreach (var plant in SurfacePlants.Place(world.Width, gen, seed))
+            {
+                int lo = math.max(1, gen.rootLength.x), hi = math.max(lo, gen.rootLength.y);
+                tips.Clear();
+                tips.Add(new int4(plant.X, world.SurfaceY[plant.X] - gen.grassDepth, rng.NextInt(lo, hi + 1), 0));
+                for (int t = 0; t < tips.Count && t < 8; t++)
+                {
+                    var tip = tips[t];
+                    int x = tip.x, y = tip.y;
+                    for (int n = 0; n < tip.z; n++)
+                    {
+                        if (!world.InBounds(x, y)) break;
+                        int depth = world.SurfaceY[x] - y;
+                        if (depth > gen.rootMaxDepth) break;
+                        int i = world.Index(x, y);
+                        var cell = world.Cells[i];
+                        if (cell.IsOpen) break; // reached a cave
+                        if (depth >= gen.grassDepth && cell.Material != bedrock && content.MaterialSim[cell.Material].DropItem == ContentDB.NoItem)
+                            world.Cells[i] = new Cell(root, Cell.Full, cell.Flags);
+                        if (tip.w == 0 && n > 3 && rng.NextFloat() < 0.07f)
+                            tips.Add(new int4(x, y, math.max(3, (tip.z - n) / 2), rng.NextBool() ? 1 : -1));
+                        // Mostly down; branches lean to their side.
+                        float r = rng.NextFloat();
+                        if (tip.w != 0 && r < 0.5f) x += tip.w;
+                        else if (r < 0.15f) x--;
+                        else if (r > 0.85f) x++;
+                        else y--;
+                        if (tip.w != 0 && rng.NextFloat() < 0.5f) y--;
+                    }
+                }
+            }
         }
 
         /// <summary>Starting hole: a shaft from the surface down into a small oval chamber at the world centre.</summary>

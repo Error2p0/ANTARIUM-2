@@ -48,6 +48,8 @@ namespace Antarium.Content
         Emitter,
         PrincessChamber,
         Crusher,
+        /// <summary>Aphid Ranch: a fenced leaf pasture (aphids are drawn walking in it).</summary>
+        Ranch,
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>

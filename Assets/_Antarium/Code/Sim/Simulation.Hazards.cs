@@ -29,6 +29,7 @@ namespace Antarium.Sim
             if (++_fluidTick >= Config.fluids.ticksPerStep)
             {
                 _fluidTick = 0;
+                if (Surface.Weather == WeatherKind.Rain) RainStep();
                 var result = Fluids.Step();
                 if (result.NavChanged) _fluidNavDirty = true;
                 var reactions = Fluids.Reactions;

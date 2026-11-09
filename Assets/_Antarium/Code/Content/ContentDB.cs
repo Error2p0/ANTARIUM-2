@@ -97,6 +97,12 @@ namespace Antarium.Content
         public IReadOnlyList<GeneticDef> Genetics;
         public IReadOnlyList<WorldModifierDef> WorldModifiers;
         public IReadOnlyList<AchievementDef> Achievements;
+        /// <summary>Items that fall from surface plants by day (leaves).</summary>
+        public IReadOnlyList<ItemDef> PlantForage;
+        /// <summary>Item the queen eats from the stock to lay faster (honeydew).</summary>
+        public ItemDef RoyalTreat;
+        /// <summary>Creatures that hunt on the surface at night.</summary>
+        public IReadOnlyList<EnemyDef> NightHunters;
     }
 
     /// <summary>Baked genetic trait: dense indices.</summary>
@@ -201,6 +207,12 @@ namespace Antarium.Content
         public readonly bool[] ModifierStartsLocked;
         /// <summary>Indices into <see cref="Enemies"/> of the creatures that raid from the surface.</summary>
         public readonly int[] Raiders;
+        /// <summary>Indices into <see cref="Enemies"/> of the creatures that hunt on the surface at night.</summary>
+        public readonly int[] NightHunters;
+        /// <summary>Items that fall from surface plants by day (leaves).</summary>
+        public readonly ushort[] PlantForage;
+        /// <summary>Item the queen eats from the stock to lay faster (honeydew), or <see cref="NoItem"/>.</summary>
+        public readonly ushort RoyalTreat = NoItem;
         /// <summary>Biomes top to bottom (same order as <c>WorldGen.biomes</c>).</summary>
         public readonly BiomeData[] Biomes;
         /// <summary>Material lava turns into where it meets water.</summary>
@@ -272,7 +284,10 @@ namespace Antarium.Content
                 _recipeIndex[Recipes[i].Def.Id] = i;
 
             progression ??= new ProgressionContent();
-            Enemies = BakeEnemies(progression.Enemies, progression.Raiders, worldGen, out Raiders);
+            PlantForage = new ushort[progression.PlantForage?.Count ?? 0];
+            for (int i = 0; i < PlantForage.Length; i++) PlantForage[i] = GetItemIndex(progression.PlantForage[i]);
+            if (progression.RoyalTreat != null) RoyalTreat = GetItemIndex(progression.RoyalTreat);
+            Enemies = BakeEnemies(progression.Enemies, progression.Raiders, progression.NightHunters, worldGen, out Raiders, out NightHunters);
             Abilities = Sorted(progression.Abilities, "ability", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
             for (int i = 0; i < Abilities.Length; i++) _abilityIndex.Add(Abilities[i].Id, i);
             BuildingStartsLocked = new bool[Buildings.Length];
@@ -308,7 +323,8 @@ namespace Antarium.Content
         /// Enemies: every listed one, plus raiders and biome creatures that are not in the list (tests and
         /// hand-made databases only list them there).
         /// </summary>
-        EnemyData[] BakeEnemies(IReadOnlyList<EnemyDef> listed, IReadOnlyList<EnemyDef> raiders, WorldGenSettings worldGen, out int[] raiderIndices)
+        EnemyData[] BakeEnemies(IReadOnlyList<EnemyDef> listed, IReadOnlyList<EnemyDef> raiders, IReadOnlyList<EnemyDef> hunters,
+            WorldGenSettings worldGen, out int[] raiderIndices, out int[] hunterIndices)
         {
             var all = new List<EnemyDef>();
             var ids = new HashSet<string>();
@@ -318,6 +334,7 @@ namespace Antarium.Content
             }
             if (listed != null) foreach (var e in listed) Collect(e);
             if (raiders != null) foreach (var e in raiders) Collect(e);
+            if (hunters != null) foreach (var e in hunters) Collect(e);
             foreach (var b in worldGen.biomes)
                 if (b != null) foreach (var e in b.creatures) Collect(e);
             all.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
@@ -335,6 +352,11 @@ namespace Antarium.Content
                 foreach (var e in raiders)
                     if (e != null && !raiderList.Contains(_enemyIndex[e.Id])) raiderList.Add(_enemyIndex[e.Id]);
             raiderIndices = raiderList.ToArray();
+            var hunterList = new List<int>();
+            if (hunters != null)
+                foreach (var e in hunters)
+                    if (e != null && !hunterList.Contains(_enemyIndex[e.Id])) hunterList.Add(_enemyIndex[e.Id]);
+            hunterIndices = hunterList.ToArray();
             return result;
         }
 
@@ -707,6 +729,9 @@ namespace Antarium.Content
                     Genetics = database.genetics,
                     WorldModifiers = database.worldModifiers,
                     Achievements = database.achievements,
+                    PlantForage = database.plantForage,
+                    RoyalTreat = database.royalTreat,
+                    NightHunters = database.nightHunters,
                 });
         }
 

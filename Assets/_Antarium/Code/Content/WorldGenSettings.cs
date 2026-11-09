@@ -38,6 +38,18 @@ namespace Antarium.Content
         [Tooltip("What lava turns into where it meets water.")]
         public TerrainMaterialDef fluidReactionMaterial;
 
+        [Header("Surface plants and roots")]
+        [Tooltip("Columns between surface plants (random in this range). Each plant drops leaves and has roots.")]
+        public Vector2Int plantGap = new(8, 20);
+        [Tooltip("No plants this many columns either side of the nest shaft.")]
+        [Min(0)] public int plantClearance = 6;
+        [Tooltip("Tough material roots are made of (none = no roots).")]
+        public TerrainMaterialDef rootMaterial;
+        [Tooltip("Cells a plant's main root grows down (random in this range); branches are shorter.")]
+        public Vector2Int rootLength = new(10, 32);
+        [Tooltip("Roots stay in the topsoil: no deeper than this many cells.")]
+        [Min(1)] public int rootMaxDepth = 60;
+
         [Header("Starting nest")]
         [Min(4)] public int nestDepth = 14;
         public Vector2 nestRadius = new(7f, 3.5f);
