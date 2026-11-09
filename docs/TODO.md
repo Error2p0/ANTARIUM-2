@@ -296,7 +296,36 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Verified in the editor (on the 10.2 colony, restored afterwards): a water wheel in a shaft with a three-pump return loop (85% power at first, the smelter beside it +39%), an irrigated fungus garden, a smelter on magma rock smelting iron without coal, a coal seam burning along a tunnel floor into ash with grey smoke, the Fire! card, a meteorite strike; hover texts for all of them.
 - Known limits: ants don't route around fires (they walk past and get burned; Avoid scent keeps them out) and enemies are not burned; lava that settled before the colony arrived sleeps and lights nothing until something wakes its chunk; water creeps slowly along long flat channels, so wheels belong right under a waterfall or a pump outlet; a pump keeping a wheel turning is free power (by design, no power grid); smoke and spore gas don't mix in one cell; the irrigation carry (half a batch) is not saved; no fire offline; pumps can't move lava; fire doesn't harm buildings; fire numbers are first guesses.
 
-**10.4 Colony depth** (open: queen evolution currency)
+**10.7a Art and UI pass** (pulled forward from 10.7, built **before 10.4**; decided 2026-11-09)
+*Why now:* this phase is done with **Claude Fable 5.2**, which the plan includes only until **2026-11-16** (the weekly limit resets on 11-15). The content phases 10.4–10.6 would use up the limit first, so the art comes now and they reuse it. Everything left in 10.7 (tooltips, overlays, stingers, sound cues, final docs) stays there; it is routine work that doesn't need the stronger model.
+
+*Decisions (asked and confirmed):*
+- **Scope**: sprites (ants, queen, eggs, items, buildings, enemies, creatures, surface), **terrain textures** (every material) and the **UI** (skin, panels, icons). Fonts stay (VT323 + Silkscreen, OFL).
+- **Art for content that is planned but not built yet is drawn now** (list below), so 10.4–10.6 only wire it in.
+- Art is delivered as **PNG files** in `Assets/_Antarium/Art/`, loaded by the override pipeline; the code generators (`ColonySprites`, `BuildingSprites`, `MaterialTextureBuilder`, `UiSetup`) stay as the fallback for anything without a PNG. That way the user or an artist can later edit the PNGs (e.g. in Aseprite) without touching code. How the PNGs are authored is up to you (by hand, or an editor script under `Code/Editor/` writing them from pixel maps); the PNGs are the deliverable and are committed (LFS).
+- Generated art, not hand-drawn: the aim is a clearly better, coherent pixel-art style, not final commercial art.
+
+*Instructions for the session (read this first):*
+- The usage limit may run out before the end. **Work in the priority order below, verify and commit after every step**, so each finished step stays usable even if the session stops. Update this list (`[x]`) in the same commit.
+- **Step 1 is a style test and then a stop**: show the captures and wait for the user's approval or corrections before drawing the rest. Don't redo approved styles later.
+- Keep captures cheap: one contact sheet / capture per batch, not per sprite. `capture_game_view --save_path X` writes under `Assets/X`; move the PNG out and delete the folder + `.meta` right after (CLAUDE.md).
+- Rules that bind the art (GDD 3.0, 2.4): PPU 16, 1 cell = 8×8 px, point filtering, no compression, integer zoom only. Current sprite sizes are contracts used by the code (worker 12×7, soldier 14×8, queen 24×12, princess 14×10 with `PrincessBeds` positions, building sizes = cells × 8; see the constants in `ColonySprites` / `BuildingSprites`). Change a size only together with the code that depends on it. Colony sprites are lifted to a minimum brightness in dark tunnels, and the body colour carries the silhouette (a dark outline vanishes against dark tunnels; see the note in `ColonySprites`). Item blobs, piles and belt items are greyscale tinted per item through vertex colour; real per-item sprites may replace them, but then the tint path must be handled. Terrain slices are tileable **32×32** per material, readable, read through `TerrainMaterialDef.textureOverride` / `MaterialTextureBuilder`. The terrain shader adds edges, light, fluids, fire and the sky on top, so textures stay calm. The UI skin is 9-slice bevels drawn over the HUD's background colours (`UiSetup`, `UI/Skin/`, `Hud.uss`, `AntariumTheme.tss`), so state colours keep working; UI scale is whole numbers.
+- Write **`docs/ART_STYLE.md`**: palette (per biome and for the colony), outline / shading rules, sizes per category, frame counts, animation timing, **the file naming convention**, and how to add a new sprite. 10.4–10.6 (built with another model) follow it.
+- Also update GDD 3.0 (art direction, status) and `HOW_TO_PLAY.md` where the player sees something new (e.g. icons). The *Missing* list below: placeholder art lines.
+
+*Steps, in priority order:*
+- [ ] **1. Style test** (then stop for approval): a palette, the worker (walk frames), the queen, one building (the smelter), two terrain materials (topsoil and one deep stone) and one restyled UI panel with a few item icons, in the running game.
+- [ ] **2. Override pipeline**: `Assets/_Antarium/Art/` by naming convention (ants per caste and frame, queen, eggs, princess, items, buildings and their frames, enemies, creatures, surface, terrain materials, UI icons, UI skin). Editor menu *Antarium → Art → Import Overrides* (import settings: point, no compression, readable where needed; terrain PNGs assigned to `textureOverride`); at runtime a PNG replaces its generated rect in the atlases, missing ones fall back. EditMode tests: name → slot, fallback when missing, wrong size warns and falls back.
+- [ ] **3. Terrain**: every material in `Content/Materials` (all 7 biomes, ores, crystals, ash, root, packed earth, ruins …), tileable, checked by a capture per biome.
+- [ ] **4. Colony**: worker and soldier, the six specialists with **distinct silhouettes** (miner, hauler, nurse, builder, scout, engineer), queen, princess (rest + 2 flight frames), eggs, carried items, piles, stored items, marker, golden beetle, golden aphid.
+- [ ] **5. Buildings**: all (belts, lifts and their iron tiers, splitter, filter, chest, unloader, smelter, crusher, garden, ranch, archive, nursery, emitter, princess chamber, gates, trap, guard post, wall, pump, water wheel, storage) with their working / animation frames; blueprints and ghosts still dither from them.
+- [ ] **6. Enemies, creatures and the surface**: termite, centipede, spider, mite, fire beetle, guardian, wolf spider; plants, aphids, the bird and its shadow; dig debris / particles if they read better.
+- [ ] **7. UI**: new skin (frames, buttons, insets, scrollbars), panels and dialogs restyled, **item icons** in the resource bar, build palette, configure panel and hover panel, icons for tools, abilities and toolbar buttons, the title screen. Then re-run *Antarium → Steam → Export Achievements and Icons* (the icons are made from the sprites); **(you)** upload the changed icons to Steamworks.
+- [ ] **8. Art for planned content** (drawn now, wired in later; named by the convention, listed in `ART_STYLE.md` as "not used yet"): **10.4** glow ant (with its glow), fire ant, Queen panel frame and evolution icons, priority panel icons, ant trait icons (*Strong, Swift, Lucky, Lazy*) and level pips; **10.5** crystal resonator, Codex panel frame, tablet relic and lore fragment icons, *Ancient Engine* (its restoration stages), rival ant raider, mole cricket (digging frames); **10.6** *Queen's Throne*, save slot picker frame, respec icon.
+- [ ] **9. Finish**: captures of every biome, the colony, buildings and the UI (before / after); all tests pass; docs; final commit.
+
+
+**10.4 Colony depth** (open: queen evolution currency. Use the 10.7a art for glow / fire ants, the Queen panel, priority and trait icons, and follow `docs/ART_STYLE.md`; the same holds for 10.5 and 10.6)
 - [ ] **Glow Ant** caste (research, deep): carries light. Drawn as small dynamic lights near the camera (pooled `Light2D`, GPU light splat for the rest), so dark depths can be lit by ants; finally adds **ShadowCaster2D** near the camera for these lights (GDD 3.2).
 - [ ] **Fire Ant** caste: immune to lava heat and fire, takes no burn damage; works the magma zone. New hazard **heat**: ants near lava / in the magma zone lose health slowly without it.
 - [ ] **Queen evolution tree** (per colony, unlike genetics): spend rare finds (honeydew, relics, star fragments, royal jelly) on bigger broods, queen health / regeneration, extra egg slots, castes unlocked earlier, a new ability. Opens from the **Queen panel** (click the queen / Q key): stats, upkeep, eggs, caste mix shortcut, evolutions.
@@ -317,9 +346,8 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - [ ] **Prestige-only mechanics**: traits that unlock a caste from the start, biome variants (world modifiers that swap a biome's palette / creature), a building only known through flights (e.g. *Queen's Throne*).
 - [ ] **Save slots**: 3 slots + backups, slot picker on the title screen (generation, depth, play time from the header), Steam Cloud keeps working (`Saves/*`).
 
-**10.7 Presentation** (no open questions)
-- [ ] **Art override pipeline**: `Assets/_Antarium/Art/` PNGs by naming convention replace generated sprites (ants per caste and frame, queen, eggs, items, buildings, enemies, UI icons); editor menu *Antarium → Art → Import Overrides*; generated art stays the fallback.
-- [ ] Distinct generated **caste silhouettes** (not just palette swaps), better nursery / emitter / new building sprites; **UI item icons** in the resource bar, palettes and hover panel.
+**10.7 Presentation** (no open questions; the art override pipeline, caste silhouettes, better sprites, terrain textures, UI skin and item icons moved to **10.7a**, built before 10.4)
+- [ ] Wire in any 10.7a art for planned content that 10.4–10.6 didn't use yet; new sprites for anything added since, following `docs/ART_STYLE.md`.
 - [ ] **Overlays**: light overlay and a full ore-scan overlay (revealed ore by type, toggle).
 - [ ] **Tooltips** on every interactive UI element (palette entries, research nodes, castes, resource entries, ability buttons), and hint texts that follow the key bindings (no fixed letters).
 - [ ] Flight / discovery **stinger** slots wired (**(you)**: generate them from `docs/SUNO_PROMPTS.md`); sound cues for every new M10 feature.
@@ -354,11 +382,11 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
 
 **Presentation**
-- All art is placeholder generated in code (ant/queen/egg sprites, terrain textures).
+- All art is placeholder generated in code (ant/queen/egg sprites, terrain textures); replaced by PNG art in 10.7a.
 - Sound effects and ambience are synthesized placeholders; music is recorded (10 tracks), no flight / discovery stingers yet.
-- UI skin is generated bevels over flat colours; no hand-drawn UI art or icons.
+- UI skin is generated bevels over flat colours; no UI art or item icons (10.7a).
 - No queen panel. Tooltips are limited to the hover info panel, the toolbar and the research hover details.
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
 - One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).
-- Caste sprites are palette swaps of the worker; nursery and emitter sprites are generated placeholders.
+- Caste sprites are palette swaps of the worker; nursery and emitter sprites are generated placeholders (10.7a).
 - Store page is in review, not public yet; no Steam Deck pass or public build yet (Milestone 9).
