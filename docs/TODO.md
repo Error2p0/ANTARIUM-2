@@ -306,6 +306,7 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Generated art, not hand-drawn: the aim is a clearly better, coherent pixel-art style, not final commercial art.
 
 *Instructions for the session (read this first):*
+- **Branch**: work on a new branch **`milestone-10-early-art-pass`**, made from `milestone-10` (`git switch -c milestone-10-early-art-pass milestone-10`). Commit there only; it is merged back into `milestone-10` when the user says so, and 10.4 continues from the merged result.
 - The usage limit may run out before the end. **Work in the priority order below, verify and commit after every step**, so each finished step stays usable even if the session stops. Update this list (`[x]`) in the same commit.
 - **Step 1 is a style test and then a stop**: show the captures and wait for the user's approval or corrections before drawing the rest. Don't redo approved styles later.
 - Keep captures cheap: one contact sheet / capture per batch, not per sprite. `capture_game_view --save_path X` writes under `Assets/X`; move the PNG out and delete the folder + `.meta` right after (CLAUDE.md).
