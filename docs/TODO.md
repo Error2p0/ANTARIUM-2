@@ -269,14 +269,19 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - [x] 157 EditMode tests (9 new: chest filling and its filter, chest refused on a zone, storage filters and acceptance, unloader into a machine with a reserve, unloader item onto a belt, recipe choice, iron belt upgrade keeping items, splitters side by side never handing back, save round trip of chests / filters / reserves / recipe choice / unloader / zone growth).
 - Verified in the editor: chest → unloader → iron belts → crusher → smelter → filtered chest runs (16 ore in, 8 copper in the copper-only chest after 25 s), splitter pair, iron lift and gates drawn, configure panel on a chest and on the smelter, research row 7, the wrapped palette; quitting saved format 5 and the next play loaded it intact. The belt step stays plain C#: its cost is per cell per tick, so faster tiers don't add to it.
 
-**10.2 Surface: day, weather, aphids** (decisions asked and confirmed 2026-11-09: a full day/night cycle lasts **12 minutes** of game time; **birds scare first, then kill**: see below)
-- [ ] **Day / night** cycle: sky colour and sky light in the light map (night = dim surface; the light map's sky source scales), forage spawns by day, rich presence untouched. A full cycle is **12 minutes** of game time (decided), set in `GameConfig`.
-- [ ] **Weather**: rain (water seeps into open tunnels near the surface for a while, floods dips) and drought (forage −50%), announced by event cards. Offline: no weather.
-- [ ] **Leaves** on surface plants as a second forage; **Fungus Garden** accepts leaves (better ratio than seeds).
-- [ ] **Aphid Ranch** (machine with live aphids drawn in it, fed leaves → *honeydew*, a high-value food and queen resource); **golden aphid** random event (appears in a ranch, click it).
-- [ ] **Roots** in the topsoil as a cave feature (tough material ants dig around; drops root fibre for silk / recipes) — fills GDD 2.2.
-- [ ] **Surface threats**: **birds** (daytime) and **surface spiders** (hunt near the nest entrance at night). Raids stay as they are.
-  - Birds (decided): a bird first **scares** ants on the open surface: its warning shadow appears, and every ant on the surface drops its job and runs for the nearest way underground. Ants that **don't get back in time** (because they were far from an entrance) are **killed** when the bird strikes. Near ants are safe if they react; far foragers are at risk, so entrances near forage matter.
+**10.2 Surface: day, weather, aphids** ✅ (GDD 2.8.1; decisions asked and confirmed 2026-11-09: a full day/night cycle lasts **12 minutes** of game time; **birds scare first, then kill**)
+- [x] **Day / night**: a saved clock in days (`SurfaceState`, `SurfaceConfig` in `GameConfig`), day = 65% of the cycle with smooth twilights, a new colony starts at 07:12. The light map's unused alpha became a **sky channel** (RGB = emitters, alpha = sky level); the shaders colour and scale it by daylight and rain, so night needs no relight. Sky gradient with dawn / dusk tints, stars, moonlight. Seeds and leaves only by day. Dawn / dusk toasts and chimes.
+- [x] **Weather**: rain (water near the nest each fluid step; water within 40 cells of the surface soaks away afterwards) and drought (forage ×0.5), every 6–10 minutes after the first 10, with event cards. Offline: the clock runs on, no weather, birds or spiders.
+- [x] **Plants and leaves**: seeded plants along the surface drop leaves by day (second forage, not food); the **Fungus Garden** takes 2 leaves → 4 fungus.
+- [x] **Aphid Ranch** (research *Aphid Herding*): 2 leaves → 1 **honeydew**, aphids drawn walking in it. Honeydew stays a stock item; the queen eats one every 20 s (laying +50%, no upkeep of her own). **Golden aphid** event in a ranch.
+- [x] **Roots** grow down from every plant through the topsoil (world generation), tough, drop **root fibre** (ranch and research cost, a contract).
+- [x] **Birds** by day: every ant in the open runs underground along a new **Shelter** flow field (`AntState.Sheltering`); after 8 s the strike takes up to 4 ants still in the open near the shadow. **Wolf spiders** (`EnemyBehavior.NightHunter`) come out near the nest at night and slink off at dawn.
+- [x] HUD: clock / weather entry, cards for weather, the bird and night hunters, toasts, *taken by a bird*; hover *hiding from the bird*. `SurfaceView` draws plants, aphids, rain, the bird and its shadow. Sound cues BirdCry, BirdStrike, Rain, Dusk, Dawn.
+- [x] Content (`ContentSetup.Surface.cs`): items leaf, honeydew, root fibre; material root; 2 recipes; Aphid Ranch; Aphid Herding (research row 8); Golden Aphid event; Wolf Spider; 3 contracts. No new achievements.
+- [x] Save: new section `SURF` 1 (format stays 5). The 10.1 save loaded (morning of day 1, clear weather) and play mode saved `SURF` on quit.
+- [x] 169 EditMode tests (12 new: day / night clock and leaves only by day, the sky channel, rain soaking away, drought ending, the bird scaring and striking, no bird without ants outside, night spiders out and gone at dawn, honeydew, golden aphid, roots, save round trip, offline clock).
+- Verified in the editor: the 10.1 colony at night (stars, dim surface, night hunters card), rain by day (drops, grey sky, water down the shaft and into the meteorite crater), a bird circling over far foragers and striking 4 of them, a new colony's roots under the plants, an Aphid Ranch making honeydew (queen fed, eggs laid) with the golden aphid in it, a wolf spider at night, a sunrise.
+- Known limits: the rain amount and the soak rate are first guesses (rain pours down the starting shaft and pools on the royal chamber floor until it soaks away); plants are generated placeholders; the 4 a.m. sunrise on the clock is simply 65% day share; root fibre has few uses yet (more in 10.3 recipes).
 
 **10.3 Living world: fluids and materials** (no open questions)
 - [ ] **Pump** (moves fluid from its intake side to its outlet side; no pipes, pumps chain through dug tunnels): drain a flooded shaft, fill a moat.
@@ -319,7 +324,7 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
 
 **Food & economy**
-- Food sources: seeds on the surface, grubs from grub nests, and the Fungus Garden (seeds → fungus). No aphid ranches or leaves as fungus feed yet.
+- Food sources: seeds on the surface (by day), grubs from grub nests, the Fungus Garden (seeds or leaves → fungus), giant fungus. Honeydew from aphid ranches feeds the queen.
 - Food is a colony-wide stock with upkeep; no per-ant hunger/rest needs.
 - Ores are crushed and smelted into copper and iron; iron builds iron belts, lifts and gates. No heat-powered or fluid-powered processing yet (10.3).
 
@@ -334,14 +339,12 @@ Things the current build is still missing, grouped by area. Many are planned for
 - All 7 planned biomes exist; crystal resonance, magma heat for smelting and the ruins' story / endgame tech are not in yet.
 - Fluids are a hazard only: no pumps, water wheels, irrigation or other uses; no fluid pressure.
 - Material flags *Flammable* and *Conductive* have no behaviour yet (*Unstable* = sand collapses).
-- No day/night cycle or weather (GDD 2.8).
-- No roots, underground lakes or other cave features beyond open caverns.
+- Weather is rain and drought only (no storms, no seasons).
 
 **Gameplay layers**
-- Events: no golden aphid (needs aphids).
 - Research: no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
 - One save slot (synced by Steam Cloud).
-- Threats: termite raids and one cave creature per deep biome; no birds, surface spiders or rival ant colonies, no enemies that dig.
+- Threats: termite raids, birds by day, wolf spiders at night and one cave creature per deep biome; no rival ant colonies, no enemies that dig (10.5).
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
 - Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
 
