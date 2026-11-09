@@ -11,7 +11,7 @@ Enter these on partner.steamgames.com → your app → **Edit Steamworks Setting
 | `STAT_MAX_ANTS` | INT | Client | yes | 0 | Most ants alive |
 | `STAT_FLIGHTS` | INT | Client | yes | 0 | Nuptial Flights |
 
-## Achievements (32)
+## Achievements (34)
 
 Icons: `steam/achievement_icons/<API name>.png` (achieved) and `<API name>_locked.png` (unachieved), 64×64.
 *Progress stat*: pick the stat and enter 0 as the minimum and the amount as the maximum (Steam then shows a progress bar).
@@ -50,3 +50,5 @@ Icons: `steam/achievement_icons/<API name>.png` (achieved) and `<API name>_locke
 | 30 | `ACH_FLIGHTS_5` | Dynasty | Found 5 colonies by Nuptial Flight. |  | `STAT_FLIGHTS` (0 – 5) |
 | 31 | `ACH_TRAITS_10` | Bloodline | Buy 10 levels of genetic traits. |  |  |
 | 32 | `ACH_MEMORY_500` | Ancestral Memory | Earn 500 Genetic Memory over your bloodline. | yes |  |
+| 33 | `ACH_CHESTS_10` | Quartermaster | Build 10 chests in one colony. |  |  |
+| 34 | `ACH_IRON_BELTS_100` | Iron Highway | Build 100 iron belts in one colony. |  |  |

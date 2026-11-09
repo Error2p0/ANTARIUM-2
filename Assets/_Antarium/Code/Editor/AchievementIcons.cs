@@ -101,6 +101,8 @@ namespace Antarium.Editor
             AchievementKind.HatchAnts => (Colony, Atlas(ColonySprites.EggRect)),
             AchievementKind.HatchCaste => (def.caste == AntCaste.Soldier ? Combat : Colony, Caste(def.caste)),
             AchievementKind.AntsAlive => (Colony, Crowd()),
+            AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Chest =>
+                (Industry, Glyph(Chest, Pal('o', 0x2a1a10, 'W', 0x6b4a2c, 'P', 0x93693f, 'h', 0xe0c070, 'n', 0xd47a3c, 'N', 0xaeb8c6))),
             AchievementKind.Build => (Industry, Glyph(Belt, Pal('o', 0x1c2228, 'H', 0xa8b4c0, 'M', 0x6a7684, 'D', 0x3a4450, 'n', ItemHex(def), 'N', Lighter(ItemHex(def))))),
             AchievementKind.Deliver or AchievementKind.Craft => (def.kind == AchievementKind.Craft ? Industry : Earth, Nugget(def.item)),
             AchievementKind.KillEnemies => (Combat, Atlas(ColonySprites.SoldierRect)),
@@ -190,6 +192,13 @@ namespace Antarium.Editor
         static readonly string[] Belt =
         {
             "...nnN.......", "...nnn.......", "ooooooooooooo", "oHHHHHHHHHHHo", "oMDMMDMMDMMDo", "oDDDDDDDDDDDo", ".ooo.....ooo.",
+        };
+
+        /// <summary>A wooden chest with goods heaped on its lid.</summary>
+        static readonly string[] Chest =
+        {
+            "...nnNN.n...", "..nnnNNnnn..", "oooooooooooo", "oPPPPPPPPPPo", "oWWWWWWWWWWo", "oPPPPhhPPPPo", "oPPPPhhPPPPo",
+            "oPPPPPPPPPPo", "oooooooooooo",
         };
 
         static readonly string[] Scroll =

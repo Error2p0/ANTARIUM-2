@@ -130,6 +130,7 @@ namespace Antarium.Editor
             CreateCastesAndPheromones(copperItem, copperBar, ironBar);
             CreatePrestige(copperItem, copperBar, ironBar, amberItem, fungusItem);
             CreateAchievements(copperBar, ironBar, fungusItem);
+            CreateLogistics(copperItem, ironItem, coalItem, copperBar, ironBar);
             CreateSoundBank();
 
             var database = LoadOrCreate<ContentDatabase>(DatabasePath, db => db.worldGen = worldGen);

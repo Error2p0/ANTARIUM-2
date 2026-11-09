@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Smelter
   kind: 4
   paletteOrder: 10
-  description: 2 copper ore -> 1 copper. 2 iron ore + 1 coal -> 1 iron.
+  description: '2 copper ore -> 1 copper. 2 iron ore + 1 coal -> 1 iron. Crushed ore smelts better: 2 crushed copper -> 1 copper, 2 crushed iron + 1 coal -> 1 iron. Click it with I to pick one recipe.'
   size: {x: 3, y: 3}
   cost:
   - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
@@ -24,10 +24,23 @@ MonoBehaviour:
   foodCost: 0
   buildWork: 8
   speed: 2
+  tier: 0
+  capacity: 16
   recipes:
   - {fileID: 11400000, guid: 444cc13dc8194aa4daa09c64f7a6361d, type: 2}
   - {fileID: 11400000, guid: 29c058f435e8e46458bfadf8ba60dc88, type: 2}
+  - {fileID: 11400000, guid: 92998e70c78f8934f97b8baedebfeb44, type: 2}
+  - {fileID: 11400000, guid: d5a8211120704d446a9778c73b1d7acc, type: 2}
   inputBatches: 2
   outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
   color: {r: 0.72156864, g: 0.3372549, b: 0.17254902, a: 1}
   art: 1
