@@ -98,6 +98,13 @@ namespace Antarium.Editor
             Ui(SoundCue.Refused, Patch(SynthWave.Square, 0.15f, 220f, 180f, decay: 2f, lowpass: 1800f, notes: 2), 0.28f, 0.2f);
             Ui(SoundCue.Toast, Patch(SynthWave.Sine, 0.06f, 1320f, decay: 3f), 0.1f, 0.5f, 1);
 
+            // the surface
+            Note(SoundCue.BirdCry, Patch(SynthWave.Sine, 0.55f, 2600f, 1500f, attack: 0.02f, decay: 1.5f, harmonics: 0.2f, vibratoHz: 18f, vibratoDepth: 1.5f, notes: 2, noteStep: -3f), 0.5f, 1f);
+            Sfx(SoundCue.BirdStrike, Patch(SynthWave.Noise, 0.45f, 2000f, 300f, attack: 0.15f, decay: 1.5f, lowpass: 3500f), 0.6f, 0.5f, 1);
+            Note(SoundCue.Rain, Patch(SynthWave.Noise, 2.2f, 200f, 40f, attack: 0.05f, decay: 1.2f, lowpass: 500f, gain: 1.4f), 0.6f, 2f);
+            Note(SoundCue.Dusk, Patch(SynthWave.Sine, 1.4f, 330f, attack: 0.3f, decay: 1.5f, harmonics: 0.3f, notes: 3, noteStep: -4f), 0.3f, 2f);
+            Note(SoundCue.Dawn, Patch(SynthWave.Sine, 1.2f, 392f, attack: 0.2f, decay: 1.6f, harmonics: 0.4f, notes: 3, noteStep: 4f), 0.3f, 2f);
+
             void Bed(string biomeId, AmbiencePatch patch)
             {
                 var biome = biomeId == null ? null : AssetDatabase.LoadAssetAtPath<BiomeDef>($"{BiomesFolder}/{biomeId}.asset");

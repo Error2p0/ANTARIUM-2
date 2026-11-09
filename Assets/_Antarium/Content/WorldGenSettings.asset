@@ -35,6 +35,11 @@ MonoBehaviour:
   caveMinDepth: 24
   caveFadeDepth: 24
   fluidReactionMaterial: {fileID: 11400000, guid: 750aeb7a41d0c48468897ab834ec9fa8, type: 2}
+  plantGap: {x: 8, y: 20}
+  plantClearance: 6
+  rootMaterial: {fileID: 11400000, guid: a286ed699116a39419d1c76776f52d9d, type: 2}
+  rootLength: {x: 10, y: 32}
+  rootMaxDepth: 60
   nestDepth: 14
   nestRadius: {x: 7, y: 3.5}
   shaftHalfWidth: 1

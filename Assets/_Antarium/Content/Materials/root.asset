@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e5d762bd988e474491e587556e4c018, type: 3}
+  m_Name: root
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TerrainMaterialDef
+  id: root
+  displayName: Root
+  hardness: 4
+  value: 0
+  flags: 8
+  drop: {fileID: 11400000, guid: c22f002829fecd34cb3dcdcee4ed32f2, type: 2}
+  dropAmount: 1
+  dropChance: 0.5
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  emissionStrength: 0
+  selfGlow: 0
+  pattern: 3
+  baseColor: {r: 0.22745098, g: 0.14117648, b: 0.07058824, a: 1}
+  shadowColor: {r: 0.14117648, g: 0.08627451, b: 0.039215688, a: 1}
+  highlightColor: {r: 0.47843137, g: 0.30588236, b: 0.15686275, a: 1}
+  accentColor: {r: 0.65882355, g: 0.45490196, b: 0.23529412, a: 1}
+  accentAmount: 0.45
+  topRimColor: {r: 0, g: 0, b: 0, a: 0}
+  textureOverride: {fileID: 0}

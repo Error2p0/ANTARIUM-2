@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Fungus Garden
   kind: 4
   paletteOrder: 11
-  description: 2 seeds -> 3 fungus (3 food each). Feed it the seeds your workers forage.
+  description: 2 seeds -> 3 fungus, or 2 leaves -> 4 fungus (3 food each). Feed it what your workers forage; press I to pick one recipe.
   size: {x: 4, y: 2}
   cost:
   - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
@@ -24,9 +24,21 @@ MonoBehaviour:
   foodCost: 0
   buildWork: 6
   speed: 2
+  tier: 0
+  capacity: 16
   recipes:
   - {fileID: 11400000, guid: d2877dfaf3f91f14580cf2f1d19bb68e, type: 2}
+  - {fileID: 11400000, guid: e7375e6fd805b64409aedf34f66435bb, type: 2}
   inputBatches: 2
   outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
   color: {r: 0.60784316, g: 0.4862745, b: 0.7058824, a: 1}
   art: 2

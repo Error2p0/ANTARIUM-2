@@ -1190,6 +1190,136 @@ MonoBehaviour:
     cooldown: 0.5
     maxVoices: 1
     positional: 0
+  - cue: 45
+    clip: {fileID: 0}
+    synth:
+      wave: 0
+      duration: 0.55
+      frequency: 2600
+      frequencyEnd: 1500
+      attack: 0.02
+      decayPower: 1.5
+      noise: 0
+      lowpass: 0
+      highpass: 0
+      harmonics: 0.2
+      vibratoHz: 18
+      vibratoDepth: 1.5
+      notes: 2
+      noteStep: -3
+      crush: 0
+      gain: 1
+    variants: 1
+    bus: 0
+    volume: 0.5
+    pitch: {x: 0.99, y: 1.01}
+    cooldown: 1
+    maxVoices: 2
+    positional: 0
+  - cue: 46
+    clip: {fileID: 0}
+    synth:
+      wave: 4
+      duration: 0.45
+      frequency: 2000
+      frequencyEnd: 300
+      attack: 0.15
+      decayPower: 1.5
+      noise: 0
+      lowpass: 3500
+      highpass: 0
+      harmonics: 0
+      vibratoHz: 0
+      vibratoDepth: 0
+      notes: 1
+      noteStep: 0
+      crush: 0
+      gain: 1
+    variants: 2
+    bus: 0
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.5
+    maxVoices: 1
+    positional: 1
+  - cue: 47
+    clip: {fileID: 0}
+    synth:
+      wave: 4
+      duration: 2.2
+      frequency: 200
+      frequencyEnd: 40
+      attack: 0.05
+      decayPower: 1.2
+      noise: 0
+      lowpass: 500
+      highpass: 0
+      harmonics: 0
+      vibratoHz: 0
+      vibratoDepth: 0
+      notes: 1
+      noteStep: 0
+      crush: 0
+      gain: 1.4
+    variants: 1
+    bus: 0
+    volume: 0.6
+    pitch: {x: 0.99, y: 1.01}
+    cooldown: 2
+    maxVoices: 2
+    positional: 0
+  - cue: 48
+    clip: {fileID: 0}
+    synth:
+      wave: 0
+      duration: 1.4
+      frequency: 330
+      frequencyEnd: 0
+      attack: 0.3
+      decayPower: 1.5
+      noise: 0
+      lowpass: 0
+      highpass: 0
+      harmonics: 0.3
+      vibratoHz: 0
+      vibratoDepth: 0
+      notes: 3
+      noteStep: -4
+      crush: 0
+      gain: 1
+    variants: 1
+    bus: 0
+    volume: 0.3
+    pitch: {x: 0.99, y: 1.01}
+    cooldown: 2
+    maxVoices: 2
+    positional: 0
+  - cue: 49
+    clip: {fileID: 0}
+    synth:
+      wave: 0
+      duration: 1.2
+      frequency: 392
+      frequencyEnd: 0
+      attack: 0.2
+      decayPower: 1.6
+      noise: 0
+      lowpass: 0
+      highpass: 0
+      harmonics: 0.4
+      vibratoHz: 0
+      vibratoDepth: 0
+      notes: 3
+      noteStep: 4
+      crush: 0
+      gain: 1
+    variants: 1
+    bus: 0
+    volume: 0.3
+    pitch: {x: 0.99, y: 1.01}
+    cooldown: 2
+    maxVoices: 2
+    positional: 0
   ambience:
   - biome: {fileID: 0}
     clip: {fileID: 0}

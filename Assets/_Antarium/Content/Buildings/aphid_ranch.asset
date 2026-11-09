@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: aphid_ranch
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: aphid_ranch
+  displayName: Aphid Ranch
+  kind: 4
+  paletteOrder: 16
+  description: 'Aphids graze on leaves: 2 leaves -> 1 honeydew. The queen eats honeydew from the stock: she lays 50% faster and needs no food of her own while she does.'
+  size: {x: 4, y: 2}
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 8
+  - item: {fileID: 11400000, guid: c22f002829fecd34cb3dcdcee4ed32f2, type: 2}
+    count: 4
+  foodCost: 0
+  buildWork: 7
+  speed: 2
+  tier: 0
+  capacity: 16
+  recipes:
+  - {fileID: 11400000, guid: 28e73d14dacde5946a13f9fc8412d6a1, type: 2}
+  inputBatches: 2
+  outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
+  color: {r: 0.6117647, g: 0.8117647, b: 0.3529412, a: 1}
+  art: 12

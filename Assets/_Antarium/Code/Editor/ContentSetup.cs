@@ -144,6 +144,7 @@ namespace Antarium.Editor
                 database.raiders.AddRange(raiders);
                 EditorUtility.SetDirty(database);
             }
+            CreateSurface(database, worldGen, copperItem, copperBar, fungusItem, AssetDatabase.LoadAssetAtPath<ItemDef>($"{ItemsFolder}/chitin.asset"));
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;
