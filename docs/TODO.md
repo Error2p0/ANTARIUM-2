@@ -246,6 +246,69 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [ ] Release build log noise: `Hidden/Universal Render Pipeline/GaussianDepthOfField` "stripped from the build" is logged repeatedly (22 times in a 15 s run of the Development build), and "More than one global light" is logged during builds although `Main.unity` has one global light and no player run has logged it. Neither has a known visible effect; look into both.
 - [ ] **(you)** Submit the build for review; set the release date; release (or keep it in Coming Soon / playtest).
 
+## Milestone 10 — Content complete (planned)
+Build what is still on the *Missing / not built yet* list below, while M9 waits for Steam's approvals. Branch `milestone-10` (off `milestone-9`; builds for Steam keep coming from `milestone-9` until M10 is merged, because M10 changes the save format). Each phase ends playable, verified in the editor (play mode + captures), with tests, docs (GDD / TODO / HOW_TO_PLAY) and its own commits. Save format 5 grows section by section (one version byte per section, older saves keep loading). Phases are ordered so later ones build on earlier ones; each can ship alone.
+
+**Proposed decisions** (open ones are asked before the phase that needs them)
+- *Per-ant hunger / rest* is **not built**: the colony-wide upkeep per caste already makes food matter, and per-ant needs with thousands of ants add micromanagement and cost without a visible decision for the player. Ant XP (10.4) gives individual ants their character instead.
+- *Pheromone diffusion* and a *Haul to* scent stay out (decided in M6: sharp, predictable scents; storage zones do *Haul to*).
+- Hand-drawn art and recorded sound effects can't come from code. M10 builds the **drop-in pipeline** (PNGs / WAVs by naming convention override the generated ones, like the terrain `textureOverride` and *Assign Audio Files*) and better generated placeholders; the art itself is **(you)** or an artist.
+- No power network: water wheels and magma heat **boost machines next to them** instead of introducing a power grid (keeps building simple, gives fluids a use).
+
+**10.1 Logistics completion** (no open questions)
+- [ ] **Chest** (1 cell buffer, holds N items of any type, counts as storage) and **Unloader** (takes items of a chosen type, or any, from the container next to it onto a belt): stock can finally feed belts.
+- [ ] **Storage filters**: per storage zone (click a zone cell → item list) and per chest; deliveries respect them.
+- [ ] **Per-machine recipe choice** (click a machine: *Any* or one recipe) and **reserving** items for construction (machines never take the last N of an item needed by blueprints).
+- [ ] **Crusher** (2×2): ore → crushed ore (2 per ore); the smelter makes metal from crushed ore at a better ratio. First 3-step chain.
+- [ ] **Conveyor tiers**: *Iron Belt* / *Iron Lift* (iron, research *Reinforced Silk*), 2× speed, upgrade in place by placing over a silk belt. Iron gets its first building use; iron buildings (iron gate, iron trap tier) where natural.
+- [ ] Splitters / filters connect to each other; belt step moved to Burst if tiers push it past ~1 ms.
+- [ ] Contracts, research nodes (tier 3–5), achievements for the new buildings; save `BLDG` 5 (chest contents, unloader / zone filters, recipe choice, tiers).
+
+**10.2 Surface: day, weather, aphids** (open: day length; whether birds take ants)
+- [ ] **Day / night** cycle: sky colour and sky light in the light map (night = dim surface; the light map's sky source scales), forage spawns by day, rich presence untouched. Length in `GameConfig`.
+- [ ] **Weather**: rain (water seeps into open tunnels near the surface for a while, floods dips) and drought (forage −50%), announced by event cards. Offline: no weather.
+- [ ] **Leaves** on surface plants as a second forage; **Fungus Garden** accepts leaves (better ratio than seeds).
+- [ ] **Aphid Ranch** (machine with live aphids drawn in it, fed leaves → *honeydew*, a high-value food and queen resource); **golden aphid** random event (appears in a ranch, click it).
+- [ ] **Roots** in the topsoil as a cave feature (tough material ants dig around; drops root fibre for silk / recipes) — fills GDD 2.2.
+- [ ] **Surface threats**: **birds** (daytime, pick off ants on the open surface; warning shadow) and **surface spiders** (hunt near the nest entrance at night). Raids stay as they are.
+
+**10.3 Living world: fluids and materials** (open: fluid pressure)
+- [ ] **Pump** (moves fluid from its intake side to its outlet side; no pipes, pumps chain through dug tunnels): drain a flooded shaft, fill a moat.
+- [ ] **Water wheel** (in flowing / falling water: machines within N cells +speed) and **irrigation** (water next to a Fungus Garden / Aphid Ranch: +output).
+- [ ] **Magma heat**: a Smelter (or a new *Magma Forge*) next to lava or magma rock needs no coal and works faster.
+- [ ] **Flammable**: coal, mycelium, giant fungus and roots catch fire next to lava; fire spreads cell by cell, burns into smoke (gas) and ash; ants take burn damage. **Conductive**: copper ore / crystals carry crystal resonance (10.5).
+- [ ] **Fluid pressure** (optional, see question): water rises through U-bends to the level of its source.
+- [ ] Save `FLUD` 3 (fire), `WRLD` (roots, ash).
+
+**10.4 Colony depth** (open: queen evolution currency)
+- [ ] **Glow Ant** caste (research, deep): carries light. Drawn as small dynamic lights near the camera (pooled `Light2D`, GPU light splat for the rest), so dark depths can be lit by ants; finally adds **ShadowCaster2D** near the camera for these lights (GDD 3.2).
+- [ ] **Fire Ant** caste: immune to lava heat and fire, takes no burn damage; works the magma zone. New hazard **heat**: ants near lava / in the magma zone lose health slowly without it.
+- [ ] **Queen evolution tree** (per colony, unlike genetics): spend rare finds (honeydew, relics, star fragments, royal jelly) on bigger broods, queen health / regeneration, extra egg slots, castes unlocked earlier, a new ability. Opens from the **Queen panel** (click the queen / Q key): stats, upkeep, eggs, caste mix shortcut, evolutions.
+- [ ] **Priority panel**: per job (dig, haul, build, supply, tend, nurse) a priority 1–5 that multiplies the global weights; caste weights stay.
+- [ ] **Ant XP and levels** per ant in its main job (faster at it, small cap); optional **traits** at hatch (*Strong* carry +1, *Swift*, *Lucky* drops, *Lazy*), shown in the hover panel. `ANTS` 4.
+- [ ] **Lane jitter**: small per-ant offsets so a column of ants on one route reads as a stream, not a single sprite.
+
+**10.5 Deep endgame: crystals and ruins** (no open questions)
+- [ ] **Crystal resonance**: a *Crystal Resonator* next to glow crystals (more crystals in its conductive cluster = stronger) produces knowledge and speeds nearby machines; mining the cluster weakens it.
+- [ ] **Ruins story**: relics studied in the Archive unlock **lore fragments** (a Codex panel with a short story of the lost colony, ~12 entries); some ruin rooms hold a *tablet* (unique relic).
+- [ ] **Endgame tech**: research tier 7 behind the lore (e.g. *Ancient Engine*: a big ruin machine the colony restores step by step with relics, iron, crystals; finishing it is the colony's goal and gives a large Genetic Memory bonus at the next flight).
+- [ ] **Rival ant colony** (deep or surface raid variant that steals items from storage instead of food) and an **enemy that digs** (mole cricket: tunnels toward the nest through soft soil, so walls / gates alone don't stop it).
+- [ ] Contracts, achievements, ruin-tier music cue hook.
+
+**10.6 Prestige and saves** (open: respec cost)
+- [ ] **Respec** genetic memory (refund at a cost, or free once per flight).
+- [ ] **New bloodline**: start a fresh legacy from the menu (with confirmation), keeping achievements.
+- [ ] **Prestige-only mechanics**: traits that unlock a caste from the start, biome variants (world modifiers that swap a biome's palette / creature), a building only known through flights (e.g. *Queen's Throne*).
+- [ ] **Save slots**: 3 slots + backups, slot picker on the title screen (generation, depth, play time from the header), Steam Cloud keeps working (`Saves/*`).
+
+**10.7 Presentation** (open: whether art is commissioned)
+- [ ] **Art override pipeline**: `Assets/_Antarium/Art/` PNGs by naming convention replace generated sprites (ants per caste and frame, queen, eggs, items, buildings, enemies, UI icons); editor menu *Antarium → Art → Import Overrides*; generated art stays the fallback.
+- [ ] Distinct generated **caste silhouettes** (not just palette swaps), better nursery / emitter / new building sprites; **UI item icons** in the resource bar, palettes and hover panel.
+- [ ] **Overlays**: light overlay and a full ore-scan overlay (revealed ore by type, toggle).
+- [ ] **Tooltips** on every interactive UI element (palette entries, research nodes, castes, resource entries, ability buttons), and hint texts that follow the key bindings (no fixed letters).
+- [ ] Flight / discovery **stinger** slots wired (**(you)**: generate them from `docs/SUNO_PROMPTS.md`); sound cues for every new M10 feature.
+- [ ] Final docs pass, HOW_TO_PLAY for everything above, version 0.10.0.
+
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
 
