@@ -72,7 +72,7 @@ Gamepad **Y** possesses the ant under the pointer / lets go.
 |---|---|
 | Click a building in the **palette** (above the toolbar) | Select it (also switches to the Build tool) |
 | **Q** / **E** | Previous / next building |
-| **R** | Rotate: belts flip left/right, lifts flip up/down, filters and unloaders turn a quarter clockwise; with the Pheromone Emitter selected: the next scent for new emitters |
+| **R** | Rotate: belts flip left/right, lifts flip up/down, filters, unloaders and pumps turn a quarter clockwise; with the Pheromone Emitter selected: the next scent for new emitters |
 | **Left drag** with a belt or lift (silk or iron) | Lay a line. It stays on the row (belt) or column (lift) where you started, and **flows in the direction you drag**. Dragging over an existing belt or lift of the same kind turns it to the new direction. |
 | **Left drag** with Iron Belt / Iron Lift **over silk belts / root lifts** | **Upgrades them in place**: the old one is refunded, the iron one is paid and workers build it. Items riding the belt stay on it. (Works the other way round too.) |
 | **Left drag** with Earth Wall, Resin Gate or Iron Gate | Paint them on every cell you drag over. An Iron Gate over a Resin Gate upgrades it. |
@@ -149,6 +149,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - A card also appears when you break into a cave where **creatures** live (which kind and how many).
   - **Weather** cards: *Rain* or *Drought* with the time left.
   - A red **bird** card while a bird circles (*Strikes in 6s*), then whether it took any ants; a red **Night hunters** card while spiders prowl (*Until dawn*). **Go** jumps to the bird or a spider.
+  - A red **Fire!** card while anything burns (*12 cells burning*); **Go** jumps to the fire.
 - **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
@@ -181,7 +182,8 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - A **golden beetle** with a blinking sparkle wanders the tunnels during its event; a **golden aphid** sits in an Aphid Ranch during its event. A blinking **orange dot** marks ants trapped in the rock.
   - A **purple crystalline lump** in a crater on the surface is a meteorite.
   - **See-through (dithered) buildings** are blueprints still being built; they fill in as workers work on them.
-  - **Water** is blue with a pale surface line; **lava** is bright churning orange and lights its surroundings; **spore gas** is a speckled green haze. **Sand** is pale and grainy.
+  - **Water** is blue with a pale surface line; **lava** is bright churning orange and lights its surroundings; **spore gas** is a speckled green haze, **smoke** a speckled grey one. **Sand** is pale and grainy, **ash** dark grey and grainy. A **burning** cell has flickering orange flames on its edges and glowing embers inside.
+  - A **grey box with a blue spout** is a pump (the spout is where the fluid goes). A **wooden wheel** with wet paddles in a shaft is a water wheel; it turns as fast as water pours through it.
   - **Soldiers** are darker and bigger than workers, with a heavy head and golden mandibles. **Miners** are grey with a heavy head and pale jaws, **haulers** tan with a big rear (a second lump on top when they carry more than one), **nurses** pale cream, **builders** olive green, **scouts** bright orange with long antennae, **engineers** steel blue with a cyan eye.
   - A **nurse carrying an egg** holds a little white oval. The ant you control has a **blinking gold diamond** over it and a warm light around it.
   - A **clay ledge with three silk cradles** is a nursery; the eggs lie in the cradles. A **pale pod** with a coloured dot is a pheromone emitter (the dot is its scent).
@@ -194,7 +196,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Flow overlay (O):**
   - Belts and lifts go from **grey** (nothing moving) to **green** (busy). **Red** = jammed: full and not moving.
   - Machines are **green** while working, **yellow** while waiting for input, **red** when their products are not being taken away.
-  - Unloaders are **green** while unloading, **grey** with nothing to take, **red** when what they feed is full.
+  - Unloaders are **green** while unloading, **grey** with nothing to take, **red** when what they feed is full. Pumps likewise (red: no room in front); water wheels are green while turning.
   - Idle workers get a **blue dot** above them.
 
 ---
@@ -303,7 +305,7 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 ### Building (Build tool)
 - Choose a building in the palette and place it. The **cost is paid from your stock right away** and a see-through **blueprint** appears. Workers walk over and build it (up to 2 workers per building). You can't place what you can't afford.
 - **Removing** a building (right mouse) gives back its full cost. Items riding a removed belt, and a removed machine's stored inputs, drop to the floor as piles.
-- You can only build on cells you can see, and not in deep water, thick gas or lava. Belts, lifts, splitters, filters, walls, gates and guard posts need open space ants can walk on (dug-out space or the ground surface outside). Traps also need a solid floor under them. Machines need dug-out space underground **and a flat, solid floor under their whole width**.
+- You can only build on cells you can see, and not in deep water, thick gas or lava. Belts, lifts, splitters, filters, walls, gates and guard posts need open space ants can walk on (dug-out space or the ground surface outside). Traps also need a solid floor under them. Machines need dug-out space underground **and a flat, solid floor under their whole width**. A Water Wheel needs dug-out space underground but no floor.
 
 | Building | Cost | Size | Build time (1 worker) | What it does |
 |---|---|---|---|---|
@@ -311,15 +313,17 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Root Lift** | 2 Copper Ore | 1 cell | 0.5 s | Carries items **up or down**, 3 cells per second |
 | **Splitter** | 3 Copper Ore | 1 cell | 1 s | Hands items in turn to every belt, lift or machine around it |
 | **Filter** | 2 Copper | 1 cell | 1.5 s | Its item leaves through the arrow side; everything else through the other sides |
-| **Smelter** | 12 Copper Ore | 3 × 3 | 8 s | 2 Copper Ore → 1 Copper (4 s); 2 Iron Ore + 1 Coal → 1 Iron (6 s); 2 Crushed Copper → 1 Copper (3 s); 2 Crushed Iron + 1 Coal → 1 Iron (5 s) |
+| **Smelter** | 12 Copper Ore | 3 × 3 | 8 s | 2 Copper Ore → 1 Copper (4 s); 2 Iron Ore + 1 Coal → 1 Iron (6 s); 2 Crushed Copper → 1 Copper (3 s); 2 Crushed Iron + 1 Coal → 1 Iron (5 s). **Heated** (lava, magma rock or fire touching it): twice as fast and **no coal needed**. |
 | **Crusher** | 10 Copper Ore, 4 Copper | 2 × 2 | 6 s | 2 Copper Ore → 3 Crushed Copper (3 s); 2 Iron Ore → 3 Crushed Iron (4 s). Crushed ore smelts into **75% more metal** per ore. Needs a flat floor. |
 | **Chest** | 4 Copper Ore | 1 cell | 1.5 s | Holds **16 items**. **I** chooses which. A belt that ends at a chest fills it. |
 | **Unloader** | 3 Copper | 1 cell | 1.5 s | Takes items (**I**: one item or any) out of the storage cell, chest or royal chamber **behind** it and puts them onto the belt, lift, splitter or machine its **arrow** points at, 1.5 per second. Leaves what you keep for building. |
+| **Pump** | 3 Copper, 2 Root Fibre | 1 cell | 3 s | Moves **water or gas/smoke** (not lava) from behind it to where its **spout** points, 2 cells of fluid per second. See *Pumps, water wheels and farms*. |
+| **Water Wheel** | 4 Copper, 2 Iron, 4 Root Fibre | 2 × 2, no floor needed | 6 s | Water pouring onto it falls through and turns it; machines within **8 cells** work up to **50% faster**. |
 | **Iron Belt** | 1 Iron | 1 cell | 0.4 s | Like a silk belt, **5 cells per second**. Drag over silk belts to upgrade them. |
 | **Iron Lift** | 1 Iron, 1 Copper Ore | 1 cell | 0.6 s | Like a root lift, **6 cells per second**. |
 | **Iron Gate** | 3 Iron, 2 Copper | 1 cell | 4 s | Like a resin gate with **450 hit points**. Place over a resin gate to upgrade it. |
-| **Fungus Garden** | 8 Copper Ore | 4 × 2 | 6 s | 2 Seeds → 3 Fungus (10 s); 2 Leaves → 4 Fungus (10 s). Fungus is food worth 3 each. |
-| **Aphid Ranch** | 8 Copper Ore, 4 Root Fibre | 4 × 2 | 7 s | 2 Leaves → 1 **Honeydew** (8 s): the queen's treat (see *Food and the queen*). Needs a flat floor. |
+| **Fungus Garden** | 8 Copper Ore | 4 × 2 | 6 s | 2 Seeds → 3 Fungus (10 s); 2 Leaves → 4 Fungus (10 s). Fungus is food worth 3 each. **Irrigated** (water in or next to it): +50% output. |
+| **Aphid Ranch** | 8 Copper Ore, 4 Root Fibre | 4 × 2 | 7 s | 2 Leaves → 1 **Honeydew** (8 s): the queen's treat (see *Food and the queen*). Needs a flat floor. **Irrigated**: +50% output. |
 | **Archive** | 10 Copper Ore | 3 × 2 | 10 s | Studies finds into **Knowledge**: 1 Copper → 1 (8 s), 1 Crystal Shard → 4 (6 s), 1 Amber → 5 (8 s), 1 Fossil → 6 (8 s), 1 Star Fragment → 12 (10 s), 1 Relic → 25 (12 s) |
 | **Earth Wall** | Free | 1 cell | 1.5 s | When finished the cell becomes **solid packed earth** (soft, easy to mine again). Seals off water, gas, lava and caves. Not in the royal chamber or a storage zone. |
 | **Resin Gate** | 4 Copper | 1 cell | 3 s | Ants walk through; **enemies must break it** (150 hit points, mends 1 per second). A broken gate becomes a blueprint again and workers rebuild it for free. |
@@ -329,7 +333,7 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Pheromone Emitter** | 3 Copper, 1 Iron | 1 cell | 2 s | Keeps one scent from fading within 10 cells. |
 | **Princess Chamber** | 10 Copper, 4 Iron | 4 × 3 | 12 s | 12 Fungus + 2 Amber → **1 princess** (60 s). Stops while the colony has as many princesses as count (5). Needs a flat floor. |
 
-The **Unloader** is locked until you research *Stockkeeping*, the **Crusher** until *Ore Crushing*, **Iron Belts** and **Iron Lifts** until *Reinforced Silk*, the **Iron Gate** until *Iron Bulwark*, the **Splitter** and **Filter** until *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Aphid Ranch** until *Aphid Herding*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands* and the **Princess Chamber** until *Nuptial Flight*. Locked buildings are faded in the palette.
+The **Pump** is locked until you research *Hydraulics*, the **Water Wheel** until *Water Mills*, the **Unloader** until *Stockkeeping*, the **Crusher** until *Ore Crushing*, **Iron Belts** and **Iron Lifts** until *Reinforced Silk*, the **Iron Gate** until *Iron Bulwark*, the **Splitter** and **Filter** until *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Aphid Ranch** until *Aphid Herding*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands* and the **Princess Chamber** until *Nuptial Flight*. Locked buildings are faded in the palette.
 
 ### Belts and lifts
 - Each belt or lift cell holds **2 items**. Items pass from cell to cell; if the next cell is full they wait, so a blocked line **backs up**.
@@ -403,11 +407,13 @@ The **Unloader** is locked until you research *Stockkeeping*, the **Crusher** un
 | 4 | **Reinforced Silk** | 45 Knowledge, 6 Iron | Ore Crushing, Silk Weaving | Unlocks **Iron Belts** and **Iron Lifts** |
 | 5 | **Iron Bulwark** | 55 Knowledge, 8 Iron | Reinforced Silk, Fortification | Unlocks the **Iron Gate** |
 | 2 | **Aphid Herding** | 18 Knowledge, 3 Root Fibre | Fungiculture | Unlocks the **Aphid Ranch** |
+| 3 | **Hydraulics** | 25 Knowledge, 2 Copper, 3 Root Fibre | Aphid Herding | Unlocks the **Pump** |
+| 4 | **Water Mills** | 40 Knowledge, 4 Iron | Hydraulics | Unlocks the **Water Wheel** |
 
 ### Contracts
 - The board on the right always shows **3 contracts** (4 with *Contract Network*). Progress counts from the moment a contract appears.
 - The first ones are a short **introduction** (one at a time, in order): dig 40 cells, bring in 10 copper ore, dig 40 deep, build a Smelter, hatch 10 workers, build an Archive.
-- The others are drawn at random: deliver items into the stock (copper ore, grubs, seeds; iron ore once you are 110 deep, coal, fossils and chitin at 290, crystal shards at 690, obsidian at 1050, relics at 1250), make copper or iron, dig out cells, dig deeper, hatch workers, **defeat enemies** (from 290 deep), **hatch miners, haulers or nurses** (once that caste is researched), build chests, make crushed copper (with *Ore Crushing*), lay iron belts (with *Reinforced Silk*), bring in leaves or root fibre, make honeydew (with *Aphid Herding*). Each time you finish one, the next of that kind asks for about **30% more** and pays more (defeating enemies and hatching castes: 35–40%).
+- The others are drawn at random: deliver items into the stock (copper ore, grubs, seeds; iron ore once you are 110 deep, coal, fossils and chitin at 290, crystal shards at 690, obsidian at 1050, relics at 1250), make copper or iron, dig out cells, dig deeper, hatch workers, **defeat enemies** (from 290 deep), **hatch miners, haulers or nurses** (once that caste is researched), build chests, make crushed copper (with *Ore Crushing*), lay iron belts (with *Reinforced Silk*), bring in leaves or root fibre, make honeydew (with *Aphid Herding*), build pumps (with *Hydraulics*) or a water wheel (with *Water Mills*). Each time you finish one, the next of that kind asks for about **30% more** and pays more (defeating enemies and hatching castes: 35–40%).
 - When a contract is done, click **Claim reward** to collect it: knowledge, food and sometimes items (items that don't fit drop next to the queen). A new contract takes its place.
 
 ### Random events
@@ -440,8 +446,8 @@ The world gets stranger the deeper you dig. Depths are cells below the surface; 
 | **Clay** | 110–290 | clay | iron ore, copper ore | sand, **underground lakes** |
 | **Stone strata** | 290–690 | stone | coal, iron, amber, fossils, glow crystals | lakes, **centipedes** |
 | **Crystal Caverns** | 690–870 | quartzite (hard) | lots of glow crystals, iron, amber | big caves, lakes, **cave spiders** |
-| **Fungal Depths** | 870–1050 | mycelium (soft) | **giant fungus** (food, glows), coal | **spore gas**, lakes, swarms of **fungal mites** |
-| **Magma Zone** | 1050–1250 | basalt (very hard) | **obsidian**, iron, coal, glowing magma rock | **lava lakes**, gas, **fire beetles** |
+| **Fungal Depths** | 870–1050 | mycelium (soft, **burns**) | **giant fungus** (food, glows, burns), coal | **spore gas**, lakes, swarms of **fungal mites** |
+| **Magma Zone** | 1050–1250 | basalt (very hard) | **obsidian**, iron, coal, glowing **magma rock** (hot: heats a Smelter) | **lava lakes** (they set coal alight), gas, **fire beetles** |
 | **Ancient Ruins** | 1250–bottom | ruin brick (very hard) | **relics** (25 knowledge each in the Archive), glow crystals | rooms guarded by **ruin guardians** |
 
 The ruins are a grid of rectangular rooms joined by doors and hatches, built by a lost ant civilization.
@@ -454,6 +460,19 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
 - To deal with a flood: let it drain into a pit dug below it, wait for puddles to dry, or seal it off with **Earth Walls** (painted by dragging). Walls also seal gas and lava.
 - **Sand** collapses: when you dig out the cell under sand, the sand falls into the gap (and slides off to the side of piles), one cell at a time. An ant it lands on takes 25 damage and is pushed out. Fallen sand is automatically **ordered for mining**, so workers clear it. Sand never falls into buildings, blueprints, storage zones or the royal chamber; they hold it up.
 - *Air Sacs* research halves all of this damage.
+
+### Pumps, water wheels and farms
+- Fluids have no pressure: water never rises by itself. **Pumps** do that. A pump takes water or gas (also smoke) from the cell **behind** it and pushes it out of its **spout** (R turns it before you place it). It **reaches up to 8 cells back** for fluid and pushes up to **8 cells ahead** past cells that are already full, so a pump placed just above a flooded shaft, spout up, drains it and stacks the water above itself. Chain pumps every 8 cells to lift water higher. Fluid never flows through a pump; ants walk through it. Lava is too thick to pump.
+- Uses: drain a flooded tunnel, **fill a moat** in front of the nest, blow smoke or spore gas out of your tunnels, water a farm, keep a water wheel turning.
+- **Water Wheel** (2 × 2): water resting on top of it falls through it, up to 2 cells per second per column, into the cells below (which need room for it). The more passes, the faster it turns: at full flow every machine within **8 cells** works **50% faster** (the best wheel counts; wheels don't add up). Put it under a waterfall, or under a pump's outlet so the water lands right on it: water creeps only slowly along long flat channels. A pump lifting the water back up keeps it going.
+- **Irrigation:** a Fungus Garden or Aphid Ranch with water **in or next to it** (at least about a tenth of a cell) makes **50% more**: every second batch comes out doubled. Each batch drinks a little water (about a fifth of a cell), so a pump feeding the puddle keeps it going.
+- **Magma heat:** a Smelter with **lava, glowing magma rock or a fire** in or next to it is heated: it works **twice as fast** and needs **no coal** (it stops taking coal; what it already holds stays). The info panel says whether a machine is heated, irrigated or sped up by a wheel.
+
+### Fire
+- **Coal, roots, mycelium and giant fungus burn.** Lava flowing next to them can set them alight, and a **meteorite** sets roots and anything else that burns around its crater on fire.
+- A burning cell glows with flickering flames for **15 seconds**, then turns into **ash**. Meanwhile it lights up its surroundings, gives off **grey smoke** (it rises, hurts ants when thick like spore gas and clears away by itself) and **burns ants next to it** (10 per second; *Air Sacs* halves it). Fire spreads cell by cell to what burns next to it, but only to cells you have seen that **touch open air**: a seam buried in rock does not catch.
+- **Ash** is soft and falls like sand when you dig out the cell under it (then it is ordered for mining). Burnt coal is lost.
+- **Putting fires out:** water next to a burning cell puts it out at once (pump some in, or let a flood do it); digging the burning cell out ends it too. A red **Fire!** card shows how many cells are burning; **Go** jumps to one.
 
 ### Health
 - Workers have **40 hit points**, soldiers **150**. Ants heal **2 per second** after 6 seconds without damage.
@@ -561,7 +580,7 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 - **Achievements** (title screen or Esc menu): 34 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and the hidden *Lost Civilization* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
 
 ### Sound
-- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. A circling bird cries and its strike whooshes; rain starts with a rumble of thunder; dusk and dawn each have a soft chime. Research, contracts, events, abilities, traits, princesses, the flight and achievements each have their own chime.
+- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. A circling bird cries and its strike whooshes; rain starts with a rumble of thunder; dusk and dawn each have a soft chime. A fire starting crackles; water putting one out hisses. Research, contracts, events, abilities, traits, princesses, the flight and achievements each have their own chime.
 - **Ambience** follows the camera: wind and the odd bird above ground, then drips in the topsoil and clay, a low hum in the stone, ringing crystals in the caverns, bubbling spores in the fungal depths, a rumbling bubbling magma zone and a hollow drone in the ruins. It crossfades as you move between layers.
 - **Music** is generated too: a soft pad and sparse plucked notes that play for a few minutes, then rest for a minute or two. Its key drops the deeper the camera is, and from the crystal caverns down it turns minor. When recorded tracks are added, they replace it: a track for the layer the camera is in, then a rest, then the next; the title screen, raids and the genetic tree get their own music, and the Nuptial Flight and the first dig into each deeper layer get a short cue.
 
@@ -593,4 +612,4 @@ The **contracts** on the right walk you through the first steps; this is the sam
 
 ## Not in the game yet
 
-Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), rival ant colonies and digging enemies, several save slots, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
+Glow ants and heat-resistant ants, a queen evolution tree, crystal resonance (conductive copper ore and crystals do nothing yet), rival ant colonies and digging enemies, several save slots, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.

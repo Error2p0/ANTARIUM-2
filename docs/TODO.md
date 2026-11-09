@@ -162,8 +162,8 @@
 - Debug-spawned ants of a still-locked caste don't show in the castes panel.
 - Combat and hazard balance is first-pass (enemy stats, raid timing and size, soldier cost, damage per second, lake / gas / lava amounts, sand amounts).
 - Fluids have no pressure: water does not rise through U-bends, and a lake surface can keep a slope of one level (of 255) per cell. Hidden lakes only settle once the colony has revealed part of their chunk, so a freshly breached lake may still be levelling.
-- Ants only know "blocked or not" for fluid: they route around deep water, dense gas and lava but walk through shallow water and thin gas (which hurts).
-- Fluids are only a hazard: no pumps, water wheels, irrigation, or magma heat for smelting yet. Gates do not hold back fluids (walls do).
+- Ants only know "blocked or not" for fluid: they route around deep water, dense gas / smoke and lava but walk through shallow water and thin gas (which hurts), and past burning cells (which burn them).
+- Gates do not hold back fluids (walls, pumps and water wheels do). Fluids have no pressure: water rises only through pumps.
 - Sand only collapses when a cell below it is dug out; sand left hanging over open caves by world generation stays until disturbed.
 - Workers never flee; they keep working next to enemies and bite back weakly. Soldiers can't be ordered individually (share, guard posts, Defend scent and the Pheromone Burst).
 - Enemies don't dig and never leave their cave's surroundings (cave creatures) or the path to the queen (raiders). Raiders come along the surface and take the shortest way in.
@@ -283,13 +283,18 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Verified in the editor: the 10.1 colony at night (stars, dim surface, night hunters card), rain by day (drops, grey sky, water down the shaft and into the meteorite crater), a bird circling over far foragers and striking 4 of them, a new colony's roots under the plants, an Aphid Ranch making honeydew (queen fed, eggs laid) with the golden aphid in it, a wolf spider at night, a sunrise.
 - Known limits: the rain amount and the soak rate are first guesses (rain pours down the starting shaft and pools on the royal chamber floor until it soaks away); plants are generated placeholders; the 4 a.m. sunrise on the clock is simply 65% day share; root fibre has few uses yet (more in 10.3 recipes).
 
-**10.3 Living world: fluids and materials** (no open questions)
-- [ ] **Pump** (moves fluid from its intake side to its outlet side; no pipes, pumps chain through dug tunnels): drain a flooded shaft, fill a moat.
-- [ ] **Water wheel** (in flowing / falling water: machines within N cells +speed) and **irrigation** (water next to a Fungus Garden / Aphid Ranch: +output).
-- [ ] **Magma heat**: a Smelter (or a new *Magma Forge*) next to lava or magma rock needs no coal and works faster.
-- [ ] **Flammable**: coal, mycelium, giant fungus and roots catch fire next to lava; fire spreads cell by cell, burns into smoke (gas) and ash; ants take burn damage. **Conductive**: copper ore / crystals carry crystal resonance (10.5).
+**10.3 Living world: fluids and materials** ✅ (GDD 2.2.1; no open questions. Decided while building: the Smelter itself is heated (no separate *Magma Forge*); pumps reach 8 cells back and push 8 cells ahead, because without pressure a pump could neither take water from below nor lift it more than one cell; smoke is its own grey gas kind)
+- [x] **Pump** (1 cell, R turns it, *Hydraulics*): 2 cells of water / gas / smoke per second from behind it to its spout (not lava); intake reaches 8 cells back, outlet pushes past full cells up to 8 ahead; fluid can't pass through it (`CellFlags.FluidBlock`), ants can. Drains a flooded shaft from above, lifts water (chain every 8 cells), fills a moat, blows smoke out.
+- [x] **Water Wheel** (2×2, no floor, *Water Mills*): water resting on it falls through (2 cells/s per column); power = share of its full rate; machines within 8 cells +50% × power (best wheel counts). **Irrigation**: Fungus Garden and Aphid Ranch with water in or next to them: +50% output (an extra batch every second craft), each craft drinks 48/255 water.
+- [x] **Magma heat**: the Smelter with lava, magma rock (`MaterialFlags.Hot`) or a fire in or next to it is heated: +100% speed, skips fuel (`ItemDef.fuel`: coal) and stops taking it in.
+- [x] **Fire** (`FireSystem`, `FluidKind.Fire` on solid cells): coal, roots, mycelium and giant fungus burn; moving lava and meteorites light them; spreads (0.25/s per neighbour) only to seen cells touching open air; 15 s, then **ash** (falls like sand); grey **smoke** (`FluidKind.Smoke`, like gas, thins out everywhere); ants next to it take 10/s; water puts it out; digging it out ends it. **Conductive** set on copper / iron ore and glow crystals (used in 10.5).
 - Fluid pressure is **not built** (decided): pumps give the player control over water, and lakes / floods stay predictable.
-- [ ] Save `FLUD` 3 (fire), `WRLD` (roots, ash).
+- [x] Presentation: fire, embers, flames licking up and smoke in the terrain shader, fire light; pump and water wheel sprites; flow overlay tints; hover texts (pump, wheel, burning cell, smoke, machine heat / irrigation / wheel boost); red **Fire!** card; fire crackle (water on fire reuses the lava hiss).
+- [x] Content (`ContentSetup.Waterworks.cs`): Pump, Water Wheel, research *Hydraulics* and *Water Mills* (row 9), material Ash, irrigation / heat bonuses on the existing machines, coal as fuel, material flags, contracts *Waterworks* and *Mill Race*, sound cue *FireIgnite*. No new achievements.
+- [x] Save `FLUD` 2 (fire on solid cells, smoke); `WRLD` unchanged (ash is a material by id, the fluid block is rebuilt by the buildings). The 10.2 save loaded; a save with pumps, a wheel and burning coal saved on quit and loaded again with all of them (fluid blocks restored, the fire burning on).
+- [x] 184 EditMode tests (15 new: pump drains and keeps the water, pump drains a flooded shaft from above, pump leaves lava and stops at another fluid, water wheel turns and speeds up a machine and stops when the water runs out, irrigation extra output and drinking, magma and lava heat; fire spreads only along exposed cells, smokes and burns out into ash, water puts it out, moving lava lights coal, a meteorite lights its surroundings as one fire, burnt-out ceiling ash falls, ants next to a fire are burned, digging a fire out, save round trip of fires and pump blocks).
+- Verified in the editor (on the 10.2 colony, restored afterwards): a water wheel in a shaft with a three-pump return loop (85% power at first, the smelter beside it +39%), an irrigated fungus garden, a smelter on magma rock smelting iron without coal, a coal seam burning along a tunnel floor into ash with grey smoke, the Fire! card, a meteorite strike; hover texts for all of them.
+- Known limits: ants don't route around fires (they walk past and get burned; Avoid scent keeps them out) and enemies are not burned; lava that settled before the colony arrived sleeps and lights nothing until something wakes its chunk; water creeps slowly along long flat channels, so wheels belong right under a waterfall or a pump outlet; a pump keeping a wheel turning is free power (by design, no power grid); smoke and spore gas don't mix in one cell; the irrigation carry (half a batch) is not saved; no fire offline; pumps can't move lava; fire doesn't harm buildings; fire numbers are first guesses.
 
 **10.4 Colony depth** (open: queen evolution currency)
 - [ ] **Glow Ant** caste (research, deep): carries light. Drawn as small dynamic lights near the camera (pooled `Light2D`, GPU light splat for the rest), so dark depths can be lit by ants; finally adds **ShadowCaster2D** near the camera for these lights (GDD 3.2).
@@ -326,7 +331,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 **Food & economy**
 - Food sources: seeds on the surface (by day), grubs from grub nests, the Fungus Garden (seeds or leaves → fungus), giant fungus. Honeydew from aphid ranches feeds the queen.
 - Food is a colony-wide stock with upkeep; no per-ant hunger/rest needs.
-- Ores are crushed and smelted into copper and iron; iron builds iron belts, lifts and gates. No heat-powered or fluid-powered processing yet (10.3).
+- Ores are crushed and smelted into copper and iron; iron builds iron belts, lifts and gates. Magma heat replaces coal in the Smelter; water wheels speed up machines; irrigation raises farm output.
 
 **Colony & ants**
 - No late castes yet: glow ants that carry light, heat-resistant ants for the magma zone.
@@ -336,9 +341,9 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Ants on the same route walk in single file and overlap.
 
 **World**
-- All 7 planned biomes exist; crystal resonance, magma heat for smelting and the ruins' story / endgame tech are not in yet.
-- Fluids are a hazard only: no pumps, water wheels, irrigation or other uses; no fluid pressure.
-- Material flags *Flammable* and *Conductive* have no behaviour yet (*Unstable* = sand collapses).
+- All 7 planned biomes exist; crystal resonance and the ruins' story / endgame tech are not in yet.
+- Fluids: pumps, water wheels, irrigation and magma heat exist; no fluid pressure (decided), no lava pumping.
+- Material flag *Conductive* has no behaviour yet (crystal resonance, 10.5); *Flammable* = fire, *Unstable* = sand and ash collapse, *Hot* = magma heat.
 - Weather is rain and drought only (no storms, no seasons).
 
 **Gameplay layers**
