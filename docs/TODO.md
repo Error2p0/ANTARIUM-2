@@ -171,11 +171,12 @@
 - Rebuilding a broken gate counts as building one for *Build* contracts.
 - Ruin rooms are a regular grid; no story, artefacts or endgame tech yet. Crystal resonance is not in.
 - Progression balance is first-pass (research costs, contract sizes and rewards, event timing, ability cooldowns, offline efficiency).
-- Machines and buildings draw from the same stock; there is no way to reserve items for construction or to limit what machines may take.
-- No unloader building yet: stored items reach machines only by workers, never onto belts.
+- Reserves are colony-wide counts, not per container: an unloader may empty a chest while the reserved items lie elsewhere. Building costs ignore the reserve (they are what it is for).
+- Unloaders take only from the one cell behind them (a storage cell, chest or royal chamber cell). Chests don't draw their items one by one (a heap and a dot for the main item); the configure panel lists every non-food item, even ones never found.
+- Upgrading a belt to iron turns it into a blueprint until workers build it: the line stops there meanwhile.
+- Splitters and filters in a closed square of four can pass an item round the square a few times before it leaves.
+- Configure (I) has no gamepad binding yet (Steam Deck pass).
 - Storage cells show at most 8 items each (the display cap matches the default capacity; raising `storageItemsPerCell` stores more than is drawn).
-- A machine runs whichever recipe it can, in turn; there is no per-machine recipe choice yet.
-- Splitters and filters cannot connect directly to each other (put a belt cell between them).
 - The belt step is plain C# (fine at 6,000 cells); move it to Burst when networks get much bigger.
 - The flow overlay shows colours only; exact rates are in the hover panel. No numbers drawn in the world.
 - Offline progress replays the last 5 minutes of net production: it does not notice mining orders running out or machines running dry, and more workers hatched offline do not raise income. Fine at 50%; revisit if players exploit it.
@@ -185,7 +186,7 @@
 - Random events only start while the game runs; meteorites always land near the nest. The golden beetle can't be caught with a gamepad unless the pointer is moved onto it.
 - Royal Decree eggs may share a floor cell (drawn on top of each other).
 - Seismic Sense has no radius preview while aiming.
-- Iron and coal are only spent on research for now; no iron buildings / reinforced belts yet.
+- Iron goes into research, iron belts / lifts / gates and the princess chamber; coal into research and smelting iron.
 - Belts need no floor (they can be strung across a chamber). Machines need a flat floor; if it is dug away later the machine keeps floating.
 - Placeholder sprites for buildings are generated in code (`BuildingSprites`).
 - Ants following the same flow field walk in single file and overlap ("conga line"); trails make it more visible. Add small per-ant lateral offsets or lane jitter when it starts to matter.
@@ -246,7 +247,7 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [ ] Release build log noise: `Hidden/Universal Render Pipeline/GaussianDepthOfField` "stripped from the build" is logged repeatedly (22 times in a 15 s run of the Development build), and "More than one global light" is logged during builds although `Main.unity` has one global light and no player run has logged it. Neither has a known visible effect; look into both.
 - [ ] **(you)** Submit the build for review; set the release date; release (or keep it in Coming Soon / playtest).
 
-## Milestone 10 — Content complete (planned)
+## Milestone 10 — Content complete 🟡
 Build what is still on the *Missing / not built yet* list below, while M9 waits for Steam's approvals. Branch `milestone-10` (off `milestone-9`; builds for Steam keep coming from `milestone-9` until M10 is merged, because M10 changes the save format). Each phase ends playable, verified in the editor (play mode + captures), with tests, docs (GDD / TODO / HOW_TO_PLAY) and its own commits. Save format 5 grows section by section (one version byte per section, older saves keep loading). Phases are ordered so later ones build on earlier ones; each can ship alone.
 
 **Decisions** (asked and confirmed 2026-11-09; the rest are asked before the phase that needs them)
@@ -255,14 +256,18 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Hand-drawn art and recorded sound effects can't come from code. M10 builds the **drop-in pipeline** (PNGs / WAVs by naming convention override the generated ones, like the terrain `textureOverride` and *Assign Audio Files*) and better generated placeholders; the art itself is **(you)** or an artist. Both are built: the pipeline *and* better generated art.
 - No power network: water wheels and magma heat **boost machines next to them** instead of introducing a power grid (keeps building simple, gives fluids a use).
 
-**10.1 Logistics completion** (no open questions)
-- [ ] **Chest** (1 cell buffer, holds N items of any type, counts as storage) and **Unloader** (takes items of a chosen type, or any, from the container next to it onto a belt): stock can finally feed belts.
-- [ ] **Storage filters**: per storage zone (click a zone cell → item list) and per chest; deliveries respect them.
-- [ ] **Per-machine recipe choice** (click a machine: *Any* or one recipe) and **reserving** items for construction (machines never take the last N of an item needed by blueprints).
-- [ ] **Crusher** (2×2): ore → crushed ore (2 per ore); the smelter makes metal from crushed ore at a better ratio. First 3-step chain.
-- [ ] **Conveyor tiers**: *Iron Belt* / *Iron Lift* (iron, research *Reinforced Silk*), 2× speed, upgrade in place by placing over a silk belt. Iron gets its first building use; iron buildings (iron gate, iron trap tier) where natural.
-- [ ] Splitters / filters connect to each other; belt step moved to Burst if tiers push it past ~1 ms.
-- [ ] Contracts, research nodes (tier 3–5), achievements for the new buildings; save `BLDG` 5 (chest contents, unloader / zone filters, recipe choice, tiers).
+**10.1 Logistics completion** ✅ (GDD 2.5.3)
+- [x] **Chest** (1 cell, 16 items, 4 copper ore, no research): a container like a storage cell; lines ending at it and ants standing on it put items straight in; not on storage zones; removal moves its items. **Unloader** (3 copper, *Stockkeeping*): takes its item (or any) from the storage cell / chest / royal chamber cell behind it onto the belt, lift, router or machine in front, 1.5/s, only what that output can take now.
+- [x] **Storage filters**: an allowed-item set per container; **I** on a zone sets the whole connected zone (new cells painted next to it inherit it), on a chest that chest. Deliveries skip refusing containers; acceptance counts room in the containers that take the item.
+- [x] **Recipe choice** per machine (any / one recipe; only that recipe's inputs are taken in) and **reserves** per item (stock view from the resource bar: machines' supply jobs and unloaders leave that many; building costs can still use them).
+- [x] **Crusher** (2×2, *Ore Crushing*): 2 ore → 3 crushed ore; the smelter makes 1 bar from 2 crushed ore (+1 coal for iron): 75% more metal per ore.
+- [x] **Tiers**: Iron Belt (5 cells/s) and Iron Lift (6 cells/s) behind *Reinforced Silk*, Iron Gate (450 HP) behind *Iron Bulwark*; placing another tier of the same kind over a building upgrades it in place (refund, pay, blueprint; belt items stay). Iron sprites for all three.
+- [x] Splitters and filters connect to each other: items remember where they came from and are never handed back; routing masks per router and incoming side.
+- [x] **Configure panel** (I, rebindable; new action *Tools/Configure*): zone / chest filters, unloader / filter item, emitter scent, machine recipe; stock view from the resource bar; hover texts name the key. Palette wraps before the ability bar (20 buildings).
+- [x] Content (`ContentSetup.Logistics.cs`): items crushed copper / iron, 4 recipes, 6 buildings, 4 research nodes (row 7), 3 contracts, 2 achievements (*Quartermaster*, *Iron Highway*; icons exported, chest glyph added). **(you)** enter `ACH_CHESTS_10` and `ACH_IRON_BELTS_100` on Steamworks with the icons from `steam/achievement_icons/` (`steam/achievements.md`).
+- [x] Save format 5: `COLN` 5 (zone filters, reserves; chests left out of the container list), `BLDG` 3 (chest filter + contents, recipe choice; unloaders keep "any"). The M9 save loaded and saved again in the editor.
+- [x] 157 EditMode tests (9 new: chest filling and its filter, chest refused on a zone, storage filters and acceptance, unloader into a machine with a reserve, unloader item onto a belt, recipe choice, iron belt upgrade keeping items, splitters side by side never handing back, save round trip of chests / filters / reserves / recipe choice / unloader / zone growth).
+- Verified in the editor: chest → unloader → iron belts → crusher → smelter → filtered chest runs (16 ore in, 8 copper in the copper-only chest after 25 s), splitter pair, iron lift and gates drawn, configure panel on a chest and on the smelter, research row 7, the wrapped palette; quitting saved format 5 and the next play loaded it intact. The belt step stays plain C#: its cost is per cell per tick, so faster tiers don't add to it.
 
 **10.2 Surface: day, weather, aphids** (open: day length; whether birds take ants)
 - [ ] **Day / night** cycle: sky colour and sky light in the light map (night = dim surface; the light map's sky source scales), forage spawns by day, rich presence untouched. Length in `GameConfig`.
@@ -315,9 +320,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 **Food & economy**
 - Food sources: seeds on the surface, grubs from grub nests, and the Fungus Garden (seeds → fungus). No aphid ranches or leaves as fungus feed yet.
 - Food is a colony-wide stock with upkeep; no per-ant hunger/rest needs.
-- Ores are spent on buildings and smelted into copper and iron; iron and coal are spent on research. No crusher, iron buildings or other processing yet.
-- Storage cells accept any item; no per-zone item filters yet.
-- No buffers / chests, no unloader that puts stock items onto belts.
+- Ores are crushed and smelted into copper and iron; iron builds iron belts, lifts and gates. No heat-powered or fluid-powered processing yet (10.3).
 
 **Colony & ants**
 - No late castes yet: glow ants that carry light, heat-resistant ants for the magma zone.
@@ -335,7 +338,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 
 **Gameplay layers**
 - Events: no golden aphid (needs aphids).
-- Research: no conveyor tiers; no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
+- Research: no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
 - One save slot (synced by Steam Cloud).
 - Threats: termite raids and one cave creature per deep biome; no birds, surface spiders or rival ant colonies, no enemies that dig.
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).

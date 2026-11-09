@@ -72,13 +72,28 @@ Gamepad **Y** possesses the ant under the pointer / lets go.
 |---|---|
 | Click a building in the **palette** (above the toolbar) | Select it (also switches to the Build tool) |
 | **Q** / **E** | Previous / next building |
-| **R** | Rotate: belts flip left/right, lifts flip up/down, filters turn a quarter clockwise; with the Pheromone Emitter selected: the next scent for new emitters |
-| **Left drag** with Silk Belt or Root Lift | Lay a line. It stays on the row (belt) or column (lift) where you started, and **flows in the direction you drag**. Dragging over an existing belt or lift turns it to the new direction. |
-| **Left drag** with Earth Wall or Resin Gate | Paint them on every cell you drag over |
+| **R** | Rotate: belts flip left/right, lifts flip up/down, filters and unloaders turn a quarter clockwise; with the Pheromone Emitter selected: the next scent for new emitters |
+| **Left drag** with a belt or lift (silk or iron) | Lay a line. It stays on the row (belt) or column (lift) where you started, and **flows in the direction you drag**. Dragging over an existing belt or lift of the same kind turns it to the new direction. |
+| **Left drag** with Iron Belt / Iron Lift **over silk belts / root lifts** | **Upgrades them in place**: the old one is refunded, the iron one is paid and workers build it. Items riding the belt stay on it. (Works the other way round too.) |
+| **Left drag** with Earth Wall, Resin Gate or Iron Gate | Paint them on every cell you drag over. An Iron Gate over a Resin Gate upgrades it. |
 | **Left click** with any other building | Place it (machines: the cursor marks the bottom middle) |
-| **Left click on a placed filter** with the Filter selected | Change the filter's item (cycles through all items) |
-| **Left click on a placed emitter** with the Pheromone Emitter selected | Change its scent (cycles through the five) |
+| **Left click on a placed filter** with the Filter selected | Change the filter's item (cycles through all items; **I** picks it from a list) |
+| **Left click on a placed emitter** with the Pheromone Emitter selected | Change its scent (cycles through the five; **I** picks it from a list) |
 | **Right mouse** (hold) | Remove whatever building is under the cursor |
+
+### Configure (I)
+Point at something and press **I** (rebindable) to open the **configure panel** (right side). **I** again on the same spot, the **x** or **Esc** closes it.
+
+| Pointing at | What you set |
+|---|---|
+| A **storage zone** cell | Which items the whole zone (every storage cell connected to it) takes: click items on / off, **All**, **None**. Items already inside stay. |
+| A **chest** | Which items it takes (same as a zone, for this chest alone) |
+| An **unloader** | The item it takes out, or **Any item** |
+| A **filter** | The item it sends out of its arrow side |
+| A **pheromone emitter** | Its scent |
+| A **machine with several recipes** (e.g. the Smelter) | **Any recipe it can** (the default) or **one recipe only**: it then only takes in what that recipe needs |
+
+Click any item in the **resource bar** (or *Storage*) to open the **stock view**: how many of each item you have and how many to **keep for building** (**-** / **+** in steps of 5). Machines (workers fetching for them) and unloaders never take the stock below that number, so a busy smelter can't eat the copper ore you are saving. Building costs can still use it.
 
 A preview follows the cursor: **green** = can be built there, **red** = can't. The info panel says why.
 
@@ -134,7 +149,8 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
-- **Build palette** (above the toolbar, Build tool only): every building with its cost. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
+- **Build palette** (above the toolbar, Build tool only): every building with its cost, in up to three rows. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
+- **Configure panel** (right, **I**) and **stock view** (click an item in the resource bar): see *Configure (I)*.
 - **Scent palette** (above the toolbar, Scent tool only): the five pheromones with what each does. *Defend* is faded until you have soldiers.
 - **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent, a princess chamber's princesses), an **ant** under the cursor (caste, hit points, what it is doing, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor, what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls.
 - **Messages** (above the info panel): short notes, e.g. a refused placement (*Not enough Copper Ore (3/12)*), finished research, an ability that is still recharging, a claimed contract, a random event, an ant lost (*A worker drowned.*), a cave-in, a broken gate, or taking / losing control of an ant.
@@ -151,6 +167,9 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **White ovals** next to the queen are eggs.
   - **Cream silk bands** along a tunnel floor are belts; **brown root rails** in a shaft are lifts. Small coloured dots riding them are items.
   - A **knot** is a splitter; a **framed square with a coloured dot** is a filter (the dot is its item, the bright edge is its arrow side).
+  - **Grey riveted bands** and **grey rails** are iron belts and iron lifts (twice as fast); an **iron lattice** is an iron gate.
+  - A **wooden chest** holds stock; once it has goods, they heap on its lid with a dot in the colour of what it holds most of. A **grey hopper with an arrow** is an unloader (a coloured dot shows its item; none = any item).
+  - **Two grinding stones** under a hopper are a crusher (they turn and throw dust while it works).
   - The **clay kiln** is a smelter (its mouth glows while it works); the **mushroom bed** is a fungus garden; the **wooden shelves** with bones and books are an Archive (its candle burns while it studies).
   - A **golden beetle** with a blinking sparkle wanders the tunnels during its event. A blinking **orange dot** marks ants trapped in the rock.
   - A **purple crystalline lump** in a crater on the surface is a meteorite.
@@ -168,6 +187,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Flow overlay (O):**
   - Belts and lifts go from **grey** (nothing moving) to **green** (busy). **Red** = jammed: full and not moving.
   - Machines are **green** while working, **yellow** while waiting for input, **red** when their products are not being taken away.
+  - Unloaders are **green** while unloading, **grey** with nothing to take, **red** when what they feed is full.
   - Idle workers get a **blue dot** above them.
 
 ---
@@ -200,9 +220,12 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 - **Capacity** (items of any type):
   - The royal chamber holds **40 items** and **100 food**.
   - **Each storage cell holds 8 items and adds +6 food.**
+  - A **chest** (Build tool) holds **16 items** in one cell (no food).
   - Food is kept as food points, not as items.
   - Workers only pick up what still fits in the stock or in a machine that needs it. When storage is full, piles stay where they are until you add storage (or a machine wants them).
-- **Erasing** a storage cell moves its items to other storage with room; whatever doesn't fit drops to the floor as piles.
+- **Storage filters** (**I** on a zone or chest): a zone or chest with a filter only takes those items; everything else goes to the next place with room. If nothing takes an item any more, workers leave its piles alone.
+- A worker standing on a **chest** puts its load into that chest if the chest takes it.
+- **Erasing** a storage cell (or removing a chest) moves its items to other storage with room; whatever doesn't fit drops to the floor as piles. Chests can't be built on a storage zone.
 
 ### Food and the queen
 - **Food sources right now:**
@@ -279,7 +302,13 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Root Lift** | 2 Copper Ore | 1 cell | 0.5 s | Carries items **up or down**, 3 cells per second |
 | **Splitter** | 3 Copper Ore | 1 cell | 1 s | Hands items in turn to every belt, lift or machine around it |
 | **Filter** | 2 Copper | 1 cell | 1.5 s | Its item leaves through the arrow side; everything else through the other sides |
-| **Smelter** | 12 Copper Ore | 3 × 3 | 8 s | 2 Copper Ore → 1 Copper (4 s); 2 Iron Ore + 1 Coal → 1 Iron (6 s) |
+| **Smelter** | 12 Copper Ore | 3 × 3 | 8 s | 2 Copper Ore → 1 Copper (4 s); 2 Iron Ore + 1 Coal → 1 Iron (6 s); 2 Crushed Copper → 1 Copper (3 s); 2 Crushed Iron + 1 Coal → 1 Iron (5 s) |
+| **Crusher** | 10 Copper Ore, 4 Copper | 2 × 2 | 6 s | 2 Copper Ore → 3 Crushed Copper (3 s); 2 Iron Ore → 3 Crushed Iron (4 s). Crushed ore smelts into **75% more metal** per ore. Needs a flat floor. |
+| **Chest** | 4 Copper Ore | 1 cell | 1.5 s | Holds **16 items**. **I** chooses which. A belt that ends at a chest fills it. |
+| **Unloader** | 3 Copper | 1 cell | 1.5 s | Takes items (**I**: one item or any) out of the storage cell, chest or royal chamber **behind** it and puts them onto the belt, lift, splitter or machine its **arrow** points at, 1.5 per second. Leaves what you keep for building. |
+| **Iron Belt** | 1 Iron | 1 cell | 0.4 s | Like a silk belt, **5 cells per second**. Drag over silk belts to upgrade them. |
+| **Iron Lift** | 1 Iron, 1 Copper Ore | 1 cell | 0.6 s | Like a root lift, **6 cells per second**. |
+| **Iron Gate** | 3 Iron, 2 Copper | 1 cell | 4 s | Like a resin gate with **450 hit points**. Place over a resin gate to upgrade it. |
 | **Fungus Garden** | 8 Copper Ore | 4 × 2 | 6 s | 2 Seeds → 3 Fungus (10 s). Fungus is food worth 3 each. |
 | **Archive** | 10 Copper Ore | 3 × 2 | 10 s | Studies finds into **Knowledge**: 1 Copper → 1 (8 s), 1 Crystal Shard → 4 (6 s), 1 Amber → 5 (8 s), 1 Fossil → 6 (8 s), 1 Star Fragment → 12 (10 s), 1 Relic → 25 (12 s) |
 | **Earth Wall** | Free | 1 cell | 1.5 s | When finished the cell becomes **solid packed earth** (soft, easy to mine again). Seals off water, gas, lava and caves. Not in the royal chamber or a storage zone. |
@@ -290,24 +319,26 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Pheromone Emitter** | 3 Copper, 1 Iron | 1 cell | 2 s | Keeps one scent from fading within 10 cells. |
 | **Princess Chamber** | 10 Copper, 4 Iron | 4 × 3 | 12 s | 12 Fungus + 2 Amber → **1 princess** (60 s). Stops while the colony has as many princesses as count (5). Needs a flat floor. |
 
-The **Splitter** and **Filter** are locked until you research *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands* and the **Princess Chamber** until *Nuptial Flight*. Locked buildings are faded in the palette.
+The **Unloader** is locked until you research *Stockkeeping*, the **Crusher** until *Ore Crushing*, **Iron Belts** and **Iron Lifts** until *Reinforced Silk*, the **Iron Gate** until *Iron Bulwark*, the **Splitter** and **Filter** until *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands* and the **Princess Chamber** until *Nuptial Flight*. Locked buildings are faded in the palette.
 
 ### Belts and lifts
 - Each belt or lift cell holds **2 items**. Items pass from cell to cell; if the next cell is full they wait, so a blocked line **backs up**.
 - Lines **merge** when one belt or lift points into another. Two belts pointing straight at each other don't connect.
 - **Where a line ends** (the last cell has no belt or lift after it):
   - into a **machine** → the machine takes the items it uses;
+  - into a **chest** → the chest takes them (if its filter allows; otherwise they go to the nearest storage with room);
   - in or next to the **royal chamber** or a **storage zone** → items go into the stock;
   - anywhere else → the line **leads nowhere** and items stop at its end. The info panel warns about this.
 - Belts only take items they can deliver. A line that ends in a smelter only takes smelter ingredients.
-- **Splitter:** passes items in turn to every neighbouring belt, lift or machine that isn't feeding into it, skipping outputs that can't use the item. **Filter:** the chosen item only leaves through its arrow side; everything else goes to the other sides. Put at least one belt cell between two splitters or filters, since they don't connect directly.
+- **Splitter:** passes items in turn to every neighbouring belt, lift, splitter, filter or machine that isn't feeding into it, skipping outputs that can't use the item. **Filter:** the chosen item only leaves through its arrow side; everything else goes to the other sides. Splitters and filters next to each other pass items along, but never hand an item back to the one it came from.
+- **Unloader:** puts stock back onto a line. It takes from the storage, chest or royal chamber cell behind it (opposite its arrow) only what the belt or machine in front can use, so a chest of ore next to an unloader pointing into a smelter feeds the smelter directly.
 - A line that is **full and has not moved for 2 seconds** counts as jammed: it shows red in the overlay and workers stop loading it until it moves again.
 
 ### Machines
-- A machine stores up to **two crafts' worth** of each ingredient (a smelter holds 4 Copper Ore, 4 Iron Ore and 2 Coal) and starts a recipe as soon as it has the ingredients, taking turns between recipes.
+- A machine stores up to **two crafts' worth** of each ingredient (a smelter holds 4 Copper Ore, 4 Iron Ore and 2 Coal) and starts a recipe as soon as it has the ingredients, taking turns between recipes. With **I** you can make a machine run **one recipe only**: it then only takes in that recipe's ingredients (what it already holds stays).
 - **Products** go onto a belt or lift next to the machine that leads away from it. With no such belt, products are left as a pile on the machine floor for workers to haul; at **6 waiting products** the machine pauses.
 - Machines get their ingredients from **belts**, from **workers bringing fresh piles**, and from **storage**: when a machine has room for an ingredient that is in stock, a worker walks to the storage cell (or royal chamber) holding it, takes it out and carries it over. Keep ingredients in storage near your machines to keep them busy.
-- Taking items out for machines and paying for buildings use the same stock, so a busy smelter can eat the copper ore you were saving for a building.
+- Taking items out for machines and paying for buildings use the same stock. To keep some for building, set a number to **keep** in the stock view (click an item in the resource bar): machines and unloaders leave that many.
 
 ### How workers use belts and machines
 - A worker carrying an item takes it to a **machine that needs it** rather than the stock, unless the machine is more than about **10 times farther** away.
@@ -357,11 +388,15 @@ The **Splitter** and **Filter** are locked until you research *Silk Routing*, th
 | 3 | **Pheromone Burst** | 30 Knowledge, 20 Food | Scent Glands | Unlocks the Pheromone Burst ability (V) |
 | 4 | **Scout Caste** | 35 Knowledge | Seismic Sense, Miner Caste | The queen can lay **scouts** |
 | 4 | **Engineer Caste** | 40 Knowledge, 6 Iron | Hot Kilns, Hauler Caste | The queen can lay **engineers** |
+| 2 | **Stockkeeping** | 15 Knowledge, 2 Copper | Silk Routing | Unlocks the **Unloader** |
+| 3 | **Ore Crushing** | 30 Knowledge, 4 Copper | Stockkeeping | Unlocks the **Crusher** |
+| 4 | **Reinforced Silk** | 45 Knowledge, 6 Iron | Ore Crushing, Silk Weaving | Unlocks **Iron Belts** and **Iron Lifts** |
+| 5 | **Iron Bulwark** | 55 Knowledge, 8 Iron | Reinforced Silk, Fortification | Unlocks the **Iron Gate** |
 
 ### Contracts
 - The board on the right always shows **3 contracts** (4 with *Contract Network*). Progress counts from the moment a contract appears.
 - The first ones are a short **introduction** (one at a time, in order): dig 40 cells, bring in 10 copper ore, dig 40 deep, build a Smelter, hatch 10 workers, build an Archive.
-- The others are drawn at random: deliver items into the stock (copper ore, grubs, seeds; iron ore once you are 110 deep, coal, fossils and chitin at 290, crystal shards at 690, obsidian at 1050, relics at 1250), make copper or iron, dig out cells, dig deeper, hatch workers, **defeat enemies** (from 290 deep), **hatch miners, haulers or nurses** (once that caste is researched). Each time you finish one, the next of that kind asks for about **30% more** and pays more (defeating enemies and hatching castes: 35–40%).
+- The others are drawn at random: deliver items into the stock (copper ore, grubs, seeds; iron ore once you are 110 deep, coal, fossils and chitin at 290, crystal shards at 690, obsidian at 1050, relics at 1250), make copper or iron, dig out cells, dig deeper, hatch workers, **defeat enemies** (from 290 deep), **hatch miners, haulers or nurses** (once that caste is researched), build chests, make crushed copper (with *Ore Crushing*), lay iron belts (with *Reinforced Silk*). Each time you finish one, the next of that kind asks for about **30% more** and pays more (defeating enemies and hatching castes: 35–40%).
 - When a contract is done, click **Claim reward** to collect it: knowledge, food and sometimes items (items that don't fit drop next to the queen). A new contract takes its place.
 
 ### Random events
@@ -499,7 +534,7 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
   - **Display:** window (borderless fullscreen, exclusive fullscreen, windowed), resolution (*Native* or any your display offers), v-sync, frame limit without v-sync (30 to 240 fps or unlimited), interface size (*Auto*: 1× below 1440 lines, 2× from 1440, 3× from 3240; or 1× to 4×). Window and resolution changes only take effect in a built game, not in the editor.
   - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes the colony save and its backup, your Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
   - **Controls:** every keyboard / mouse action with its key. Click a key, then press the new key or mouse button (**Esc** cancels). **Reset to defaults** restores them all. The gamepad keeps its own fixed layout.
-- **Achievements** (title screen or Esc menu): 32 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and the hidden *Lost Civilization* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
+- **Achievements** (title screen or Esc menu): 34 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and the hidden *Lost Civilization* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
 
 ### Sound
 - Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. Research, contracts, events, abilities, traits, princesses, the flight and achievements each have their own chime.
@@ -526,10 +561,11 @@ The **contracts** on the right walk you through the first steps; this is the sam
 14. Press **5** and paint a **Trail** along your busiest tunnel: haulers go faster and keep it fresh. Paint **Dig here** over the mining orders you want first and **Avoid** over a dangerous cave.
 15. Research **Miner Caste** and **Hauler Caste**, then open the castes panel (**K**) and give them a share. Later **Nurses** with a **Nursery** keep the queen laying, **Scouts** find ore in the dark, **Engineers** speed up your machines.
 16. Point at an ant and press **F** to play it yourself: dig a shortcut, carry a find home, or bite a raider. **F** again lets go.
-17. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
+17. Once the factory grows: **chests** (4) next to your machines, **I** on a chest or storage zone to sort what goes where, an **Unloader** (*Stockkeeping*) to feed a smelter straight from a chest, a **Crusher** (*Ore Crushing*) for 75% more metal per ore, and **Iron Belts** (*Reinforced Silk*) dragged over your busiest silk lines.
+18. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
 
 ---
 
 ## Not in the game yet
 
-Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, several save slots, a way to put stored items onto belts, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
+Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, several save slots, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
