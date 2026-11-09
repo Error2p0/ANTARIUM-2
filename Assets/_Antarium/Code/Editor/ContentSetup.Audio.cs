@@ -105,6 +105,9 @@ namespace Antarium.Editor
             Note(SoundCue.Dusk, Patch(SynthWave.Sine, 1.4f, 330f, attack: 0.3f, decay: 1.5f, harmonics: 0.3f, notes: 3, noteStep: -4f), 0.3f, 2f);
             Note(SoundCue.Dawn, Patch(SynthWave.Sine, 1.2f, 392f, attack: 0.2f, decay: 1.6f, harmonics: 0.4f, notes: 3, noteStep: 4f), 0.3f, 2f);
 
+            // the living world: a crackling whoosh when something catches fire (water on a fire reuses the lava sizzle)
+            Sfx(SoundCue.FireIgnite, Patch(SynthWave.Noise, 0.9f, 300f, 2400f, attack: 0.12f, decay: 1.4f, lowpass: 3000f, crush: 2500f, gain: 1.2f), 0.5f, 0.8f, 2);
+
             void Bed(string biomeId, AmbiencePatch patch)
             {
                 var biome = biomeId == null ? null : AssetDatabase.LoadAssetAtPath<BiomeDef>($"{BiomesFolder}/{biomeId}.asset");

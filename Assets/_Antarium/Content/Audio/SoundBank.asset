@@ -1320,6 +1320,32 @@ MonoBehaviour:
     cooldown: 2
     maxVoices: 2
     positional: 0
+  - cue: 50
+    clip: {fileID: 0}
+    synth:
+      wave: 4
+      duration: 0.9
+      frequency: 300
+      frequencyEnd: 2400
+      attack: 0.12
+      decayPower: 1.4
+      noise: 0
+      lowpass: 3000
+      highpass: 0
+      harmonics: 0
+      vibratoHz: 0
+      vibratoDepth: 0
+      notes: 1
+      noteStep: 0
+      crush: 2500
+      gain: 1.2
+    variants: 2
+    bus: 0
+    volume: 0.5
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.8
+    maxVoices: 2
+    positional: 1
   ambience:
   - biome: {fileID: 0}
     clip: {fileID: 0}

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Magma Rock
   hardness: 6
   value: 0
-  flags: 4
+  flags: 68
   drop: {fileID: 0}
   dropAmount: 1
   dropChance: 1

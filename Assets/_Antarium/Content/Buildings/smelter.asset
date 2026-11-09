@@ -42,5 +42,9 @@ MonoBehaviour:
   hatchBonus: 0.5
   emitterRadius: 10
   princessSlots: 0
+  machineBoost: 0
+  boostRadius: 8
+  irrigationBonus: 0
+  heatBonus: 1
   color: {r: 0.72156864, g: 0.3372549, b: 0.17254902, a: 1}
   art: 1

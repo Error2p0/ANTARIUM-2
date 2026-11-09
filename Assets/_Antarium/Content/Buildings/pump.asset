@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: pump
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: pump
+  displayName: Pump
+  kind: 13
+  paletteOrder: 9
+  description: Moves water or gas (not lava) from behind it to where its spout points, 2 cells a second. It reaches 8 cells back and pushes up to 8 cells ahead, so it drains a flooded shaft from above and lifts water up one. Fluid can't pass through it; ants can. R turns it.
+  size: {x: 1, y: 1}
+  cost:
+  - item: {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
+    count: 3
+  - item: {fileID: 11400000, guid: c22f002829fecd34cb3dcdcee4ed32f2, type: 2}
+    count: 2
+  foodCost: 0
+  buildWork: 3
+  speed: 2
+  tier: 0
+  capacity: 16
+  recipes: []
+  inputBatches: 2
+  outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
+  machineBoost: 0
+  boostRadius: 8
+  irrigationBonus: 0
+  heatBonus: 0
+  color: {r: 0.3529412, g: 0.6039216, b: 0.84705883, a: 1}
+  art: 0

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Giant Fungus
   hardness: 1
   value: 4
-  flags: 4
+  flags: 12
   drop: {fileID: 11400000, guid: 93580a647449c1f48ac3fc2667523c60, type: 2}
   dropAmount: 2
   dropChance: 1

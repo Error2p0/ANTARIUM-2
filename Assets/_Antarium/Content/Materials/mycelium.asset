@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Mycelium
   hardness: 1.5
   value: 0
-  flags: 0
+  flags: 8
   drop: {fileID: 0}
   dropAmount: 1
   dropChance: 1

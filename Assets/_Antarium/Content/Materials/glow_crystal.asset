@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Glow Crystal
   hardness: 4
   value: 12
-  flags: 4
+  flags: 20
   drop: {fileID: 11400000, guid: dcdeb32bddf75074f83de6aa0c054e8c, type: 2}
   dropAmount: 1
   dropChance: 1

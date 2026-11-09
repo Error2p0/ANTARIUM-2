@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: water_wheel
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: water_wheel
+  displayName: Water Wheel
+  kind: 14
+  paletteOrder: 17
+  description: 'Put it where water pours down: water falling onto it passes through and turns it. Machines within 8 cells work up to 50% faster while it turns. Needs no floor; a pump can keep it going.'
+  size: {x: 2, y: 2}
+  cost:
+  - item: {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
+    count: 4
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: c22f002829fecd34cb3dcdcee4ed32f2, type: 2}
+    count: 4
+  foodCost: 0
+  buildWork: 6
+  speed: 2
+  tier: 0
+  capacity: 16
+  recipes: []
+  inputBatches: 2
+  outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
+  machineBoost: 0.5
+  boostRadius: 8
+  irrigationBonus: 0
+  heatBonus: 0
+  color: {r: 0.47843137, g: 0.3529412, b: 0.21176471, a: 1}
+  art: 13

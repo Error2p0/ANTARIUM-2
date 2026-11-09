@@ -16,3 +16,4 @@ MonoBehaviour:
   displayName: Coal
   color: {r: 0.16470589, g: 0.15686275, b: 0.18039216, a: 1}
   foodValue: 0
+  fuel: 1

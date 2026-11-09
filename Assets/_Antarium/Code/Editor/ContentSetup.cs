@@ -145,6 +145,7 @@ namespace Antarium.Editor
                 EditorUtility.SetDirty(database);
             }
             CreateSurface(database, worldGen, copperItem, copperBar, fungusItem, AssetDatabase.LoadAssetAtPath<ItemDef>($"{ItemsFolder}/chitin.asset"));
+            CreateWaterworks(worldGen, copperBar, ironBar);
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;

@@ -15,6 +15,7 @@ MonoBehaviour:
   materials:
   - {fileID: 11400000, guid: cb82451f557686e41b367b63ec284a90, type: 2}
   - {fileID: 11400000, guid: 7def0e179ba399b4cb5c709014eada32, type: 2}
+  - {fileID: 11400000, guid: 1585313deb4f6ea46a9b5c83a4935644, type: 2}
   - {fileID: 11400000, guid: 9bd4accdced9fcb4d9025bcc75f7ab28, type: 2}
   - {fileID: 11400000, guid: 93805c4604632d04fac6c5d05a2a4993, type: 2}
   - {fileID: 11400000, guid: e527fe19dbf5a104f9cadb314d3c9421, type: 2}
@@ -75,6 +76,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1e5ff1449ef9e2948909b4d6053616c4, type: 2}
   - {fileID: 11400000, guid: 3c35a85ffcead8d478509d56a917f5a6, type: 2}
   - {fileID: 11400000, guid: e045ed51333525144af9a683e5886094, type: 2}
+  - {fileID: 11400000, guid: a516309bf5847c14fbf226a41d5e4494, type: 2}
   - {fileID: 11400000, guid: 2b9591be4cdd6774fba5a48dfb863363, type: 2}
   - {fileID: 11400000, guid: a638e0732dc66b34481c10cb0fb17246, type: 2}
   - {fileID: 11400000, guid: 49d68aa91aa50e14d8894ad9d5360ba7, type: 2}
@@ -82,6 +84,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f56b966fcd64eef4090324309aec17e0, type: 2}
   - {fileID: 11400000, guid: 28f14e2371b079e43bdc1c6d5c7f1ce7, type: 2}
   - {fileID: 11400000, guid: 50aaf54f1a9eae74ba182fee13b0822f, type: 2}
+  - {fileID: 11400000, guid: 62c35962b8cbbbc4daf30f18e78850c9, type: 2}
   recipes:
   - {fileID: 11400000, guid: e8cb644d1464fe342a24557e945bc4c2, type: 2}
   - {fileID: 11400000, guid: 35619421e35528f4f82950db7c90c0cd, type: 2}
@@ -113,6 +116,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0f5ae983bbe13ce45b4a7eaa82f78298, type: 2}
   - {fileID: 11400000, guid: 686ee252db1012341b08ace1be1989ce, type: 2}
   - {fileID: 11400000, guid: 62fea3bcefc52724a8d742b8d2ffbaca, type: 2}
+  - {fileID: 11400000, guid: b210b69a701da4947851cbcad9f670cf, type: 2}
   - {fileID: 11400000, guid: effcbfa3713152c49a7ca052bd93a023, type: 2}
   - {fileID: 11400000, guid: 749bae39875eb3348a1fff0e158d3c15, type: 2}
   - {fileID: 11400000, guid: 89e9cf2c3e615434f848431fcb2124b0, type: 2}
@@ -136,6 +140,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 24a131e773a4f62409ab1433b34e6f66, type: 2}
   - {fileID: 11400000, guid: b0f84b6080064594cabe79376f3f2197, type: 2}
   - {fileID: 11400000, guid: f44be510b42565340a776195a5fb72b4, type: 2}
+  - {fileID: 11400000, guid: 0f53be89fabeac74d9a563c9d091bb04, type: 2}
   abilities:
   - {fileID: 11400000, guid: 81fc28ce5c00c004592dafca5f166afd, type: 2}
   - {fileID: 11400000, guid: cf5044a8073b52b498b0ccdbd85dc064, type: 2}
@@ -144,6 +149,8 @@ MonoBehaviour:
   contracts:
   - {fileID: 11400000, guid: 6af7e74988dd94347bf723b2f1dee861, type: 2}
   - {fileID: 11400000, guid: 387e0de2682d7cf46bed41531e1e9e6e, type: 2}
+  - {fileID: 11400000, guid: 0a371775741cdbe4d87bdff55fd35abf, type: 2}
+  - {fileID: 11400000, guid: 7b9e2c6fb4a14ac4aab96089f2f1e367, type: 2}
   - {fileID: 11400000, guid: ca9235a0f50c1fd4189a63b484422535, type: 2}
   - {fileID: 11400000, guid: dd593bf3c0ba6d44693f90a28f3331b1, type: 2}
   - {fileID: 11400000, guid: 276d7e69fcafffb4aa60f0fdab2c66e5, type: 2}

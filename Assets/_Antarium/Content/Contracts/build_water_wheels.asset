@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c323df54987554b9a84d957c19353a, type: 3}
+  m_Name: build_water_wheels
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ContractDef
+  id: build_water_wheels
+  displayName: Mill Race
+  description: Build a water wheel where water falls.
+  kind: 5
+  item: {fileID: 0}
+  building: {fileID: 11400000, guid: 62c35962b8cbbbc4daf30f18e78850c9, type: 2}
+  caste: 0
+  amount: 1
+  introOrder: 0
+  repeatable: 1
+  growth: 0.3
+  weight: 0.6
+  minDepth: 0
+  requires: {fileID: 11400000, guid: 0f53be89fabeac74d9a563c9d091bb04, type: 2}
+  rewardKnowledge: 12
+  rewardFood: 0
+  rewards: []

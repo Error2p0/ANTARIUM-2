@@ -35,6 +35,7 @@ MonoBehaviour:
   caveMinDepth: 24
   caveFadeDepth: 24
   fluidReactionMaterial: {fileID: 11400000, guid: 750aeb7a41d0c48468897ab834ec9fa8, type: 2}
+  ashMaterial: {fileID: 11400000, guid: 1585313deb4f6ea46a9b5c83a4935644, type: 2}
   plantGap: {x: 8, y: 20}
   plantClearance: 6
   rootMaterial: {fileID: 11400000, guid: a286ed699116a39419d1c76776f52d9d, type: 2}
