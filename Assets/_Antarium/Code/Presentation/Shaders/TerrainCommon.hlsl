@@ -16,7 +16,7 @@ struct AntMaterial
 };
 
 StructuredBuffer<uint> _AntCells;        // material(16) | density(8) | flags(8)
-StructuredBuffer<uint> _AntLight;        // r | g | b | unused, 8 bits each
+StructuredBuffer<uint> _AntLight;        // r | g | b (emitters) | sky level, 8 bits each
 StructuredBuffer<AntMaterial> _AntMaterials;
 TEXTURE2D_ARRAY(_AntMaterialTex);
 
@@ -26,6 +26,8 @@ float4 _AntWall;       // x = wall brightness, y = wall occlusion, z = gamma exp
 float4 _AntSkyTop;
 float4 _AntSkyHorizon;
 float4 _AntSkyRange;   // x = horizon world y, y = top world y
+float4 _AntSkyLight;   // rgb = colour and strength of the sky light now (time of day, weather)
+float4 _AntStars;      // rgb = star colour, a = how visible the stars are (night)
 
 static const float kBayer4[16] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
 
@@ -61,7 +63,8 @@ float CellRevealed(uint w) { return (float)((w >> 24) & 1u); }
 float3 CellLight(int2 c)
 {
     uint w = _AntLight[CellIndex(c)];
-    return float3(w & 0xFFu, (w >> 8) & 0xFFu, (w >> 16) & 0xFFu) / 255.0;
+    float3 emitted = float3(w & 0xFFu, (w >> 8) & 0xFFu, (w >> 16) & 0xFFu) / 255.0;
+    return max(emitted, ((w >> 24) & 0xFFu) / 255.0 * _AntSkyLight.rgb);
 }
 
 // 3x3 block of cells around the pixel's cell; origin = bottom-left cell.
@@ -384,6 +387,13 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
             float t = saturate((positionWS.y - _AntSkyRange.x) / max(_AntSkyRange.y - _AntSkyRange.x, 1e-3));
             t = floor(t * 8.0 + Bayer4(p.px)) / 8.0;
             s.albedo = lerp(_AntSkyHorizon.rgb, _AntSkyTop.rgb, t);
+            // Stars at night: sparse fixed pixels, a few twinkling, fading toward the horizon.
+            if (_AntStars.a > 0.0)
+            {
+                float star = Hash21(p.px + int2(9173, 3511));
+                float twinkle = Hash21(p.px + int2((int)(_AntTime * 1.5), 77)) > 0.15 ? 1.0 : 0.4;
+                if (star > 0.9965) s.albedo = lerp(s.albedo, _AntStars.rgb, saturate(_AntStars.a * t * 1.6) * twinkle);
+            }
             s.unlit = true;
             ApplyFluid(s, n, p);
         }

@@ -20,6 +20,8 @@ namespace Antarium.Content
         GeneticBought, Flight, Achievement,
         // interface
         UiClick, UiHover, UiOpen, UiClose, Refused, Toast,
+        // the surface (Milestone 10.2; appended so saved banks keep their cues)
+        BirdCry, BirdStrike, Rain, Dusk, Dawn,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }

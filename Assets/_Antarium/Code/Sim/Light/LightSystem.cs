@@ -72,8 +72,14 @@ namespace Antarium.Sim
             return true;
         }
 
+        /// <summary>Sky light scale used by <see cref="Sample(WorldGrid, int, int)"/> (the presentation sets it from the time of day).</summary>
+        public float SkyScale = 1f;
+
+        /// <summary>Light at a cell as 0..1 RGB, with the sky at <see cref="SkyScale"/>.</summary>
+        public float3 Sample(WorldGrid world, int x, int y) => Sample(world, x, y, SkyScale);
+
         /// <summary>Light at a cell as 0..1 RGB, with the sky at <paramref name="daylight"/> (1 = full sky light).</summary>
-        public float3 Sample(WorldGrid world, int x, int y, float daylight = 1f)
+        public float3 Sample(WorldGrid world, int x, int y, float daylight)
         {
             if (!world.InBounds(x, y)) return 0f;
             uint v = Light[world.Index(x, y)];

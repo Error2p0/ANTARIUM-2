@@ -139,10 +139,12 @@ namespace Antarium.Presentation
             foreach (var c in events.Critters)
             {
                 float2 cellPos = math.lerp(c.PrevPos, c.Pos, alpha);
-                var center = Body(nav, cellPos, c.Heading, ColonySprites.BeetleHeight, out int2 up, out int facing, out float2 world);
-                int frame = c.IsMoving ? (int)(c.WalkPhase * 4f) & 1 : 0;
-                SpriteQuads.WriteQuad(vertices, quad++, center, new int2(ColonySprites.BeetleWidth, ColonySprites.BeetleHeight), up, facing,
-                    rects[ColonySprites.BeetleRect + frame], White, world);
+                bool aphid = events.TryGetActive(c.EventId, out var owner) && owner.Kind == RandomEventKind.GoldenAphid;
+                int2 size = aphid ? new int2(ColonySprites.AphidWidth, ColonySprites.AphidHeight) : new int2(ColonySprites.BeetleWidth, ColonySprites.BeetleHeight);
+                var center = Body(nav, cellPos, c.Heading, size.y, out int2 up, out int facing, out float2 world);
+                int frame = aphid ? (int)(time * 2.5f) & 1 : c.IsMoving ? (int)(c.WalkPhase * 4f) & 1 : 0;
+                SpriteQuads.WriteQuad(vertices, quad++, center, size, up, facing,
+                    rects[(aphid ? ColonySprites.AphidRect : ColonySprites.BeetleRect) + frame], White, world);
                 if (blink)
                 {
                     float2 sparkle = center + new float2(up) * (6f / WorldConstants.PixelsPerUnit);

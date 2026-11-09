@@ -69,6 +69,7 @@ namespace Antarium.Gameplay
         DebugHud _debugHud;
         ColonyView _colonyView;
         BuildingView _buildingView;
+        SurfaceView _surfaceView;
         NumberPops _pops;
         HoverInfo _hoverInfo;
         PanelSettings _panelSettings;
@@ -304,6 +305,8 @@ namespace Antarium.Gameplay
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
             _buildingView = new BuildingView(_content, config.render, spriteMaterial, transform, _worldSize);
             _colonyView = new ColonyView(_content, config.render, spriteMaterial, transform, _worldSize);
+            _surfaceView = new SurfaceView(_content, config.render, spriteMaterial, transform, _worldSize);
+            _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };
             _tools = new ToolController(config, _content, _buildingView.Ghosts);
             _tools.ModeChanged += _hud.SetActiveTool;
@@ -325,12 +328,14 @@ namespace Antarium.Gameplay
             _feedback?.Dispose();
             _pops?.Dispose();
             _colonyView?.Dispose();
+            _surfaceView?.Dispose();
             _buildingView?.Dispose();
             _terrain?.Dispose();
             _sim?.Dispose();
             _feedback = null;
             _pops = null;
             _colonyView = null;
+            _surfaceView = null;
             _buildingView = null;
             _terrain = null;
             _sim = null;
@@ -556,10 +561,12 @@ namespace Antarium.Gameplay
 
             if (!paused) _sim.Advance(dt * DebugSpeeds[_speed]);
             _sim.UpdateDerived();
+            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt);
             _terrain.Upload();
             float alpha = _sim.Clock.Alpha;
             _buildingView.Render(_sim, alpha, Time.time, _overlay);
             _colonyView.Render(_sim, alpha, _overlay, Time.time);
+            _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, paused ? 0f : dt, Time.time);
 
             var events = _sim.Events;
             _camera.AddTrauma(_feedback.Consume(events) + EventShake(events));
@@ -804,9 +811,11 @@ namespace Antarium.Gameplay
             float2 target = sum / counted * WorldConstants.CellSize;
             _camera.Position = math.lerp(_camera.Position, target, 1f - math.exp(-3f * dt));
             _camera.Apply(dt, _worldSize);
+            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt);
             _terrain.Upload();
             _buildingView.Render(_sim, 1f, Time.time, false);
             _colonyView.Render(_sim, 1f, false, Time.time);
+            _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, dt, Time.time);
             _hud.Update(dt, _sim, -1, null);
             _sim.Events.Flush();
             if (f.Time >= cfg.flightSeconds) FinishFlight();

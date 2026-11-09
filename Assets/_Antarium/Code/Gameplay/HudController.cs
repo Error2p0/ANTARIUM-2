@@ -36,6 +36,8 @@ namespace Antarium.Gameplay
         readonly Button _possessButton, _castesButton;
         readonly Button _overlayButton;
         readonly Label _food, _foodRate, _ants, _eggs, _storage;
+        readonly Label _clock, _weather;
+        readonly VisualElement _clockEntry, _clockSwatch;
         readonly VisualElement _storageEntry;
         readonly VisualElement[] _itemEntries;
         readonly Label[] _itemLabels, _itemRates;
@@ -121,6 +123,10 @@ namespace Antarium.Gameplay
                 return;
             }
 
+            _clock = AddEntry(new Color(1f, 0.85f, 0.35f), out _clockEntry, out _weather);
+            _clockSwatch = _clockEntry.Q(className: "resource__swatch");
+            Tip(_clockEntry, "Day and night: seeds and leaves only grow by day, birds hunt by day and spiders come out at night. " +
+                             "Rain floods the tunnels near the surface for a while; a drought halves forage.");
             _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out _, out _foodRate);
             _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out _, out _);
             _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out _, out _);
@@ -581,6 +587,7 @@ namespace Antarium.Gameplay
                 DeathCause.Burned => $"{subject} burned in lava.",
                 DeathCause.Gassed => $"{subject} choked on gas.",
                 DeathCause.Crushed => $"{subject} {verb} buried by a cave-in.",
+                DeathCause.Bird => $"{subject} {verb} taken by a bird.",
                 DeathCause.Killed when first.Killer >= 0 && first.Killer < _content.Enemies.Length =>
                     $"{subject} {verb} killed by {(same == 1 ? HudText.Plural(1, _content.Enemies[first.Killer].Def.DisplayName) : "enemies")}.",
                 _ => $"{subject} died.",
@@ -649,6 +656,7 @@ namespace Antarium.Gameplay
 
             var colony = sim.Colony;
             var inv = colony.Inventory;
+            UpdateClock(sim.Surface);
             _food.text = $"Food {NumberFormat.Format(inv.Food)}/{NumberFormat.Format(inv.FoodCapacity)}";
             SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.AliveByCaste));
             int specialists = sim.Ants.Count - sim.Workers;
@@ -712,7 +720,8 @@ namespace Antarium.Gameplay
             }
 
             _sb.Clear();
-            if (colony.QueenDisturbed) _sb.Append("Raiders are in the royal chamber! They eat your food and the queen stopped laying.");
+            if (sim.Surface.Bird == BirdPhase.Circling) _sb.Append("A bird is circling! Ants on the surface are running for cover.");
+            if (colony.QueenDisturbed) _sb.Append(_sb.Length > 0 ? "\n" : "").Append("Raiders are in the royal chamber! They eat your food and the queen stopped laying.");
             if (colony.Starving)
             {
                 if (_sb.Length > 0) _sb.Append('\n');
@@ -720,6 +729,23 @@ namespace Antarium.Gameplay
             }
             _alert.EnableInClassList("hidden", _sb.Length == 0);
             if (_sb.Length > 0) _alert.text = _sb.ToString();
+        }
+
+        /// <summary>"Day 3  14:20" with the weather next to it; the swatch is the sun by day and the moon by night.</summary>
+        void UpdateClock(SurfaceState surface)
+        {
+            int minutes = (int)(surface.TimeOfDay * 24f * 60f) % (24 * 60);
+            _clock.text = $"Day {surface.Day}  {minutes / 60:00}:{minutes % 60:00}";
+            _clockSwatch.style.backgroundColor = surface.IsDay ? new Color(1f, 0.85f, 0.35f) : new Color(0.55f, 0.65f, 1f);
+            string weather = surface.Weather switch
+            {
+                WeatherKind.Rain => "Rain",
+                WeatherKind.Drought => "Drought",
+                _ => surface.IsDay ? "" : "Night",
+            };
+            _weather.EnableInClassList("hidden", weather.Length == 0);
+            _weather.text = weather;
+            _weather.EnableInClassList("resource__rate--negative", surface.Weather != WeatherKind.Clear);
         }
 
         /// <summary>The Nuptial Flight is known: a princess chamber is unlocked, princesses exist, or the colony has flown before.</summary>

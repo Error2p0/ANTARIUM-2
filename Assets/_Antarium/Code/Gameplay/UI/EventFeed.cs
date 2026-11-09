@@ -11,7 +11,8 @@ namespace Antarium.Gameplay
 {
     /// <summary>
     /// Cards on the left: random events (what happened, the time left to act), raids (warning countdown,
-    /// raiders left, outcome) and creatures found in a newly opened cave. A Go button moves the camera there.
+    /// raiders left, outcome), creatures found in a newly opened cave, and the surface: weather, a circling bird and
+    /// spiders out at night. A Go button moves the camera there.
     /// Finished cards stay a few seconds with their outcome.
     /// </summary>
     public sealed class EventFeed
@@ -19,7 +20,7 @@ namespace Antarium.Gameplay
         const float InstantLinger = 30f;
         const float EndedLinger = 8f;
 
-        enum CardKind : byte { RandomEvent, Raid, Creatures }
+        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders }
 
         sealed class Card
         {
@@ -38,6 +39,7 @@ namespace Antarium.Gameplay
         readonly StringBuilder _sb = new();
         Simulation _sim;
         int _nextCreatureCard = 1;
+        int _nextSurfaceCard = 1;
 
         /// <summary>Where to move the camera (the event's current place).</summary>
         public event Action<int2> GoClicked;
@@ -59,6 +61,10 @@ namespace Antarium.Gameplay
             var threats = sim.Enemies;
             if (threats.RaidIncoming) AddRaidCard(new RaidEvent(RaidPhase.Warning, threats.RaidsStarted + 1, threats.RaidCell, threats.NextRaidSize(), 0f));
             else if (threats.CountRaiders() > 0) AddRaidCard(new RaidEvent(RaidPhase.Started, threats.ActiveRaid, threats.RaidCell, threats.CountRaiders(), 0f));
+            var surface = sim.Surface;
+            if (surface.Weather == WeatherKind.Rain) OnSurface(new SurfaceEvent(SurfaceEventKind.RainStarted, sim.Colony.QueenCell));
+            else if (surface.Weather == WeatherKind.Drought) OnSurface(new SurfaceEvent(SurfaceEventKind.DroughtStarted, sim.Colony.QueenCell));
+            if (surface.Bird == BirdPhase.Circling) OnSurface(new SurfaceEvent(SurfaceEventKind.BirdCircling, (int2)surface.BirdPos));
         }
 
         /// <summary>Adds cards for new events and marks finished ones. Returns a toast for the newest change, or null.</summary>
@@ -84,7 +90,85 @@ namespace Antarium.Gameplay
                 toast = OnRaid(e);
             foreach (var e in events.Read<CreaturesFoundEvent>())
                 toast = OnCreatures(e);
+            foreach (var e in events.Read<SurfaceEvent>())
+                toast = OnSurface(e) ?? toast;
             return toast;
+        }
+
+        string NightHunterName(int count)
+        {
+            var hunters = _content.NightHunters;
+            return HudText.Plural(count, hunters.Length > 0 ? _content.Enemies[hunters[0]].Def.DisplayName : "spider");
+        }
+
+        static string Capital(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text.Substring(1);
+
+        /// <summary>Weather, bird and spider cards; returns a toast (dawn, dusk and the rest), or null.</summary>
+        string OnSurface(in SurfaceEvent e)
+        {
+            switch (e.Kind)
+            {
+                case SurfaceEventKind.Dawn:
+                    return $"Day {e.Count} dawns. Seeds and leaves grow again; birds hunt by day.";
+                case SurfaceEventKind.Dusk:
+                    return "Night falls. Nothing grows on the surface until dawn, and hunters come out in the dark.";
+                case SurfaceEventKind.RainStarted:
+                {
+                    var old = Find(CardKind.Weather, 0);
+                    if (old != null) Remove(old);
+                    var card = NewCard(CardKind.Weather, 0, -1, e.Cell, "Rain",
+                        "Water runs into open tunnels near the surface and pools in dips. It soaks away again after the rain.");
+                    return "It is raining! Water runs into the tunnels near the surface.";
+                }
+                case SurfaceEventKind.DroughtStarted:
+                {
+                    var old = Find(CardKind.Weather, 0);
+                    if (old != null) Remove(old);
+                    var card = NewCard(CardKind.Weather, 0, -1, e.Cell, "Drought",
+                        "The surface is dry: seeds and leaves appear half as often until it ends.");
+                    return "A drought: seeds and leaves appear half as often for a while.";
+                }
+                case SurfaceEventKind.RainEnded:
+                case SurfaceEventKind.DroughtEnded:
+                {
+                    bool rain = e.Kind == SurfaceEventKind.RainEnded;
+                    var card = Find(CardKind.Weather, 0);
+                    string text = rain ? "The rain stopped. The water near the surface soaks away." : "The drought is over.";
+                    if (card != null) End(card, text, "Over", true);
+                    return text;
+                }
+                case SurfaceEventKind.BirdCircling:
+                {
+                    var card = NewCard(CardKind.Bird, _nextSurfaceCard++, -1, e.Cell, "A bird is circling!",
+                        "Its shadow follows your ants on the surface. They drop their work and run for the nearest way underground; those still out when it strikes are taken. Entrances close to where ants forage save lives.");
+                    card.Root.AddToClassList("event--danger");
+                    return "A bird is circling! Ants on the surface run for cover.";
+                }
+                case SurfaceEventKind.BirdStruck:
+                {
+                    string text = e.Count == 0 ? "The bird struck and missed: every ant made it to cover." : $"The bird struck and took {HudText.Plural(e.Count, "ant")}.";
+                    foreach (var c in _cards)
+                        if (c.Kind == CardKind.Bird && !c.Ended) End(c, text, e.Count == 0 ? "Missed" : "Struck", e.Count == 0);
+                    return text;
+                }
+                case SurfaceEventKind.SpidersOut:
+                {
+                    string who = Capital(NightHunterName(e.Count));
+                    var card = NewCard(CardKind.Spiders, _nextSurfaceCard++, -1, e.Cell, "Night hunters",
+                        $"{who} prowl the surface near the nest tonight. Ants outside are in danger; soldiers will go after them.");
+                    card.Root.AddToClassList("event--danger");
+                    return $"{who} come out in the dark.";
+                }
+                case SurfaceEventKind.SpidersLeft:
+                {
+                    string text = $"Dawn: {NightHunterName(e.Count)} slunk off.";
+                    foreach (var c in _cards)
+                        if (c.Kind == CardKind.Spiders && !c.Ended) End(c, text, "Gone", true);
+                    return text;
+                }
+                default:
+                    return null;
+            }
         }
 
         string Outcome(int index, bool won)
@@ -100,6 +184,11 @@ namespace Antarium.Gameplay
                     return _sb.ToString();
                 case RandomEventKind.TrappedAnts:
                     return won ? $"Rescued {def.count} ants! They join the colony." : "The trapped ants were lost.";
+                case RandomEventKind.GoldenAphid:
+                    if (!won) return "The golden aphid flew off.";
+                    _sb.Clear().Append("Caught the golden aphid: ");
+                    HudText.AppendReward(_sb, _content, data.RewardItems, data.RewardCounts, 1f, def.rewardFood, def.rewardKnowledge);
+                    return _sb.ToString();
                 default:
                     return won ? def.DisplayName + ": done." : def.DisplayName + ": missed.";
             }
@@ -232,6 +321,33 @@ namespace Antarium.Gameplay
                         card.Timer.text = active.TimeLeft > 0f ? HudText.Duration(active.TimeLeft) + " left" : "";
                         continue;
                     }
+                    if (card.Kind == CardKind.Weather)
+                    {
+                        if (sim.Surface.Weather != WeatherKind.Clear)
+                        {
+                            card.Timer.text = HudText.Duration(sim.Surface.WeatherLeft) + " left";
+                            continue;
+                        }
+                        End(card, "The weather cleared.", "Over", true);
+                    }
+                    else if (card.Kind == CardKind.Bird)
+                    {
+                        if (sim.Surface.Bird == BirdPhase.Circling)
+                        {
+                            card.Timer.text = "Strikes in " + HudText.Duration(sim.Surface.BirdTimer);
+                            continue;
+                        }
+                        End(card, "The bird is gone.", "Gone", true);
+                    }
+                    else if (card.Kind == CardKind.Spiders)
+                    {
+                        if (!sim.Surface.IsDay)
+                        {
+                            card.Timer.text = "Until dawn";
+                            continue;
+                        }
+                        End(card, "Dawn: the hunters are gone.", "Gone", true);
+                    }
                     if (card.Kind == CardKind.Raid)
                     {
                         var threats = sim.Enemies;
@@ -264,6 +380,12 @@ namespace Antarium.Gameplay
                 case CardKind.Raid:
                     foreach (var enemy in _sim.Enemies.Enemies)
                         if (enemy.Raid == card.Id) return enemy.Cell;
+                    return card.Cell;
+                case CardKind.Bird:
+                    return _sim.Surface.Bird != BirdPhase.None ? (int2)_sim.Surface.BirdPos : card.Cell;
+                case CardKind.Spiders:
+                    foreach (var enemy in _sim.Enemies.Enemies)
+                        if (_content.Enemies[enemy.Def].Def.behavior == EnemyBehavior.NightHunter) return enemy.Cell;
                     return card.Cell;
                 default:
                     return card.Cell;

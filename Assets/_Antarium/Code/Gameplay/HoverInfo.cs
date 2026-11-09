@@ -96,10 +96,11 @@ namespace Antarium.Gameplay
             AntState.SeekEgg => "going for an egg",
             AntState.CarryEgg => "carrying an egg to a nursery",
             AntState.Scouting => "scouting",
-            AntState.SeekCritter => "chasing a golden beetle",
+            AntState.SeekCritter => "chasing a golden critter",
             AntState.SeekMachine => "going to tend a machine",
             AntState.Tending => "tending a machine",
             AntState.Rallying => "answering the Pheromone Burst",
+            AntState.Sheltering => "hiding from the bird",
             _ => "idle",
         };
 

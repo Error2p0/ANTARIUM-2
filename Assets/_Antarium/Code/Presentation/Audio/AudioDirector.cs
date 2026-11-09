@@ -341,6 +341,18 @@ namespace Antarium.Presentation
 
             foreach (var e in events.Read<EnemyKilledEvent>()) Queue(SoundCue.EnemyKilled, e.Cell);
             foreach (var e in events.Read<CreaturesFoundEvent>()) QueueUi(SoundCue.CreaturesFound);
+            foreach (var e in events.Read<SurfaceEvent>())
+            {
+                switch (e.Kind)
+                {
+                    case SurfaceEventKind.BirdCircling: QueueUi(SoundCue.BirdCry); break;
+                    case SurfaceEventKind.BirdStruck: Queue(SoundCue.BirdStrike, e.Cell); break;
+                    case SurfaceEventKind.RainStarted: QueueUi(SoundCue.Rain); break;
+                    case SurfaceEventKind.Dusk: QueueUi(SoundCue.Dusk); break;
+                    case SurfaceEventKind.Dawn: QueueUi(SoundCue.Dawn); break;
+                    case SurfaceEventKind.SpidersOut: QueueUi(SoundCue.CreaturesFound); break;
+                }
+            }
             foreach (var e in events.Read<RaidEvent>())
             {
                 switch (e.Phase)

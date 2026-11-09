@@ -41,14 +41,17 @@ namespace Antarium.Presentation
         public const int PixelRect = SoldierRect + WorkerFrames;
         /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
         public const int EnemyRect = PixelRect + 1;
-        public const int EnemyArtCount = 6;
+        public const int EnemyArtCount = 7;
         /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer): 4 walk frames each, in caste order.</summary>
         public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
         const int SpecialistCount = 6;
         /// <summary>Winged princess: resting (wings folded), then two flight frames (wings up, wings back).</summary>
         public const int PrincessRect = SpecialistRect + SpecialistCount * WorkerFrames;
         public const int PrincessWidth = 14, PrincessHeight = 10, PrincessFrames = 3;
-        const int RectCount = PrincessRect + PrincessFrames;
+        /// <summary>Golden aphid (sits in an Aphid Ranch), 2 frames.</summary>
+        public const int AphidRect = PrincessRect + PrincessFrames;
+        public const int AphidWidth = 6, AphidHeight = 5;
+        const int RectCount = AphidRect + 2;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -161,6 +164,18 @@ namespace Antarium.Presentation
             },
         };
 
+        // Wolf spider: a hairy brown-grey hunter with pale stripes and many eyes.
+        static readonly string[][] WolfSpider =
+        {
+            new[] { "....bbbb....", "..bBsBBsBb..", ".bBBBBBBBbeE", "vbBBsBBBBbEe", "v.vbbbbbv.v.", "v.v.v.v.v.v.", "............" },
+            new[] { "....bbbb....", "..bBsBBsBb..", ".bBBBBBBBbeE", ".bBBsBBBBbEe", "vvvbbbbbvvv.", ".v.v...v.v..", "v.......v..." },
+        };
+        static readonly string[][] GoldenAphid =
+        {
+            new[] { "..a...", ".YYYa.", "YOOOOa", "OOOOOo", ".l.l.." },
+            new[] { "...a..", ".YYYa.", "YOOOOa", "OOOOOo", "..l.l." },
+        };
+
         static readonly Color32 Dark = Hex(0x5a1a0c), Mid = Hex(0xb8401e), High = Hex(0xf08048), Leg = Hex(0x4a160a);
         static readonly Color32 SoldierDark = Hex(0x3a0c06), SoldierMid = Hex(0x862612), SoldierHigh = Hex(0xc05a2a), Mandible = Hex(0xe0b050);
         static readonly Color32 EggColor = Hex(0xefe6cf), EggShade = Hex(0xc9bc9c);
@@ -236,6 +251,14 @@ namespace Antarium.Presentation
                 ['G'] = Hex(0x6a6878), ['g'] = Hex(0x8e8ca0), ['C'] = Hex(0x70f0ff),
             });
 
+            AddEnemy(pixels, EnemyArt.WolfSpider, WolfSpider, 64, 74, new Dictionary<char, Color32>
+            {
+                ['b'] = Hex(0x4a3c2e), ['B'] = Hex(0x7a6650), ['s'] = Hex(0xc8b89a), ['e'] = Hex(0x101010), ['E'] = Hex(0xffd060), ['v'] = Hex(0x2e241a),
+            });
+            AddFrames(pixels, GoldenAphid, 90, 82, AphidRect, new Dictionary<char, Color32>
+            {
+                ['Y'] = Hex(0xfff6b0), ['O'] = Hex(0xf0c040), ['o'] = Hex(0xb08020), ['a'] = Hex(0x8a6a20), ['l'] = Hex(0x5a3a10),
+            });
             PaintCastes(pixels);
             AddFrames(pixels, Princess, 0, 74, PrincessRect, new Dictionary<char, Color32>
             {

@@ -47,6 +47,9 @@ namespace Antarium.Presentation
         static readonly int ScentId = Shader.PropertyToID("_AntScent");
         static readonly int ScentColorsId = Shader.PropertyToID("_AntScentColors");
         static readonly int ScentCoverId = Shader.PropertyToID("_AntScentCover");
+        static readonly int SkyLightId = Shader.PropertyToID("_AntSkyLight");
+        static readonly int StarsId = Shader.PropertyToID("_AntStars");
+        float _rain;
 
         readonly WorldGrid _world;
         readonly LightSystem _light;
@@ -141,8 +144,38 @@ namespace Antarium.Presentation
             Shader.SetGlobalColor(StorageColorId, render.storageColor);
             Shader.SetGlobalColor(SkyTopId, render.skyTop);
             Shader.SetGlobalColor(SkyHorizonId, render.skyHorizon);
+            Shader.SetGlobalVector(SkyLightId, Vector4.one);
+            Shader.SetGlobalVector(StarsId, Vector4.zero);
             float horizon = (_world.Height - content.WorldGen.skyHeight) * WorldConstants.CellSize;
             Shader.SetGlobalVector(SkyRangeId, new Vector4(horizon, _world.Height * WorldConstants.CellSize, 0f, 0f));
+        }
+
+        /// <summary>
+        /// Sky colours, sky light and stars for the time of day and the weather (rain greys the sky and dims the light; it
+        /// fades in and out over a few seconds). Also sets the light map's sky scale for particles.
+        /// </summary>
+        public void SetSky(SurfaceState surface, Color daySkyLight, float dt)
+        {
+            float d = surface.Daylight;
+            float target = surface.Weather == WeatherKind.Rain ? 1f : 0f;
+            _rain = Mathf.MoveTowards(_rain, target, dt / 4f);
+            var r = _render;
+            float twilight = 1f - Mathf.Abs(2f * d - 1f); // 1 halfway through a sunrise or sunset
+            var top = Color.Lerp(r.nightSkyTop, r.skyTop, d);
+            var horizon = Color.Lerp(Color.Lerp(r.nightSkyHorizon, r.skyHorizon, d), r.duskSkyHorizon, twilight * 0.85f);
+            top = Color.Lerp(top, r.duskSkyHorizon * 0.6f, twilight * 0.25f);
+            float grey = _rain * 0.65f;
+            top = Color.Lerp(top, r.rainSky * Mathf.Lerp(0.25f, 1f, d), grey);
+            horizon = Color.Lerp(horizon, r.rainSky * Mathf.Lerp(0.3f, 1.1f, d), grey);
+            Shader.SetGlobalColor(SkyTopId, top);
+            Shader.SetGlobalColor(SkyHorizonId, horizon);
+
+            var night = r.nightLight * r.nightLightStrength;
+            var sky = Color.Lerp(night, daySkyLight, d) * Mathf.Lerp(1f, r.rainLight, _rain);
+            Shader.SetGlobalVector(SkyLightId, new Vector4(sky.r, sky.g, sky.b, 1f));
+            float stars = Mathf.Clamp01(1f - d * 2f) * (1f - _rain);
+            Shader.SetGlobalVector(StarsId, new Vector4(r.starColor.r, r.starColor.g, r.starColor.b, stars));
+            _light.SkyScale = Mathf.Lerp(r.nightLightStrength, 1f, d) * Mathf.Lerp(1f, r.rainLight, _rain);
         }
 
         /// <summary>Pheromones are drawn faintly, or clearly while the Pheromone tool is active.</summary>

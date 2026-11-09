@@ -59,7 +59,10 @@ namespace Antarium.Presentation
         /// <summary>Crusher (2×2 cells): 2 frames, idle and grinding.</summary>
         public const int CrusherRect = UnloaderRect + 1;
         public const int CrusherWidth = 16, CrusherHeight = 16;
-        const int RectCount = CrusherRect + 2;
+        /// <summary>Aphid Ranch (4×2 cells): 2 frames, grazing and with honeydew drops. The aphids themselves are drawn moving.</summary>
+        public const int RanchRect = CrusherRect + 2;
+        public const int RanchWidth = 32, RanchHeight = 16;
+        const int RectCount = RanchRect + 2;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -162,6 +165,11 @@ namespace Antarium.Presentation
             Rects[CrusherRect] = Rect(96, 48, CrusherWidth, CrusherHeight);
             Rects[CrusherRect + 1] = Rect(112, 48, CrusherWidth, CrusherHeight);
 
+            PaintRanch(64, 64, working: false);
+            PaintRanch(96, 64, working: true);
+            Rects[RanchRect] = Rect(64, 64, RanchWidth, RanchHeight);
+            Rects[RanchRect + 1] = Rect(96, 64, RanchWidth, RanchHeight);
+
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
                 filterMode = FilterMode.Point,
@@ -258,6 +266,44 @@ namespace Antarium.Presentation
                 Set(ox + 6, oy + 2, Dust);
                 Set(ox + 9, oy + 4, Dust);
             }
+        }
+
+        /// <summary>Aphid Ranch: a leafy pasture behind a low twig fence; the working frame has honeydew drops on the leaves.</summary>
+        void PaintRanch(int ox, int oy, bool working)
+        {
+            var soil = Hex(0x5a3e24);
+            var soilHigh = Hex(0x7a5a36);
+            var leafDark = Hex(0x3e7a2a);
+            var leaf = Hex(0x6aae3e);
+            var leafHigh = Hex(0x9cd65a);
+            var stem = Hex(0x4a6a24);
+            var dew = Hex(0xf2d65a);
+            for (int x = 0; x < RanchWidth; x++)
+            {
+                Set(ox + x, oy, soil);
+                Set(ox + x, oy + 1, (x * 7 & 5) == 0 ? soilHigh : soil);
+            }
+            // Leaf plants: a stem with leaves on alternating sides.
+            int[] plants = { 5, 12, 19, 26 };
+            for (int p = 0; p < plants.Length; p++)
+            {
+                int px = plants[p], h = 7 + (p * 3 % 4);
+                for (int y = 2; y < 2 + h; y++) Set(ox + px, oy + y, stem);
+                for (int y = 4; y < 2 + h; y += 2)
+                {
+                    int side = ((y / 2) + p) % 2 == 0 ? 1 : -1;
+                    Set(ox + px + side, oy + y, leaf);
+                    Set(ox + px + side * 2, oy + y, leafDark);
+                    Set(ox + px + side, oy + y + 1, leafHigh);
+                    if (working && (y + p) % 3 == 0) Set(ox + px + side * 2, oy + y - 1, dew);
+                }
+                Set(ox + px, oy + 2 + h, leafHigh);
+            }
+            // Twig fence posts at both ends with a rail.
+            foreach (int fx in new[] { 0, RanchWidth - 1 })
+                for (int y = 2; y < 8; y++) Set(ox + fx, oy + y, Root);
+            for (int x = 0; x < RanchWidth; x++)
+                if (x % 4 != 2) Set(ox + x, oy + 6, RootHigh);
         }
 
         /// <summary>Two root rails with a silk strand between them; rungs travel up one pixel per frame.</summary>
