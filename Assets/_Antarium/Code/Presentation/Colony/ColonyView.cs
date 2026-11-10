@@ -39,6 +39,9 @@ namespace Antarium.Presentation
         readonly Color32 _idleTint;
         readonly Color32 _possessedTint;
         readonly BarColors _bars;
+        /// <summary>Per <see cref="AntCaste"/>: 1 if it carries a light (drawn with a halo).</summary>
+        readonly NativeArray<byte> _casteHalo;
+        readonly int _laneOffsetPixels;
         static readonly Color32 SparkleTint = new(255, 230, 120, 255);
         static readonly Color32 AlertTint = new(255, 150, 70, 255);
         static readonly Color32 White = new(255, 255, 255, 255);
@@ -53,9 +56,14 @@ namespace Antarium.Presentation
             public Color32 Ant, Enemy, Back, Flash;
         }
 
-        public ColonyView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
+        /// <param name="laneOffsetPixels">Ants are drawn up to this many art pixels ahead of / behind their spot (lane jitter).</param>
+        public ColonyView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize,
+            int laneOffsetPixels = 0)
         {
             _content = content;
+            _laneOffsetPixels = laneOffsetPixels;
+            _casteHalo = new NativeArray<byte>(Castes.Count, Allocator.Persistent);
+            for (int c = 0; c < Castes.Count; c++) _casteHalo[c] = content.CasteDefs[c].lightRadius > 0f ? (byte)1 : (byte)0;
             _sprites = new ColonySprites(art);
             _mesh = new SpriteMesh("Colony", spriteMaterial, _sprites.Texture, parent, worldSize, 10);
             _itemColors = ItemColors(content);
@@ -86,7 +94,8 @@ namespace Antarium.Presentation
             var events = sim.RandomEvents;
             var enemies = sim.Enemies.Enemies;
             int antCount = sim.Ants.Count;
-            int quads = antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count
+            // Halos first (behind every ant), then the ants.
+            int quads = antCount + antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count
                         + enemies.Count * QuadsPerEnemy + colony.Princesses + Flyers.Count;
             _mesh.EnsureCapacity(quads);
             var vertices = _mesh.Vertices;
@@ -98,6 +107,9 @@ namespace Antarium.Presentation
                 Rects = _sprites.Rects,
                 CasteRect = _sprites.CasteRect,
                 CasteSize = _sprites.CasteSize,
+                CasteHalo = _casteHalo,
+                AntBase = antCount,
+                LanePixels = _laneOffsetPixels,
                 Castes = _content.CasteSim,
                 HealthMultiplier = sim.Ants.HealthMultiplier,
                 ItemColors = _itemColors,
@@ -110,7 +122,7 @@ namespace Antarium.Presentation
                 Bars = _bars,
             }.Schedule(antCount, 64).Complete();
 
-            int quad = antCount * QuadsPerAnt;
+            int quad = antCount + antCount * QuadsPerAnt;
             var rects = _sprites.Rects;
 
             // The queen breathes: her gaster swells and settles about once a second.
@@ -257,6 +269,7 @@ namespace Antarium.Presentation
         {
             _mesh.Dispose();
             if (_itemColors.IsCreated) _itemColors.Dispose();
+            if (_casteHalo.IsCreated) _casteHalo.Dispose();
             _sprites.Dispose();
         }
 
@@ -268,6 +281,10 @@ namespace Antarium.Presentation
             [ReadOnly] public NativeArray<float4> Rects;
             [ReadOnly] public NativeArray<int> CasteRect;
             [ReadOnly] public NativeArray<int2> CasteSize;
+            [ReadOnly] public NativeArray<byte> CasteHalo;
+            /// <summary>First ant quad (the halos come before, one per ant).</summary>
+            public int AntBase;
+            public int LanePixels;
             [ReadOnly] public NativeArray<CasteSim> Castes;
             public float HealthMultiplier;
             [ReadOnly] public NativeArray<Color32> ItemColors;
@@ -282,7 +299,7 @@ namespace Antarium.Presentation
             public void Execute(int index)
             {
                 var a = Ants[index];
-                int quad = index * QuadsPerAnt;
+                int quad = AntBase + index * QuadsPerAnt;
                 float2 cellPos = math.lerp(a.PrevPos, a.Pos, Alpha);
                 int2 cell = (int2)math.floor(cellPos);
                 int2 up;
@@ -306,9 +323,21 @@ namespace Antarium.Presentation
                 int2 size = CasteSize[caste];
                 int rect = CasteRect[caste] + frame;
                 float2 world = cellPos * WorldConstants.CellSize;
-                float2 center = SpriteQuads.OnSurface(world, up, size.y);
+                // Lane jitter: each ant is drawn a few whole art pixels ahead of or behind its spot along the surface.
+                int lane = (int)math.round(a.Lane / 127f * LanePixels);
+                float2 laneShift = new float2(forwardAxis) * (lane / (float)WorldConstants.PixelsPerUnit);
+                float2 center = SpriteQuads.OnSurface(world, up, size.y) + laneShift;
                 var tint = a.SinceHurt < FlashSeconds ? Bars.Flash : new Color32(255, 255, 255, 255);
                 SpriteQuads.WriteQuad(Vertices, quad, center, size, up, facing, Rects[rect], tint, world);
+
+                // A glow ant's light: the halo, unlit, centred on its gaster.
+                if (CasteHalo[caste] != 0)
+                {
+                    float2 back = new float2(forwardAxis) * facing * ((ColonySprites.GasterX - size.x * 0.5f) / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(Vertices, index, center + back, new int2(ColonySprites.HaloSize), new int2(0, 1), 1,
+                        Rects[ColonySprites.HaloRect], new Color32(255, 255, 255, 255), new float2(0f, -20000f)); // unlit
+                }
+                else SpriteQuads.WriteEmpty(Vertices, index);
 
                 float max = Castes[caste].Health * HealthMultiplier;
                 WriteBar(Vertices, quad + 3, Rects[ColonySprites.PixelRect], center + new float2(0f, (size.y * 0.5f + 2f) / WorldConstants.PixelsPerUnit),

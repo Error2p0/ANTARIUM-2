@@ -1,6 +1,7 @@
 using System.Text;
 using Antarium.Content;
 using Antarium.Core;
+using Antarium.Sim;
 
 namespace Antarium.Gameplay
 {
@@ -93,7 +94,59 @@ namespace Antarium.Gameplay
             StatKind.RaidSize => "raiders per raid",
             StatKind.RaidFrequency => "raid frequency",
             StatKind.CreatureCount => "cave creatures",
+            StatKind.AntRegen => "ant healing",
             _ => stat.ToString(),
+        };
+
+        /// <summary>Name of a job in the priority panel.</summary>
+        public static string JobName(JobKind job) => job switch
+        {
+            JobKind.Dig => "Dig",
+            JobKind.Haul => "Haul",
+            JobKind.Build => "Build",
+            JobKind.Supply => "Supply",
+            JobKind.Tend => "Tend",
+            JobKind.Nurse => "Nurse",
+            _ => job.ToString(),
+        };
+
+        /// <summary>What an ant skilled in a job is called: "digger", "hauler"...</summary>
+        public static string SkillName(JobKind job) => job switch
+        {
+            JobKind.Dig => "digger",
+            JobKind.Haul => "hauler",
+            JobKind.Build => "builder",
+            JobKind.Supply => "supplier",
+            JobKind.Tend => "machinist",
+            JobKind.Nurse => "nursemaid",
+            _ => job.ToString().ToLowerInvariant(),
+        };
+
+        public static string PriorityName(int priority) => priority switch
+        {
+            1 => "lowest",
+            2 => "low",
+            3 => "normal",
+            4 => "high",
+            _ => "highest",
+        };
+
+        public static string TraitName(AntTrait trait) => trait switch
+        {
+            AntTrait.Strong => "Strong",
+            AntTrait.Swift => "Swift",
+            AntTrait.Lucky => "Lucky",
+            AntTrait.Lazy => "Lazy",
+            _ => "",
+        };
+
+        public static string TraitText(AntTrait trait) => trait switch
+        {
+            AntTrait.Strong => "carries one more item",
+            AntTrait.Swift => "walks faster",
+            AntTrait.Lucky => "sometimes finds an extra item",
+            AntTrait.Lazy => "works and walks slower",
+            _ => "",
         };
 
         /// <summary>True for stats whose value is a fraction shown as a percentage.</summary>

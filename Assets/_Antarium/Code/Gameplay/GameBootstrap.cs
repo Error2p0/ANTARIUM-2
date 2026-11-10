@@ -68,6 +68,7 @@ namespace Antarium.Gameplay
         HudController _hud;
         DebugHud _debugHud;
         ColonyView _colonyView;
+        GlowLights _glow;
         BuildingView _buildingView;
         SurfaceView _surfaceView;
         NumberPops _pops;
@@ -181,6 +182,23 @@ namespace Antarium.Gameplay
             _hud.ResearchToggled += ToggleResearch;
             _hud.PossessClicked += () => { if (_sim != null) _tools.ClickPossess(_sim); };
             _hud.CastesClicked += () => _hud.Castes?.Toggle();
+            _hud.QueenToggled += ToggleQueen;
+            _hud.PrioritiesClicked += () => _hud.Priorities?.Toggle();
+            if (_hud.Priorities != null)
+                _hud.Priorities.Step += (job, step) =>
+                {
+                    if (_sim != null) _sim.EnqueuePriority(job, _sim.Colony.JobPriority[(int)job] + step);
+                };
+            if (_hud.Queen != null)
+            {
+                _hud.Queen.EvolveClicked += evolution => _sim?.EnqueueEvolution(evolution);
+                _hud.Queen.CloseClicked += _hud.HideModal;
+                _hud.Queen.CastesClicked += () =>
+                {
+                    _hud.HideModal();
+                    if (_sim != null && CastesPanel.HasSpecialists(_sim) && !_hud.Castes.Visible) _hud.Castes.Toggle();
+                };
+            }
             _hud.GeneticsToggled += ToggleGenetics;
             _hud.FlightToggled += ToggleFlight;
             _hud.UiClicked += () => _audio?.Play(SoundCue.UiClick);
@@ -304,7 +322,8 @@ namespace Antarium.Gameplay
             _terrain.Upload();
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
             _buildingView = new BuildingView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
-            _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
+            _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize, config.growth.laneOffsetPixels);
+            _glow = new GlowLights(config.glow, _content, transform);
             _surfaceView = new SurfaceView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };
@@ -328,6 +347,7 @@ namespace Antarium.Gameplay
             _feedback?.Dispose();
             _pops?.Dispose();
             _colonyView?.Dispose();
+            _glow?.Dispose();
             _surfaceView?.Dispose();
             _buildingView?.Dispose();
             _terrain?.Dispose();
@@ -335,6 +355,7 @@ namespace Antarium.Gameplay
             _feedback = null;
             _pops = null;
             _colonyView = null;
+            _glow = null;
             _surfaceView = null;
             _buildingView = null;
             _terrain = null;
@@ -552,6 +573,11 @@ namespace Antarium.Gameplay
 
             bool overUi = !Capturing && _hud.IsPointerOverUi(_input.Pointer);
             if (!paused && !Capturing) _tools.Update(_sim, _input, pointerWorld, overUi, dt, now);
+            // Clicking the queen (Dig or Mine tool) opens her panel.
+            if (!paused && !Capturing && !overUi && !possessing && _input.Primary.WasPressedThisFrame()
+                && (_tools.Mode == ToolMode.Dig || _tools.Mode == ToolMode.Mine) && _tools.TargetingAbility < 0 && !_tools.TargetingPossess
+                && PointerOnQueen(pointerWorld))
+                ToggleQueen();
             if (!title && !Capturing)
             {
                 if (_input.Overlay.WasPressedThisFrame()) ToggleOverlay();
@@ -566,6 +592,7 @@ namespace Antarium.Gameplay
             float alpha = _sim.Clock.Alpha;
             _buildingView.Render(_sim, alpha, Time.time, _overlay);
             _colonyView.Render(_sim, alpha, _overlay, Time.time);
+            _glow.Update(_sim, alpha, _camera.Position, _camera.HalfViewSize, dt, false);
             _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, paused ? 0f : dt, Time.time);
 
             var events = _sim.Events;
@@ -670,6 +697,8 @@ namespace Antarium.Gameplay
             if (_input.Genetics.WasPressedThisFrame()) ToggleGenetics();
             if (_input.Flight.WasPressedThisFrame()) ToggleFlight();
             if (_input.Castes.WasPressedThisFrame() && _hud.Castes != null && CastesPanel.HasSpecialists(_sim)) _hud.Castes.Toggle();
+            if (_input.Queen.WasPressedThisFrame()) ToggleQueen();
+            if (_input.Priorities.WasPressedThisFrame()) _hud.Priorities?.Toggle();
             if (_input.Configure.WasPressedThisFrame()) ToggleConfigure();
             if (_input.QuickSave.WasPressedThisFrame()) Save(background: true, announce: true);
             if (_input.QuickLoad.WasPressedThisFrame() && !TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load.");
@@ -731,6 +760,22 @@ namespace Antarium.Gameplay
             if (_hud.Research == null) return;
             if (_hud.IsShowing(_hud.Research.Root)) _hud.HideModal();
             else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Research.Root);
+        }
+
+        void ToggleQueen()
+        {
+            if (_hud.Queen == null || _sim == null) return;
+            if (_hud.IsShowing(_hud.Queen.Root)) _hud.HideModal();
+            else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Queen.Root);
+        }
+
+        /// <summary>The pointer is on the queen's sprite (24 x 12 art pixels standing on her cell's floor).</summary>
+        bool PointerOnQueen(float2 pointerWorld)
+        {
+            float2 floor = WorldGrid.CellCenterToWorld(_sim.Colony.QueenCell) - new float2(0f, WorldConstants.CellSize * 0.5f);
+            float2 d = pointerWorld - floor;
+            float px = 1f / WorldConstants.PixelsPerUnit;
+            return math.abs(d.x) <= 12f * px && d.y >= 0f && d.y <= 12f * px;
         }
 
         void ToggleGenetics()

@@ -188,6 +188,32 @@ namespace Antarium.Tests
             Assert.AreEqual(5, Sim.Colony.JobPriority[(int)JobKind.Dig], "1..5 only");
         }
 
+        [Test]
+        public void NursePriority_WeighsItsOwnJobAgainstHauling()
+        {
+            // Nurses may haul (weight 2): at normal priorities the egg comes first; with Nurse at 1 and Haul at 5 the pile does.
+            C.SetCaste(AntCaste.Nurse, c => c.haulJob = 2f);
+            Unlock(C.CasteResearch);
+            Assert.IsTrue(FindMachineSpot(C.Nursery, out var origin));
+            BuildNow(C.Nursery, origin);
+            var start = CarveTunnel(10);
+            var eggCell = Sim.World.FloorBelow(Sim.World.OpenAbove(Queen + new int2(2, 0)));
+            Sim.Colony.Eggs.Add(new Egg { Cell = eggCell, Nursery = -1, Caste = AntCaste.Worker });
+            Sim.Colony.Piles.Add(start + new int2(3, 0), C.Item(C.Ore), 1);
+
+            AntState First(int nursePriority, int haulPriority)
+            {
+                ClearAnts();
+                Sim.EnqueuePriority(JobKind.Nurse, nursePriority);
+                Sim.EnqueuePriority(JobKind.Haul, haulPriority);
+                int n = Spawn(start + new int2(1, 0), AntCaste.Nurse);
+                Sim.Tick();
+                return Sim.Ants.Ants[n].State;
+            }
+            Assert.AreEqual(AntState.SeekEgg, First(3, 3), "its own job first");
+            Assert.AreEqual(AntState.SeekItem, First(1, 5), "hauling first");
+        }
+
         int DigTicks(int ant, int2 target)
         {
             Sim.EnqueueDesignate(new float2(target) + 0.5f, 0.5f, true);

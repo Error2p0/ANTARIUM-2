@@ -1275,3 +1275,121 @@
 .title__menu {
     padding: 14px 16px;
 }
+
+/* ---------------------------------------------------------------- Milestone 10.4: Queen panel, job priorities */
+.queen {
+    width: 1060px;
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/frame_queen.png");
+}
+.queen .research__knowledge {
+    color: rgb(255, 215, 120);
+    font-size: 16px;
+}
+.queen__body {
+    flex-direction: row;
+    margin-top: 6px;
+}
+.queen__stats {
+    width: 330px;
+    margin-right: 12px;
+    padding: 6px 8px;
+    background-color: rgb(30, 20, 14);
+}
+.queen__text {
+    color: rgb(230, 220, 200);
+    font-size: 16px;
+    white-space: normal;
+    margin: 0;
+    padding: 0;
+}
+.queen__castes {
+    margin-top: 8px;
+    align-self: flex-start;
+}
+.queen__tree {
+    flex-grow: 1;
+    justify-content: flex-start;
+    margin-top: 0;
+}
+.queen__column {
+    width: 220px;
+    margin-right: 8px;
+}
+.evolution {
+    height: 64px;
+}
+.evolution__top {
+    flex-direction: row;
+    align-items: center;
+}
+.evolution__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.evolution__pips {
+    flex-direction: row;
+    margin-left: 8px;
+}
+.evolution__pip {
+    width: 10px;
+    height: 10px;
+    margin-right: 2px;
+    background-color: rgba(0, 0, 0, 0);
+}
+.queen .node--available {
+    border-color: rgb(170, 130, 60);
+    background-color: rgb(48, 36, 20);
+}
+.queen .node--available .node__name {
+    color: rgb(255, 235, 190);
+}
+.queen .node--affordable {
+    border-color: rgb(255, 210, 110);
+    background-color: rgb(84, 62, 26);
+}
+.queen .node--affordable .node__cost {
+    color: rgb(255, 220, 140);
+}
+.queen .node--affordable:hover {
+    background-color: rgb(112, 84, 34);
+}
+.queen .node--owned {
+    border-left-color: rgb(120, 200, 120);
+    border-left-width: 4px;
+}
+.priorities {
+    left: 360px;
+    min-width: 380px;
+}
+.priority__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.priority__hint {
+    color: rgb(170, 160, 140);
+    font-size: 16px;
+    width: 160px;
+    margin: 0;
+    padding: 0;
+}
+.priority__value {
+    color: rgb(230, 220, 200);
+    font-size: 16px;
+    width: 76px;
+    -unity-text-align: middle-right;
+    margin: 0 6px 0 0;
+    padding: 0;
+}
+.priority__value--high {
+    color: rgb(255, 210, 140);
+}
+.priority__value--low {
+    color: rgb(150, 140, 125);
+}
+.hud--title .priorities {
+    display: none;
+}

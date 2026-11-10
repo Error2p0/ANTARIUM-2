@@ -49,6 +49,25 @@ namespace Antarium.Editor
                 EditorUtility.SetDirty(fire);
             }
 
+            // Nurses and engineers help out when their own job waits (their job and its priority usually come first):
+            // nurses haul, engineers carry machine inputs. This is what the Tend and Nurse priorities weigh against.
+            var nurse = AssetDatabase.LoadAssetAtPath<CasteDef>($"{CastesFolder}/nurse.asset");
+            if (nurse != null && nurse.haulJob <= 0f)
+            {
+                nurse.haulJob = 2f;
+                nurse.description = "Carries eggs from the queen to a Nursery, where they hatch faster and free the queen to lay more. " +
+                                    "With no eggs to carry it hauls.";
+                EditorUtility.SetDirty(nurse);
+            }
+            var engineer = AssetDatabase.LoadAssetAtPath<CasteDef>($"{CastesFolder}/engineer.asset");
+            if (engineer != null && engineer.supplyJob <= 0f)
+            {
+                engineer.supplyJob = 2f;
+                engineer.description = "Tends a working machine: it works 50% faster while an engineer stands by it. " +
+                                       "With no machine to tend it carries machine inputs from storage.";
+                EditorUtility.SetDirty(engineer);
+            }
+
             // Heat: the magma zone itself is hot.
             var magma = worldGen.biomes.FirstOrDefault(b => b != null && b.Id == "magma_zone");
             if (magma != null && magma.heat <= 0f)

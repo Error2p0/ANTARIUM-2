@@ -113,6 +113,20 @@ namespace Antarium.Gameplay
                 .Append((int)sim.Ants.MaxHealth(a.Caste)).Append(" HP  -  ").Append(StateText(a));
             if (a.IsCarrying)
                 _sb.Append(" (").Append(a.CarryCount > 1 ? $"{a.CarryCount} " : "").Append(_content.Items[a.Carry].DisplayName).Append(')');
+            if (a.Skill != Jobs.NoSkill || a.Trait != AntTrait.None) _sb.Append('\n');
+            if (a.Skill != Jobs.NoSkill)
+            {
+                int level = sim.AntLevel(a);
+                _sb.Append("Level ").Append(level).Append(' ').Append(HudText.SkillName((JobKind)a.Skill));
+                if (level > 1) _sb.Append(" (+").Append(Mathf.RoundToInt((level - 1) * sim.Config.growth.levelBonus * 100f)).Append("% at it)");
+                var xp = sim.Config.growth.levelXp;
+                if (xp != null && level - 1 < xp.Length) _sb.Append(", ").Append((int)a.Xp).Append('/').Append((int)xp[level - 1]).Append(" XP");
+            }
+            if (a.Trait != AntTrait.None)
+            {
+                if (a.Skill != Jobs.NoSkill) _sb.Append("   ");
+                _sb.Append(HudText.TraitName(a.Trait)).Append(": ").Append(HudText.TraitText(a.Trait));
+            }
             if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
             _sb.Append("\nF: take control of this ant.");
         }
@@ -400,6 +414,7 @@ namespace Antarium.Gameplay
             AppendAllowed(container);
             _sb.Append("\nWhole stock ").Append(inv.Stored).Append('/').Append(inv.Capacity).Append(". Workers fetch from here for machines that need it.");
             if (!container.IsRoyal) _sb.Append("\n").Append(_hud.ConfigureKey).Append(": choose which items this storage zone takes.");
+            else _sb.Append("\nThe queen: click her or press ").Append(_hud.QueenKey).Append(" for her panel (evolutions).");
         }
 
         void AppendContents(StockContainer container)

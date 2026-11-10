@@ -34,7 +34,8 @@ namespace Antarium.Gameplay
         Button _hovered;
         readonly VisualElement _scentPalette;
         readonly Button[] _scentButtons = new Button[Pheromones.Count];
-        readonly Button _possessButton, _castesButton;
+        readonly Button _possessButton, _castesButton, _queenButton, _jobsButton;
+        float _masterToastCooldown;
         readonly Button _overlayButton;
         readonly Label _food, _foodRate, _ants, _eggs, _storage;
         readonly Label _clock, _weather;
@@ -60,6 +61,10 @@ namespace Antarium.Gameplay
         float _caveInToastCooldown;
 
         public CastesPanel Castes { get; }
+        /// <summary>The Queen panel (H): stats and evolutions (10.4).</summary>
+        public QueenPanel Queen { get; }
+        /// <summary>Job priorities (P, 10.4); null if the layout has no "priorities" element.</summary>
+        public PrioritiesPanel Priorities { get; }
         public ConfigurePanel Configure { get; }
         /// <summary>An item in the resource bar was clicked (opens the stock view).</summary>
         public event Action StockClicked;
@@ -92,6 +97,8 @@ namespace Antarium.Gameplay
         public event Action<PheromoneKind> ScentClicked;
         public event Action PossessClicked;
         public event Action CastesClicked;
+        public event Action QueenToggled;
+        public event Action PrioritiesClicked;
 
         public HudController(UIDocument document, ContentDB content, RenderConfig render, ArtLibrary art, float autosaveSeconds, GameInput input)
         {
@@ -111,6 +118,7 @@ namespace Antarium.Gameplay
             _palette = root.Q<VisualElement>("build-palette");
             _scentPalette = root.Q<VisualElement>("scent-palette");
             var castes = root.Q<VisualElement>("castes");
+            var priorities = root.Q<VisualElement>("priorities");
             var configure = root.Q<VisualElement>("configure");
             DebugLabel = root.Q<Label>("debug");
             var toolbar = root.Q<VisualElement>("toolbar");
@@ -171,6 +179,10 @@ namespace Antarium.Gameplay
             _possessButton = Toggle(toolbar, "Possess", () => PossessClicked?.Invoke(), input.Possess, "tool_possess", "Possess: take control of an ant and dig, carry and fight yourself.");
             _castesButton = Toggle(toolbar, "Castes", () => CastesClicked?.Invoke(), input.Castes, "tool_castes", "Castes: choose which kinds of ants the queen lays.");
             _castesButton.AddToClassList("hidden");
+            _jobsButton = Toggle(toolbar, "Jobs", () => PrioritiesClicked?.Invoke(), input.Priorities, "priority_dig",
+                "Job priorities: which jobs the ants pick first.");
+            _queenButton = Toggle(toolbar, "Queen", () => QueenToggled?.Invoke(), input.Queen, "evolution_brood",
+                "The Queen: how she lays, and her evolutions (paid with rare finds).");
             _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "tool_research", "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
             _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "tool_flow", "Flow overlay: belt traffic, jams, machine status and idle workers.");
             _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "memory", "Genetic Memory: permanent traits for every colony of your bloodline.");
@@ -184,6 +196,8 @@ namespace Antarium.Gameplay
             Abilities = new AbilityBar(abilities, content, art, input.Abilities);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
             Castes = new CastesPanel(castes, content, art);
+            if (priorities != null) Priorities = new PrioritiesPanel(priorities, art);
+            Queen = new QueenPanel(content, art);
             Configure = new ConfigurePanel(configure, content, art);
 
             _unlockedBy = new string[content.Buildings.Length];
@@ -327,6 +341,9 @@ namespace Antarium.Gameplay
 
         /// <summary>The key currently bound to Configure (for hints).</summary>
         public string ConfigureKey => _input != null ? GameInput.KeyName(_input.Configure) : "I";
+
+        /// <summary>The key currently bound to the Queen panel (for hints).</summary>
+        public string QueenKey => _input != null ? GameInput.KeyName(_input.Queen) : "H";
 
         /// <summary>"[key] Name" labels follow the current key bindings.</summary>
         void RefreshKeyLabels()
@@ -601,6 +618,39 @@ namespace Antarium.Gameplay
                     _ => $"{name} is already at its highest level.",
                 });
             }
+            foreach (var e in events.Read<EvolutionBoughtEvent>())
+            {
+                var data = _content.Evolutions[e.Evolution];
+                _sb.Clear().Append("The queen evolved ").Append(data.Def.DisplayName);
+                if (data.MaxLevel > 1) _sb.Append(" (level ").Append(e.Level).Append(')');
+                _sb.Append('.');
+                foreach (var effect in data.Effects)
+                {
+                    if (Math.Max(1, effect.level) != e.Level) continue;
+                    if (effect.kind == EvolutionEffectKind.UnlockCaste)
+                        _sb.Append(" She now lays ").Append(_content.Caste(effect.caste).DisplayName.ToLowerInvariant()).Append("s: set their share in the castes panel.");
+                    else if (effect.kind == EvolutionEffectKind.UnlockAbility && effect.ability != null)
+                        _sb.Append(' ').Append(effect.ability.DisplayName).Append(" unlocked.");
+                }
+                ShowToast(_sb.ToString());
+            }
+            foreach (var e in events.Read<EvolutionFailedEvent>())
+            {
+                if (e.Evolution < 0 || e.Evolution >= _content.Evolutions.Length) continue;
+                string name = _content.Evolutions[e.Evolution].Def.DisplayName;
+                ShowToast(e.Result switch
+                {
+                    EvolutionResult.NeedsPrerequisites => $"{name} needs the evolution to its left first.",
+                    EvolutionResult.CantAfford => $"Not enough in the stock for {name} yet.",
+                    _ => $"{name} is fully evolved.",
+                });
+            }
+            foreach (var e in events.Read<AntLevelUpEvent>())
+            {
+                if (e.Level < 5 || _masterToastCooldown > 0f) continue;
+                ShowToast($"An ant became a master {HudText.SkillName(e.Skill)} (level 5): it does that job fastest now.");
+                _masterToastCooldown = 30f;
+            }
             foreach (var e in events.Read<PrincessRaisedEvent>())
                 ShowToast(e.Total >= sim.Colony.PrincessCap
                     ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen (N)."
@@ -653,6 +703,7 @@ namespace Antarium.Gameplay
                 DeathCause.Gassed => $"{subject} choked on gas.",
                 DeathCause.Crushed => $"{subject} {verb} buried by a cave-in.",
                 DeathCause.Bird => $"{subject} {verb} taken by a bird.",
+                DeathCause.Heat => $"{subject} died of the heat. Fire ants don't mind it.",
                 DeathCause.Killed when first.Killer >= 0 && first.Killer < _content.Enemies.Length =>
                     $"{subject} {verb} killed by {(same == 1 ? HudText.Plural(1, _content.Enemies[first.Killer].Def.DisplayName) : "enemies")}.",
                 _ => $"{subject} died.",
@@ -715,6 +766,7 @@ namespace Antarium.Gameplay
                 if (_toastTimer <= 0f) _toast.AddToClassList("hidden");
             }
             if (_caveInToastCooldown > 0f) _caveInToastCooldown -= dt;
+            if (_masterToastCooldown > 0f) _masterToastCooldown -= dt;
             _timer -= dt;
             if (_timer > 0f) return;
             _timer = RefreshInterval;
@@ -733,6 +785,18 @@ namespace Antarium.Gameplay
             _castesButton.EnableInClassList("tool--on", Castes.Visible);
             if (!castes) Castes.Hide();
             Castes.Refresh(sim);
+            if (Priorities != null)
+            {
+                Priorities.Refresh(sim);
+                _jobsButton.EnableInClassList("tool--on", Priorities.Visible);
+            }
+            bool queenOpen = IsShowing(Queen.Root);
+            _queenButton.EnableInClassList("tool--on", queenOpen);
+            if (queenOpen)
+            {
+                Queen.SetCastesKey(castes ? GameInput.KeyName(_input.Castes) : null);
+                Queen.Refresh(sim);
+            }
             Configure.Refresh(sim);
             for (int k = 0; k < _scentButtons.Length; k++)
                 _scentButtons[k].EnableInClassList("building--locked", !ToolController.ScentAvailable(sim, (PheromoneKind)k));

@@ -37,7 +37,11 @@ namespace Antarium.Gameplay
         public readonly InputAction Genetics;
         /// <summary>N: the Nuptial Flight screen.</summary>
         public readonly InputAction Flight;
-        /// <summary>Z / X / C / V: the abilities in bar order.</summary>
+        /// <summary>H: the Queen panel (stats, evolutions).</summary>
+        public readonly InputAction Queen;
+        /// <summary>P: the job priority panel.</summary>
+        public readonly InputAction Priorities;
+        /// <summary>Z / X / C / V / B: the abilities in bar order.</summary>
         public readonly InputAction[] Abilities;
         public readonly InputAction Menu;
         public readonly InputAction QuickSave;
@@ -95,12 +99,15 @@ namespace Antarium.Gameplay
             Research = asset.FindAction("View/Research", true);
             Genetics = asset.FindAction("View/Genetics", true);
             Flight = asset.FindAction("View/Flight", true);
+            Queen = asset.FindAction("View/Queen", true);
+            Priorities = asset.FindAction("View/Priorities", true);
             Abilities = new[]
             {
                 asset.FindAction("Tools/Ability1", true),
                 asset.FindAction("Tools/Ability2", true),
                 asset.FindAction("Tools/Ability3", true),
                 asset.FindAction("Tools/Ability4", true),
+                asset.FindAction("Tools/Ability5", true),
             };
             Menu = asset.FindAction("System/Menu", true);
             QuickSave = asset.FindAction("System/QuickSave", true);
@@ -154,6 +161,8 @@ namespace Antarium.Gameplay
             Add("Panels", "Flow overlay", Overlay);
             Add("Panels", "Research", Research);
             Add("Panels", "Castes", Castes);
+            Add("Panels", "Queen", Queen);
+            Add("Panels", "Job priorities", Priorities);
             Add("Panels", "Genetic Memory", Genetics);
             Add("Panels", "Nuptial Flight", Flight);
             Add("Game", "Menu / back", Menu);

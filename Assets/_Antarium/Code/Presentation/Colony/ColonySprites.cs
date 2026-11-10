@@ -21,7 +21,7 @@ namespace Antarium.Presentation
         public const int PileWidth = 6, PileHeight = 4;
         public const int CarryWidth = 3, CarryHeight = 3;
 
-        const int AtlasWidth = 128, AtlasHeight = 96;
+        const int AtlasWidth = 128, AtlasHeight = 128;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax); see the *Rect constants.</summary>
@@ -43,9 +43,9 @@ namespace Antarium.Presentation
         /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
         public const int EnemyRect = PixelRect + 1;
         public const int EnemyArtCount = 7;
-        /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer): 4 walk frames each, in caste order.</summary>
+        /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer, glow, fire): 4 walk frames each, in caste order.</summary>
         public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
-        const int SpecialistCount = 6;
+        const int SpecialistCount = 8;
         /// <summary>Winged princess: resting (wings folded), then two flight frames (wings up, wings back).</summary>
         public const int PrincessRect = SpecialistRect + SpecialistCount * WorkerFrames;
         public const int PrincessWidth = 14, PrincessHeight = 10, PrincessFrames = 3;
@@ -54,7 +54,12 @@ namespace Antarium.Presentation
         public const int AphidWidth = 6, AphidHeight = 5;
         /// <summary>The queen's second frame (her gaster swells as she breathes); the first is <see cref="QueenRect"/>.</summary>
         public const int QueenBreathRect = AphidRect + 2;
-        const int RectCount = QueenBreathRect + 1;
+        /// <summary>The light a glow ant carries: a dithered disc drawn unlit around its gaster (10.4).</summary>
+        public const int HaloRect = QueenBreathRect + 1;
+        public const int HaloSize = 13;
+        /// <summary>Pixels from the sprite's left edge to the middle of the glow ant's gaster (the halo's centre).</summary>
+        public const float GasterX = 2f;
+        const int RectCount = HaloRect + 1;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -266,6 +271,8 @@ namespace Antarium.Presentation
                 ['Y'] = Hex(0xfff6b0), ['O'] = Hex(0xf0c040), ['o'] = Hex(0xb08020), ['a'] = Hex(0x8a6a20), ['l'] = Hex(0x5a3a10),
             });
             PaintCastes(pixels);
+            PaintHalo(pixels, 112, 98);
+            Rects[HaloRect] = Rect(112, 98, HaloSize, HaloSize);
             AddFrames(pixels, Princess, 0, 74, PrincessRect, new Dictionary<char, Color32>
             {
                 ['D'] = Hex(0x7a4a10), ['M'] = Hex(0xe0a032), ['H'] = Hex(0xffe48a), ['L'] = Hex(0x5a3008), ['K'] = Hex(0xfff4c8),
@@ -307,6 +314,7 @@ namespace Antarium.Presentation
                 ArtSlot.Strip("Colony/princess", PrincessRect, PrincessFrames),
                 ArtSlot.Strip("Colony/golden_beetle", BeetleRect, 2),
                 ArtSlot.Strip("Colony/golden_aphid", AphidRect, 2),
+                ArtSlot.Strip("Colony/ant_glow_halo", HaloRect),
             };
             for (int s = 0; s < Specialists.Length; s++)
                 slots.Add(ArtSlot.Strip("Colony/ant_" + Specialists[s].Caste.ToString().ToLowerInvariant(), SpecialistRect + s * WorkerFrames, WorkerFrames));
@@ -351,6 +359,11 @@ namespace Antarium.Presentation
                 0x8a4a10, 0xe08a28, 0xffc060, 0x5a3008, 0xffe0a0),
             new(AntCaste.Engineer, new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMK.", "MMMMLMMLMMML", ".DMD.DD.DD.." }, 0,
                 0x1e3448, 0x3e6a8e, 0x7aaad0, 0x162432, 0xa0f0ff),
+            // 10.4: the glow ant's gaster is a pale lantern; the fire ant is ember red with a bright tip.
+            new(AntCaste.Glow, new[] { "..........L.", ".KK.....HL..", "KKKK.HH.HMM.", "KKKKLMMLMMML", ".DMD.DD.DD.." }, 0,
+                0x0e3238, 0x24706e, 0x6cc8b0, 0x081c20, 0xd4fff0),
+            new(AntCaste.Fire, new[] { "K.........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMML", ".DMD.DD.DD.." }, 0,
+                0x5a180c, 0xd4501c, 0xffc860, 0x2a0c08, 0xffe6a0),
         };
 
         /// <summary>Walk cycles of the specialist castes (palette swaps and small silhouette changes of the worker).</summary>
@@ -366,7 +379,8 @@ namespace Antarium.Presentation
             {
                 var art = Specialists[s];
                 int w = art.Body[0].Length, h = art.Body.Length + 2;
-                int ox = (s % 2) * 56, oy = 44 + (s / 2) * 9;
+                // The first six fill rows 44-70; the 10.4 castes sit in the rows added below the old atlas.
+                int ox = (s % 2) * 56, oy = s < 6 ? 44 + (s / 2) * 9 : 98 + ((s - 6) / 2) * 9;
                 for (int f = 0; f < WorkerFrames; f++)
                 {
                     var rows = new string[h];
@@ -395,6 +409,23 @@ namespace Antarium.Presentation
                 }
                 CasteRect[(int)art.Caste] = SpecialistRect + s * WorkerFrames;
                 CasteSize[(int)art.Caste] = new int2(w, h);
+            }
+        }
+
+        /// <summary>The glow ant's light: a bright core, then two dithered rings (green-white, fading out).</summary>
+        static void PaintHalo(Color32[] px, int ox, int oy)
+        {
+            Color32 core = Hex(0xd8ffe8), ring = Hex(0x8ee8b0), rim = Hex(0x4aa878);
+            for (int y = 0; y < HaloSize; y++)
+            for (int x = 0; x < HaloSize; x++)
+            {
+                float r = math.length(new float2(x - 6, y - 6));
+                Color32 c;
+                if (r < 2.5f) c = core;
+                else if (r < 4.2f && (x + y) % 2 == 0) c = ring;
+                else if (r < 6.3f && x % 2 == 0 && y % 2 == 0) c = rim;
+                else continue;
+                px[(oy + y) * AtlasWidth + ox + x] = c;
             }
         }
 

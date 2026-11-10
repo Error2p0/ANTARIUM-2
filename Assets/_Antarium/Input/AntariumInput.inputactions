@@ -349,6 +349,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Ability5",
+                    "type": "Button",
+                    "id": "6ed5617f-b206-42aa-9bf4-45d6870768ad",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "ToolPheromone",
                     "type": "Button",
                     "id": "c4a19e2f-6b7d-4e83-a5f1-90d2c3b4e5a6",
@@ -548,6 +557,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Ability4",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0e1ab0d4-d089-4cc6-8aa2-602397716b89",
+                    "path": "<Keyboard>/b",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Ability5",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -835,6 +855,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Queen",
+                    "type": "Button",
+                    "id": "6e8b0e3c-379f-4a71-9fc0-769259df63e1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Priorities",
+                    "type": "Button",
+                    "id": "bb1c5ea9-de0b-445e-8f18-79d50779e40c",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -890,6 +928,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Flight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7770ca8b-f2f3-48d4-b2bf-1f9bb4d31633",
+                    "path": "<Keyboard>/h",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Queen",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "208d88df-5767-4fce-beec-9f6067e555ab",
+                    "path": "<Keyboard>/p",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Priorities",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

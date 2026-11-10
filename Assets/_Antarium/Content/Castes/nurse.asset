@@ -15,7 +15,7 @@ MonoBehaviour:
   id: nurse
   displayName: Nurse
   caste: 4
-  description: Carries eggs from the queen to a Nursery, where they hatch faster and free the queen to lay more.
+  description: Carries eggs from the queen to a Nursery, where they hatch faster and free the queen to lay more. With no eggs to carry it hauls.
   order: 4
   eggFoodCost: 6
   upkeep: 0.2
@@ -27,9 +27,12 @@ MonoBehaviour:
   build: 1
   carry: 1
   digJob: 0
-  haulJob: 0
+  haulJob: 2
   buildJob: 0
   supplyJob: 0
   senseRadius: 10
   machineBoost: 0.5
+  heatProof: 0
+  lavaDamageTaken: 1
+  lightRadius: 0
   color: {r: 1, g: 0.95686275, b: 0.84705883, a: 1}

@@ -197,6 +197,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 8dbe73bd50fd5214c9a7b3c1f3b3b793, type: 3}
   - name: UI/Icons/ability_pheromone_burst
     texture: {fileID: 2800000, guid: 33965117eb6cb9845a7922a5710f3b3a, type: 3}
+  - name: UI/Icons/ability_quickening
+    texture: {fileID: 2800000, guid: 1eba8f79c8d7bbd4e893eddb05b7ddb5, type: 3}
   - name: UI/Icons/ability_royal_decree
     texture: {fileID: 2800000, guid: 1336bbdecf236014587952481b2d7117, type: 3}
   - name: UI/Icons/ability_seismic_sense
@@ -253,6 +255,10 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 90aec917685f0ac418ce6b7475c7084d, type: 3}
   - name: UI/Icons/caste_engineer
     texture: {fileID: 2800000, guid: 38643725dcc74bb4fadba9939175bd15, type: 3}
+  - name: UI/Icons/caste_fire
+    texture: {fileID: 2800000, guid: 244e79d8b66a1c5418a6c7cbd5910b2f, type: 3}
+  - name: UI/Icons/caste_glow
+    texture: {fileID: 2800000, guid: 05cada4e5ece1fe4594dd9276762b816, type: 3}
   - name: UI/Icons/caste_hauler
     texture: {fileID: 2800000, guid: 718fdc5b8eb66254baf9a3215c1ccc7e, type: 3}
   - name: UI/Icons/caste_miner
