@@ -21,6 +21,8 @@ namespace Antarium.Editor
         public const string ArtFolder = "Assets/_Antarium/Art";
         public const string LibraryPath = ArtFolder + "/ArtLibrary.asset";
         const string TerrainPrefix = "Terrain/";
+        /// <summary>Materials changed by the current import (only these are saved, not every dirty asset).</summary>
+        static readonly List<TerrainMaterialDef> _touched = new();
 
         [MenuItem("Antarium/Art/Import Overrides")]
         public static void ImportOverrides()
@@ -55,7 +57,10 @@ namespace Antarium.Editor
                 config.art = library;
                 EditorUtility.SetDirty(config);
             }
-            AssetDatabase.SaveAssets();
+            AssetDatabase.SaveAssetIfDirty(library);
+            if (config != null) AssetDatabase.SaveAssetIfDirty(config);
+            foreach (var material in _touched) AssetDatabase.SaveAssetIfDirty(material);
+            _touched.Clear();
             foreach (string problem in problems) Debug.LogWarning("Art import: " + problem);
             Debug.Log($"Art import: {library.entries.Count} PNGs in the library, {terrain} terrain tiles assigned.");
         }
@@ -125,6 +130,7 @@ namespace Antarium.Editor
                     material.shadowColor = shadow;
                     material.highlightColor = highlight;
                     EditorUtility.SetDirty(material);
+                    _touched.Add(material);
                 }
                 assigned++;
             }
