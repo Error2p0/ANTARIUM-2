@@ -305,7 +305,7 @@ namespace Antarium.Gameplay
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
             _buildingView = new BuildingView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
-            _surfaceView = new SurfaceView(_content, config.render, spriteMaterial, transform, _worldSize);
+            _surfaceView = new SurfaceView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };
             _tools = new ToolController(config, _content, _buildingView.Ghosts);

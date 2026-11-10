@@ -74,6 +74,38 @@ namespace Antarium.Presentation
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
         public NativeArray<float4> Rects;
 
+        /// <summary>Every sprite a PNG can replace (<c>Art/Buildings/</c>). Sizes and frames: see <c>docs/ART_STYLE.md</c>.</summary>
+        public static readonly ArtSlot[] Slots =
+        {
+            ArtSlot.Strip("Buildings/silk_belt", BeltRect, AnimFrames),
+            ArtSlot.Strip("Buildings/root_lift", LiftRect, AnimFrames),
+            ArtSlot.Strip("Buildings/iron_belt", IronBeltRect, AnimFrames),
+            ArtSlot.Strip("Buildings/iron_lift", IronLiftRect, AnimFrames),
+            ArtSlot.Strip("Buildings/splitter", SplitterRect),
+            ArtSlot.Strip("Buildings/filter", FilterRect),
+            ArtSlot.Strip("Buildings/unloader", UnloaderRect),
+            ArtSlot.Strip("Buildings/chest", ChestRect, 2),
+            ArtSlot.Strip("Buildings/smelter", SmelterRect, 2),
+            ArtSlot.Strip("Buildings/crusher", CrusherRect, 2),
+            ArtSlot.Strip("Buildings/fungus_garden", GardenRect, 2),
+            ArtSlot.Strip("Buildings/aphid_ranch", RanchRect, 2),
+            ArtSlot.Strip("Buildings/archive", ArchiveRect, 2),
+            ArtSlot.Strip("Buildings/nursery", NurseryRect),
+            ArtSlot.Strip("Buildings/pheromone_emitter", EmitterRect),
+            ArtSlot.Strip("Buildings/princess_chamber", PrincessChamberRect, 2),
+            ArtSlot.Strip("Buildings/resin_gate", GateRect),
+            ArtSlot.Strip("Buildings/iron_gate", IronGateRect),
+            ArtSlot.Strip("Buildings/resin_trap", TrapRect, 2),
+            ArtSlot.Strip("Buildings/guard_post", GuardPostRect),
+            ArtSlot.Strip("Buildings/earth_wall", WallRect),
+            ArtSlot.Strip("Buildings/pump", PumpRect, 2),
+            ArtSlot.Strip("Buildings/water_wheel", WheelRect, AnimFrames),
+            ArtSlot.Strip("Buildings/generic", GenericRect),
+            ArtSlot.Strip("Buildings/belt_item", ItemRect),
+            ArtSlot.Strip("Buildings/dot", DotRect),
+            ArtSlot.Strip("Buildings/stored_item", StoredRect),
+        };
+
         static readonly Color32 SilkHigh = Hex(0xfff4dc), SilkMid = Hex(0xe2d2ae), SilkDark = Hex(0xa8916a), SilkShadow = Hex(0x6f5d44);
         static readonly Color32 Root = Hex(0x6b4a2c), RootHigh = Hex(0x93693f);
         static readonly Color32 Clay = Hex(0xb8562c), ClayDark = Hex(0x7a3418), ClayHigh = Hex(0xe08048), Brick = Hex(0x6c5a4c), BrickDark = Hex(0x4a3c32);
@@ -189,12 +221,7 @@ namespace Antarium.Presentation
                 Rects[WheelRect + f] = Rect(64 + f * WheelSize, 80, WheelSize, WheelSize);
             }
 
-            if (art != null)
-            {
-                void Strip(string name, int firstRect, int frames) =>
-                    ArtOverrides.Apply(art, name, _px, AtlasWidth, AtlasHeight, Rects, firstRect, frames);
-                Strip("Buildings/smelter", SmelterRect, 2);
-            }
+            ArtOverrides.Apply(art, Slots, _px, AtlasWidth, AtlasHeight, Rects);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {

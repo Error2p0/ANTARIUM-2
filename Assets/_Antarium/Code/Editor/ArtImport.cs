@@ -115,7 +115,8 @@ namespace Antarium.Editor
                     problems.Add($"'{entry.name}.png' is {entry.texture.width}x{entry.texture.height}; terrain tiles are {size}x{size}. Not assigned.");
                     continue;
                 }
-                TileColors(entry.texture.GetPixels32(), out var baseColor, out var shadow, out var highlight);
+                Antarium.Presentation.ArtOverrides.TileColors(entry.texture.GetPixels32(), out var base32, out var shadow32, out var highlight32);
+                Color baseColor = base32, shadow = shadow32, highlight = highlight32;
                 if (material.textureOverride != entry.texture || material.baseColor != baseColor
                     || material.shadowColor != shadow || material.highlightColor != highlight)
                 {
@@ -128,33 +129,6 @@ namespace Antarium.Editor
                 assigned++;
             }
             return assigned;
-        }
-
-        /// <summary>
-        /// The colours the terrain shader needs next to a tile: its average (background walls), and the average of its
-        /// darkest and of its lightest fifth (the outline and the lit top edge are derived from those).
-        /// </summary>
-        public static void TileColors(Color32[] pixels, out Color baseColor, out Color shadow, out Color highlight)
-        {
-            var sorted = pixels.OrderBy(c => c.r * 0.299f + c.g * 0.587f + c.b * 0.114f).ToArray();
-            int fifth = Mathf.Max(1, sorted.Length / 5);
-            baseColor = Average(sorted, 0, sorted.Length);
-            shadow = Average(sorted, 0, fifth);
-            highlight = Average(sorted, sorted.Length - fifth, fifth);
-        }
-
-        static Color Average(Color32[] pixels, int start, int count)
-        {
-            float r = 0f, g = 0f, b = 0f;
-            for (int i = start; i < start + count; i++)
-            {
-                r += pixels[i].r;
-                g += pixels[i].g;
-                b += pixels[i].b;
-            }
-            float scale = 1f / (255f * count);
-            // Rounded to 8 bits so a re-import of an unchanged tile changes nothing.
-            return new Color32((byte)Mathf.RoundToInt(r * scale * 255f), (byte)Mathf.RoundToInt(g * scale * 255f), (byte)Mathf.RoundToInt(b * scale * 255f), 255);
         }
     }
 }

@@ -11,8 +11,8 @@ namespace Antarium.Presentation
 {
     /// <summary>
     /// The surface layer (Milestone 10.2): plants swaying along the ground, aphids grazing in Aphid Ranches, the bird's
-    /// shadow (behind the colony) and the bird itself and the rain (in front). Generated placeholder art in its own small
-    /// atlas, drawn by two sprite meshes; only what is in view is written.
+    /// shadow (behind the colony) and the bird itself and the rain (in front). Its own small atlas, generated in code and
+    /// replaced by the PNGs in <c>Art/Surface/</c> where they exist; drawn by two sprite meshes, only what is in view.
     /// </summary>
     public sealed class SurfaceView : IDisposable
     {
@@ -64,9 +64,19 @@ namespace Antarium.Presentation
         bool _dropsPlaced;
         static readonly Color32 White = new(255, 255, 255, 255);
 
-        public SurfaceView(ContentDB content, RenderConfig render, Material spriteMaterial, Transform parent, float2 worldSize)
+        static readonly string[] PlantNames = { "plant_fern", "plant_bush", "plant_flower" };
+
+        /// <summary>The PNG names this view looks up, with their frame counts (for the art list and tests).</summary>
+        public static readonly (string Name, int Frames)[] SlotNames =
+        {
+            ("Surface/plant_fern", 2), ("Surface/plant_bush", 2), ("Surface/plant_flower", 2), ("Surface/bird", 2),
+            ("Surface/bird_dive", 1), ("Surface/aphid", 2), ("Surface/bird_shadow", 1),
+        };
+
+        public SurfaceView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
         {
             _content = content;
+            var slots = new List<ArtSlot>();
             var px = new Color32[AtlasWidth * AtlasHeight];
             var rects = new List<float4>();
             var palette = new Dictionary<char, Color32>
@@ -80,6 +90,7 @@ namespace Antarium.Presentation
             for (int k = 0; k < Plants.Length; k++)
             {
                 _plantRect[k] = rects.Count;
+                slots.Add(ArtSlot.Strip("Surface/" + PlantNames[k], rects.Count, 2));
                 int w = Plants[k][0][0].Length, h = Plants[k][0].Length;
                 _plantSize[k] = new int2(w, h);
                 for (int f = 0; f < 2; f++)
@@ -91,6 +102,7 @@ namespace Antarium.Presentation
             }
 
             _birdRect = rects.Count;
+            slots.Add(ArtSlot.Strip("Surface/bird", rects.Count, 2));
             _birdSize = new int2(Bird[0][0].Length, Bird[0].Length);
             for (int f = 0; f < 2; f++)
             {
@@ -98,11 +110,13 @@ namespace Antarium.Presentation
                 rects.Add(Rect(f * (_birdSize.x + 1), 20, _birdSize.x, _birdSize.y));
             }
             _diveRect = rects.Count;
+            slots.Add(ArtSlot.Strip("Surface/bird_dive", rects.Count));
             _diveSize = new int2(Dive[0].Length, Dive.Length);
             Blit(px, 32, 20, Dive, palette);
             rects.Add(Rect(32, 20, _diveSize.x, _diveSize.y));
 
             _aphidRect = rects.Count;
+            slots.Add(ArtSlot.Strip("Surface/aphid", rects.Count, 2));
             Blit(px, 42, 20, Aphid, palette);
             rects.Add(Rect(42, 20, 3, 2));
             Blit(px, 46, 20, AphidStep, palette);
@@ -110,6 +124,7 @@ namespace Antarium.Presentation
 
             // Shadow: a dithered dark ellipse (every other pixel), so the ground shows through.
             _shadowRect = rects.Count;
+            slots.Add(ArtSlot.Strip("Surface/bird_shadow", rects.Count));
             for (int sy = 0; sy < 4; sy++)
             for (int sx = 0; sx < 16; sx++)
             {
@@ -126,6 +141,7 @@ namespace Antarium.Presentation
             rects.Add(Rect(AtlasWidth - 1, AtlasHeight - 1, 1, 1));
 
             _rects = new NativeArray<float4>(rects.ToArray(), Allocator.Persistent);
+            ArtOverrides.Apply(art, slots.ToArray(), px, AtlasWidth, AtlasHeight, _rects);
             _texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
                 filterMode = FilterMode.Point,

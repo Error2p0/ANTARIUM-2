@@ -272,7 +272,7 @@ namespace Antarium.Presentation
                 ['w'] = Hex(0xf0f8ff), ['v'] = Hex(0x7896c8),
             });
 
-            ApplyOverrides(art, pixels);
+            ArtOverrides.Apply(art, Slots, pixels, AtlasWidth, AtlasHeight, Rects);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -284,23 +284,35 @@ namespace Antarium.Presentation
             Texture.Apply(false, false); // small; kept readable for debugging
         }
 
-        /// <summary>PNG strips that replace generated sprites: name under <c>Art/</c>, first rect, frames.</summary>
-        void ApplyOverrides(ArtLibrary art, Color32[] pixels)
+        static readonly string[] EnemyNames = { "termite", "centipede", "spider", "mite", "fire_beetle", "guardian", "wolf_spider" };
+
+        /// <summary>
+        /// Every sprite a PNG can replace (<c>Art/Colony/</c>, <c>Art/Enemies/</c>): ants are <c>Colony/ant_&lt;caste&gt;</c>,
+        /// enemies <c>Enemies/&lt;name&gt;</c> in <see cref="EnemyArt"/> order. Sizes: see <c>docs/ART_STYLE.md</c>.
+        /// </summary>
+        public static ArtSlot[] Slots => _slots ??= BuildSlots();
+        static ArtSlot[] _slots;
+
+        static ArtSlot[] BuildSlots()
         {
-            if (art == null) return;
-            void Strip(string name, int firstRect, int frames) =>
-                ArtOverrides.Apply(art, name, pixels, AtlasWidth, AtlasHeight, Rects, firstRect, frames);
-            Strip("Colony/ant_worker", 0, WorkerFrames);
-            // The queen's two frames are not neighbours in the rect list: one strip, applied frame by frame.
-            if (art.TryGet("Colony/queen", out var queen) && ArtOverrides.Fits(queen, QueenWidth * 2, QueenHeight, out _))
+            var slots = new List<ArtSlot>
             {
-                var order = new NativeArray<float4>(2, Allocator.Temp);
-                order[0] = Rects[QueenRect];
-                order[1] = Rects[QueenBreathRect];
-                ArtOverrides.Apply(art, "Colony/queen", pixels, AtlasWidth, AtlasHeight, order, 0, 2);
-                order.Dispose();
-            }
-            else Strip("Colony/queen", QueenRect, 1);
+                ArtSlot.Strip("Colony/ant_worker", 0, WorkerFrames),
+                ArtSlot.Strip("Colony/ant_soldier", SoldierRect, WorkerFrames),
+                new("Colony/queen", QueenRect, QueenBreathRect),
+                ArtSlot.Strip("Colony/egg", EggRect),
+                ArtSlot.Strip("Colony/pile", PileRect),
+                ArtSlot.Strip("Colony/carry", CarryRect),
+                ArtSlot.Strip("Colony/marker", MarkerRect),
+                ArtSlot.Strip("Colony/princess", PrincessRect, PrincessFrames),
+                ArtSlot.Strip("Colony/golden_beetle", BeetleRect, 2),
+                ArtSlot.Strip("Colony/golden_aphid", AphidRect, 2),
+            };
+            for (int s = 0; s < Specialists.Length; s++)
+                slots.Add(ArtSlot.Strip("Colony/ant_" + Specialists[s].Caste.ToString().ToLowerInvariant(), SpecialistRect + s * WorkerFrames, WorkerFrames));
+            for (int e = 0; e < EnemyArtCount; e++)
+                slots.Add(ArtSlot.Strip("Enemies/" + EnemyNames[e], EnemyRect + e * 2, 2));
+            return slots.ToArray();
         }
 
         /// <summary>One specialist caste: body rows (first = top), legs and palette (D dark, M mid, H high, L leg, K accent).</summary>

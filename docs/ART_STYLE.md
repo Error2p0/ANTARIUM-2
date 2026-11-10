@@ -1,8 +1,8 @@
 # Antarium 2 — Art style
 
 How the game's pixel art is made, named and wired in. Follow it for every new sprite, tile and UI piece
-(milestones 10.4–10.7 included). Status: **style test (10.7a step 1), waiting for approval**. Only the pieces
-listed under *What exists* are drawn in the new style so far; everything else is still generated in code.
+(milestones 10.4–10.7 included). The style was approved on 2026-11-10 (10.7a step 1). Pieces not yet listed
+under *What exists* are still generated in code.
 
 ## 1. How the art gets into the game
 
@@ -128,7 +128,7 @@ Buildings are always cells × 8 px. More rows are added to this table as each ca
 2. `python tools/art/make_art.py <name>`, look at `Captures/art/pieces.png`.
 3. In Unity: **Antarium → Art → Import Overrides**.
 4. A new *slot* (a sprite the code does not know yet) also needs: its rect in the atlas class, a generated
-   fallback there, and a line in that class's override list (`ApplyOverrides`).
+   fallback there, and an `ArtSlot` in that class's `Slots` list (name → rects). `ArtTests` checks the list.
 5. Check it in the running game: `CaptureMenu.Run("art", false)` writes review stills to `Captures/stills/art_*.png`.
 
 ## 9. What exists
