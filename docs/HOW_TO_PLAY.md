@@ -298,7 +298,7 @@ The queen lays **workers** at first. Research unlocks more castes (see *Research
 - An ant's **first job becomes its skill** (digging, hauling, building, supplying, tending or nursing). Only work in that job gives it experience: digging and building by the work done, hauling and supplying per item delivered, tending per second by a working machine, nursing per egg brought to a nursery.
 - **Levels 1–5** (at 15, 45, 110 and 240 XP): every level above 1 makes it **5% faster** at its skill (dig and build power, walking while it carries for that job, an engineer's boost to its machine), and it picks its skill a little more often. Point at an ant to see its level and XP. A message tells you when an ant becomes a **master** (level 5).
 - About one ant in three hatches with a **trait**: **Strong** (carries one more item), **Swift** (walks 20% faster), **Lucky** (a quarter of the cells it breaks drop one more item), **Lazy** (works and walks 20% slower).
-- Ants on the same route walk at slightly different speeds (±7%) and are drawn a little apart, so a column reads as a stream.
+- Ants on the same route walk at slightly different speeds (±7%) and are drawn a few pixels apart (ahead, behind, higher, lower), so a column reads as a stream.
 
 ### The queen's evolutions (H)
 The queen evolves with **rare finds from the stock**. Evolutions belong to this colony (a Nuptial Flight starts the next colony without them). Open the **Queen panel** (**H** or click her), point at an evolution for what it does and what the next level costs, click to buy it. Each column needs at least one level of the evolution to its left.

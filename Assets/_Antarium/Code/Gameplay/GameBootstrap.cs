@@ -322,7 +322,8 @@ namespace Antarium.Gameplay
             _terrain.Upload();
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
             _buildingView = new BuildingView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
-            _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize, config.growth.laneOffsetPixels);
+            _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize,
+                new int3(config.growth.laneOffsetPixels, config.growth.laneUpPixels, config.growth.laneDownPixels));
             _glow = new GlowLights(config.glow, _content, transform);
             _surfaceView = new SurfaceView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);

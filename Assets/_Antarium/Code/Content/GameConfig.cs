@@ -78,7 +78,11 @@ namespace Antarium.Content
         [Tooltip("Walking speed varies per ant by up to this share (0.07 = 93%..107%), so ants on one route spread out.")]
         [Range(0f, 0.3f)] public float speedJitter = 0.07f;
         [Tooltip("Ants are drawn up to this many art pixels ahead of / behind their spot on the route.")]
-        [Range(0, 4)] public int laneOffsetPixels = 3;
+        [Range(0, 6)] public int laneOffsetPixels = 3;
+        [Tooltip("...and up to this many art pixels away from the surface they walk on (up from a floor, out from a wall).")]
+        [Range(0, 6)] public int laneUpPixels = 3;
+        [Tooltip("...or up to this many into it (down into a floor).")]
+        [Range(0, 6)] public int laneDownPixels = 2;
     }
 
     [Serializable]

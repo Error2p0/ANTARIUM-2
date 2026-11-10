@@ -73,7 +73,7 @@ Design pillars:
 - **Job priorities** (priority panel, P): per job (dig, haul, build, supply, tend, nurse) 1–5, multiplying the job's distance by ×4 / ×2 / ×1 / ×0.5 / ×0.25 (`AntGrowthConfig`); caste job weights stay. Nurses and engineers weigh their own job (`roleWeight` 0.1 × its priority) against the shared jobs they may take; since 10.4 nurses may haul and engineers supply machines (weight 2), so they help while their own job waits.
 - **Experience**: an ant's first job becomes its **skill**; only work in it gives XP (dig / build per unit of work, haul / supply per item, tend per second at a working machine, nurse per egg laid in a nursery). Levels 1–5 (15 / 45 / 110 / 240 XP) give +5% per level at that job (dig and build power, walking while hauling / supplying / nursing, an engineer's machine boost) and a slight preference for it.
 - **Traits** at hatch (30%, equally likely): *Strong* carries one more, *Swift* walks ×1.2, *Lucky* gets an extra drop from 25% of the cells it breaks, *Lazy* works and walks ×0.8.
-- **Lane jitter**: every ant has a lane (−127..127): ±7% walking speed and drawn up to 3 art pixels ahead of / behind its spot, so a column on one route reads as a stream.
+- **Lane jitter**: every ant has a lane (−127..127): ±7% walking speed, and drawn up to 3 art pixels ahead of / behind its spot and 3 above / 2 below the surface it walks on, so a column on one route reads as a stream.
 - **Save**: `ANTS` 4 and `QUEN` 1 (3.5).
 
 - ✅ The player can **possess** any ant (click to take control) for direct active play: run, dig, carry, fight. This is the main "active" mode and should feel good to control. *(See 2.6.1; it uses the same crawling rules as every ant.)*

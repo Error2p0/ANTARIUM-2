@@ -41,7 +41,8 @@ namespace Antarium.Presentation
         readonly BarColors _bars;
         /// <summary>Per <see cref="AntCaste"/>: 1 if it carries a light (drawn with a halo).</summary>
         readonly NativeArray<byte> _casteHalo;
-        readonly int _laneOffsetPixels;
+        /// <summary>Lane jitter in art pixels: along the route, away from the surface, into it.</summary>
+        readonly int3 _lanePixels;
         static readonly Color32 SparkleTint = new(255, 230, 120, 255);
         static readonly Color32 AlertTint = new(255, 150, 70, 255);
         static readonly Color32 White = new(255, 255, 255, 255);
@@ -56,12 +57,12 @@ namespace Antarium.Presentation
             public Color32 Ant, Enemy, Back, Flash;
         }
 
-        /// <param name="laneOffsetPixels">Ants are drawn up to this many art pixels ahead of / behind their spot (lane jitter).</param>
+        /// <param name="lanePixels">Lane jitter in art pixels: x ahead of / behind its spot, y away from the surface it walks on, z into it.</param>
         public ColonyView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize,
-            int laneOffsetPixels = 0)
+            int3 lanePixels = default)
         {
             _content = content;
-            _laneOffsetPixels = laneOffsetPixels;
+            _lanePixels = lanePixels;
             _casteHalo = new NativeArray<byte>(Castes.Count, Allocator.Persistent);
             for (int c = 0; c < Castes.Count; c++) _casteHalo[c] = content.CasteDefs[c].lightRadius > 0f ? (byte)1 : (byte)0;
             _sprites = new ColonySprites(art);
@@ -109,7 +110,7 @@ namespace Antarium.Presentation
                 CasteSize = _sprites.CasteSize,
                 CasteHalo = _casteHalo,
                 AntBase = antCount,
-                LanePixels = _laneOffsetPixels,
+                LanePixels = _lanePixels,
                 Castes = _content.CasteSim,
                 HealthMultiplier = sim.Ants.HealthMultiplier,
                 ItemColors = _itemColors,
@@ -284,7 +285,7 @@ namespace Antarium.Presentation
             [ReadOnly] public NativeArray<byte> CasteHalo;
             /// <summary>First ant quad (the halos come before, one per ant).</summary>
             public int AntBase;
-            public int LanePixels;
+            public int3 LanePixels;
             [ReadOnly] public NativeArray<CasteSim> Castes;
             public float HealthMultiplier;
             [ReadOnly] public NativeArray<Color32> ItemColors;
@@ -323,9 +324,13 @@ namespace Antarium.Presentation
                 int2 size = CasteSize[caste];
                 int rect = CasteRect[caste] + frame;
                 float2 world = cellPos * WorldConstants.CellSize;
-                // Lane jitter: each ant is drawn a few whole art pixels ahead of or behind its spot along the surface.
-                int lane = (int)math.round(a.Lane / 127f * LanePixels);
-                float2 laneShift = new float2(forwardAxis) * (lane / (float)WorldConstants.PixelsPerUnit);
+                // Lane jitter: each ant is drawn a few whole art pixels ahead of or behind its spot, and above or below the
+                // surface it walks on (the second offset comes from a hash of its lane, so the two vary independently).
+                int ahead = (int)math.round(a.Lane / 127f * LanePixels.x);
+                uint h = math.hash(new int2(a.Lane, 0x51ed));
+                int side = LanePixels.y + LanePixels.z;
+                int across = side > 0 ? (int)(h % (uint)(side + 1)) - LanePixels.z : 0;
+                float2 laneShift = (new float2(forwardAxis) * ahead + new float2(up) * across) / WorldConstants.PixelsPerUnit;
                 float2 center = SpriteQuads.OnSurface(world, up, size.y) + laneShift;
                 var tint = a.SinceHurt < FlashSeconds ? Bars.Flash : new Color32(255, 255, 255, 255);
                 SpriteQuads.WriteQuad(Vertices, quad, center, size, up, facing, Rects[rect], tint, world);
