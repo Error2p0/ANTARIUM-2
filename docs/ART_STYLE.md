@@ -190,7 +190,7 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 
 ## 9. What exists
 
-Drawn in the new style: **the whole colony** (8 castes, queen, princess, egg, item lumps, golden beetle and
+192 PNGs (159 in use). Drawn in the new style: **the whole colony** (8 castes, queen, princess, egg, item lumps, golden beetle and
 aphid), **every building** (27 PNGs), **the 7 enemies**, **the surface** (plants, bird, aphid), **all 26
 terrain tiles**, the UI skin (frame, button bevels, inset), **74 icons** (items, buildings, castes, tools,
 abilities, fixed entries) and the title crest.
