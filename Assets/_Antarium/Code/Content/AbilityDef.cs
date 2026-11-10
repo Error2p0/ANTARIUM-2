@@ -22,7 +22,7 @@ namespace Antarium.Content
     {
         public AbilityKind kind;
         [TextArea] public string description;
-        [Tooltip("Position on the ability bar (lower first). The first four get the Z / X / C / V hotkeys.")]
+        [Tooltip("Position on the ability bar (lower first). The first five get the Z / X / C / V / B hotkeys.")]
         public int order;
 
         [Min(1f)] public float cooldown = 120f;

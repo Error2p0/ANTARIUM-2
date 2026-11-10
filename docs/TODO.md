@@ -152,7 +152,7 @@
 - Vein Instinct orders every revealed material that drops a non-food item (ore, coal, amber, fossils, crystals, relics) within 2 cells of a dug-out cell, including cells dug by the player and cave-ins.
 - The flight screen shows decimals in the system's number format (like the resource bar rates).
 - Caste, pheromone and possession balance is first-pass (caste costs and multipliers, shares, scent fade time, trail speed, priority distance, Burst numbers, possession numbers).
-- Specialists only do their own jobs (by their job weights): miners stand idle without mining orders, nurses without a nursery. That is the point of the mix, but the panel only hints at it for nurses.
+- Specialists only do their own jobs (by their job weights): miners stand idle without mining orders, builders without blueprints. Since 10.4 nurses haul and engineers supply machines while their own job waits.
 - Scents are on / off for the simulation; strength only sets how long they last and how they are drawn. No diffusion. Emitters keep only cells that are already scented (plus their own spot).
 - Scouts only sense rock from tunnels the colony has explored; they never walk into undiscovered caves (those still open by breaching, with their creatures).
 - Engineers stay by their machine even while it waits for input.
@@ -189,9 +189,8 @@
 - Iron goes into research, iron belts / lifts / gates and the princess chamber; coal into research and smelting iron.
 - Belts need no floor (they can be strung across a chamber). Machines need a flat floor; if it is dug away later the machine keeps floating.
 - Placeholder sprites for buildings are generated in code (`BuildingSprites`).
-- Ants following the same flow field walk in single file and overlap ("conga line"); trails make it more visible. Add small per-ant lateral offsets or lane jitter when it starts to matter.
 - `LightSystem.UpdateDirty` unions all dirty chunks into one rect. With many ants digging at distant fronts this grows; split into clusters.
-- Job priorities are global weights in `GameConfig.worker` (dig, haul) and `GameConfig.logistics` (build, machine preference), times each caste's job weights; the player steers them with Dig / Gather scents. A priority panel comes later if scents aren't enough.
+- Job priorities: global weights in `GameConfig.worker` / `logistics`, times each caste's job weights, times the priority panel's multiplier (10.4); Dig / Gather scents still put scented jobs first. Priorities are colony-wide, not per caste.
 - Food balance is first-pass: the Fungus Garden roughly doubles what foraged seeds are worth, but supply is still limited by seed spawns.
 - Debris particles: capped per frame (`feedback.maxParticlesPerFrame`).
 - Placeholder art is generated in code (`ColonySprites`, `MaterialTextureBuilder`); replace with real sprites/tiles.
@@ -340,13 +339,19 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
   - Known limits: icons are missing in the hover panel and the achievements dialog; the store media in `Captures/` (trailer clips, GIFs) and on the Steam page still show the old art until they are re-captured (`CaptureMenu.Run("all", false)`, then `tools/media`); the generated fallbacks in `ColonySprites` / `BuildingSprites` still draw the old placeholder look and are only seen if a PNG is removed; the queen's second frame and the scout's three leg rows exist only in the PNGs (the fallback repeats one queen frame).
 
 
-**10.4 Colony depth** (open: queen evolution currency. Use the 10.7a art for glow / fire ants, the Queen panel, priority and trait icons, and follow `docs/ART_STYLE.md`; the same holds for 10.5 and 10.6)
-- [ ] **Glow Ant** caste (research, deep): carries light. Drawn as small dynamic lights near the camera (pooled `Light2D`, GPU light splat for the rest), so dark depths can be lit by ants; finally adds **ShadowCaster2D** near the camera for these lights (GDD 3.2).
-- [ ] **Fire Ant** caste: immune to lava heat and fire, takes no burn damage; works the magma zone. New hazard **heat**: ants near lava / in the magma zone lose health slowly without it.
-- [ ] **Queen evolution tree** (per colony, unlike genetics): spend rare finds (honeydew, relics, star fragments, royal jelly) on bigger broods, queen health / regeneration, extra egg slots, castes unlocked earlier, a new ability. Opens from the **Queen panel** (click the queen / Q key): stats, upkeep, eggs, caste mix shortcut, evolutions.
-- [ ] **Priority panel**: per job (dig, haul, build, supply, tend, nurse) a priority 1–5 that multiplies the global weights; caste weights stay.
-- [ ] **Ant XP and levels** per ant in its main job (faster at it, small cap); optional **traits** at hatch (*Strong* carry +1, *Swift*, *Lucky* drops, *Lazy*), shown in the hover panel. `ANTS` 4.
-- [ ] **Lane jitter**: small per-ant offsets so a column of ants on one route reads as a stream, not a single sprite.
+**10.4 Colony depth** ✅ (GDD 2.3.1; decided 2026-11-10: evolutions are paid with **rare finds from the stock**, no new currency. Decided while building: the queen has no hit points (raiders eat food, they don't attack her), so the health / regeneration evolutions work on her brood; the Queen panel key is **H** because Q picks buildings; nurses and engineers got a weak fallback job so the Tend / Nurse priorities have something to weigh against)
+- [x] **Glow Ant** (`AntCaste.Glow`, research *Glow Ants*: 50 knowledge + 6 crystal shards, after Scout Caste): a worker (dig / build 0.8) whose gaster glows. Every glow ant draws its unlit halo sprite; the 24 nearest the view centre get a pooled `Light2D` (`GlowConfig`), and **ShadowCaster2D** rectangles are made from the rock edges near those lights (pooled, refreshed 4× a second; URP's default unit-square shape sized by the transform, so no private API). GDD 3.2.
+- [x] **Fire Ant** (`AntCaste.Fire`, research *Fire Ants*: 60 knowledge + 4 obsidian + 2 iron, after Engineer Caste): heat-proof (`CasteDef.heatProof`), a quarter of lava damage, 60 HP, digs 1.2×. **Heat** hazard: 3 HP/s next to lava, magma rock or a fire; `BiomeDef.heat` per biome (magma zone 0.8/s); death cause *Heat*.
+- [x] **Queen evolutions** (`EvolutionDef`, `EvolutionSystem`, `ContentSetup.Depth.cs`): per colony, one cost per level (rare finds + food). *Bigger Broods* (laying +15%/level), *Royal Cradles* (+2 egg slots/level), *Hardy Brood* (+15% ant HP), *Quick Mending* (+50% healing, new stat `AntRegen`), *Deep Lineage* (glow then fire ants without research), *Quickening* (new ability: every egg hatches at once, 5 min, key **B**). Each column needs a level of the one to its left.
+- [x] **Queen panel** (H, toolbar *Queen*, or click the queen with the Dig / Mine tool): laying, eggs, upkeep, skilled ants and traits, *Caste mix* shortcut, the evolution tree (icons, level pips, costs with what the stock lacks), `frame_queen` skin.
+- [x] **Priority panel** (P, toolbar *Jobs*): dig, haul, build, supply, tend, nurse at 1..5 → distance ×4 / ×2 / ×1 / ×0.5 / ×0.25 (`AntGrowthConfig.priorityWeights`); caste weights stay. Nurses and engineers weigh their own job (`roleWeight` 0.1 × priority) against shared jobs: nurses may now haul and engineers supply (weight 2), so they also help when their own job waits.
+- [x] **Ant XP and levels**: an ant's first job becomes its skill; work in it gives XP (dig / build per unit of work, haul / supply per item, tend per second, nurse per egg); levels 1..5 at 15 / 45 / 110 / 240 XP: +5% speed at it per level and a slight preference. **Traits** at hatch (30%): Strong (+1 carried), Swift (×1.2 walking), Lucky (25% chance of an extra drop), Lazy (×0.8 work and walking). Hover text shows level, XP and trait; a toast when an ant reaches level 5.
+- [x] **Lane jitter**: per-ant lane (−127..127): walking speed ±7% and drawn up to 3 art pixels ahead / behind on its route.
+- [x] Save: `ANTS` 4 (XP, skill, trait, lane; older ants get a lane from their random state), new section `QUEN` 1 (evolutions by id, priorities), read right after research. The showcase save (format 5, `ANTS` 3) loads.
+- [x] Art: glow / fire walk cycles and the halo wired in (colony atlas 96 → 128 rows), evolution / priority / trait / pip icons and `frame_queen` used; new icons `caste_glow`, `caste_fire`, `ability_quickening` (`tools/art/planned.py`).
+- [x] 203 EditMode tests (11 new: heat near hot rock and in a hot biome, fire ants and lava / fire, evolution payment / levels / unlocks, the Quickening, priorities steering a worker, nurse priority vs hauling, XP and level speed-up, traits and Strong carrying, lanes, save round trip).
+- Verified in the editor (capture shot `depth`, `Captures/stills/depth_*`): glow ants lighting a dark ruin tunnel with shadows cut by the rock (and without lights / without shadows for comparison), fire ants and workers by the lava, the Queen panel with bought evolutions, the priority panel beside the castes panel, an ant's hover text, a busy route with lanes.
+- Known limits: glow ants without a real light only show their halo (no light on the terrain); shadow casters are rebuilt 4× a second, so a freshly dug cell can let light through for a moment; the halo is drawn behind all ants; evolution and priority balance is first-pass; the Quickening has no special effect beyond the hatch sounds; ant traits can't be rerolled; skill is fixed by the first job (a worker that first hauled stays a hauler); the Queen panel, the priority panel and the fifth ability have no gamepad binding yet (Steam Deck pass).
 
 **10.5 Deep endgame: crystals and ruins** (no open questions)
 - [ ] **Crystal resonance**: a *Crystal Resonator* next to glow crystals (more crystals in its conductive cluster = stronger) produces knowledge and speeds nearby machines; mining the cluster weakens it.
@@ -377,11 +382,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Ores are crushed and smelted into copper and iron; iron builds iron belts, lifts and gates. Magma heat replaces coal in the Smelter; water wheels speed up machines; irrigation raises farm output.
 
 **Colony & ants**
-- No late castes yet: glow ants that carry light, heat-resistant ants for the magma zone.
-- No queen evolution tree (castes come from research).
-- Priorities are only Dig / Gather scents and per-caste job weights; no priority panel.
-- No ant XP/levels or traits.
-- Ants on the same route walk in single file and overlap.
+- 10 castes, including glow ants (light) and fire ants (heat-proof); a queen evolution tree per colony; job priorities; ant experience, levels and traits (10.4).
 
 **World**
 - All 7 planned biomes exist; crystal resonance and the ruins' story / endgame tech are not in yet.
@@ -390,7 +391,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Weather is rain and drought only (no storms, no seasons).
 
 **Gameplay layers**
-- Research: no queen evolution tree. Auto-designating veins exists as the genetic trait *Vein Instinct*.
+- Auto-designating veins exists as the genetic trait *Vein Instinct*.
 - One save slot (synced by Steam Cloud).
 - Threats: termite raids, birds by day, wolf spiders at night and one cave creature per deep biome; no rival ant colonies, no enemies that dig (10.5).
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
@@ -400,7 +401,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - World art is PNG now (colony, buildings, enemies, surface, terrain; 10.7a). Still generated in code: the marker diamond, the bird's shadow, rain, dig debris and number pops.
 - Sound effects and ambience are synthesized placeholders; music is recorded (10 tracks), no flight / discovery stingers yet.
 - UI: skin and icons done in 10.7a; the hover panel has no icons, and the achievements dialog shows plain squares instead of the achievement icons.
-- No queen panel. Tooltips are limited to the hover info panel, the toolbar and the research hover details.
+- Tooltips are limited to the hover info panel, the toolbar and the research / evolution hover details.
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
-- One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).
+- Dynamic lights: the possessed ant's and up to 24 glow ants near the view, with ShadowCaster2D rock shadows near the glow lights (10.4).
 - Store page is in review, not public yet; no Steam Deck pass or public build yet (Milestone 9).

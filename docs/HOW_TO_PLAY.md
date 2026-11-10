@@ -42,6 +42,7 @@ Clicking a **golden beetle** catches it, whatever tool is active (see *Random ev
 | **X** | **Seismic Sense** | Used **at the cursor**: reveals every ore cell, grub nest and crystal within 24 cells, even in unexplored darkness. Revealed finds glow faintly so you can spot them. Recharges in 90 seconds. Unlocked by research. |
 | **C** | **Royal Decree** | Used right away: the queen lays 4 eggs at once, free of food (beyond the usual egg limit). Recharges in 4 minutes. Unlocked by research. |
 | **V** | **Pheromone Burst** | Used **at the cursor**: every ant within 20 cells drops what it is doing and rushes to that spot, 50% faster, for 15 seconds. Good for swarming raiders or crowding a new dig site. Recharges in 2.5 minutes (no ants in range: nothing happens and it doesn't recharge). Unlocked by research. |
+| **B** | **Quickening** | Used right away: every egg hatches at once (next to the queen, in nurseries and carried by nurses). Recharges in 5 minutes (no eggs: nothing happens). Unlocked by the queen's *Quickening* evolution. |
 
 The ability buttons sit at the bottom right (only unlocked ones are shown) with the time left to recharge. Clicking **Seismic Sense** or **Pheromone Burst** there waits for you to click a spot in the world; right click or **Esc** cancels.
 
@@ -104,6 +105,8 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 | **O** (or the **O Flow** button) | Toggle the flow overlay (see *The screen*) |
 | **T** (or the **T Research** button) | Open / close the research tree |
 | **K** (or the **K Castes** button) | Open / close the castes panel (once the queen can lay anything but workers) |
+| **P** (or the **P Jobs** button) | Open / close the job priority panel |
+| **H** (or the **H Queen** button, or click the queen with the Dig or Mine tool) | Open / close the Queen panel (her stats and evolutions) |
 | **N** (or the **N Flight** button) | Open / close the Nuptial Flight screen (once *Nuptial Flight* is researched, or after your first flight) |
 | **G** (or the **G Genes** button) | Open / close the Genetic Memory tree (once you have had Genetic Memory, or from the flight screen) |
 
@@ -150,14 +153,16 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **Weather** cards: *Rain* or *Drought* with the time left.
   - A red **bird** card while a bird circles (*Strikes in 6s*), then whether it took any ants; a red **Night hunters** card while spiders prowl (*Until dawn*). **Go** jumps to the bird or a spider.
   - A red **Fire!** card while anything burns (*12 cells burning*); **Go** jumps to the fire.
-- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
+- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **P Jobs**, **H Queen**, **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
+- **Job priority panel** (next to the castes panel, **P**): one row per job (Dig, Haul, Build, Supply, Tend, Nurse) with its priority from **1 lowest** to **5 highest** and **-** / **+**. See *Job priorities*.
+- **Queen panel** (middle of the screen, **H** or click the queen): how often she lays, her eggs, the colony's food upkeep, how many ants are skilled or masters and their traits, a **Caste mix** button that opens the castes panel, and her **evolution tree**. See *The queen's evolutions*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
 - **Build palette** (above the toolbar, Build tool only): every building with its cost, in up to three rows. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
 - **Configure panel** (right, **I**) and **stock view** (click an item in the resource bar): see *Configure (I)*.
 - **Scent palette** (above the toolbar, Scent tool only): the five pheromones with what each does. *Defend* is faded until you have soldiers.
-- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent, a princess chamber's princesses), an **ant** under the cursor (caste, hit points, what it is doing, e.g. *hiding from the bird*, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor, what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls.
-- **Messages** (above the info panel): short notes, e.g. a refused placement (*Not enough Copper Ore (3/12)*), finished research, an ability that is still recharging, a claimed contract, a random event, an ant lost (*A worker drowned.*, *2 workers were taken by a bird.*), a cave-in, a broken gate, dawn and nightfall, the weather, or taking / losing control of an ant.
+- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent, a princess chamber's princesses), an **ant** under the cursor (caste, hit points, what it is doing, e.g. *hiding from the bird*, its skill and level, e.g. *Level 3 digger (+10% at it), 60/110 XP*, its trait, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor, what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls.
+- **Messages** (above the info panel): short notes, e.g. a refused placement (*Not enough Copper Ore (3/12)*), finished research, an ability that is still recharging, a claimed contract, a random event, an ant lost (*A worker drowned.*, *2 workers were taken by a bird.*, *A worker died of the heat.*), a queen evolution, an ant that became a master (level 5), a cave-in, a broken gate, dawn and nightfall, the weather, or taking / losing control of an ant.
 - **Research tree (T):** see *Research*.
 - **Nuptial Flight screen (N)** and **Genetic Memory tree (G):** see *Nuptial Flight and Genetic Memory*.
 - **Welcome back** (after the game was closed): what the colony did while you were away.
@@ -248,6 +253,7 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 - **Honeydew** (from an **Aphid Ranch**) is kept in the stock like an item. The queen eats one from the stock every **20 seconds** while there is any (leaving what you keep for building): meanwhile she lays **50% faster** and needs no food of her own.
 - **Starving:** if food runs out, the colony is starving. Workers move and dig at half speed and the queen stops laying until food comes in again. Nobody starves to death.
 - While **raiders are in the royal chamber** the queen doesn't lay either.
+- The **Queen panel** (**H**, or click her) shows all of this at a glance and holds her evolutions.
 
 ### What workers do on their own
 Each idle worker picks the best job it can reach (nearer jobs first; jobs inside **Dig here** / **Gather** scent come first, jobs inside **Avoid** scent are never taken):
@@ -261,6 +267,12 @@ Workers crawl on floors, walls, ceilings and the back wall of dug tunnels, so th
 
 Other castes only do their own kind of work (see *Castes*); soldiers never take jobs.
 
+### Job priorities (P)
+Every job has a priority from **1 (lowest)** to **5 (highest)**, **3** at the start. A higher priority makes ants pick that job over others nearby: the distance to a job counts ×4 at 1, ×2 at 2, ×1 at 3, ×0.5 at 4 and ×0.25 at 5. Each caste still only does the jobs it does.
+- **Dig** (mining orders), **Haul** (loose items to storage or machines), **Build** (blueprints), **Supply** (fetching machine inputs from storage).
+- **Tend** and **Nurse** are the engineers' and nurses' own jobs. They normally come first; lower them and engineers supply machines, nurses haul, when that is much closer.
+- Scents still work on top: jobs inside **Dig here** / **Gather** scent come before the rest.
+
 ### Castes
 The queen lays **workers** at first. Research unlocks more castes (see *Research*); each one you unlock starts at a **10% share** of the colony (soldiers 20%). Open the **castes panel (K)** to change the shares with **-** / **+** in 5% steps: one caste can be at most 50%, all of them together at most 80%, and **workers fill the rest**. The queen always lays whichever caste is furthest below its share.
 
@@ -270,14 +282,37 @@ The queen lays **workers** at first. Research unlocks more castes (see *Research
 | **Soldier** | 15 | 0.6 | 150 | Fights (bites hard), guards posts and Defend scent; never takes jobs |
 | **Miner** | 9 | 0.35 | 50 | Digs **3 times as fast**, but only digs |
 | **Hauler** | 8 | 0.3 | 45 | Carries **3 items** of a kind at once and walks 20% faster; only hauls and fetches for machines |
-| **Nurse** | 6 | 0.2 | 30 | Carries eggs from the queen to a **Nursery** |
+| **Nurse** | 6 | 0.2 | 30 | Carries eggs from the queen to a **Nursery**. With no eggs to carry it hauls |
 | **Builder** | 8 | 0.3 | 45 | Builds **3 times as fast**, but only builds |
 | **Scout** | 8 | 0.3 | 35 | Walks 50% faster to the edge of your tunnels and **senses the rock up to 10 cells around**: hidden cells there are revealed and ore found glows. Chases and catches **golden beetles** |
-| **Engineer** | 10 | 0.35 | 40 | Walks to a machine nobody tends and stands by it: the machine works **50% faster** |
+| **Engineer** | 10 | 0.35 | 40 | Walks to a machine nobody tends and stands by it: the machine works **50% faster**. With no machine to tend it carries machine inputs from storage |
+| **Glow Ant** | 10 | 0.35 | 35 | A worker whose gaster glows: digs, hauls, builds and fetches (digs and builds at 80%) and **lights the tunnels around it** |
+| **Fire Ant** | 12 | 0.4 | 60 | A worker for the magma zone: **no harm from fire or heat**, a quarter of the damage from lava; digs 20% faster than a worker |
 
-- Specialists stand idle when there is none of their work (miners without mining orders, nurses without a nursery). Keep their shares to what you need.
+- Specialists stand idle when there is none of their work (miners without mining orders, builders without blueprints). Keep their shares to what you need.
+- **Glow ants** come from the research *Glow Ants* or the queen's *Deep Lineage* evolution, **fire ants** from *Fire Ants* or *Deep Lineage* level 2.
 - **Nursery** (Build tool, unlocked with *Nurse Caste*): nurses bring eggs here. Eggs in a nursery hatch **50% faster** and free the queen's egg slots, so she keeps laying. A nursery holds 6 eggs. Without nurses or a nursery, eggs simply hatch next to the queen as before.
 - One engineer per machine; it stays until the machine is removed.
+
+### Experience and traits
+- An ant's **first job becomes its skill** (digging, hauling, building, supplying, tending or nursing). Only work in that job gives it experience: digging and building by the work done, hauling and supplying per item delivered, tending per second by a working machine, nursing per egg brought to a nursery.
+- **Levels 1–5** (at 15, 45, 110 and 240 XP): every level above 1 makes it **5% faster** at its skill (dig and build power, walking while it carries for that job, an engineer's boost to its machine), and it picks its skill a little more often. Point at an ant to see its level and XP. A message tells you when an ant becomes a **master** (level 5).
+- About one ant in three hatches with a **trait**: **Strong** (carries one more item), **Swift** (walks 20% faster), **Lucky** (a quarter of the cells it breaks drop one more item), **Lazy** (works and walks 20% slower).
+- Ants on the same route walk at slightly different speeds (±7%) and are drawn a little apart, so a column reads as a stream.
+
+### The queen's evolutions (H)
+The queen evolves with **rare finds from the stock**. Evolutions belong to this colony (a Nuptial Flight starts the next colony without them). Open the **Queen panel** (**H** or click her), point at an evolution for what it does and what the next level costs, click to buy it. Each column needs at least one level of the evolution to its left.
+
+| Evolution | Levels | Per level | Cost (level 1 / 2 / 3) |
+|---|---|---|---|
+| **Bigger Broods** | 3 | Lays 15% faster | 4 Honeydew + 20 Food / 8 Honeydew, 2 Amber + 40 Food / 12 Honeydew, 4 Amber, 1 Star Fragment + 60 Food |
+| **Royal Cradles** | 3 | 2 more eggs can wait by her | 2 Amber + 15 Food / 6 Honeydew, 3 Fossils + 30 Food / 2 Star Fragments, 1 Relic + 45 Food |
+| **Hardy Brood** (needs Bigger Broods) | 3 | Every ant has 15% more hit points | 2 Amber, 2 Chitin / 4 Amber, 4 Chitin, 1 Fossil / 3 Fossils, 1 Relic |
+| **Quick Mending** (needs Royal Cradles) | 2 | Ants heal 50% faster | 4 Honeydew, 3 Chitin / 2 Star Fragments, 4 Chitin |
+| **Deep Lineage** (needs Hardy Brood) | 2 | Level 1: she lays **glow ants**, level 2: **fire ants** (no research needed) | 6 Crystal Shards, 4 Honeydew / 4 Obsidian, 2 Relics |
+| **Quickening** (needs Quick Mending) | 1 | Unlocks the **Quickening** ability (B) | 3 Star Fragments, 2 Relics, 6 Honeydew |
+
+The items she takes are the same ones the Archive studies for knowledge, so you choose what each find is for. Keep a reserve (stock view) for anything you want to save.
 
 ### Pheromones (Scent tool, 5)
 Paint scents onto the map to steer the colony. Each scent is shown as coloured speckles.
@@ -409,6 +444,8 @@ The **Pump** is locked until you research *Hydraulics*, the **Water Wheel** unti
 | 2 | **Aphid Herding** | 18 Knowledge, 3 Root Fibre | Fungiculture | Unlocks the **Aphid Ranch** |
 | 3 | **Hydraulics** | 25 Knowledge, 2 Copper, 3 Root Fibre | Aphid Herding | Unlocks the **Pump** |
 | 4 | **Water Mills** | 40 Knowledge, 4 Iron | Hydraulics | Unlocks the **Water Wheel** |
+| 5 | **Glow Ants** | 50 Knowledge, 6 Crystal Shards | Scout Caste | The queen can lay **glow ants** |
+| 5 | **Fire Ants** | 60 Knowledge, 4 Obsidian, 2 Iron | Engineer Caste | The queen can lay **fire ants** |
 
 ### Contracts
 - The board on the right always shows **3 contracts** (4 with *Contract Network*). Progress counts from the moment a contract appears.
@@ -447,7 +484,7 @@ The world gets stranger the deeper you dig. Depths are cells below the surface; 
 | **Stone strata** | 290–690 | stone | coal, iron, amber, fossils, glow crystals | lakes, **centipedes** |
 | **Crystal Caverns** | 690–870 | quartzite (hard) | lots of glow crystals, iron, amber | big caves, lakes, **cave spiders** |
 | **Fungal Depths** | 870–1050 | mycelium (soft, **burns**) | **giant fungus** (food, glows, burns), coal | **spore gas**, lakes, swarms of **fungal mites** |
-| **Magma Zone** | 1050–1250 | basalt (very hard) | **obsidian**, iron, coal, glowing **magma rock** (hot: heats a Smelter) | **lava lakes** (they set coal alight), gas, **fire beetles** |
+| **Magma Zone** | 1050–1250 | basalt (very hard) | **obsidian**, iron, coal, glowing **magma rock** (hot: heats a Smelter) | **heat** everywhere, **lava lakes** (they set coal alight), gas, **fire beetles** |
 | **Ancient Ruins** | 1250–bottom | ruin brick (very hard) | **relics** (25 knowledge each in the Archive), glow crystals | rooms guarded by **ruin guardians** |
 
 The ruins are a grid of rectangular rooms joined by doors and hatches, built by a lost ant civilization.
@@ -476,6 +513,7 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
 
 ### Health
 - Workers have **40 hit points**, soldiers **150**. Ants heal **2 per second** after 6 seconds without damage.
+- **Heat:** an ant next to lava, glowing magma rock or a fire loses **3 hit points per second**, and anywhere in the **magma zone** it loses **0.8 per second**, so ants working there long enough die of the heat. **Fire ants** don't mind it. *Air Sacs* halves it.
 - An ant that dies drops whatever it carried. A message says what happened. Losing ants is a setback, not the end.
 
 ### Enemies and raids
@@ -565,6 +603,7 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 ### Light and darkness
 - Sunlight reaches into shafts and tunnels near the surface and fades deeper down. It follows the time of day: dim bluish moonlight at night, a little darker while it rains.
 - **Glow crystals**, **giant fungi**, **magma rock** and **lava** light their surroundings, and a small warm light goes with the ant you control.
+- **Glow ants** carry a green light. The ones nearest the middle of the screen (up to 24) light the tunnel around them, and rock casts shadows from their light; the others show only their glowing gaster.
 - Explored but unlit areas stay dim. Unexplored areas are black.
 - Ants, the queen and items always stay visible enough to follow.
 
@@ -606,10 +645,11 @@ The **contracts** on the right walk you through the first steps; this is the sam
 16. Research **Miner Caste** and **Hauler Caste**, then open the castes panel (**K**) and give them a share. Later **Nurses** with a **Nursery** keep the queen laying, **Scouts** find ore in the dark, **Engineers** speed up your machines.
 17. Point at an ant and press **F** to play it yourself: dig a shortcut, carry a find home, or bite a raider. **F** again lets go.
 18. Once the factory grows: **chests** (4) next to your machines, **I** on a chest or storage zone to sort what goes where, an **Unloader** (*Stockkeeping*) to feed a smelter straight from a chest, a **Crusher** (*Ore Crushing*) for 75% more metal per ore, and **Iron Belts** (*Reinforced Silk*) dragged over your busiest silk lines.
-19. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
+19. Open the **Queen panel** (**H**) once you have honeydew and amber: *Bigger Broods* and *Royal Cradles* grow the colony faster. Set **job priorities** (**P**) when ants dig while items pile up (or the other way round). Deeper down, **glow ants** light the dark layers and **fire ants** work the magma zone, where heat slowly kills everyone else.
+20. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
 
 ---
 
 ## Not in the game yet
 
-Glow ants and heat-resistant ants, a queen evolution tree, crystal resonance (conductive copper ore and crystals do nothing yet), rival ant colonies and digging enemies, several save slots, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
+Crystal resonance (conductive copper ore and crystals do nothing yet), rival ant colonies and digging enemies, several save slots, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
