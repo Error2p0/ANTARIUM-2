@@ -16,6 +16,7 @@ import numpy as np
 import buildings
 import colony
 import creatures
+import planned
 import terrain
 import ui
 from palette import RAMPS
@@ -54,6 +55,8 @@ PIECES.update({"building_" + name: (f"Buildings/{name}.png", painter) for name, 
 PIECES.update({"enemy_" + name: (f"Enemies/{name}.png", painter) for name, painter in creatures.ENEMIES.items()})
 PIECES.update({"surface_" + name: (f"Surface/{name}.png", painter) for name, painter in creatures.SURFACE.items()})
 PIECES.update({"terrain_" + name: (f"Terrain/{name}.png", painter) for name, painter in terrain.TILES.items()})
+# Art for planned content (10.4 - 10.6): written and imported like the rest, used by nothing yet.
+PIECES.update({"planned_" + name: piece for name, piece in planned.PIECES.items()})
 
 
 def palette_sheet():

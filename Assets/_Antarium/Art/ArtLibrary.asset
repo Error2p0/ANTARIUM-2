@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: ArtLibrary
   m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ArtLibrary
   entries:
+  - name: Buildings/ancient_engine
+    texture: {fileID: 2800000, guid: 3f78cff076c12404a9e1dc07b406578d, type: 3}
   - name: Buildings/aphid_ranch
     texture: {fileID: 2800000, guid: 7a399cded4f84314d890ebae0a6d8e87, type: 3}
   - name: Buildings/archive
@@ -23,6 +25,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: ce7816fde99a90c4d8424b015677819e, type: 3}
   - name: Buildings/crusher
     texture: {fileID: 2800000, guid: 049cac4200723984892d522ce63ff037, type: 3}
+  - name: Buildings/crystal_resonator
+    texture: {fileID: 2800000, guid: 1824e5bf59af20847be9148456d3e2c1, type: 3}
   - name: Buildings/dot
     texture: {fileID: 2800000, guid: 777b29bd163f46745b6a82db687d3b8b, type: 3}
   - name: Buildings/earth_wall
@@ -49,6 +53,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: ac0c15bf0b7062c4e93a882b7658bc7c, type: 3}
   - name: Buildings/pump
     texture: {fileID: 2800000, guid: 04fd1c2d0a5b7514183d5c404b75a7f9, type: 3}
+  - name: Buildings/queens_throne
+    texture: {fileID: 2800000, guid: dc5c7fe81ed1e854b9901bbf6e8d02c4, type: 3}
   - name: Buildings/resin_gate
     texture: {fileID: 2800000, guid: 50c96f00507a3da4eb6676e0df1cb96d, type: 3}
   - name: Buildings/resin_trap
@@ -71,6 +77,12 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 176df814974107c4b9c88eca1b39efb7, type: 3}
   - name: Colony/ant_engineer
     texture: {fileID: 2800000, guid: 38755752a1cbfe94eae6f1267e728551, type: 3}
+  - name: Colony/ant_fire
+    texture: {fileID: 2800000, guid: 1a6b3bc3c42710f47b613f8a00050529, type: 3}
+  - name: Colony/ant_glow
+    texture: {fileID: 2800000, guid: ea2cc3664f23c53488696e02c96b2077, type: 3}
+  - name: Colony/ant_glow_halo
+    texture: {fileID: 2800000, guid: 3c6c5bf264d95ed458ed30b357c014e3, type: 3}
   - name: Colony/ant_hauler
     texture: {fileID: 2800000, guid: 36b7bbd131c0d60468ab928cbf6cab65, type: 3}
   - name: Colony/ant_miner
@@ -105,6 +117,12 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 2cca79b173b3ec64cbabdfac5bc5e826, type: 3}
   - name: Enemies/mite
     texture: {fileID: 2800000, guid: b23ca6a880b45854397165dc8db53932, type: 3}
+  - name: Enemies/mole_cricket
+    texture: {fileID: 2800000, guid: bcf85b588890b7c43b1f30946374705f, type: 3}
+  - name: Enemies/mole_cricket_dig
+    texture: {fileID: 2800000, guid: 8ff2e91a4e843414f97bfc55d17504b2, type: 3}
+  - name: Enemies/rival_ant
+    texture: {fileID: 2800000, guid: ad93ca045a8b33548bfcd146534c98a6, type: 3}
   - name: Enemies/spider
     texture: {fileID: 2800000, guid: c397a0719e0b32e468657db557cf0a7b, type: 3}
   - name: Enemies/termite
@@ -249,6 +267,18 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 9d2ecd365a3e8914b81e5b1eb7ec8643, type: 3}
   - name: UI/Icons/eggs
     texture: {fileID: 2800000, guid: 62ec88d71b40bc4448dc74364e2a352b, type: 3}
+  - name: UI/Icons/evolution_ability
+    texture: {fileID: 2800000, guid: b7ba01c10c500a34986c0623f94d5607, type: 3}
+  - name: UI/Icons/evolution_brood
+    texture: {fileID: 2800000, guid: 490a33c3cc168374581e702bfed2f82b, type: 3}
+  - name: UI/Icons/evolution_castes
+    texture: {fileID: 2800000, guid: 0f3b52735ff921d49892f483899c236b, type: 3}
+  - name: UI/Icons/evolution_egg_slots
+    texture: {fileID: 2800000, guid: 77379afdf5894ae4bad9199c27c5b4f4, type: 3}
+  - name: UI/Icons/evolution_health
+    texture: {fileID: 2800000, guid: b33584f94bfc18743a28fac1a4f7d755, type: 3}
+  - name: UI/Icons/evolution_regeneration
+    texture: {fileID: 2800000, guid: 8f176651fc8a3c34e928461a0be215cb, type: 3}
   - name: UI/Icons/food
     texture: {fileID: 2800000, guid: 3365556d0b0ca3647ad274fe29c2dad9, type: 3}
   - name: UI/Icons/item_amber
@@ -291,14 +321,36 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: c359da180e0b17543a19b87bbd9a1376, type: 3}
   - name: UI/Icons/item_star_fragment
     texture: {fileID: 2800000, guid: 085e60f9f73c1694aa5b88177941e0f4, type: 3}
+  - name: UI/Icons/item_tablet
+    texture: {fileID: 2800000, guid: 3282bbf66606aa943aa484008240d6de, type: 3}
   - name: UI/Icons/knowledge
     texture: {fileID: 2800000, guid: b14ee1e3c5178c547af3716e2e4ed00b, type: 3}
+  - name: UI/Icons/level_pips
+    texture: {fileID: 2800000, guid: 71e52a8e2e2593f40822d33d188f0cda, type: 3}
+  - name: UI/Icons/lore_fragment
+    texture: {fileID: 2800000, guid: a6de6abf782c0a94fb5c40b34aa076a3, type: 3}
+  - name: UI/Icons/lore_fragment_locked
+    texture: {fileID: 2800000, guid: 64b6e971fab0cd540a7ba83992806552, type: 3}
   - name: UI/Icons/memory
     texture: {fileID: 2800000, guid: d29a4b5f0b224c64bb5773b1a9cc1623, type: 3}
   - name: UI/Icons/moon
     texture: {fileID: 2800000, guid: 47057d723c444ba478a3e20fe2b9e0df, type: 3}
   - name: UI/Icons/princesses
     texture: {fileID: 2800000, guid: f5f846783fa10344d8d4e8ccd99ae608, type: 3}
+  - name: UI/Icons/priority_build
+    texture: {fileID: 2800000, guid: 5c54fb8eb09c19d4bb952b16334951b8, type: 3}
+  - name: UI/Icons/priority_dig
+    texture: {fileID: 2800000, guid: 925da7bb28c2a7247ae7bbd5a3ac75ca, type: 3}
+  - name: UI/Icons/priority_haul
+    texture: {fileID: 2800000, guid: d6ae7318283746540b5bc57725815823, type: 3}
+  - name: UI/Icons/priority_nurse
+    texture: {fileID: 2800000, guid: 2f844a1fd2a0ce548ad2bc4763b23b14, type: 3}
+  - name: UI/Icons/priority_supply
+    texture: {fileID: 2800000, guid: ac27067c54aac0e43883cddb7cdb44a3, type: 3}
+  - name: UI/Icons/priority_tend
+    texture: {fileID: 2800000, guid: 951c19947eaa4f14b918584f7c9758ce, type: 3}
+  - name: UI/Icons/respec
+    texture: {fileID: 2800000, guid: 9af73cc977a5332479246433f5b84d17, type: 3}
   - name: UI/Icons/storage
     texture: {fileID: 2800000, guid: a917084bc2da0c74babb6eb29bf1053c, type: 3}
   - name: UI/Icons/sun
@@ -321,12 +373,26 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 842dc0f77538e5340a6754cec341f882, type: 3}
   - name: UI/Icons/tool_scent
     texture: {fileID: 2800000, guid: 3b9d6dc16c75cbd4f8e71da50603b0f1, type: 3}
+  - name: UI/Icons/trait_lazy
+    texture: {fileID: 2800000, guid: c41bdc2df1f490a41b01db924fb08e4e, type: 3}
+  - name: UI/Icons/trait_lucky
+    texture: {fileID: 2800000, guid: 936b6ccd96f974740b8b6dbed72ecf1f, type: 3}
+  - name: UI/Icons/trait_strong
+    texture: {fileID: 2800000, guid: 53fab72e8518e7148bbea8b94241a034, type: 3}
+  - name: UI/Icons/trait_swift
+    texture: {fileID: 2800000, guid: 43bc646d7bc3542498079f9ec7a631cb, type: 3}
   - name: UI/Skin/button
     texture: {fileID: 2800000, guid: 7016396a4b8f496439c80023fd590cd2, type: 3}
   - name: UI/Skin/button_down
     texture: {fileID: 2800000, guid: b906f908b7ef1964e9a468e2ebd2ae66, type: 3}
   - name: UI/Skin/frame
     texture: {fileID: 2800000, guid: 717983b298113ff4e9244b2e3c90283b, type: 3}
+  - name: UI/Skin/frame_codex
+    texture: {fileID: 2800000, guid: 5ca6d64e06b067742a76f50970e7e1f3, type: 3}
+  - name: UI/Skin/frame_queen
+    texture: {fileID: 2800000, guid: d2923a3936d54f4419e17c64eafaba13, type: 3}
+  - name: UI/Skin/frame_slot
+    texture: {fileID: 2800000, guid: 137c16fd0ff4fcc49ab439544f39346e, type: 3}
   - name: UI/Skin/inset
     texture: {fileID: 2800000, guid: f9279a72b50aef74db485a91ae1ea0c0, type: 3}
   - name: UI/title_emblem

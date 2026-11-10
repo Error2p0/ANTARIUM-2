@@ -195,4 +195,30 @@ aphid), **every building** (27 PNGs), **the 7 enemies**, **the surface** (plants
 terrain tiles**, the UI skin (frame, button bevels, inset), **74 icons** (items, buildings, castes, tools,
 abilities, fixed entries) and the title crest.
 
-Not used yet: nothing (art for planned content comes in step 8 and is listed here then).
+## 10. Not used yet
+
+Art drawn ahead for milestones 10.4–10.6 (`tools/art/planned.py`). The PNGs are in the library; **no code uses
+them yet**. When the feature is built: give a world sprite a rect, a generated fallback and an `ArtSlot` in its
+atlas class (§8 step 4); show an icon with `HudController.SetIcon`; use a frame in `Hud.uss` like
+`UI/Skin/frame`. If the content gets another id than assumed here, rename the PNG.
+
+| For | PNG | Size | Frames |
+|---|---|---|---|
+| 10.4 Glow Ant | `Colony/ant_glow` | 12 × 7 | 4 walk (a caste: add it to `ColonySprites` like the specialists) |
+| 10.4 its light | `Colony/ant_glow_halo` | 13 × 13 | 1, dithered; draw it unlit, centred on the gaster (x 1–2 of the sprite) |
+| 10.4 Fire Ant | `Colony/ant_fire` | 12 × 7 | 4 walk |
+| 10.4 Queen panel | `UI/Skin/frame_queen` | 12 × 12, slice 4 | gold band |
+| 10.4 Evolutions | `UI/Icons/evolution_brood`, `_health`, `_regeneration`, `_egg_slots`, `_castes`, `_ability` | 10 × 10 | |
+| 10.4 Priority panel | `UI/Icons/priority_dig`, `_haul`, `_build`, `_supply`, `_tend`, `_nurse` | 10 × 10 | |
+| 10.4 Traits | `UI/Icons/trait_strong`, `_swift`, `_lucky`, `_lazy` | 10 × 10 | |
+| 10.4 Levels | `UI/Icons/level_pips` | 5 × 5 | 2 (empty, full): a strip, show half of it per pip |
+| 10.5 Crystal Resonator | `Buildings/crystal_resonator` | 16 × 16 | 2 (idle, resonating) |
+| 10.5 Ancient Engine | `Buildings/ancient_engine` | 32 × 24 | 4 stages (ruin, rebuilt with gear, crystals set, running) |
+| 10.5 Rival ant | `Enemies/rival_ant` | 12 × 7 | 2 walk (an `EnemyArt`) |
+| 10.5 Mole cricket | `Enemies/mole_cricket`, `Enemies/mole_cricket_dig` | 16 × 8 | 2 walk, 2 dig |
+| 10.5 Codex | `UI/Skin/frame_codex`; `UI/Icons/item_tablet`, `lore_fragment`, `lore_fragment_locked` | 12 × 12 slice 4; 10 × 10 | |
+| 10.6 Queen's Throne | `Buildings/queens_throne` | 32 × 16 | 1 (the queen sprite rests on the dais, between the pillars) |
+| 10.6 Save slots | `UI/Skin/frame_slot` | 12 × 12, slice 4 | iron band |
+| 10.6 Respec | `UI/Icons/respec` | 10 × 10 | |
+
+Ramps drawn for them: `caste_glow`, `caste_fire`, `rival` (in `palette.py`).
