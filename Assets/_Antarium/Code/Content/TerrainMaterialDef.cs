@@ -51,6 +51,11 @@ namespace Antarium.Content
         [Min(1)] public int dropAmount = 1;
         [Range(0f, 1f)] public float dropChance = 1f;
 
+        [Header("Crystal resonance (10.5)")]
+        [Tooltip("What a cell of this (conductive) material adds to a Crystal Resonator's cluster: glow crystals 1, ores less. " +
+                 "Conductive cells with 0 still carry the resonance.")]
+        [Min(0f)] public float resonance;
+
         [Header("Light")]
         [ColorUsage(false)] public Color emissionColor = Color.black;
         [Tooltip("Light emitted, as a fraction of the maximum light level.")]

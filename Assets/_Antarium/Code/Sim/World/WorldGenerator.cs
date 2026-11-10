@@ -180,8 +180,55 @@ namespace Antarium.Sim
             }
 
             GrowRoots(world, content, seed);
+            PlaceTablets(world, content, seed, scale);
             CarveNest(world, gen);
             world.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightRecompute);
+        }
+
+        /// <summary>
+        /// Tablets (10.5): a few unique finds set into the floors of ruin rooms (the first biome with rooms), far apart. A tablet
+        /// replaces the solid cell under an open room cell whose neighbours on the floor are solid too.
+        /// </summary>
+        static void PlaceTablets(WorldGrid world, ContentDB content, uint seed, float scale)
+        {
+            var gen = content.WorldGen;
+            ushort tablet = content.TabletMaterial;
+            if (tablet == ContentDB.AirIndex || gen.tabletCount <= 0) return;
+            int top = 0, ruins = -1;
+            for (int i = 0; i < gen.biomes.Count; i++)
+            {
+                if (gen.biomes[i] != null && gen.biomes[i].rooms) { ruins = i; break; }
+                top += ContentDB.BiomeThickness(gen.biomes[i], scale);
+            }
+            if (ruins < 0) return;
+
+            var rng = new Random(math.hash(new uint2(seed, 0x7AB1E7u)) | 1u);
+            var placed = new System.Collections.Generic.List<int2>();
+            int margin = gen.bedrockThickness + 2;
+            int minDepth = top + 8;
+            float spacing2 = (float)gen.tabletSpacing * gen.tabletSpacing;
+            for (int attempt = 0; attempt < 4000 && placed.Count < gen.tabletCount; attempt++)
+            {
+                int x = rng.NextInt(margin, world.Width - margin);
+                int maxDepth = world.SurfaceY[x] - margin;
+                if (maxDepth <= minDepth) continue;
+                int y = world.SurfaceY[x] - rng.NextInt(minDepth, maxDepth);
+                // Walk down to the floor of the room this cell is in (if it is one).
+                if (!world[x, y].IsOpen) continue;
+                while (y > margin && world[x, y - 1].IsOpen) y--;
+                int2 floor = new int2(x, y - 1);
+                if (floor.y <= margin || world[floor.x, floor.y].IsOpen) continue;
+                if (world.Depth(floor.x, floor.y) < minDepth) continue;
+                if (world[floor.x - 1, floor.y].IsOpen || world[floor.x + 1, floor.y].IsOpen) continue;
+                if (!world[floor.x - 1, floor.y + 1].IsOpen || !world[floor.x + 1, floor.y + 1].IsOpen) continue;
+                bool far = true;
+                foreach (var p in placed)
+                    if (math.distancesq(new float2(p), new float2(floor)) < spacing2) { far = false; break; }
+                if (!far) continue;
+                int index = world.Index(floor.x, floor.y);
+                world.Cells[index] = new Cell(tablet, Cell.Full);
+                placed.Add(floor);
+            }
         }
 
         /// <summary>Ore: a material that drops an item that is not food (world modifiers make these richer or rarer).</summary>

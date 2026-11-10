@@ -41,6 +41,9 @@ MonoBehaviour:
   rootMaterial: {fileID: 11400000, guid: a286ed699116a39419d1c76776f52d9d, type: 2}
   rootLength: {x: 10, y: 32}
   rootMaxDepth: 60
+  tabletMaterial: {fileID: 11400000, guid: 05761e1042302b4479dead0f149a8487, type: 2}
+  tabletCount: 4
+  tabletSpacing: 60
   nestDepth: 14
   nestRadius: {x: 7, y: 3.5}
   shaftHalfWidth: 1

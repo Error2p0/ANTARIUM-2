@@ -35,6 +35,10 @@ namespace Antarium.Content
         Pump,
         /// <summary>Multi-cell, no floor needed: water from above falls through it, and the flow speeds up machines nearby.</summary>
         WaterWheel,
+        /// <summary>Multi-cell, on a floor, touching conductive rock: its crystal cluster makes knowledge and speeds up machines nearby (10.5).</summary>
+        Resonator,
+        /// <summary>The Ancient Engine (10.5): one per colony, built in the ruins and restored stage by stage; running, it is the colony's goal.</summary>
+        Engine,
     }
 
     /// <summary>Which generated placeholder sprite a machine uses until real art exists.</summary>
@@ -56,6 +60,22 @@ namespace Antarium.Content
         Ranch,
         /// <summary>Water wheel (its own animated sprite).</summary>
         Wheel,
+        /// <summary>Crystal resonator: idle / resonating.</summary>
+        Resonator,
+        /// <summary>Ancient Engine: one frame per restoration stage.</summary>
+        Engine,
+    }
+
+    /// <summary>One restoration step of a staged building (the Ancient Engine): paid from the stock, then built by workers.</summary>
+    [System.Serializable]
+    public sealed class BuildingStage
+    {
+        public string name;
+        [TextArea] public string description;
+        public List<ItemAmount> cost = new();
+        [Min(0f)] public float foodCost;
+        [Tooltip("Seconds of work for one worker.")]
+        [Min(0.05f)] public float buildWork = 10f;
     }
 
     /// <summary>Anything the player can place with the Build tool: transport cells and processing chambers.</summary>
@@ -128,6 +148,20 @@ namespace Antarium.Content
         [Tooltip("Machines: extra speed (1 = +100%) while lava, magma rock or fire touches them; they then need no fuel. 0 = no heat.")]
         [Min(0f)] public float heatBonus;
 
+        [Header("Crystals and ruins (10.5)")]
+        [Tooltip("Resonator / Engine: knowledge per second at full power (knowledge gain applies). 0 = none.")]
+        [Min(0f)] public float knowledgePerSecond;
+        [Tooltip("Resonator: resonance (sum of the cluster's material resonance) for full power.")]
+        [Min(0.1f)] public float fullResonance = 24f;
+        [Tooltip("Resonator: conductive cells it follows at most when measuring its cluster.")]
+        [Min(1)] public int maxClusterCells = 400;
+        [Tooltip("Can only be built in this biome (the Ancient Engine: the ruins). None = anywhere.")]
+        public BiomeDef requiredBiome;
+        [Tooltip("Only one per colony.")]
+        public bool unique;
+        [Tooltip("Engine: restoration steps after placing it, each paid and built in turn. The last one finishes it.")]
+        public List<BuildingStage> stages = new();
+
         [Header("Presentation")]
         [Tooltip("Colour of the palette swatch.")]
         public Color color = Color.white;
@@ -139,8 +173,9 @@ namespace Antarium.Content
         /// <summary>Gates, traps, guard posts and walls: one cell, no items.</summary>
         public bool IsDefense => kind >= BuildingKind.Gate && kind <= BuildingKind.Wall;
         /// <summary>Machines and nurseries: several cells on a flat floor.</summary>
-        public bool IsChamber => kind == BuildingKind.Processor || kind == BuildingKind.Nursery;
-        /// <summary>Several cells: machines, nurseries and water wheels (the only ones that use <see cref="size"/>).</summary>
+        public bool IsChamber => kind == BuildingKind.Processor || kind == BuildingKind.Nursery || kind == BuildingKind.Resonator
+                                 || kind == BuildingKind.Engine;
+        /// <summary>Several cells: machines, nurseries, resonators, the engine and water wheels (the only ones that use <see cref="size"/>).</summary>
         public bool IsMultiCell => IsChamber || kind == BuildingKind.WaterWheel;
         /// <summary>Pumps and water wheels: fluid can't flow through their cells.</summary>
         public bool BlocksFluid => kind == BuildingKind.Pump || kind == BuildingKind.WaterWheel;

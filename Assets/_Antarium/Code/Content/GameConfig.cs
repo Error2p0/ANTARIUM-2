@@ -255,6 +255,10 @@ namespace Antarium.Content
         [Min(0.5f)] public float flightSeconds = 4.5f;
         [Tooltip("Princesses climb this many cells per second.")]
         [Min(0.5f)] public float flightSpeed = 9f;
+
+        [Header("Ancient Engine (10.5)")]
+        [Tooltip("A colony whose Ancient Engine runs earns this much more Genetic Memory from its flight (1 = twice as much).")]
+        [Min(0f)] public float engineMemoryBonus = 1f;
     }
 
     [Serializable]
@@ -403,6 +407,24 @@ namespace Antarium.Content
         public Vector2Int raidDistance = new(60, 100);
         [Tooltip("Knowledge for beating a raid (every raider killed or chased off).")]
         [Min(0f)] public float raidKnowledge = 10f;
+
+        [Header("Rival ants (10.5)")]
+        [Tooltip("No rival ant raids before this many seconds into a colony (before that every raid is termites).")]
+        [Min(0f)] public float rivalFirstSeconds = 1500f;
+        [Tooltip("Chance that a raid is rival ants (thieves) instead of termites, once they come.")]
+        [Range(0f, 1f)] public float rivalRaidChance = 0.4f;
+
+        [Header("Mole crickets (10.5)")]
+        [Tooltip("No mole crickets before this many seconds into a colony.")]
+        [Min(0f)] public float moleFirstSeconds = 1080f;
+        [Min(1f)] public float moleIntervalMin = 480f;
+        [Min(1f)] public float moleIntervalMax = 840f;
+        [Tooltip("No mole crickets while the colony has fewer ants than this.")]
+        [Min(0)] public int moleMinAnts = 15;
+        [Tooltip("A mole cricket starts this far (cells) from the queen, in soft ground.")]
+        public Vector2Int moleDistance = new(26, 42);
+        [Tooltip("A mole cricket that can't get closer for this many seconds gives up and digs away (it is removed).")]
+        [Min(1f)] public float moleGiveUpSeconds = 30f;
     }
 
     [Serializable]

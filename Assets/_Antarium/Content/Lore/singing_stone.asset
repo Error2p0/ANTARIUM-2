@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdfd34d14c768f34bb3a3dff90fd62e2, type: 3}
+  m_Name: singing_stone
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.LoreDef
+  id: singing_stone
+  displayName: Singing Stone
+  order: 2
+  text: The Old Colony listened to the crystals. Where many grew together the stone hummed, and the hum carried thoughts from chamber to chamber. They built their halls around the loudest clusters.
+  item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+  count: 3

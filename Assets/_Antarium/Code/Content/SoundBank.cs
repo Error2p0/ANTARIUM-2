@@ -24,6 +24,8 @@ namespace Antarium.Content
         BirdCry, BirdStrike, Rain, Dusk, Dawn,
         // the living world (Milestone 10.3)
         FireIgnite,
+        // the deep endgame (Milestone 10.5)
+        LoreFound, EngineStage, EngineAwakened, Burrow, ItemStolen,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }
@@ -141,6 +143,10 @@ namespace Antarium.Content
         public AudioClip flightCue;
         [Tooltip("Plays once when the colony first digs into a deeper biome.")]
         public AudioClip discoveryCue;
+        [Tooltip("Plays once when a lore fragment of the ruins is found (10.5).")]
+        public AudioClip loreCue;
+        [Tooltip("Plays once when the Ancient Engine wakes (10.5).")]
+        public AudioClip engineCue;
         [Range(0f, 1f)] public float trackVolume = 0.8f;
         [Range(0f, 1f)] public float cueVolume = 0.9f;
         [Tooltip("Seconds to crossfade between tracks (and to fade the generative music in and out).")]

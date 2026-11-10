@@ -52,6 +52,14 @@ namespace Antarium.Content
         [Tooltip("Roots stay in the topsoil: no deeper than this many cells.")]
         [Min(1)] public int rootMaxDepth = 60;
 
+        [Header("Ruins (10.5)")]
+        [Tooltip("Unique find set into the floor of some ruin rooms (none = no tablets).")]
+        public TerrainMaterialDef tabletMaterial;
+        [Tooltip("Tablets in a world.")]
+        [Min(0)] public int tabletCount = 4;
+        [Tooltip("Tablets lie at least this many cells apart.")]
+        [Min(1)] public int tabletSpacing = 60;
+
         [Header("Starting nest")]
         [Min(4)] public int nestDepth = 14;
         public Vector2 nestRadius = new(7f, 3.5f);

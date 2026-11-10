@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdfd34d14c768f34bb3a3dff90fd62e2, type: 3}
+  m_Name: guardians
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.LoreDef
+  id: guardians
+  displayName: The Guardians
+  order: 4
+  text: When the soldiers grew too few, the engineers shaped guardians out of stone and crystal to keep the relic halls. They were told to wait. They are still waiting.
+  item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+  count: 7

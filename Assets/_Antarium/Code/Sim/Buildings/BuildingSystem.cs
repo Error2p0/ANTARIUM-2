@@ -68,6 +68,8 @@ namespace Antarium.Sim
         public bool MachinesChanged = true;
         /// <summary>Extra machine speed per engineer tending it (from the engineer caste, set by the simulation).</summary>
         public float EngineerBoost;
+        /// <summary>The world's biome thickness multiplier (world modifiers; set by the simulation): which biome a cell is in.</summary>
+        public float BiomeScale = 1f;
         /// <summary>Walls finished this tick: the simulation turns their cells solid and removes them.</summary>
         public readonly List<int> CompletedWalls = new();
 
@@ -191,7 +193,15 @@ namespace Antarium.Sim
                 if (bdef.kind == BuildingKind.Wall && (_colony.IsRoyalCell(c) || (cell.Flags & CellFlags.Storage) != 0))
                     return PlaceResult.Protected;
                 if (bdef.kind == BuildingKind.Chest && (cell.Flags & CellFlags.Storage) != 0) return PlaceResult.Protected;
+                if (data.RequiredBiome >= 0 && _content.BiomeAtDepth(_world.Depth(c.x, c.y), BiomeScale) != data.RequiredBiome)
+                    return PlaceResult.WrongBiome;
             }
+            if (bdef.unique && rotate < 0 && upgrade < 0)
+            {
+                for (int i = 0; i < All.Length; i++)
+                    if (All[i].Alive && All[i].Def == def) return PlaceResult.Unique;
+            }
+            if (bdef.kind == BuildingKind.Resonator && !TouchesConductive(origin, size)) return PlaceResult.NeedsCrystal;
             if (needsFloor)
             {
                 for (int x = 0; x < size.x; x++)
@@ -286,6 +296,7 @@ namespace Antarium.Sim
             };
             if (id == All.Length) All.Add(b);
             else All[id] = b;
+            if (bdef.kind == BuildingKind.Engine) _engine = id;
 
             ForEachCell(origin, size, index =>
             {
@@ -335,6 +346,7 @@ namespace Antarium.Sim
                 cell.Flags &= ~CellFlags.Blueprint;
                 _world.Cells[index] = cell;
             });
+            if (b.Kind == BuildingKind.Engine) FinishStage(ref b, id, notify);
             if (b.Kind == BuildingKind.Processor)
             {
                 var m = new Machine(id, _content.Buildings[b.Def]);
@@ -412,6 +424,13 @@ namespace Antarium.Sim
             var b = All[id];
             var data = _content.Buildings[b.Def];
             bool blueprint = b.State == BuildingState.Blueprint;
+            if (b.Kind == BuildingKind.Engine && refund && (b.Restoring || !blueprint))
+            {
+                // The Ancient Engine stays once it stands: removing it only cancels a restoration step in progress.
+                if (CancelStage(id)) return true;
+                _events.Publish(new PlaceFailedEvent(b.Def, b.Origin, PlaceResult.Permanent));
+                return false;
+            }
             if (b.Kind == BuildingKind.Chest && !blueprint)
             {
                 // A chest's items move to other storage first; what does not fit drops where it stood.
@@ -450,6 +469,7 @@ namespace Antarium.Sim
                 _world.Cells[index] = c;
             });
             All[id] = new Building { Alive = false, Machine = None, Outputs = new int4(None), Front = ItemSlot.Empty, Back = ItemSlot.Empty };
+            if (id == _engine) _engine = None;
             _free.Push(id);
             _networkDirty = true;
             if (blueprint)
@@ -649,6 +669,7 @@ namespace Antarium.Sim
                 UpdateClimate();
             }
             TickMachines(dt);
+            TickRuins(dt);
             UpdateConsumerRoom();
 
             _rateTimer += dt;
@@ -925,7 +946,8 @@ namespace Antarium.Sim
                         var recipe = _content.Recipes[m.Recipe];
                         var def = m.Data.Def;
                         m.Status = MachineStatus.Working;
-                        m.Progress += dt * speed * (1f + EngineerBoost * m.TendPower) * (1f + m.WheelBoost) * (m.Heated ? 1f + def.heatBonus : 1f);
+                        m.Progress += dt * speed * (1f + EngineerBoost * m.TendPower) * (1f + m.WheelBoost) * (1f + m.ResonanceBoost)
+                                      * (m.Heated ? 1f + def.heatBonus : 1f);
                         if (m.Progress >= recipe.Duration)
                         {
                             // Irrigated: the machine drinks some water and every 1 / bonus crafts yields a whole extra batch.
@@ -945,7 +967,12 @@ namespace Antarium.Sim
                                     m.Pending.Add(recipe.OutputItems[i]);
                             }
                             if (recipe.Knowledge > 0f)
+                            {
                                 _colony.Inventory.AddKnowledge(recipe.Knowledge * _colony.Mods.Mult(StatKind.KnowledgeGain), studied: true);
+                                // What was studied counts toward the lore (relics, tablets: 10.5).
+                                for (int i = 0; i < recipe.InputItems.Length; i++)
+                                    stats.Studied[recipe.InputItems[i]] += recipe.InputCounts[i];
+                            }
                             if (recipe.Princesses > 0)
                             {
                                 _colony.Princesses += recipe.Princesses;
@@ -1064,6 +1091,8 @@ namespace Antarium.Sim
             _chests.Clear();
             _pumps.Clear();
             _wheels.Clear();
+            _resonators.Clear();
+            _engine = None;
             for (int id = 0; id < n; id++)
             {
                 ref var b = ref Get(id);
@@ -1080,6 +1109,8 @@ namespace Antarium.Sim
                 else if (b.IsActive && b.Kind == BuildingKind.Chest) _chests.Add(id);
                 else if (b.IsActive && b.Kind == BuildingKind.Pump) _pumps.Add(id);
                 else if (b.IsActive && b.Kind == BuildingKind.WaterWheel) _wheels.Add(id);
+                else if (b.IsActive && b.Kind == BuildingKind.Resonator) _resonators.Add(id);
+                if (b.Kind == BuildingKind.Engine) _engine = id;
             }
             ActiveCount = active;
 

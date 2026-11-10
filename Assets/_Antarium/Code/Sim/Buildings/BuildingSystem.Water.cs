@@ -212,6 +212,7 @@ namespace Antarium.Sim
         /// <summary>Which machines are heated, irrigated or near a turning wheel (every <see cref="WaterworksConfig.checkSeconds"/>).</summary>
         void UpdateClimate()
         {
+            UpdateResonators();
             ulong fuel = _content.FuelMask;
             foreach (var m in _machines)
             {
@@ -235,6 +236,7 @@ namespace Antarium.Sim
                     if (RectDistance(b, wb) <= wdef.boostRadius) boost = math.max(boost, wb.Craft * wdef.machineBoost);
                 }
                 m.WheelBoost = boost;
+                m.ResonanceBoost = ResonatorBoost(b);
             }
         }
 

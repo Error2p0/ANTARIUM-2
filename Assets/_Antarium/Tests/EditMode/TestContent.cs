@@ -46,6 +46,19 @@ namespace Antarium.Tests
         /// glow ants at level 1, fire ants at level 2 (1 chitin each). Quicken: unlocks the Quickening (1 honeydew).</summary>
         public readonly EvolutionDef EvoBrood, EvoLineage, EvoQuicken;
         public readonly AbilityDef Quickening;
+        /// <summary>
+        /// 10.5. Resonator: 2x2 on a floor touching conductive rock, 1 knowledge a second and +50% machine speed within 6 cells at
+        /// full power (4 resonance; Crystal resonates 1, OreRock conducts). Engine: 2x2, unique, only in the Deep biome, 2 stages
+        /// (1 bar, then 1 relic and 5 food), 2 knowledge a second running. Scriptorium: studies relics (5 knowledge) and tablets (9).
+        /// </summary>
+        public readonly BuildingDef Resonator, Engine, Scriptorium;
+        public readonly ItemDef Relic, Tablet;
+        public readonly TerrainMaterialDef TabletRock;
+        /// <summary>Lore: Marks (1 relic), Story (2 relics), Plan (1 tablet). AncientResearch needs 2 fragments.</summary>
+        public readonly LoreDef LoreMarks, LoreStory, LorePlan;
+        public readonly ResearchDef AncientResearch;
+        /// <summary>Thief: a rival ant (carries 2, one every 0.5 s). Mole: digs (power 4) through hardness up to 1.5.</summary>
+        public readonly EnemyDef Thief, Mole;
         /// <summary>Unlocks every specialist caste but soldiers.</summary>
         public readonly ResearchDef CasteResearch;
         public readonly AbilityDef Burst;
@@ -79,6 +92,8 @@ namespace Antarium.Tests
             Fibre = Make<ItemDef>("fibre");
             Coal = Make<ItemDef>("coal");
             Coal.fuel = true;
+            Relic = Make<ItemDef>("relic");
+            Tablet = Make<ItemDef>("tablet");
 
             Smelt = Make<RecipeDef>("smelt");
             Smelt.inputs.Add(new ItemAmount(Ore, 2));
@@ -106,7 +121,8 @@ namespace Antarium.Tests
             Dirt = Mat("dirt", 1f);
             Stone = Mat("stone", 4f);
             Stone.drop = Ore;
-            Crystal = Mat("crystal", 4f, MaterialFlags.LightEmitting);
+            Crystal = Mat("crystal", 4f, MaterialFlags.LightEmitting | MaterialFlags.Conductive);
+            Crystal.resonance = 1f;
             Crystal.emissionColor = Color.white;
             Crystal.emissionStrength = 1f;
             Bedrock = Mat("bedrock", 1f, MaterialFlags.Indestructible);
@@ -115,7 +131,7 @@ namespace Antarium.Tests
             Sand = Mat("sand", 0.5f, MaterialFlags.Unstable);
             Obsidian = Mat("obsidian", 6f);
             Packed = Mat("packed", 1f);
-            OreRock = Mat("ore_rock", 2f);
+            OreRock = Mat("ore_rock", 2f, MaterialFlags.Conductive);
             OreRock.drop = Ore;
             Root = Mat("root", 4f, MaterialFlags.Flammable);
             Root.drop = Fibre;
@@ -123,6 +139,8 @@ namespace Antarium.Tests
             CoalRock.drop = Coal;
             Magma = Mat("magma", 6f, MaterialFlags.Hot);
             Ash = Mat("ash", 0.3f, MaterialFlags.Unstable);
+            TabletRock = Mat("tablet_rock", 5f, MaterialFlags.LightEmitting);
+            TabletRock.drop = Tablet;
 
             Gate = Building("gate", BuildingKind.Gate, 6);
             Gate.maxHealth = 40f;
@@ -199,6 +217,32 @@ namespace Antarium.Tests
             Farm.inputBatches = 10;
             Farm.outputLimit = 50;
 
+            Resonator = Building("resonator", BuildingKind.Resonator, 22);
+            Resonator.size = new Vector2Int(2, 2);
+            Resonator.knowledgePerSecond = 1f;
+            Resonator.fullResonance = 4f;
+            Resonator.machineBoost = 0.5f;
+            Resonator.boostRadius = 6f;
+            Engine = Building("engine", BuildingKind.Engine, 23);
+            Engine.size = new Vector2Int(2, 2);
+            Engine.unique = true;
+            Engine.knowledgePerSecond = 2f;
+            Engine.cost.Add(new ItemAmount(Bar, 1));
+            Engine.stages.Add(new BuildingStage { name = "gears", buildWork = 0.5f, cost = { new ItemAmount(Bar, 1) } });
+            Engine.stages.Add(new BuildingStage { name = "waking", buildWork = 0.5f, foodCost = 5f, cost = { new ItemAmount(Relic, 1) } });
+            var studyRelic = Make<RecipeDef>("study_relic");
+            studyRelic.inputs.Add(new ItemAmount(Relic, 1));
+            studyRelic.knowledge = 5f;
+            studyRelic.duration = 0.5f;
+            var studyTablet = Make<RecipeDef>("study_tablet");
+            studyTablet.inputs.Add(new ItemAmount(Tablet, 1));
+            studyTablet.knowledge = 9f;
+            studyTablet.duration = 0.5f;
+            Scriptorium = Building("scriptorium", BuildingKind.Processor, 24);
+            Scriptorium.size = new Vector2Int(2, 2);
+            Scriptorium.recipes.Add(studyRelic);
+            Scriptorium.recipes.Add(studyTablet);
+
             // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
             WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
             SoldierCaste = Caste("soldier", AntCaste.Soldier, health: 150f, attack: 14f, upkeep: 0.6f, egg: 15f, share: 0.2f, jobs: false);
@@ -245,6 +289,34 @@ namespace Antarium.Tests
             WolfSpider.damage = 5f;
             WolfSpider.speed = 3f;
             WolfSpider.aggroRadius = 8f;
+            Thief = Make<EnemyDef>("thief");
+            Thief.behavior = EnemyBehavior.Thief;
+            Thief.health = 20f;
+            Thief.damage = 2f;
+            Thief.speed = 3f;
+            Thief.carryItems = 2;
+            Thief.stealSeconds = 0.5f;
+            Thief.drops.Add(new ItemAmount(Chitin, 1));
+            Mole = Make<EnemyDef>("mole");
+            Mole.behavior = EnemyBehavior.Digger;
+            Mole.health = 50f;
+            Mole.damage = 5f;
+            Mole.speed = 3f;
+            Mole.aggroRadius = 10f;
+            Mole.digPower = 4f;
+            Mole.maxDigHardness = 1.5f;
+
+            LoreMarks = Make<LoreDef>("lore_marks");
+            LoreMarks.item = Relic;
+            LoreMarks.count = 1;
+            LoreStory = Make<LoreDef>("lore_story");
+            LoreStory.item = Relic;
+            LoreStory.count = 2;
+            LoreStory.order = 1;
+            LorePlan = Make<LoreDef>("lore_plan");
+            LorePlan.item = Tablet;
+            LorePlan.count = 1;
+            LorePlan.order = 2;
 
             // Progression: three research nodes, three abilities, two contracts, one event of each kind.
             Frenzy = Make<AbilityDef>("frenzy");
@@ -295,6 +367,12 @@ namespace Antarium.Tests
                 Level(0f, (Chitin, 1)), Level(0f, (Chitin, 1)));
             EvoLineage.prerequisites.Add(EvoBrood);
             EvoQuicken = Evolution("evo_quicken", 0, 1, new[] { EvolutionEffect.Unlock(Quickening) }, Level(0f, (Honeydew, 1)));
+
+            AncientResearch = Make<ResearchDef>("ancient_research");
+            AncientResearch.treePosition = new Vector2Int(3, 0);
+            AncientResearch.knowledgeCost = 1f;
+            AncientResearch.loreRequired = 2;
+            AncientResearch.effects.Add(ResearchEffect.Unlock(Engine));
 
             CasteResearch = Make<ResearchDef>("caste_research");
             CasteResearch.treePosition = new Vector2Int(2, 1);
@@ -378,13 +456,14 @@ namespace Antarium.Tests
             Progression = new ProgressionContent
             {
                 Achievements = new[] { AchFlight, AchDig },
-                Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch },
+                Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch, AncientResearch },
                 Abilities = new[] { Decree, Frenzy, Seismic, Burst, Quickening },
                 Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste, GlowCaste, FireCaste },
                 Evolutions = new[] { EvoLineage, EvoQuicken, EvoBrood },
                 Contracts = new[] { DeliverOre, DigIntro },
                 Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent, AphidEvent },
-                Enemies = new[] { Spider, Raider },
+                Enemies = new[] { Spider, Raider, Thief, Mole },
+                Lore = new[] { LorePlan, LoreMarks, LoreStory },
                 Raiders = new[] { Raider },
                 Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain },
                 WorldModifiers = new[] { ModHard, ModRich, ModShallow },
@@ -422,10 +501,14 @@ namespace Antarium.Tests
             WorldGen.nestRadius = new Vector2(4, 2);
             WorldGen.fluidReactionMaterial = Obsidian;
             WorldGen.ashMaterial = Ash;
+            WorldGen.tabletMaterial = TabletRock;
+            Engine.requiredBiome = Deep;
 
             Config = Make<GameConfig>("config");
             Config.progression.firstEventDelay = 1e9f; // events only when a test triggers them
             Config.threats.firstRaidSeconds = 1e9f;    // raids too
+            Config.threats.rivalFirstSeconds = 1e9f;   // rival ants and mole crickets only when a test asks (10.5)
+            Config.threats.moleFirstSeconds = 1e9f;
             // The surface stays quiet unless a test asks: no leaves, weather, birds or spiders.
             Config.surface.leafInterval = 1e9f;
             Config.surface.firstWeatherSeconds = 1e9f;
@@ -436,10 +519,10 @@ namespace Antarium.Tests
             Config.growth.speedJitter = 0f;
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash },
-                WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal }, null,
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash, TabletRock },
+                WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal, Relic, Tablet }, null,
                 new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch,
-                    Pump, Wheel, Forge, Farm },
+                    Pump, Wheel, Forge, Farm, Resonator, Engine, Scriptorium },
                 Progression);
         }
 
@@ -467,10 +550,10 @@ namespace Antarium.Tests
 
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
-            ContentDB.Build(new[] { Ash, Magma, CoalRock, Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
-                new[] { Coal, Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
-                new[] { Farm, Forge, Wheel, Pump, Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap, Gate, Lab, Filter, Splitter,
-                    Lift, Belt, Smelter },
+            ContentDB.Build(new[] { TabletRock, Ash, Magma, CoalRock, Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
+                new[] { Tablet, Relic, Coal, Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
+                new[] { Scriptorium, Engine, Resonator, Farm, Forge, Wheel, Pump, Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap,
+                    Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
                 Progression);
 
         GeneticDef Genetic(string id, int column, int row, int cost, int costPerLevel, int maxLevel, params GeneticEffect[] effects)

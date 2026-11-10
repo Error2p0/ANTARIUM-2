@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdfd34d14c768f34bb3a3dff90fd62e2, type: 3}
+  m_Name: hollow_halls
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.LoreDef
+  id: hollow_halls
+  displayName: The Hollow Halls
+  order: 3
+  text: Their chambers were square and their walls were brick, baked hard by the heat from below. Every hall had a door at the floor and a hatch in the roof, so no ant was ever more than a short climb from home.
+  item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+  count: 5

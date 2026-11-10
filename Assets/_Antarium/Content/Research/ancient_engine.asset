@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: ancient_engine
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: ancient_engine
+  displayName: The Ancient Engine
+  description: 'Unlocks the Ancient Engine, the lost colony''s great machine. Build it in the ruins and restore it: running, it doubles the Genetic Memory of this colony''s Nuptial Flight. Needs 8 lore fragments.'
+  treePosition: {x: 6, y: 2}
+  knowledgeCost: 200
+  cost:
+  - item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+    count: 8
+  foodCost: 0
+  loreRequired: 8
+  prerequisites:
+  - {fileID: 11400000, guid: 8f1ebefa988c4e2429a0437bf44bd377, type: 2}
+  - {fileID: 11400000, guid: ae57e2d886ace4b47aa1380c064da17b, type: 2}
+  effects:
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: 1d8227a223b325e439bd2bb247ce49d3, type: 2}
+    ability: {fileID: 0}
+    caste: 0

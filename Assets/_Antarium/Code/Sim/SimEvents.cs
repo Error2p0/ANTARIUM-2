@@ -225,7 +225,89 @@ namespace Antarium.Sim
         public readonly int2 Cell;
         public readonly int Size;
         public readonly float FoodLost;
-        public RaidEvent(RaidPhase phase, int id, int2 cell, int size, float foodLost) { Phase = phase; Id = id; Cell = cell; Size = size; FoodLost = foodLost; }
+        /// <summary>Rival ants (thieves) instead of termites (10.5).</summary>
+        public readonly bool Rival;
+        /// <summary>Items rival ants carried off.</summary>
+        public readonly int ItemsLost;
+        public RaidEvent(RaidPhase phase, int id, int2 cell, int size, float foodLost, bool rival = false, int itemsLost = 0)
+        {
+            Phase = phase;
+            Id = id;
+            Cell = cell;
+            Size = size;
+            FoodLost = foodLost;
+            Rival = rival;
+            ItemsLost = itemsLost;
+        }
+    }
+
+    // ---------------------------------------------------------------- 10.5 deep endgame
+
+    /// <summary>A rival ant grabbed an item from the stock.</summary>
+    public readonly struct ItemStolenEvent
+    {
+        public readonly int2 Cell;
+        public readonly ushort Item;
+        public ItemStolenEvent(int2 cell, ushort item) { Cell = cell; Item = item; }
+    }
+
+    public enum DiggerPhase : byte
+    {
+        /// <summary>A digger started tunnelling toward the nest (Cell = where it is).</summary>
+        Appeared,
+        /// <summary>It broke into the colony's tunnels.</summary>
+        BrokeIn,
+        /// <summary>It found no way on and dug off.</summary>
+        GaveUp,
+    }
+
+    /// <summary>A creature that digs (the mole cricket).</summary>
+    public readonly struct DiggerEvent
+    {
+        public readonly DiggerPhase Phase;
+        public readonly int Enemy;
+        public readonly int2 Cell;
+        public DiggerEvent(DiggerPhase phase, int enemy, int2 cell) { Phase = phase; Enemy = enemy; Cell = cell; }
+    }
+
+    /// <summary>A lore fragment was found (index into <c>ContentDB.Lore</c>).</summary>
+    public readonly struct LoreFoundEvent
+    {
+        public readonly int Lore;
+        public readonly int Found;
+        public readonly int Total;
+        public LoreFoundEvent(int lore, int found, int total) { Lore = lore; Found = found; Total = total; }
+    }
+
+    public enum EngineStagePhase : byte
+    {
+        /// <summary>A restoration step was paid; workers build it now.</summary>
+        Started,
+        /// <summary>A restoration step is built.</summary>
+        Finished,
+        /// <summary>The last step is built: the engine runs.</summary>
+        Awakened,
+        /// <summary>A step in progress was cancelled (refunded).</summary>
+        Cancelled,
+    }
+
+    /// <summary>The Ancient Engine changed. <see cref="Stage"/> is the index of the step concerned.</summary>
+    public readonly struct EngineStageEvent
+    {
+        public readonly int Building;
+        public readonly int Stage;
+        public readonly EngineStagePhase Phase;
+        public readonly int2 Origin;
+        public EngineStageEvent(int building, int stage, EngineStagePhase phase, int2 origin) { Building = building; Stage = stage; Phase = phase; Origin = origin; }
+    }
+
+    /// <summary>A restoration step could not be started.</summary>
+    public readonly struct StageFailedEvent
+    {
+        public readonly int Building;
+        public readonly int Def;
+        public readonly StageResult Result;
+        public StageFailedEvent(int building, int def, StageResult result) { Building = building; Def = def; Result = result; }
     }
 
     public readonly struct TrapTriggeredEvent

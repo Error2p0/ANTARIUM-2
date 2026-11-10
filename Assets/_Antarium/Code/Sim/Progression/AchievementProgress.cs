@@ -34,6 +34,9 @@ namespace Antarium.Sim
                     return levels;
                 }
                 case AchievementKind.MemoryEarned: return legacy.MemoryEarned;
+                case AchievementKind.LoreFound: return sim.Lore.FoundCount;
+                case AchievementKind.EngineRestored: return sim.Buildings.EngineRunning ? 1 : 0;
+                case AchievementKind.RivalsRepelled: return stats.RivalsRepelled;
                 default: return 0;
             }
         }

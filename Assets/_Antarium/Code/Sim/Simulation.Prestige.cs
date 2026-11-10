@@ -16,6 +16,8 @@ namespace Antarium.Sim
         public float PrincessFactor;
         /// <summary>Genetic Memory gain multiplier (traits, world modifiers).</summary>
         public float Gain;
+        /// <summary>1, or 1 + the engine bonus when the colony's Ancient Engine runs (10.5).</summary>
+        public float EngineFactor;
         /// <summary>Genetic Memory the flight earns.</summary>
         public int Memory;
 
@@ -150,11 +152,12 @@ namespace Antarium.Sim
                 MaxPrincesses = Colony.PrincessCap,
                 MinPrincesses = math.max(1, cfg.minPrincesses),
                 Gain = Colony.Mods.Mult(StatKind.GeneticGain),
+                EngineFactor = Buildings.EngineRunning ? 1f + math.max(0f, cfg.engineMemoryBonus) : 1f,
             };
             e.Base = math.pow(math.max(0f, e.Score) / math.max(0.01f, cfg.scoreDivisor), math.clamp(cfg.scoreExponent, 0.1f, 1f));
             int counted = math.min(e.Princesses, e.MaxPrincesses);
             e.PrincessFactor = counted <= 0 ? 0f : 1f + cfg.princessBonus * (counted - 1);
-            e.Memory = e.EnoughPrincesses ? (int)math.floor(e.Base * e.PrincessFactor * math.max(0f, e.Gain) + 1e-4f) : 0;
+            e.Memory = e.EnoughPrincesses ? (int)math.floor(e.Base * e.PrincessFactor * math.max(0f, e.Gain) * e.EngineFactor + 1e-4f) : 0;
             return e;
         }
 

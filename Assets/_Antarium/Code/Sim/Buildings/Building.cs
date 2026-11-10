@@ -50,6 +50,14 @@ namespace Antarium.Sim
         Flooded,
         /// <summary>Walls can't go into the royal chamber or a storage zone.</summary>
         Protected,
+        /// <summary>Only one of this building per colony (the Ancient Engine).</summary>
+        Unique,
+        /// <summary>Must be built in another biome (the Ancient Engine: in the ruins).</summary>
+        WrongBiome,
+        /// <summary>A Crystal Resonator must touch conductive rock (glow crystals, copper or iron ore).</summary>
+        NeedsCrystal,
+        /// <summary>Removing: the Ancient Engine can't be taken down once it stands.</summary>
+        Permanent,
     }
 
     /// <summary>An item riding a transport cell. <see cref="T"/> runs 0 → 1 along the cell.</summary>
@@ -115,6 +123,12 @@ namespace Antarium.Sim
         /// <summary>Trap: seconds until it is armed again (0 = armed).</summary>
         public float Rearm;
 
+        // Ancient Engine (10.5)
+        /// <summary>Restoration steps finished (0 = the bare ruin after placing it). Picks the sprite.</summary>
+        public byte Stage;
+        /// <summary>A restoration step is paid and waits for workers (the building is a blueprint meanwhile).</summary>
+        public bool Restoring;
+
         public bool IsActive => Alive && State == BuildingState.Active;
         /// <summary>Belts, lifts, splitters and filters.</summary>
         public bool IsTransport => Kind <= BuildingKind.Filter;
@@ -159,6 +173,8 @@ namespace Antarium.Sim
         public bool Irrigated;
         /// <summary>Extra speed from the best turning water wheel nearby (0.5 = +50%).</summary>
         public float WheelBoost;
+        /// <summary>Extra speed from the best resonating Crystal Resonator nearby (10.5).</summary>
+        public float ResonanceBoost;
         /// <summary>Irrigation bonus not paid out yet (a whole extra batch comes every 1 / bonus crafts).</summary>
         public float IrrigationCarry;
         ulong _choiceMask;

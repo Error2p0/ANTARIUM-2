@@ -108,6 +108,14 @@ namespace Antarium.Editor
             // the living world: a crackling whoosh when something catches fire (water on a fire reuses the lava sizzle)
             Sfx(SoundCue.FireIgnite, Patch(SynthWave.Noise, 0.9f, 300f, 2400f, attack: 0.12f, decay: 1.4f, lowpass: 3000f, crush: 2500f, gain: 1.2f), 0.5f, 0.8f, 2);
 
+            // the deep endgame: a glassy chime for lore, a heavy clank per engine step, a rising hum when it wakes,
+            // the mole cricket's muffled scraping, a quick snatch when a rival ant grabs an item
+            Note(SoundCue.LoreFound, Patch(SynthWave.Sine, 1.3f, 784f, attack: 0.01f, decay: 1.8f, harmonics: 0.6f, vibratoHz: 4f, vibratoDepth: 0.1f, notes: 4, noteStep: -5f), 0.45f, 1f);
+            Sfx(SoundCue.EngineStage, Patch(SynthWave.Square, 0.7f, 98f, 82f, decay: 2f, noise: 0.35f, lowpass: 900f, notes: 3, noteStep: 7f, crush: 5000f), 0.6f, 0.5f, 1);
+            Note(SoundCue.EngineAwakened, Patch(SynthWave.Saw, 3f, 55f, 220f, attack: 0.8f, decay: 1.1f, lowpass: 1600f, harmonics: 0.5f, vibratoHz: 3f, vibratoDepth: 0.2f, gain: 1.1f), 0.7f, 3f);
+            Sfx(SoundCue.Burrow, Patch(SynthWave.Noise, 0.35f, 180f, 90f, attack: 0.05f, decay: 1.5f, lowpass: 450f, gain: 1.2f), 0.4f, 0.6f, 1);
+            Sfx(SoundCue.ItemStolen, Patch(SynthWave.Triangle, 0.12f, 900f, 1500f, decay: 2.5f), 0.3f, 0.15f, 2);
+
             void Bed(string biomeId, AmbiencePatch patch)
             {
                 var biome = biomeId == null ? null : AssetDatabase.LoadAssetAtPath<BiomeDef>($"{BiomesFolder}/{biomeId}.asset");

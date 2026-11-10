@@ -35,6 +35,12 @@ namespace Antarium.Content
         TraitLevels,
         /// <summary>Genetic Memory earned over the whole bloodline.</summary>
         MemoryEarned,
+        /// <summary>Lore fragments found in one colony (10.5).</summary>
+        LoreFound,
+        /// <summary>The Ancient Engine restored and running in one colony (amount 1).</summary>
+        EngineRestored,
+        /// <summary>Raids of rival ants beaten without losing an item, in one colony.</summary>
+        RivalsRepelled,
     }
 
     /// <summary>

@@ -18,6 +18,7 @@ namespace Antarium.Sim
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
             ContainerFilter, Reserve, Recipe, Evolve, Priority,
+            Stage, TriggerDigger,
         }
 
         readonly struct Command
@@ -85,6 +86,8 @@ namespace Antarium.Sim
         public readonly PheromoneSystem Pheromones;
         /// <summary>The queen's evolution tree (10.4).</summary>
         public readonly EvolutionSystem Evolutions;
+        /// <summary>The ruins' story: lore fragments found by studying relics and tablets (10.5).</summary>
+        public readonly LoreSystem Lore;
         /// <summary>Experience numbers (levels), from <see cref="AntGrowthConfig"/> (re-read every tick, so tuning applies live).</summary>
         GrowthTick _growth;
 
@@ -169,6 +172,7 @@ namespace Antarium.Sim
             Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat, config.waterworks);
             Buildings.SetFluids(Fluids);
             Buildings.EngineerBoost = content.Caste(AntCaste.Engineer).machineBoost;
+            Buildings.BiomeScale = Tweaks.BiomeScale > 0f ? Tweaks.BiomeScale : 1f;
             int slots = content.ConsumerSlotCount;
             Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
             Pheromones = new PheromoneSystem(World, config.pheromones);
@@ -181,7 +185,8 @@ namespace Antarium.Sim
                 Ants.ConsumerField[i] = slot >= 0 ? FlowFields.ConsumerField(slot) : -1;
                 Ants.SupplyField[i] = slot >= 0 ? FlowFields.SupplyField(slot, slots) : -1;
             }
-            Research = new ResearchSystem(content, Colony, Events);
+            Lore = new LoreSystem(content, Colony, Events);
+            Research = new ResearchSystem(content, Colony, Events, Lore);
             Evolutions = new EvolutionSystem(content, Colony, Events);
             Abilities = new AbilitySystem(content, Colony);
             Contracts = new ContractSystem(content, config.progression, this, seed);
@@ -298,8 +303,14 @@ namespace Antarium.Sim
         public void EnqueueCasteShare(AntCaste caste, float share) =>
             _pending.Add(new Command(CommandKind.CasteShare, default, 0f, share, true, (int)caste));
 
-        /// <summary>Debug: a raid arrives now.</summary>
-        public void EnqueueTriggerRaid() => _pending.Add(new Command(CommandKind.TriggerRaid, 0, default, default, 0));
+        /// <summary>Debug: a raid arrives now (<paramref name="rival"/>: rival ants that steal from the stock, if the content has them).</summary>
+        public void EnqueueTriggerRaid(bool rival = false) => _pending.Add(new Command(CommandKind.TriggerRaid, rival ? 1 : 0, default, default, 0));
+
+        /// <summary>Debug: a mole cricket starts tunnelling toward the nest now.</summary>
+        public void EnqueueTriggerDigger() => _pending.Add(new Command(CommandKind.TriggerDigger, 0, default, default, 0));
+
+        /// <summary>Pays and starts the next restoration step of the Ancient Engine at <paramref name="cell"/> (10.5).</summary>
+        public void EnqueueStage(int2 cell) => _pending.Add(new Command(CommandKind.Stage, 0, cell, default, 0));
 
         /// <summary>Paints (or erases) a circle of pheromone <paramref name="kind"/>.</summary>
         public void EnqueuePheromone(PheromoneKind kind, float2 cellPos, float radius, bool set) =>
@@ -343,6 +354,7 @@ namespace Antarium.Sim
             Abilities.Tick(dt);
             UpdateEngineers(dt);
             Buildings.Tick(dt);
+            Lore.Update();
             Colony.Inventory.UpdateRates(dt, Config.logistics.rateSmoothing);
             Colony.Meter.Update(dt);
             StepHazards(dt);
@@ -435,7 +447,9 @@ namespace Antarium.Sim
                 case CommandKind.Claim: Contracts.Claim(cmd.Def); break;
                 case CommandKind.Catch: RandomEvents.Catch(cmd.CellPos); break;
                 case CommandKind.CasteShare: Colony.SetCasteShare((AntCaste)cmd.Def, cmd.Power); break;
-                case CommandKind.TriggerRaid: Enemies.TriggerRaid(); break;
+                case CommandKind.TriggerRaid: Enemies.TriggerRaid(cmd.Def == 1); break;
+                case CommandKind.TriggerDigger: Enemies.TriggerDigger(); break;
+                case CommandKind.Stage: Buildings.BeginStage(cmd.Cell); break;
                 case CommandKind.Pheromone:
                     if (cmd.Def >= 0 && cmd.Def < Antarium.Content.Pheromones.Count)
                         Pheromones.Paint((PheromoneKind)cmd.Def, cmd.CellPos, cmd.Radius, cmd.Set);

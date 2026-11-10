@@ -105,6 +105,8 @@ namespace Antarium.Content
         [Min(0f)] public float foodCost;
 
         [Header("Tree")]
+        [Tooltip("Lore fragments (Codex) the colony must have found first (10.5: the ancient tier). 0 = none.")]
+        [Min(0)] public int loreRequired;
         [Tooltip("All of these must be researched first.")]
         public List<ResearchDef> prerequisites = new();
         public List<ResearchEffect> effects = new();

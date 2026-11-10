@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdfd34d14c768f34bb3a3dff90fd62e2, type: 3}
+  m_Name: tablet_heart
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.LoreDef
+  id: tablet_heart
+  displayName: 'Tablet: The Heart'
+  order: 10
+  text: A cluster of crystals set in a ring of amber. "A heart that sings must be fed with light. Set the crystals where the gears can hear them."
+  item: {fileID: 11400000, guid: 165364454b27d3c42b33231485108050, type: 2}
+  count: 2

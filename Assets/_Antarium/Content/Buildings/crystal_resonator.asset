@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: crystal_resonator
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: crystal_resonator
+  displayName: Crystal Resonator
+  kind: 15
+  paletteOrder: 18
+  description: Build it on a floor touching glow crystals. The crystals it reaches through conductive rock (glow crystals; copper and iron ore carry the resonance) make knowledge and speed up machines within 8 cells by up to 30%. 24 crystals give full power; mining them weakens it.
+  size: {x: 2, y: 2}
+  cost:
+  - item: {fileID: 11400000, guid: dcdeb32bddf75074f83de6aa0c054e8c, type: 2}
+    count: 8
+  - item: {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
+    count: 4
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 2
+  foodCost: 0
+  buildWork: 8
+  speed: 2
+  tier: 0
+  capacity: 16
+  recipes: []
+  inputBatches: 2
+  outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
+  machineBoost: 0.3
+  boostRadius: 8
+  irrigationBonus: 0
+  heatBonus: 0
+  knowledgePerSecond: 0.25
+  fullResonance: 24
+  maxClusterCells: 400
+  requiredBiome: {fileID: 0}
+  unique: 0
+  stages: []
+  color: {r: 0.49803922, g: 0.84705883, b: 1, a: 1}
+  art: 14

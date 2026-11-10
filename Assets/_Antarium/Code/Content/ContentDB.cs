@@ -16,12 +16,15 @@ namespace Antarium.Content
         public ushort DropItem;
         public ushort DropAmount;
         public float DropChance;
+        /// <summary>What a conductive cell adds to a Crystal Resonator's cluster (10.5).</summary>
+        public float Resonance;
 
         public bool IsAir => (Flags & MaterialFlags.Air) != 0;
         public bool IsIndestructible => (Flags & MaterialFlags.Indestructible) != 0;
         public bool IsUnstable => (Flags & MaterialFlags.Unstable) != 0;
         public bool IsFlammable => (Flags & MaterialFlags.Flammable) != 0;
         public bool IsHot => (Flags & MaterialFlags.Hot) != 0;
+        public bool IsConductive => (Flags & MaterialFlags.Conductive) != 0;
     }
 
     /// <summary>Blittable per-caste numbers for Burst jobs (see <see cref="CasteDef"/>).</summary>
@@ -72,6 +75,20 @@ namespace Antarium.Content
         public ulong InputMask;
         /// <summary>Wall: the material the cell becomes when finished.</summary>
         public ushort FillMaterial;
+        /// <summary>Engine: cost of each restoration step, parallel to <c>Def.stages</c>.</summary>
+        public ushort[][] StageCostItems;
+        public int[][] StageCostCounts;
+        public int StageCount => StageCostItems?.Length ?? 0;
+        /// <summary>Index into <see cref="ContentDB.Biomes"/> it must be built in, or -1 (anywhere).</summary>
+        public int RequiredBiome = -1;
+    }
+
+    /// <summary>Baked lore fragment (10.5): the item and how many of it must be studied.</summary>
+    public sealed class LoreData
+    {
+        public LoreDef Def;
+        public ushort Item;
+        public int Count;
     }
 
     /// <summary>Baked enemy: dense loot indices.</summary>
@@ -111,6 +128,8 @@ namespace Antarium.Content
         public ItemDef RoyalTreat;
         /// <summary>Creatures that hunt on the surface at night.</summary>
         public IReadOnlyList<EnemyDef> NightHunters;
+        /// <summary>The ruins' story, shown in the Codex (10.5).</summary>
+        public IReadOnlyList<LoreDef> Lore;
     }
 
     /// <summary>Baked genetic trait: dense indices.</summary>
@@ -236,6 +255,14 @@ namespace Antarium.Content
         public readonly int[] Raiders;
         /// <summary>Indices into <see cref="Enemies"/> of the creatures that hunt on the surface at night.</summary>
         public readonly int[] NightHunters;
+        /// <summary>Indices into <see cref="Enemies"/> of the rival ants that raid the stock (<see cref="EnemyBehavior.Thief"/>, 10.5).</summary>
+        public readonly int[] Thieves;
+        /// <summary>Indices into <see cref="Enemies"/> of the creatures that tunnel toward the nest (<see cref="EnemyBehavior.Digger"/>, 10.5).</summary>
+        public readonly int[] Diggers;
+        /// <summary>Lore fragments in Codex order (10.5).</summary>
+        public readonly LoreData[] Lore;
+        /// <summary>Unique find set into ruin floors (10.5), or <see cref="AirIndex"/> (none).</summary>
+        public readonly ushort TabletMaterial;
         /// <summary>Items that fall from surface plants by day (leaves).</summary>
         public readonly ushort[] PlantForage;
         /// <summary>Item the queen eats from the stock to lay faster (honeydew), or <see cref="NoItem"/>.</summary>
@@ -275,6 +302,8 @@ namespace Antarium.Content
         readonly Dictionary<string, int> _geneticIndex = new();
         readonly Dictionary<string, int> _modifierIndex = new();
         readonly Dictionary<string, int> _evolutionIndex = new();
+        readonly Dictionary<string, int> _loreIndex = new();
+        readonly List<BiomeDef> _worldGenBiomes;
 
         ContentDB(TerrainMaterialDef[] materials, ItemDef[] items, IReadOnlyList<ItemDef> forage, WorldGenSettings worldGen,
             IReadOnlyList<BuildingDef> buildings, ProgressionContent progression)
@@ -282,6 +311,7 @@ namespace Antarium.Content
             Materials = materials;
             Items = items;
             WorldGen = worldGen;
+            _worldGenBiomes = worldGen.biomes;
             for (int i = 0; i < items.Length; i++)
                 _itemIndex.Add(items[i].Id, (ushort)i);
 
@@ -299,6 +329,7 @@ namespace Antarium.Content
                     DropItem = def.drop != null ? GetItemIndex(def.drop) : NoItem,
                     DropAmount = (ushort)math.clamp(def.dropAmount, 1, ushort.MaxValue),
                     DropChance = def.dropChance,
+                    Resonance = def.resonance,
                 };
             }
 
@@ -320,6 +351,16 @@ namespace Antarium.Content
             for (int i = 0; i < PlantForage.Length; i++) PlantForage[i] = GetItemIndex(progression.PlantForage[i]);
             if (progression.RoyalTreat != null) RoyalTreat = GetItemIndex(progression.RoyalTreat);
             Enemies = BakeEnemies(progression.Enemies, progression.Raiders, progression.NightHunters, worldGen, out Raiders, out NightHunters);
+            var thieves = new List<int>();
+            var diggers = new List<int>();
+            for (int i = 0; i < Enemies.Length; i++)
+            {
+                if (Enemies[i].Def.behavior == EnemyBehavior.Thief) thieves.Add(i);
+                else if (Enemies[i].Def.behavior == EnemyBehavior.Digger) diggers.Add(i);
+            }
+            Thieves = thieves.ToArray();
+            Diggers = diggers.ToArray();
+            Lore = BakeLore(progression.Lore);
             Abilities = Sorted(progression.Abilities, "ability", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
             for (int i = 0; i < Abilities.Length; i++) _abilityIndex.Add(Abilities[i].Id, i);
             BuildingStartsLocked = new bool[Buildings.Length];
@@ -351,6 +392,7 @@ namespace Antarium.Content
             FluidReactionMaterial = worldGen.fluidReactionMaterial != null && _materialIndex.TryGetValue(worldGen.fluidReactionMaterial.Id, out var reaction)
                 ? reaction : AirIndex;
             AshMaterial = worldGen.ashMaterial != null && _materialIndex.TryGetValue(worldGen.ashMaterial.Id, out var ash) ? ash : AirIndex;
+            TabletMaterial = worldGen.tabletMaterial != null && _materialIndex.TryGetValue(worldGen.tabletMaterial.Id, out var tablet) ? tablet : AirIndex;
             for (int i = 0; i < items.Length && i < 64; i++)
                 if (items[i].fuel) FuelMask |= 1ul << i;
         }
@@ -483,6 +525,22 @@ namespace Antarium.Content
             }
             return result;
         }
+
+        LoreData[] BakeLore(IReadOnlyList<LoreDef> defs)
+        {
+            var sorted = Sorted(defs, "lore", (a, b) => a.order != b.order ? a.order.CompareTo(b.order) : string.CompareOrdinal(a.Id, b.Id));
+            var result = new LoreData[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                if (def.item == null) throw new ArgumentException($"Lore '{def.Id}' has no item to study.");
+                _loreIndex.Add(def.Id, i);
+                result[i] = new LoreData { Def = def, Item = GetItemIndex(def.item), Count = math.max(1, def.count) };
+            }
+            return result;
+        }
+
+        public bool TryGetLoreIndex(string id, out int index) => _loreIndex.TryGetValue(id ?? "", out index);
 
         EvolutionData[] BakeEvolutions(IReadOnlyList<EvolutionDef> defs)
         {
@@ -787,6 +845,19 @@ namespace Antarium.Content
                 data.InputItems = inputItems.ToArray();
                 data.InputCaps = inputCaps.ToArray();
                 foreach (ushort item in data.InputItems) data.InputMask |= 1ul << item;
+                int stages = def.kind == BuildingKind.Engine ? def.stages?.Count ?? 0 : 0;
+                data.StageCostItems = new ushort[stages][];
+                data.StageCostCounts = new int[stages][];
+                for (int k = 0; k < stages; k++)
+                {
+                    if (def.stages[k] == null) throw new ArgumentException($"Building '{def.Id}' has an empty stage.");
+                    Amounts(def.stages[k].cost, $"building '{def.Id}' stage {k + 1} cost", out data.StageCostItems[k], out data.StageCostCounts[k]);
+                }
+                if (def.requiredBiome != null)
+                {
+                    data.RequiredBiome = _worldGenBiomes.IndexOf(def.requiredBiome);
+                    if (data.RequiredBiome < 0) throw new ArgumentException($"Building '{def.Id}' needs biome '{def.requiredBiome.Id}', which is not in the world.");
+                }
                 if (def.kind == BuildingKind.Wall)
                 {
                     if (def.fillMaterial == null) throw new ArgumentException($"Wall '{def.Id}' needs a fill material.");
@@ -842,6 +913,7 @@ namespace Antarium.Content
                     PlantForage = database.plantForage,
                     RoyalTreat = database.royalTreat,
                     NightHunters = database.nightHunters,
+                    Lore = database.lore,
                 });
         }
 
