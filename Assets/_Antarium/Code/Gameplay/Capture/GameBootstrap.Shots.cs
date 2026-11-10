@@ -355,20 +355,26 @@ namespace Antarium.Gameplay
             LoadShowcase();
             Hud(true);
             var q = Queen;
-            var views = new List<(string, float2, int)>
+            // (name, focus cell, zoom, lit): deep rock is dark until something lights it, so the biome views raise
+            // the ambient light to review the terrain tiles.
+            var views = new List<(string, float2, int, bool)>
             {
-                ("queen_z6", q + new float2(2f, 1f), 6),
-                ("colony_z4", q + new float2(-10f, 2f), 4),
-                ("smelter_z5", new float2(_show.Smelter.x + 1f, _show.Smelter.y + 2f), 5),
-                ("factory_z3", (float2)_show.Factory + new float2(18f, 0f), 3),
-                ("stone_z4", new float2(_show.ShaftX + 8f, _show.Surface - 380f), 4),
-                ("nest_z2", q + new float2(14f, -4f), 2),
+                ("queen_z6", q + new float2(2f, 1f), 6, false),
+                ("colony_z4", q + new float2(-10f, 2f), 4, false),
+                ("smelter_z5", new float2(_show.Smelter.x + 1f, _show.Smelter.y + 2f), 5, false),
+                ("factory_z3", (float2)_show.Factory + new float2(18f, 0f), 3, false),
+                ("nest_z2", q + new float2(14f, -4f), 2, false),
+                ("biome_topsoil", q + new float2(-40f, -14f), 3, true),
+                ("biome_clay", new float2(_show.ShaftX + 8f, _show.Surface - 200f), 3, true),
+                ("biome_stone", new float2(_show.ShaftX + 8f, _show.Surface - 380f), 3, true),
             };
+            string[] deep = { "crystal", "fungal", "magma", "ruins" };
+            for (int i = 0; i < _show.Outposts.Length && i < deep.Length; i++)
+                views.Add(("biome_" + deep[i], OutpostView(i), 3, true));
             yield return Frames(30);
-            foreach (var (name, cell, zoom) in views)
+            foreach (var (name, cell, zoom, lit) in views)
             {
-                // Deep rock is dark until something lights it: raise the ambient light to review its texture.
-                if (globalLight != null) globalLight.intensity = name.StartsWith("stone") ? 0.8f : config.render.ambient;
+                if (globalLight != null) globalLight.intensity = lit ? 0.8f : config.render.ambient;
                 Cam(cell, zoom);
                 yield return Frames(6);
                 yield return Still("art_" + name);

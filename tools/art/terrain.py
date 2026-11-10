@@ -190,3 +190,473 @@ def scatter_1d(rng, count, min_gap):
         if all(min(abs(x - q), SIZE - abs(x - q)) >= min_gap for q in xs):
             xs.append(x)
     return xs
+
+
+# ---------------------------------------------------------------- shared pieces
+
+def tones5(*hexes):
+    """Five explicit tones (deep, shade, mid, light, bright) from hex colours."""
+    return np.array([((h >> 16) & 255, (h >> 8) & 255, h & 255, 255) for h in hexes], np.uint8)
+
+
+def speckle(rng, tone, light=0.02, dark=0.02, keep=None):
+    """Single lighter and darker grains on mid-tone pixels."""
+    grain = rng.random((SIZE, SIZE))
+    ok = (tone == 2) if keep is None else keep
+    tone = np.where((grain > 1 - light) & ok, tone + 1, tone)
+    return np.where((grain < dark) & ok, tone - 1, tone)
+
+
+def clods(rng, gap_level=0.4, deep_level=0.3):
+    """Soil relief as tones 0..3: dark gaps between clods, a lit rim on the lower right of each gap."""
+    height = value_noise(rng, 8) * 0.55 + value_noise(rng, 16) * 0.45
+    gap = height < gap_level
+    tone = np.full((SIZE, SIZE), 2)
+    tone[gap] = 1
+    tone[(value_noise(rng, 4) < deep_level) & gap] = 0
+    lit = np.roll(gap, (1, 1), (0, 1)) & ~gap
+    tone[lit & (rng.random((SIZE, SIZE)) < 0.75)] = 3
+    return speckle(rng, tone, 0.015, 0.02)
+
+
+def rock(rng, count=13, stretch=(1.0, 1.7), crack_share=0.45, min_gap=5.0):
+    tone, fracture = facets(rng, count, stretch, crack_share, min_gap)
+    grain = rng.random((SIZE, SIZE))
+    tone = np.where((grain > 0.97) & ~fracture & (tone < 4), tone + 1, tone)
+    tone = np.where((grain < 0.03) & ~fracture & (tone > 1), tone - 1, tone)
+    return tone, fracture
+
+
+# Lumps embedded in a host: h lit, m body, d shade, w shine, k the host's deep tone (a shadow under the lump).
+LUMPS = [
+    ["hm", "md"],
+    [".hm.", "hmmd", ".mdk"],
+    [".hh.", "hwmd", "mmdd", ".ddk"],
+    ["hm.", "mmd", ".dk"],
+    [".hmm.", "hwmmd", "hmmdd", ".mddk"],
+    ["h", "d"],
+    ["hmd"],
+]
+
+
+def embed(img, rng, count, key, shapes=LUMPS, min_gap=6, taken=None):
+    """Stamps `count` lumps at spread-out positions; returns the positions."""
+    spots = scatter(rng, count, min_gap, taken)
+    for i, (x, y) in enumerate(spots):
+        stamp(img, int(x), int(y), shapes[i % len(shapes)], key)
+    return spots
+
+
+def lump_key(ramp, hi, deep, shine=None):
+    r = RAMPS[ramp]
+    return {"h": r[hi], "m": r[hi - 1], "d": r[hi - 2], "w": r[shine if shine is not None else min(hi + 1, len(r) - 1)], "k": deep}
+
+
+EARTH = lambda: tones("earth", 3)
+STONE = lambda: tones("stone", 3, 0.5)
+
+
+# ---------------------------------------------------------------- topsoil
+
+def grass():
+    """Turf: mid green with darker tufts and short lit blades."""
+    rng = rng_for("grass")
+    tone = np.full((SIZE, SIZE), 2)
+    tone[value_noise(rng, 8) < 0.38] = 1
+    tone[(value_noise(rng, 4) < 0.28) & (tone == 1)] = 0
+    for x, y in scatter(rng, 26, 4):
+        h = int(rng.integers(2, 4))
+        for d in range(h):
+            tone[(y + d) % SIZE, x] = 3
+        tone[y % SIZE, x] = 4 if rng.random() < 0.5 else 3
+        tone[(y + h) % SIZE, (x + 1) % SIZE] = 1
+    return tones("grass", 2, 0.5)[tone]
+
+
+def pebbles():
+    """Topsoil full of small grey stones."""
+    rng = rng_for("pebbles")
+    img = EARTH()[clods(rng)]
+    S, E = RAMPS["stone"], RAMPS["earth"]
+    # Half the topsoil is this material, so the stones stay few, small and warm: they must not read as a pattern.
+    key = {"h": mix(S[5], E[5], 0.35), "m": mix(S[4], E[4], 0.35), "d": mix(S[3], E[2], 0.4), "w": S[5], "k": E[1]}
+    embed(img, rng, 6, key, [["hm", "md"], [".hm.", "hmmd", ".mdk"], ["h", "d"], ["hm.", "mmd", ".dk"], ["hm"], ["h", "d"]], min_gap=9)
+    return img
+
+
+def grub_nest():
+    """Topsoil with pale grubs curled in small dark pockets."""
+    rng = rng_for("grub_nest")
+    img = EARTH()[clods(rng)]
+    K, E = RAMPS["silk"], RAMPS["earth"]
+    key = {"w": K[5], "c": K[4], "s": K[3], "d": K[2], "k": mix(E[1], E[2], 0.5)}
+    grubs = [
+        [".kk...", "kwck..", "kccckk", ".kscdk", "..kkk."],
+        ["..kkk.", ".kwcck", "kccskk", "kdsk..", ".kk..."],
+        [".kkk.", "kwcck", "kscdk", ".kkk."],
+    ]
+    embed(img, rng, 5, key, grubs, min_gap=10)
+    return img
+
+
+def sand():
+    """Fine pale sand with soft ripples."""
+    rng = rng_for("sand")
+    tone = np.full((SIZE, SIZE), 2)
+    for k, base in enumerate([3, 11, 19, 27]):
+        wave = (value_noise(rng, 4)[0] - 0.5) * 5
+        for x in range(SIZE):
+            if rng.random() < 0.2:
+                continue
+            y = int(round(base + wave[x])) % SIZE
+            tone[y, x] = 3
+            tone[(y + 1) % SIZE, x] = 1
+    tone = speckle(rng, tone, 0.05, 0.05)
+    grain = rng.random((SIZE, SIZE))
+    tone = np.where(grain > 0.992, 4, tone)
+    return tones("sand", 3, 0.4)[tone]
+
+
+def root():
+    """Root wood: fibres running down, darker seams between the strands, a knot or two."""
+    rng = rng_for("root")
+    tone = np.zeros((SIZE, SIZE), int)
+    edges = sorted(scatter_1d(rng, 9, 3))
+    drift = (value_noise(rng, 4)[:, 0] - 0.5) * 7
+    for y in range(SIZE):
+        shift = int(round(drift[y]))
+        for i, e in enumerate(edges):
+            nxt = edges[(i + 1) % len(edges)]
+            width = (nxt - e) % SIZE or SIZE
+            base = 2 if i % 3 else 1
+            for d in range(width):
+                x = (e + d + shift) % SIZE
+                tone[y, x] = 0 if d == 0 and rng.random() < 0.5 else base + (1 if d == 1 else 0) - (1 if d == width - 1 and width > 2 else 0)
+    tone = speckle(rng, tone, 0.02, 0.03)
+    img = tones("wood", 3, 0.5)[np.clip(tone, 0, 4)]
+    W = RAMPS["wood"]
+    key = {"h": W[5], "m": W[3], "d": W[1], "k": W[0]}
+    for (x, y), rows in zip(scatter(rng, 2, 14), [[".hh.", "hkkd", "hkkd", ".dd."], ["hh", "kd"]]):
+        stamp(img, int(x), int(y), rows, key)
+    return img
+
+
+def packed_earth():
+    """Tamped earth: flat dark layers pressed by the builders, small stones set in."""
+    rng = rng_for("packed_earth")
+    layer, row, height = strata(rng, 6, wobble=0.7)
+    tone = np.array([2, 2, 1, 2, 2, 1])[layer]
+    tone = np.where(clods(rng, 0.3, 0.0) == 1, np.maximum(tone - 1, 1), tone)
+    seam = row == 0
+    dashes = value_noise(rng, 8) > 0.45
+    tone = np.where((row == 1) & dashes & (rng.random((SIZE, SIZE)) < 0.5), tone + 1, tone)
+    tone = np.where(seam & dashes, 0, tone)
+    tone = speckle(rng, tone, 0.02, 0.03)
+    E, S = RAMPS["earth"], RAMPS["stone"]
+    img = np.array([E[0], mix(E[1], E[2], 0.4), mix(E[2], E[3], 0.35), mix(E[3], E[4], 0.25), E[4]], np.uint8)[np.clip(tone, 0, 4)]
+    key = {"h": mix(E[5], S[5], 0.5), "m": mix(E[4], S[3], 0.5), "d": E[1], "w": E[5], "k": E[0]}
+    embed(img, rng, 3, key, [["hm", "dk"], ["h", "d"], ["hmd"]], min_gap=11)
+    return img
+
+
+# ---------------------------------------------------------------- clay
+
+def clay():
+    """Clay: smooth bedded layers in close warm tones, thin broken seams, a few drying cracks."""
+    rng = rng_for("clay")
+    layer, row, height = strata(rng, 5, wobble=2.2)
+    tone = np.array([2, 1, 2, 3, 2])[layer]
+    seam = row == 0
+    tone = np.where((row == 1) & (rng.random((SIZE, SIZE)) < 0.5) & (tone < 3), tone + 1, tone)
+    tone = np.where(seam & (rng.random((SIZE, SIZE)) < 0.55), np.maximum(tone - 2, 0), tone)
+    for x in scatter_1d(rng, 3, 9):
+        y0, length = int(rng.integers(0, SIZE)), int(rng.integers(3, 6))
+        for d in range(length):
+            tone[(y0 + d) % SIZE, (x + (d // 2) % 2) % SIZE] = 0
+    tone = speckle(rng, tone, 0.012, 0.02)
+    return tones("clay", 3, 0.45)[np.clip(tone, 0, 4)]
+
+
+# ---------------------------------------------------------------- ores and finds
+
+def copper_ore():
+    """Copper ore: brown host rock with bright copper nuggets."""
+    rng = rng_for("copper_ore")
+    tone, _ = rock(rng, 12, (1.0, 1.3), 0.2)
+    img = tones5(0x3a2619, 0x4e3626, 0x5e4330, 0x70523a, 0x866648)[tone]
+    embed(img, rng, 9, lump_key("copper", 4, (0x2e, 0x1e, 0x14, 255)), min_gap=7)
+    return img
+
+
+def iron_ore():
+    """Iron ore: rusty red rock with pale metallic flecks."""
+    rng = rng_for("iron_ore")
+    tone, _ = rock(rng, 12, (1.3, 1.0), 0.2)
+    img = tones5(0x582a1c, 0x723a27, 0x84462f, 0x97563a, 0xae6a4a)[tone]
+    I = RAMPS["iron"]
+    key = {"h": I[5], "m": I[4], "d": I[3], "w": I[6], "k": (0x4a, 0x22, 0x18, 255)}
+    flecks = [["hm", "md"], [".h.", "hmd", ".d."], ["hmd", ".dk"], ["h", "m"], ["hm"], [".hm", "hmd", "md."]]
+    embed(img, rng, 9, key, flecks, min_gap=7)
+    return img
+
+
+def coal():
+    """Coal seam: stone crowded with black, glinting lumps."""
+    rng = rng_for("coal")
+    tone, _ = rock(rng, 10, (1.0, 1.5), 0.3)
+    img = STONE()[tone]
+    B, S = RAMPS["basalt"], RAMPS["stone"]
+    key = {"h": B[3], "m": B[1], "d": B[0], "w": RAMPS["iron"][4], "k": S[1]}
+    lumps = [
+        [".hmm.", "hwmmd", "mmmdd", "mmddd", ".dddk"],
+        [".hm.", "hmmd", "mmdd", ".ddk"],
+        ["hmm.", "mwmd", "mmdd", ".ddk"],
+        ["hm", "md"],
+        [".hmmm.", "hmwmmd", "mmmddd", ".ddddk"],
+    ]
+    embed(img, rng, 10, key, lumps, min_gap=7)
+    return img
+
+
+def amber():
+    """Amber: stone with honey-gold drops."""
+    rng = rng_for("amber")
+    tone, _ = rock(rng, 11, (1.0, 1.5), 0.35)
+    img = STONE()[tone]
+    drops = [[".hm.", "hwmd", "mmmd", ".ddk"], ["hm", "md"], [".h.", "hwd", "mmd", ".dk"], ["h", "d"]]
+    embed(img, rng, 7, lump_key("gold", 4, RAMPS["stone"][1]), drops, min_gap=8)
+    return img
+
+
+def fossil():
+    """Fossil bed: stone with a coiled shell, ribs and bone ends."""
+    rng = rng_for("fossil")
+    tone, _ = rock(rng, 11, (1.0, 1.5), 0.3)
+    img = STONE()[tone]
+    N, S = RAMPS["bone"], RAMPS["stone"]
+    key = {"h": N[4], "m": N[3], "d": N[2], "s": N[1], "k": S[1]}
+    bones = [
+        [".hhhh.", "hmssmh", "hs.hms", "hsmmds", "hmsss.", ".dmmd."],        # coiled shell
+        ["h.....", "mh....", ".mhhh.", "..dmmh", ".....d"],                 # rib
+        ["hm.....mh", ".dmmmmmd.", "hd.....dm"],                           # long bone
+        ["h.h.h", "mdmdm"],                                                 # vertebrae
+        ["hm", "d."],
+    ]
+    embed(img, rng, 5, key, bones, min_gap=11)
+    return img
+
+
+def relic():
+    """Relic wall: ruin masonry with a gold-inlaid tablet."""
+    rng = rng_for("relic")
+    img = bricks(rng, moss=0.0, block=(16, 8))
+    G, R = RAMPS["gold"], RAMPS["ruin"]
+    key = {"h": G[5], "m": G[4], "d": G[2], "k": R[0], "b": R[1]}
+    glyphs = [
+        ["kkkkkkkkk", "kmmmhmmmk", "kmkkkkkmk", "kmkhmkkmk", "kmkkdkkdk", "kmkkkkkdk", "kdmmdmddk", "kkkkkkkkk"],
+        [".kkkkk.", "kmhkhmk", "kkmhmkk", "kmkdkmk", "kdkkkdk", ".kkkkk."],
+    ]
+    for (x, y), rows in zip([(4, 3), (20, 18)], glyphs):
+        stamp(img, x, y, rows, key)
+    return img
+
+
+# ---------------------------------------------------------------- deep rock
+
+def basalt():
+    """Basalt: near-black columns, taller than wide."""
+    rng = rng_for("basalt")
+    tone, _ = rock(rng, 13, (1.9, 1.0), 0.55)
+    return tones("basalt", 3, 0.5)[tone]
+
+
+def bedrock():
+    """Bedrock: the darkest, heaviest rock; big blocks, deep cracks. Cannot be dug."""
+    rng = rng_for("bedrock")
+    tone, _ = rock(rng, 7, (1.0, 1.0), 0.85, min_gap=8.0)
+    return tones5(0x0c0b10, 0x1a191e, 0x2b2a30, 0x3a3940, 0x4a4954)[tone]
+
+
+def quartzite():
+    """Quartzite: pale lavender-grey, angular, with glints."""
+    rng = rng_for("quartzite")
+    tone, fracture = rock(rng, 18, (1.0, 1.0), 0.4, min_gap=4.5)
+    img = tones5(0x55526a, 0x737089, 0x8e8a9a, 0xa9a5b9, 0xc8c4da)[tone]
+    glint = (rng.random((SIZE, SIZE)) > 0.988) & ~fracture
+    img[glint] = (0xee, 0xea, 0xff, 255)
+    return img
+
+
+def glow_crystal():
+    """Glow crystals: deep blue rock set with bright shards (the tile glows in the game)."""
+    rng = rng_for("glow_crystal")
+    tone, _ = rock(rng, 10, (1.0, 1.0), 0.4)
+    C = RAMPS["crystal"]
+    img = np.array([C[0], mix(C[0], C[1], 0.5), C[1], mix(C[1], C[2], 0.5), C[2]], np.uint8)[tone]
+    key = {"w": C[6], "h": C[5], "m": C[4], "d": C[3], "g": C[2]}
+    shards = [
+        ["..w..", ".ghg.", "ghmdg", "ghmdg", "ghmdg", ".gmd.", "..d.."],
+        ["...gw", "..ghm", ".ghmd", "ghmdg", "gmdg.", ".dg.."],
+        [".w.", "hmd", "hmd", ".d."],
+        ["gw...", "ghmg.", ".gmdg", "..gdg"],
+        ["w", "m", "d"],
+        [".gwg.", "ghhmg", "gmmdg", ".gdg."],
+    ]
+    embed(img, rng, 8, key, shards, min_gap=8)
+    return img
+
+
+def obsidian():
+    """Obsidian: black-violet glass with a few sharp glancing lights."""
+    rng = rng_for("obsidian")
+    tone, _ = rock(rng, 8, (1.0, 1.0), 0.5, min_gap=7.0)
+    V = RAMPS["void"]
+    img = np.array([(0x0e, 0x0a, 0x16, 255), mix(V[0], V[1], 0.3), mix(V[0], V[1], 0.75), mix(V[1], V[2], 0.5), V[2]], np.uint8)[tone]
+    key = {"w": V[5], "h": V[4], "m": V[3]}
+    streaks = [["...w", "..h.", ".h..", "m..."], ["..h", ".h.", "m.."], ["w", "h"], [".....h", "...hw.", ".mh...", "m....."]]
+    embed(img, rng, 5, key, streaks, min_gap=10)
+    return img
+
+
+def magma_rock():
+    """Magma rock: dark crust split by glowing cracks."""
+    rng = rng_for("magma_rock")
+    owner, _ = voronoi(rng, 11, (1.0, 1.0), 6.0)
+    n = owner.max() + 1
+    tone = rng.choice([1, 2, 2, 3], n)[owner]
+    below = (owner != np.roll(owner, -1, 0)) | (owner != np.roll(owner, -1, 1))
+    crack = below & (rng.random(n) < 0.55)[owner]
+    tone = speckle(rng, tone, 0.02, 0.03, keep=~crack & (tone == 2))
+    M = RAMPS["magma"]
+    img = tones5(0x1c0c0a, 0x2e1612, 0x42211a, 0x5a3024, 0x6e3e2e)[np.clip(tone, 0, 4)]
+    heat = value_noise(rng, 4)
+    img[crack & (heat <= 0.45)] = M[3]
+    img[crack & (heat > 0.45)] = M[4]
+    img[crack & (heat > 0.68)] = M[5]
+    # A dull red rim next to the hottest cracks.
+    hot = crack & (heat > 0.45)
+    rim = (np.roll(hot, 1, 0) | np.roll(hot, 1, 1)) & ~crack
+    img[rim] = M[2]
+    return img
+
+
+def meteorite():
+    """Meteorite: dark violet iron, pitted, with glowing specks."""
+    rng = rng_for("meteorite")
+    V = RAMPS["void"]
+    tone = np.full((SIZE, SIZE), 2)
+    tone[value_noise(rng, 8) < 0.33] = 1
+    tone = speckle(rng, tone, 0.02, 0.03)
+    img = np.array([V[0], mix(V[0], V[1], 0.6), mix(V[1], V[2], 0.35), mix(V[1], V[2], 0.85), V[3]], np.uint8)[tone]
+    key = {"k": V[0], "d": mix(V[0], V[1], 0.5), "h": V[3], "w": V[5], "g": V[4]}
+    pits = [[".kk.", "kkdh", "kdhh", ".hh."], ["kk.", "kdh", ".hh"], ["kd", "dh"], [".kkk.", "kkddh", "kdddh", ".dhh."]]
+    spots = embed(img, rng, 7, key, pits, min_gap=7)
+    embed(img, rng, 6, key, [["w"], ["gw"], ["w", "g"]], min_gap=6, taken=spots)
+    return img
+
+
+# ---------------------------------------------------------------- fungal depths
+
+def mycelium():
+    """Mycelium: dark violet rot laced with pale threads."""
+    rng = rng_for("mycelium")
+    tone = clods(rng, 0.42, 0.32)
+    F = RAMPS["fungus"]
+    img = np.array([F[0], mix(F[0], F[1], 0.6), mix(F[1], F[2], 0.35), mix(F[1], F[2], 0.8), F[2]], np.uint8)[tone]
+    thread, knot = F[4], F[5]
+    for x, y in scatter(rng, 7, 8):
+        for branch in range(2):
+            p = np.array([x, y])
+            step = np.array([rng.choice([-1, 1]), rng.choice([-1, 0, 1])])
+            for i in range(int(rng.integers(5, 10))):
+                img[p[1] % SIZE, p[0] % SIZE] = thread
+                # Wander: usually keep going, often bend, never run straight for long.
+                if rng.random() < 0.6:
+                    step = np.array([step[0] if rng.random() < 0.7 else 0, rng.choice([-1, 0, 1])])
+                    if not step.any():
+                        step = np.array([rng.choice([-1, 1]), 0])
+                p = p + step
+        img[y % SIZE, x % SIZE] = knot
+    return img
+
+
+def giant_fungus():
+    """Giant fungus flesh: soft violet, ribbed like gills, with glowing teal spores."""
+    rng = rng_for("giant_fungus")
+    tone = np.full((SIZE, SIZE), 2)
+    drift = (value_noise(rng, 4)[:, 0] - 0.5) * 4
+    for x0 in sorted(scatter_1d(rng, 8, 3)):
+        for y in range(SIZE):
+            x = (x0 + int(round(drift[y]))) % SIZE
+            if rng.random() < 0.85:
+                tone[y, x] = 1
+                tone[y, (x + 1) % SIZE] = 3
+    tone[(value_noise(rng, 4) < 0.3) & (tone == 2)] = 1
+    tone = speckle(rng, tone, 0.02, 0.02)
+    img = tones("fungus", 3, 0.5)[np.clip(tone, 0, 4)]
+    P, F = RAMPS["spore"], RAMPS["fungus"]
+    key = {"w": P[5], "h": P[4], "m": P[3], "d": P[2], "k": F[1]}
+    spores = [[".h.", "hwm", ".md"], ["hw", "md"], ["w"], [".hh.", "hwwm", "hwmm", ".md."], ["h", "m"]]
+    embed(img, rng, 8, key, spores, min_gap=7)
+    return img
+
+
+# ---------------------------------------------------------------- ruins, ash
+
+def bricks(rng, moss=0.2, block=(8, 4)):
+    """Ruin masonry in running bond: worn blocks, dark joints, a lit top-left edge, moss in some joints."""
+    W, H = block
+    R, M = RAMPS["ruin"], RAMPS["moss"]
+    pal = np.array([R[0], R[1], mix(R[1], R[2], 0.6), mix(R[2], R[3], 0.4), mix(R[2], R[3], 0.9), R[3], R[4]], np.uint8)
+    img = np.zeros((SIZE, SIZE, 4), np.uint8)
+    for row in range(SIZE // H):
+        shift = (row % 2) * (W // 2)
+        for b in range(SIZE // W):
+            face = int(rng.choice([2, 3, 3, 3, 4]))
+            worn = rng.random() < 0.3
+            for y in range(H):
+                for x in range(W):
+                    t = face
+                    if y == 0 or x == 0:
+                        t = 0 if rng.random() < 0.85 else 1                    # joint
+                    elif y == 1 or x == 1:
+                        t = face + 1                                            # lit edge
+                    elif y == H - 1 or x == W - 1:
+                        t = face - 1
+                    elif rng.random() < 0.05:
+                        t = face - 1
+                    if worn and (x, y) in ((1, 1), (W - 1, H - 1)):
+                        t = 1                                                   # chipped corner
+                    px, py = (b * W + x + shift) % SIZE, row * H + y
+                    img[py, px] = pal[max(0, min(t, 6))]
+                    if (y == 0 or x == 0) and rng.random() < moss:
+                        img[py, px] = M[int(rng.choice([1, 2, 2, 3]))]
+    return img
+
+
+def ruin_brick():
+    """Ancient ruins: worn sandstone blocks with moss in the joints."""
+    return bricks(rng_for("ruin_brick"))
+
+
+def ash():
+    """Ash: soft grey powder with charcoal crumbs."""
+    rng = rng_for("ash")
+    tone = np.full((SIZE, SIZE), 2)
+    tone[value_noise(rng, 8) < 0.36] = 1
+    tone[value_noise(rng, 8) > 0.68] = 3
+    tone = speckle(rng, tone, 0.04, 0.04)
+    img = tones5(0x2a2726, 0x4a4644, 0x5a5654, 0x6b6663, 0x827c78)[tone]
+    key = {"k": (0x1e, 0x1b, 0x1a, 255), "d": (0x2a, 0x27, 0x26, 255), "h": (0x96, 0x90, 0x8a, 255)}
+    embed(img, rng, 6, key, [["kd"], ["k", "d"], ["h"], ["dk", "k."], ["h"], ["k"]], min_gap=8)
+    return img
+
+
+# Every material with a tile, by material id (dirt and stone above).
+TILES = {
+    "dirt": dirt, "grass": grass, "pebbles": pebbles, "grub_nest": grub_nest, "sand": sand, "root": root,
+    "packed_earth": packed_earth, "clay": clay, "copper_ore": copper_ore, "iron_ore": iron_ore, "coal": coal,
+    "amber": amber, "fossil": fossil, "stone": stone, "basalt": basalt, "bedrock": bedrock, "quartzite": quartzite,
+    "glow_crystal": glow_crystal, "obsidian": obsidian, "magma_rock": magma_rock, "meteorite": meteorite,
+    "mycelium": mycelium, "giant_fungus": giant_fungus, "ruin_brick": ruin_brick, "relic": relic, "ash": ash,
+}

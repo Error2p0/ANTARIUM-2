@@ -25,14 +25,13 @@ PIECES = {
     "ant_worker": ("Colony/ant_worker.png", colony.worker),
     "queen": ("Colony/queen.png", colony.queen),
     "smelter": ("Buildings/smelter.png", buildings.smelter),
-    "terrain_dirt": ("Terrain/dirt.png", terrain.dirt),
-    "terrain_stone": ("Terrain/stone.png", terrain.stone),
     "skin_frame": ("UI/Skin/frame.png", ui.frame),
     "skin_button": ("UI/Skin/button.png", ui.button),
     "skin_button_down": ("UI/Skin/button_down.png", ui.button_down),
     "skin_inset": ("UI/Skin/inset.png", ui.inset),
 }
 PIECES.update({"icon_" + name: (f"UI/Icons/{name}.png", ui.icon(name)) for name in ui.ICONS})
+PIECES.update({"terrain_" + name: (f"Terrain/{name}.png", painter) for name, painter in terrain.TILES.items()})
 
 
 def palette_sheet():

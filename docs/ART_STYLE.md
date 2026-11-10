@@ -105,7 +105,12 @@ Buildings are always cells × 8 px. More rows are added to this table as each ca
   three distinct features per tile. Anything bold shows up as a grid.
 - The shader adds the outline and lit top edge, light bands, fluids, fire and fog, and draws the same tile
   flattened and darkened as the background wall. Do not draw edges or lighting into the tile.
-- Soil is clods (dark gaps with a lit rim on their lower right); rock is flat facets with a few dark fractures.
+- Soil is clods (dark gaps with a lit rim on their lower right); rock is flat facets with a few dark fractures
+  (`clods()`, `rock()`); bedded materials use `strata()`; ores and finds are lumps stamped into a host rock
+  (`embed()`), lit top left with a shadow pixel under them. A material that covers large areas (pebbles: half the
+  topsoil) gets fewer and smaller features than a rare one (relic).
+- Glowing materials (crystal, magma rock, giant fungus, meteorite) are drawn bright; the game adds the glow
+  (`selfGlow`, emission) on top.
 
 ## 7. UI
 
@@ -133,7 +138,7 @@ Buildings are always cells × 8 px. More rows are added to this table as each ca
 
 ## 9. What exists
 
-Drawn in the new style: worker, queen, smelter, terrain tiles *dirt* and *stone*, the UI skin (frame, button
+Drawn in the new style: worker, queen, smelter, **all 26 terrain tiles**, the UI skin (frame, button
 bevels, inset) and the icons *food, ants, eggs, storage, knowledge, copper ore, iron ore, coal, copper, iron,
 crystal shard, amber*.
 

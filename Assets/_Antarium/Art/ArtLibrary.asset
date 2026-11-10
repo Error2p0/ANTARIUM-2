@@ -19,8 +19,56 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 77c0423eaa263a74faf99b90043274e2, type: 3}
   - name: Colony/queen
     texture: {fileID: 2800000, guid: 4ed4c0ce88ccded47a83d136f3de8da7, type: 3}
+  - name: Terrain/amber
+    texture: {fileID: 2800000, guid: fc4be21531c25c545b5f650a1a49e261, type: 3}
+  - name: Terrain/ash
+    texture: {fileID: 2800000, guid: 895111d4e008aa04d8fa540648e52870, type: 3}
+  - name: Terrain/basalt
+    texture: {fileID: 2800000, guid: 5e795554c7f8abd48afb47f1d5cb98d5, type: 3}
+  - name: Terrain/bedrock
+    texture: {fileID: 2800000, guid: f5bbd664b5f7b954092a8afb8db41690, type: 3}
+  - name: Terrain/clay
+    texture: {fileID: 2800000, guid: e9bad0ab72ee37745b64fdeaef261302, type: 3}
+  - name: Terrain/coal
+    texture: {fileID: 2800000, guid: 6773ff54015f0764a86e346f14898b40, type: 3}
+  - name: Terrain/copper_ore
+    texture: {fileID: 2800000, guid: 8ff30c567c8e7644e925c38dddfd7820, type: 3}
   - name: Terrain/dirt
     texture: {fileID: 2800000, guid: 2ca0b8133b696be439453a1e7b32c49a, type: 3}
+  - name: Terrain/fossil
+    texture: {fileID: 2800000, guid: 965f2da78e56cc1438eafcc5750eb3ba, type: 3}
+  - name: Terrain/giant_fungus
+    texture: {fileID: 2800000, guid: b03e0a05b3370ff4ca54dbc816506218, type: 3}
+  - name: Terrain/glow_crystal
+    texture: {fileID: 2800000, guid: c77a36ca4c3f52440947d1aafe736205, type: 3}
+  - name: Terrain/grass
+    texture: {fileID: 2800000, guid: 1c601b829d97a2641a671c44800d4f87, type: 3}
+  - name: Terrain/grub_nest
+    texture: {fileID: 2800000, guid: 5a6804288150c924296606be0663fd90, type: 3}
+  - name: Terrain/iron_ore
+    texture: {fileID: 2800000, guid: 0fc46325fccb9db4a94d56bed61724ff, type: 3}
+  - name: Terrain/magma_rock
+    texture: {fileID: 2800000, guid: e6e65df7933e6c3498d123dfb4662b86, type: 3}
+  - name: Terrain/meteorite
+    texture: {fileID: 2800000, guid: 08922382c847d644fa71b1cdd05e5f97, type: 3}
+  - name: Terrain/mycelium
+    texture: {fileID: 2800000, guid: 1f95b95bfa4ecf54fa41dc6debb8fa51, type: 3}
+  - name: Terrain/obsidian
+    texture: {fileID: 2800000, guid: 125c83a27aca6144a964cbf7720b8b55, type: 3}
+  - name: Terrain/packed_earth
+    texture: {fileID: 2800000, guid: 98657bd2a4b1d674592b4a988b069bc1, type: 3}
+  - name: Terrain/pebbles
+    texture: {fileID: 2800000, guid: 04447c53a7c0aca4792e9b4dd699cae9, type: 3}
+  - name: Terrain/quartzite
+    texture: {fileID: 2800000, guid: 6d1279889d0cb7a41929b1046048cdab, type: 3}
+  - name: Terrain/relic
+    texture: {fileID: 2800000, guid: a6109042268e27842b8fb9579d693526, type: 3}
+  - name: Terrain/root
+    texture: {fileID: 2800000, guid: 3daf0d3b1e7350441ae79ca090c2184d, type: 3}
+  - name: Terrain/ruin_brick
+    texture: {fileID: 2800000, guid: a2ebffd19c530d44f8d2c69d3741eb92, type: 3}
+  - name: Terrain/sand
+    texture: {fileID: 2800000, guid: 2b8b1e3208406ed4c8f4890b0d80fc60, type: 3}
   - name: Terrain/stone
     texture: {fileID: 2800000, guid: 8ac42b04d3326204b8873a388dcefe5e, type: 3}
   - name: UI/Icons/ants

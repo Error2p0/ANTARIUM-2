@@ -17,14 +17,17 @@ MonoBehaviour:
   hardness: 0.8
   value: 0
   flags: 0
+  drop: {fileID: 0}
+  dropAmount: 1
+  dropChance: 1
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   emissionStrength: 0
   selfGlow: 0
   pattern: 0
-  baseColor: {r: 0.29803923, g: 0.47843137, b: 0.18039216, a: 1}
-  shadowColor: {r: 0.2, g: 0.3372549, b: 0.12156863, a: 1}
-  highlightColor: {r: 0.41568628, g: 0.6509804, b: 0.23529412, a: 1}
+  baseColor: {r: 0.21176471, g: 0.42745098, b: 0.15686275, a: 1}
+  shadowColor: {r: 0.15294118, g: 0.32156864, b: 0.13333334, a: 1}
+  highlightColor: {r: 0.2509804, g: 0.49019608, b: 0.1764706, a: 1}
   accentColor: {r: 0.1764706, g: 0.2901961, b: 0.101960786, a: 1}
   accentAmount: 0.2
   topRimColor: {r: 0.5254902, g: 0.7882353, b: 0.30588236, a: 1}
-  textureOverride: {fileID: 0}
+  textureOverride: {fileID: 2800000, guid: 1c601b829d97a2641a671c44800d4f87, type: 3}

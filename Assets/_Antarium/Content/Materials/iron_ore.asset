@@ -24,10 +24,10 @@ MonoBehaviour:
   emissionStrength: 0
   selfGlow: 0
   pattern: 4
-  baseColor: {r: 0.5411765, g: 0.30588236, b: 0.20784314, a: 1}
-  shadowColor: {r: 0.39215687, g: 0.21176471, b: 0.13333334, a: 1}
-  highlightColor: {r: 0.65882355, g: 0.39607844, b: 0.2901961, a: 1}
+  baseColor: {r: 0.5019608, g: 0.2784314, b: 0.19607843, a: 1}
+  shadowColor: {r: 0.42352942, g: 0.21176471, b: 0.14117648, a: 1}
+  highlightColor: {r: 0.6039216, g: 0.40392157, b: 0.32156864, a: 1}
   accentColor: {r: 0.8117647, g: 0.78431374, b: 0.7529412, a: 1}
   accentAmount: 0.6
   topRimColor: {r: 0, g: 0, b: 0, a: 0}
-  textureOverride: {fileID: 0}
+  textureOverride: {fileID: 2800000, guid: 0fc46325fccb9db4a94d56bed61724ff, type: 3}
