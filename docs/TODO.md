@@ -353,12 +353,21 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Verified in the editor (capture shot `depth`, `Captures/stills/depth_*`): glow ants lighting a dark ruin tunnel with shadows cut by the rock (and without lights / without shadows for comparison), fire ants and workers by the lava, the Queen panel with bought evolutions, the priority panel beside the castes panel, an ant's hover text, a busy route with lanes.
 - Known limits: glow ants without a real light only show their halo (no light on the terrain); shadow casters are rebuilt 4× a second, so a freshly dug cell can let light through for a moment; the halo is drawn behind all ants; evolution and priority balance is first-pass; the Quickening has no special effect beyond the hatch sounds; ant traits can't be rerolled; skill is fixed by the first job (a worker that first hauled stays a hauler); the Queen panel, the priority panel and the fifth ability have no gamepad binding yet (Steam Deck pass).
 
-**10.5 Deep endgame: crystals and ruins** (no open questions)
-- [ ] **Crystal resonance**: a *Crystal Resonator* next to glow crystals (more crystals in its conductive cluster = stronger) produces knowledge and speeds nearby machines; mining the cluster weakens it.
-- [ ] **Ruins story**: relics studied in the Archive unlock **lore fragments** (a Codex panel with a short story of the lost colony, ~12 entries); some ruin rooms hold a *tablet* (unique relic).
-- [ ] **Endgame tech**: research tier 7 behind the lore (e.g. *Ancient Engine*: a big ruin machine the colony restores step by step with relics, iron, crystals; finishing it is the colony's goal and gives a large Genetic Memory bonus at the next flight).
-- [ ] **Rival ant colony** (deep or surface raid variant that steals items from storage instead of food) and an **enemy that digs** (mole cricket: tunnels toward the nest through soft soil, so walls / gates alone don't stop it).
-- [ ] Contracts, achievements, ruin-tier music cue hook.
+**10.5 Deep endgame: crystals and ruins** ✅ (GDD 2.2.2; no open questions. Decided while building: the Ancient Engine is **placed by the player but only in the ruins** (one per colony) and restored in paid steps that workers build like blueprints; lore is found by **studying** relics and tablets (counted per item studied); ore only **carries** resonance, glow crystals resonate; rival ants are a **surface raid variant**; the mole cricket is its own timed threat)
+- [x] **Crystal Resonator** (2 × 2, 8 crystal shards + 4 copper + 2 iron, research *Crystal Resonance*, tier 6): must touch conductive rock; follows the conductive cluster (4-way, ≤ 400 cells), power = glow crystals ÷ 24 (`TerrainMaterialDef.resonance`); knowledge 15/min and +30% for machines within 8 cells at full power (`Machine.ResonanceBoost`, best resonator, stacks with a wheel); re-measured every 0.5 s, so mining weakens it.
+- [x] **Lore** (`LoreDef`, `LoreSystem`, `ColonyStats.Studied`): 12 fragments, 9 from relics studied (1, 2, 3, 5, 7, 9, 12, 15, 18) and 3 from tablets (1, 2, 3); **Codex** panel (L, toolbar *Codex* once a fragment is found, `frame_codex`, fragment icons); toasts.
+- [x] **Ancient tablets**: a glowing material set into 4 ruin-room floors per world (60 cells apart); the item studies for 60 knowledge.
+- [x] **Ancient tier 7** behind lore (`ResearchDef.loreRequired`): *Ancient Masonry* (3), *Resonant Lattice* (5), *The Ancient Engine* (8). The research panel shows 7 tiers (wider) and *Lore 3/5* on locked nodes.
+- [x] **Ancient Engine** (4 × 3, 4 relics + 10 copper; unique, ruins only): 3 restoration steps (*Iron Gears*, *Crystal Heart*, *The Waking*) paid from the configure panel (I or a click) and built by workers; removing cancels a step (refund), a standing engine is permanent; running: 60 knowledge/min and **×2 Genetic Memory** at the flight (`engineMemoryBonus`). Sprite frame per stage.
+- [x] **Rival ants** (`EnemyBehavior.Thief`): from minute 25, 40% of raids; steal the most stocked item (up to 3 each, 1.2 s each), carry it home (drawn in the jaws); killed thieves drop it; a raid that lost items is not repelled.
+- [x] **Mole cricket** (`EnemyBehavior.Digger`): from minute 18 (15 ants), every 8–14 min; starts 26–42 cells from the queen and ≥ 8 from the tunnels; tunnels toward the queen through soft ground (earth walls too), around harder rock, its tunnel revealed; breaks in and hunts; gives up after 30 s without progress.
+- [x] Contract *Singing Stone* (resonators); achievements *Crystal Choir* (`ACH_RESONATORS_5`), *Keeper of the Codex* (`ACH_CODEX`), *The Engine Wakes* (`ACH_ANCIENT_ENGINE`, hidden), *Not One Crumb* (`ACH_RIVALS_3`; new kinds `LoreFound`, `EngineRestored`, `RivalsRepelled`). **(you)** enter the 4 on Steamworks with the icons from `steam/achievement_icons/` (`steam/achievements.md`, rows 35–38).
+- [x] Sound cues `LoreFound`, `EngineStage`, `EngineAwakened`, `Burrow`, `ItemStolen`; music cue slots `music_lore` and `music_engine` (**(you)**: prompts in `docs/SUNO_PROMPTS.md`). F11 debug: Shift = rival raid, Ctrl = mole cricket.
+- [x] Save: `BLDG` 4, `THRT` 2, new `RUIN` 1 (format stays 5); 10.4 saves load.
+- [x] Art wired: `crystal_resonator`, `ancient_engine` (building atlas grew to 128 × 128), `rival_ant`, `mole_cricket` + `_dig`, `frame_codex`, `item_tablet`, `lore_fragment(_locked)`; new: the `tablet` terrain tile and palette icons `building_crystal_resonator`, `building_ancient_engine` (`tools/art`).
+- [x] 215 EditMode tests (12 new: resonator cluster and power, resonator machine boost, studying relics finds lore and opens the ancient tier, engine biome / unique / steps / cancel / permanent, rival raid steals and leaves, killed thief drops loot, mole cricket around rock and breaking in, mole cricket giving up, digger spawn, engine flight bonus, tablets in ruin floors, save round trip).
+- Verified in the editor (capture shot `ruins`, `Captures/stills/ruins_*`): a resonator at the crystal outpost (62% power, its hover text), the engine at all four stages and its panel, the Codex, the 7-tier research tree, rival ants in the royal chamber with their card, a mole cricket tunnelling toward the nest with its card.
+- Known limits: the engine gives no light of its own; resonance counts unrevealed crystals too; rival raids only come from the surface (no deep variant); a mole cricket never digs through buildings or hard rock, so a rock shell around the nest stops it for good (it gives up); the showcase world predates tablets (none there); lore / engine / resonator numbers are first-pass; stolen items are simply lost (no rival nest to raid back).
 
 **10.6 Prestige and saves** (open: respec cost)
 - [ ] **Respec** genetic memory (refund at a cost, or free once per flight).
@@ -385,15 +394,15 @@ Things the current build is still missing, grouped by area. Many are planned for
 - 10 castes, including glow ants (light) and fire ants (heat-proof); a queen evolution tree per colony; job priorities; ant experience, levels and traits (10.4).
 
 **World**
-- All 7 planned biomes exist; crystal resonance and the ruins' story / endgame tech are not in yet.
+- All 7 planned biomes exist, with crystal resonance (Crystal Resonator), the ruins' story (lore, tablets, the Codex) and the endgame tech (ancient tier, Ancient Engine) since 10.5.
 - Fluids: pumps, water wheels, irrigation and magma heat exist; no fluid pressure (decided), no lava pumping.
-- Material flag *Conductive* has no behaviour yet (crystal resonance, 10.5); *Flammable* = fire, *Unstable* = sand and ash collapse, *Hot* = magma heat.
+- Material flags: *Conductive* = crystal resonance (10.5), *Flammable* = fire, *Unstable* = sand and ash collapse, *Hot* = magma heat.
 - Weather is rain and drought only (no storms, no seasons).
 
 **Gameplay layers**
 - Auto-designating veins exists as the genetic trait *Vein Instinct*.
 - One save slot (synced by Steam Cloud).
-- Threats: termite raids, birds by day, wolf spiders at night and one cave creature per deep biome; no rival ant colonies, no enemies that dig (10.5).
+- Threats: termite raids and rival ant raids (they steal items), birds by day, wolf spiders at night, the mole cricket (digs in) and one cave creature per deep biome. No deep raids.
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
 - Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
 

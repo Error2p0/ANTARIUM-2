@@ -198,17 +198,22 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 
 ## 9. What exists
 
-195 PNGs (183 in use since 10.4). Drawn in the new style: **the whole colony** (10 castes with the glow ant's halo, queen, princess, egg,
-item lumps, golden beetle and aphid), **every building** (27 PNGs), **the 7 enemies**, **the surface** (plants, bird, aphid), **all 26
-terrain tiles**, the UI skin (frame, button bevels, inset), **74 icons** (items, buildings, castes, tools,
-abilities, fixed entries) and the title crest.
+198 PNGs (195 in use since 10.5; the three 10.6 pieces wait). Drawn in the new style: **the whole colony** (10 castes with the glow ant's halo, queen, princess, egg,
+item lumps, golden beetle and aphid), **every building** (29 PNGs, with the Crystal Resonator and the Ancient Engine), **the 9 enemies**
+(with the rival ant and the mole cricket's walk and dig frames), **the surface** (plants, bird, aphid), **all 27
+terrain tiles** (with the ancient tablet), the UI skin (frame, button bevels, inset; `frame_queen`, `frame_codex`), **the icons** (items, buildings, castes, tools,
+abilities, fixed entries, evolutions, priorities, traits, lore fragments) and the title crest. The building atlas is 128 × 128 since 10.5
+(the engine's four 32 × 24 frames fill its top rows).
 
 ## 10. Not used yet
 
 Art drawn ahead for milestones 10.4–10.6 (`tools/art/planned.py`). The PNGs are in the library. **The 10.4 rows are in
 use since 10.4** (the glow and fire ants and the halo in the colony atlas, which grew to 128 × 128 for them; `frame_queen`
 on the Queen panel; the evolution, priority, trait and pip icons; 10.4 also added `caste_glow`, `caste_fire` and
-`ability_quickening` to `planned.py`). The 10.5 and 10.6 rows are not used yet. When the feature is built: give a world sprite a rect, a generated fallback and an `ArtSlot` in its
+`ability_quickening` to `planned.py`). **The 10.5 rows are in use since 10.5** (resonator and engine in the building atlas, rival
+ant and mole cricket in the colony atlas with `ColonySprites.MoleDigRect` for the dig frames, `frame_codex` and the lore / tablet icons
+on the Codex; 10.5 also added the palette icons `building_crystal_resonator` and `building_ancient_engine` to `planned.py` and the
+`tablet` tile to `terrain.py`). The 10.6 rows are not used yet. When the feature is built: give a world sprite a rect, a generated fallback and an `ArtSlot` in its
 atlas class (§8 step 4); show an icon with `HudController.SetIcon`; use a frame in `Hud.uss` like
 `UI/Skin/frame`. If the content gets another id than assumed here, rename the PNG.
 
