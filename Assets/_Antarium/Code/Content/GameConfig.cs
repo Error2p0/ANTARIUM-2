@@ -28,6 +28,8 @@ namespace Antarium.Content
         public SurfaceConfig surface = new();
         public WaterworksConfig waterworks = new();
         public FireConfig fire = new();
+        [Tooltip("PNG art that replaces the sprites generated in code (Antarium > Art > Import Overrides fills it).")]
+        public ArtLibrary art;
     }
 
     /// <summary>Pumps, water wheels, irrigation and magma heat (10.3). Per-building numbers are on the building assets.</summary>

@@ -30,6 +30,7 @@ namespace Antarium.Gameplay
             yield return ("flight", ShotFlight);
             yield return ("gifs", ShotGifs);
             yield return ("survey", ShotSurvey);
+            yield return ("art", ShotArt);
         }
 
         // ---------------------------------------------------------------- stills
@@ -343,6 +344,36 @@ namespace Antarium.Gameplay
                 yield return Seconds(0.5f);
                 yield return Still("survey_" + name);
             }
+        }
+
+        /// <summary>
+        /// Not media: stills for reviewing the art (10.7a), HUD on. Few frames between them, so the run stays short
+        /// when frames are stepped by hand (<c>CaptureMenu.Run("art", false)</c>).
+        /// </summary>
+        IEnumerator ShotArt()
+        {
+            LoadShowcase();
+            Hud(true);
+            var q = Queen;
+            var views = new List<(string, float2, int)>
+            {
+                ("queen_z6", q + new float2(2f, 1f), 6),
+                ("colony_z4", q + new float2(-10f, 2f), 4),
+                ("smelter_z5", new float2(_show.Smelter.x + 1f, _show.Smelter.y + 2f), 5),
+                ("factory_z3", (float2)_show.Factory + new float2(18f, 0f), 3),
+                ("stone_z4", new float2(_show.ShaftX + 8f, _show.Surface - 380f), 4),
+                ("nest_z2", q + new float2(14f, -4f), 2),
+            };
+            yield return Frames(30);
+            foreach (var (name, cell, zoom) in views)
+            {
+                // Deep rock is dark until something lights it: raise the ambient light to review its texture.
+                if (globalLight != null) globalLight.intensity = name.StartsWith("stone") ? 0.8f : config.render.ambient;
+                Cam(cell, zoom);
+                yield return Frames(6);
+                yield return Still("art_" + name);
+            }
+            if (globalLight != null) globalLight.intensity = config.render.ambient;
         }
     }
 }

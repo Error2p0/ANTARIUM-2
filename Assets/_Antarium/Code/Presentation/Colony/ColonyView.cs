@@ -30,6 +30,7 @@ namespace Antarium.Presentation
         const int QuadsPerAnt = 5;
         const int QuadsPerEnemy = 3;
         const float FlashSeconds = 0.15f;
+        const float QueenBreathsPerSecond = 0.7f;
 
         readonly ContentDB _content;
         readonly ColonySprites _sprites;
@@ -52,10 +53,10 @@ namespace Antarium.Presentation
             public Color32 Ant, Enemy, Back, Flash;
         }
 
-        public ColonyView(ContentDB content, RenderConfig render, Material spriteMaterial, Transform parent, float2 worldSize)
+        public ColonyView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
         {
             _content = content;
-            _sprites = new ColonySprites();
+            _sprites = new ColonySprites(art);
             _mesh = new SpriteMesh("Colony", spriteMaterial, _sprites.Texture, parent, worldSize, 10);
             _itemColors = ItemColors(content);
             _idleTint = TerrainView.ToWorking(render.overlayIdleAntColor);
@@ -112,7 +113,9 @@ namespace Antarium.Presentation
             int quad = antCount * QuadsPerAnt;
             var rects = _sprites.Rects;
 
-            WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[ColonySprites.QueenRect], White, quad++);
+            // The queen breathes: her gaster swells and settles about once a second.
+            int queenRect = ((int)(time * QueenBreathsPerSecond * 2f) & 1) == 0 ? ColonySprites.QueenRect : ColonySprites.QueenBreathRect;
+            WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[queenRect], White, quad++);
             foreach (var egg in colony.Eggs)
             {
                 if (egg.InNursery && egg.Nursery < sim.Buildings.All.Length)

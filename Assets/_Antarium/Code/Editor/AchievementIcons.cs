@@ -16,7 +16,7 @@ namespace Antarium.Editor
     {
         public const int Canvas = 32, Scale = 2, Size = Canvas * Scale;
 
-        readonly ColonySprites _sprites = new();
+        readonly ColonySprites _sprites = new(UnityEditor.AssetDatabase.LoadAssetAtPath<ArtLibrary>(ArtImport.LibraryPath));
         readonly Color32[] _atlas;
         readonly int _atlasWidth;
 

@@ -1,0 +1,63 @@
+"""Writes the game's pixel art as PNG files into Assets/_Antarium/Art/ (see docs/ART_STYLE.md).
+
+Usage (from the project root):
+    python tools/art/make_art.py            # everything
+    python tools/art/make_art.py worker     # only the pieces whose name contains "worker"
+
+Each PNG is drawn from the pixel maps and painters in this folder with the palette in palette.py. The PNGs are the
+deliverable: after a run, use Antarium -> Art -> Import Overrides in Unity. A PNG edited by hand (Aseprite etc.)
+is overwritten by the next run of its piece, so remove the piece from PIECES once it is hand-edited.
+Preview sheets go to Captures/art/ (not committed). Needs Pillow and numpy.
+"""
+import sys
+
+import numpy as np
+
+import buildings
+import colony
+import terrain
+import ui
+from palette import RAMPS
+from pix import save, sheet
+
+# name -> (path under Art/, painter). The path without ".png" is the name the game looks the piece up by.
+PIECES = {
+    "ant_worker": ("Colony/ant_worker.png", colony.worker),
+    "queen": ("Colony/queen.png", colony.queen),
+    "smelter": ("Buildings/smelter.png", buildings.smelter),
+    "terrain_dirt": ("Terrain/dirt.png", terrain.dirt),
+    "terrain_stone": ("Terrain/stone.png", terrain.stone),
+    "skin_frame": ("UI/Skin/frame.png", ui.frame),
+    "skin_button": ("UI/Skin/button.png", ui.button),
+    "skin_button_down": ("UI/Skin/button_down.png", ui.button_down),
+    "skin_inset": ("UI/Skin/inset.png", ui.inset),
+}
+PIECES.update({"icon_" + name: (f"UI/Icons/{name}.png", ui.icon(name)) for name in ui.ICONS})
+
+
+def palette_sheet():
+    """Every ramp as a row of swatches (dark to light), for review: Captures/art/palette.png."""
+    rows = []
+    for name, ramp in RAMPS.items():
+        row = np.zeros((2, 8, 4), np.uint8)
+        for i, color in enumerate(ramp):
+            row[:, i] = color
+        rows.append((name, row))
+    return sheet(rows, "palette", scale=14, columns=4)
+
+
+def main(filters):
+    palette_sheet()
+    done = []
+    for name, (path, painter) in PIECES.items():
+        if filters and not any(f in name for f in filters):
+            continue
+        img = painter()
+        save(img, path)
+        done.append((name, img))
+    if done:
+        print("wrote", len(done), "pieces; preview:", sheet(done, "pieces", scale=6, columns=5))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

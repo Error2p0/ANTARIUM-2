@@ -1106,3 +1106,62 @@
 .palette {
     max-width: 990px;
 }
+
+/* ---------------------------------------------------------------- Milestone 10.7a: art skin and icons
+   PNGs from Assets/_Antarium/Art/UI (tools/art/make_art.py, docs/ART_STYLE.md). One art pixel = 2 px on screen:
+   icons are sized at twice their pixels, and a slice scale of 4px draws a 9-slice at two screen pixels per texel
+   (measured in captures: 2px gives one). */
+
+/* Panels: a full frame with its own fill, so the element's background colour and border are switched off. */
+.panel, .resources, .palette, .info, .castes {
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/frame.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.panel {
+    padding: 12px 14px;
+}
+.resources {
+    padding: 9px 14px 8px 14px;
+}
+.palette {
+    padding: 10px;
+}
+.info {
+    padding: 9px 14px;
+}
+.dialog {
+    padding: 16px 20px;
+}
+.panel__title {
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(88, 64, 42);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+/* Buttons and cards: bevels over their own (state) colours. */
+.tool, .menu-button, .building, .claim, .small-button, .node, .modifier, .contract, .option__button, .key-button {
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/button.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 2; -unity-slice-bottom: 2;
+    -unity-slice-scale: 4px;
+}
+.tool:active, .menu-button:active, .building:active, .claim:active, .small-button:active, .node:active, .modifier:active,
+.option__button:active, .key-button:active {
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/button_down.png");
+}
+.bar, .slot {
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/inset.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 4px;
+}
+
+/* 10 x 10 icons at 2 px per art pixel. */
+.resource__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    flex-shrink: 0;
+}

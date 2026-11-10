@@ -5,9 +5,10 @@ using UnityEngine;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Placeholder pixel-art atlas for buildings, generated in code until real art exists: animated silk
-    /// belts and root lifts, splitter knot, filter frame, smelter kiln and fungus garden, plus a small item
-    /// blob and dot that are tinted per item through vertex colour.
+    /// The building atlas: animated silk belts and root lifts, splitter knot, filter frame, smelter kiln, fungus
+    /// garden and the rest, plus a small item blob and dot that are tinted per item through vertex colour. Every
+    /// sprite is first generated in code (the fallback) and then replaced by its PNG from the <see cref="ArtLibrary"/>
+    /// when there is one (<c>Art/Buildings/...</c>, see <c>docs/ART_STYLE.md</c>).
     /// </summary>
     public sealed class BuildingSprites : System.IDisposable
     {
@@ -91,7 +92,8 @@ namespace Antarium.Presentation
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
-        public BuildingSprites()
+        /// <param name="art">PNG overrides; null = generated sprites only.</param>
+        public BuildingSprites(Antarium.Content.ArtLibrary art = null)
         {
             Rects = new NativeArray<float4>(RectCount, Allocator.Persistent);
 
@@ -185,6 +187,13 @@ namespace Antarium.Presentation
             {
                 PaintWheel(64 + f * WheelSize, 80, f);
                 Rects[WheelRect + f] = Rect(64 + f * WheelSize, 80, WheelSize, WheelSize);
+            }
+
+            if (art != null)
+            {
+                void Strip(string name, int firstRect, int frames) =>
+                    ArtOverrides.Apply(art, name, _px, AtlasWidth, AtlasHeight, Rects, firstRect, frames);
+                Strip("Buildings/smelter", SmelterRect, 2);
             }
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)

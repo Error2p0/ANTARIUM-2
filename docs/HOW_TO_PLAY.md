@@ -135,7 +135,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 
 ## The screen
 
-- **Resource bar (top):**
+- **Resource bar (top):** entries have a small **icon** (food, ants, eggs, storage, knowledge and the first items so far; the others still show a coloured square).
   - **Day and time**, e.g. *Day 3  14:20*, with a sun (day) or moon (night) swatch; next to it *Rain*, *Drought* or *Night*. Point at it for what day, night and weather do.
   - **Food** current / capacity, with the **net food rate** per minute (food delivered minus what the colony eats; red when negative). **Ants** (with how many of them are workers once you have other castes), **Eggs**.
   - **Storage** used / total: how many items (of any type) the royal chamber and your storage cells hold. Turns orange when full.

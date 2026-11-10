@@ -40,6 +40,15 @@ MonoBehaviour:
     ambient: 0.025
     skyTop: {r: 0.36, g: 0.62, b: 0.86, a: 1}
     skyHorizon: {r: 0.72, g: 0.86, b: 0.93, a: 1}
+    nightSkyTop: {r: 0.03, g: 0.04, b: 0.12, a: 1}
+    nightSkyHorizon: {r: 0.1, g: 0.12, b: 0.26, a: 1}
+    duskSkyHorizon: {r: 0.95, g: 0.55, b: 0.35, a: 1}
+    rainSky: {r: 0.42, g: 0.46, b: 0.52, a: 1}
+    nightLight: {r: 0.55, g: 0.65, b: 1, a: 1}
+    nightLightStrength: 0.3
+    rainLight: 0.7
+    starColor: {r: 0.9, g: 0.92, b: 1, a: 1}
+    rainColor: {r: 0.65, g: 0.75, b: 0.95, a: 0.7}
     spriteMinLight: 0.85
     miningOrderColor: {r: 1, g: 0.69, b: 0.25, a: 1}
     storageColor: {r: 0.3, g: 0.75, b: 0.85, a: 1}
@@ -59,6 +68,10 @@ MonoBehaviour:
     lavaColor: {r: 0.95, g: 0.36, b: 0.08, a: 1}
     lavaHotColor: {r: 1, g: 0.85, b: 0.35, a: 1}
     gasColor: {r: 0.62, g: 0.85, b: 0.3, a: 0.55}
+    smokeColor: {r: 0.42, g: 0.4, b: 0.4, a: 0.6}
+    fireColor: {r: 1, g: 0.5, b: 0.12, a: 1}
+    fireHotColor: {r: 1, g: 0.9, b: 0.45, a: 1}
+    emberColor: {r: 0.55, g: 0.12, b: 0.04, a: 1}
     healthBarColor: {r: 0.45, g: 0.95, b: 0.4, a: 1}
     healthBarBackColor: {r: 0.15, g: 0.05, b: 0.05, a: 1}
     enemyHealthBarColor: {r: 1, g: 0.35, b: 0.25, a: 1}
@@ -169,6 +182,7 @@ MonoBehaviour:
     drownDamage: 6
     lavaDamage: 40
     gasDamage: 4
+    fireDamage: 10
     caveInDamage: 25
     swimSpeedFactor: 0.55
     soldierRange: 60
@@ -224,3 +238,57 @@ MonoBehaviour:
     veinRadius: 2
     flightSeconds: 4.5
     flightSpeed: 9
+  surface:
+    dayLengthSeconds: 720
+    dayShare: 0.65
+    twilight: 0.06
+    startTime: 0.3
+    firstWeatherSeconds: 600
+    weatherIntervalMin: 360
+    weatherIntervalMax: 600
+    rainChance: 0.6
+    rainSeconds: {x: 60, y: 100}
+    droughtSeconds: {x: 180, y: 300}
+    droughtForage: 0.5
+    rainRange: 150
+    rainDropsPerStep: 10
+    rainDropLevel: 24
+    soakDepth: 40
+    soakChance: 0.3
+    leafInterval: 6
+    maxSurfaceLeaves: 10
+    honeydewSeconds: 20
+    honeydewLaying: 0.5
+    firstBirdSeconds: 480
+    birdIntervalMin: 150
+    birdIntervalMax: 300
+    birdWarningSeconds: 8
+    birdStrikeRadius: 3
+    birdMaxKills: 4
+    birdSpeed: 6
+    birdShelterSeconds: 4
+    firstSpiderSeconds: 900
+    spiderMinAnts: 15
+    spidersBase: 1
+    spidersPerAnt: 0.02
+    spidersMax: 4
+    spiderDistance: {x: 12, y: 40}
+    spiderSpawnWindow: 60
+  waterworks:
+    pumpReach: 8
+    checkSeconds: 0.5
+    wheelSmoothing: 0.1
+    irrigationMinLevel: 24
+    irrigationWater: 48
+  fire:
+    burnSeconds: 15
+    spreadPerSecond: 0.25
+    lavaIgniteChance: 0.05
+    smokePerStep: 4
+    extinguishLevel: 32
+    extinguishWater: 16
+    maxBurning: 2000
+    meteoriteIgniteRadius: 3
+    light: {r: 1, g: 0.55, b: 0.2, a: 1}
+    lightStrength: 0.6
+  art: {fileID: 11400000, guid: 69e467dcbcbaa4744a8617661c046247, type: 2}

@@ -21,6 +21,7 @@ namespace Antarium.Gameplay
         readonly UIDocument _document;
         readonly ContentDB _content;
         readonly RenderConfig _render;
+        readonly ArtLibrary _art;
         readonly VisualElement _resources;
         readonly VisualElement _palette;
         readonly Label _alert, _info, _toast;
@@ -90,11 +91,12 @@ namespace Antarium.Gameplay
         public event Action PossessClicked;
         public event Action CastesClicked;
 
-        public HudController(UIDocument document, ContentDB content, RenderConfig render, float autosaveSeconds, GameInput input)
+        public HudController(UIDocument document, ContentDB content, RenderConfig render, ArtLibrary art, float autosaveSeconds, GameInput input)
         {
             _document = document;
             _content = content;
             _render = render;
+            _art = art;
             _input = input;
             if (document == null || document.rootVisualElement == null) return;
 
@@ -127,11 +129,11 @@ namespace Antarium.Gameplay
             _clockSwatch = _clockEntry.Q(className: "resource__swatch");
             Tip(_clockEntry, "Day and night: seeds and leaves only grow by day, birds hunt by day and spiders come out at night. " +
                              "Rain floods the tunnels near the surface for a while; a drought halves forage.");
-            _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out _, out _foodRate);
-            _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out _, out _);
-            _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out _, out _);
-            _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _);
-            _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate);
+            _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out _, out _foodRate, "food");
+            _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out _, out _, "ants");
+            _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out _, out _, "eggs");
+            _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _, "storage");
+            _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate, "knowledge");
             knowledgeEntry.AddToClassList("resource--knowledge");
             _princesses = AddEntry(new Color(1f, 0.75f, 0.4f), out _princessEntry, out _);
             _princessEntry.AddToClassList("hidden");
@@ -144,7 +146,7 @@ namespace Antarium.Gameplay
             for (int i = 0; i < content.Items.Length; i++)
             {
                 if (content.Items[i].IsFood) continue;
-                _itemLabels[i] = AddEntry(content.Items[i].color, out _itemEntries[i], out _itemRates[i]);
+                _itemLabels[i] = AddEntry(content.Items[i].color, out _itemEntries[i], out _itemRates[i], "item_" + content.Items[i].Id);
                 _itemEntries[i].AddToClassList("hidden");
                 _itemEntries[i].AddToClassList("resource--clickable");
                 _itemEntries[i].RegisterCallback<ClickEvent>(_ => StockClicked?.Invoke());
@@ -215,13 +217,20 @@ namespace Antarium.Gameplay
             SetSelectedBuilding(0);
         }
 
-        Label AddEntry(Color swatchColor, out VisualElement entry, out Label rate)
+        /// <summary>
+        /// A resource bar entry. With an icon called <paramref name="icon"/> in the art library (<c>Art/UI/Icons/</c>) it
+        /// shows that; otherwise a colour swatch.
+        /// </summary>
+        Label AddEntry(Color swatchColor, out VisualElement entry, out Label rate, string icon = null)
         {
             entry = new VisualElement();
             entry.AddToClassList("resource");
             var swatch = new VisualElement();
-            swatch.AddToClassList("resource__swatch");
-            swatch.style.backgroundColor = swatchColor;
+            if (!SetIcon(swatch, _art, icon, "resource__icon"))
+            {
+                swatch.AddToClassList("resource__swatch");
+                swatch.style.backgroundColor = swatchColor;
+            }
             var label = new Label();
             label.AddToClassList("resource__label");
             rate = new Label();
@@ -231,6 +240,18 @@ namespace Antarium.Gameplay
             entry.Add(rate);
             _resources.Add(entry);
             return label;
+        }
+
+        /// <summary>
+        /// Shows the 10×10 icon <c>UI/Icons/<paramref name="icon"/></c> on <paramref name="element"/> (class
+        /// <paramref name="className"/> sizes it). False if there is no such icon: the caller keeps its fallback.
+        /// </summary>
+        public static bool SetIcon(VisualElement element, ArtLibrary art, string icon, string className)
+        {
+            if (art == null || string.IsNullOrEmpty(icon) || !art.TryGet("UI/Icons/" + icon, out var texture)) return false;
+            element.AddToClassList(className);
+            element.style.backgroundImage = new StyleBackground(texture);
+            return true;
         }
 
         void AddTool(VisualElement toolbar, ToolMode mode, string name, InputAction action, string tip)

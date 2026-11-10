@@ -144,7 +144,7 @@ namespace Antarium.Gameplay
                 _hud.ShowToast($"Achievement unlocked: {a.Def.DisplayName}! {a.Def.description}");
                 _audio?.Play(SoundCue.Achievement);
             };
-            _hud = new HudController(hudDocument, _content, config.render, config.save.autosaveSeconds, _input);
+            _hud = new HudController(hudDocument, _content, config.render, config.art, config.save.autosaveSeconds, _input);
             WireHud();
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
@@ -303,8 +303,8 @@ namespace Antarium.Gameplay
             _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform);
             _terrain.Upload();
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
-            _buildingView = new BuildingView(_content, config.render, spriteMaterial, transform, _worldSize);
-            _colonyView = new ColonyView(_content, config.render, spriteMaterial, transform, _worldSize);
+            _buildingView = new BuildingView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
+            _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _surfaceView = new SurfaceView(_content, config.render, spriteMaterial, transform, _worldSize);
             _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };

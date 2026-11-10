@@ -315,7 +315,12 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Also update GDD 3.0 (art direction, status) and `HOW_TO_PLAY.md` where the player sees something new (e.g. icons). The *Missing* list below: placeholder art lines.
 
 *Steps, in priority order:*
-- [ ] **1. Style test** (then stop for approval): a palette, the worker (walk frames), the queen, one building (the smelter), two terrain materials (topsoil and one deep stone) and one restyled UI panel with a few item icons, in the running game.
+- [x] **1. Style test** (built 2026-11-10, **waiting for approval**; nothing else is drawn until then): a palette (24 ramps, `tools/art/palette.py`), the worker (4 walk frames, darker gaster, eye, pale mandible), the queen (banded gaster, 2 frames: she breathes), the smelter (idle / working), terrain *dirt* and *stone*, the UI skin (panel frame, button bevels, inset) and 12 icons in the resource bar (food, ants, eggs, storage, knowledge, copper ore, iron ore, coal, copper, iron, crystal shard, amber), all in the running game.
+  - *Decided while building:* the PNGs are written by **`python tools/art/make_art.py`** (Pillow + numpy, like `tools/media`), from ASCII pixel maps and painters; an **animated sprite is one strip PNG** (frames side by side), not a file per frame; a PNG's name is its path under `Art/`; item **icons are 10 × 10** (20 px on screen) and UI-only (items in the world stay tinted blobs); the import takes a material's base / shadow / highlight colours **from its tile**, so edges and walls always match the texture.
+  - *Already there from step 2:* `ArtLibrary` (`GameConfig.art`), *Antarium → Art → Import Overrides*, `ArtOverrides.Apply` (strip → atlas rects, wrong size warns and falls back), overrides wired for the worker, queen and smelter, terrain through `textureOverride`, icons through `HudController.SetIcon`. Still to do in step 2: every other slot by name, the EditMode tests.
+  - *Found:* `-unity-slice-scale: 4px` draws a 9-slice at two screen pixels per texel (`2px` draws one); the UI blends in linear space, so white bevel overlays need about 4% alpha and black ones 40–65%.
+  - Review stills: `CaptureMenu.Run("art", false)` → `Captures/stills/art_*.png` (the stone still raises the ambient light, deep rock is dark otherwise); pieces and palette: `Captures/art/pieces.png`, `palette.png`.
+  - 184 EditMode tests pass (no new ones yet).
 - [ ] **2. Override pipeline**: `Assets/_Antarium/Art/` by naming convention (ants per caste and frame, queen, eggs, princess, items, buildings and their frames, enemies, creatures, surface, terrain materials, UI icons, UI skin). Editor menu *Antarium → Art → Import Overrides* (import settings: point, no compression, readable where needed; terrain PNGs assigned to `textureOverride`); at runtime a PNG replaces its generated rect in the atlases, missing ones fall back. EditMode tests: name → slot, fallback when missing, wrong size warns and falls back.
 - [ ] **3. Terrain**: every material in `Content/Materials` (all 7 biomes, ores, crystals, ash, root, packed earth, ruins …), tileable, checked by a capture per biome.
 - [ ] **4. Colony**: worker and soldier, the six specialists with **distinct silhouettes** (miner, hauler, nurse, builder, scout, engineer), queen, princess (rest + 2 flight frames), eggs, carried items, piles, stored items, marker, golden beetle, golden aphid.
@@ -383,9 +388,9 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
 
 **Presentation**
-- All art is placeholder generated in code (ant/queen/egg sprites, terrain textures); replaced by PNG art in 10.7a.
+- Most art is still placeholder generated in code; PNG art replaces it in 10.7a (so far, as a style test: worker, queen, smelter, dirt, stone).
 - Sound effects and ambience are synthesized placeholders; music is recorded (10 tracks), no flight / discovery stingers yet.
-- UI skin is generated bevels over flat colours; no UI art or item icons (10.7a).
+- UI skin: new panel frame and bevels (style test); dialogs, event cards and the title screen are not restyled yet, and only 12 icons exist (the other items show colour swatches) (10.7a).
 - No queen panel. Tooltips are limited to the hover info panel, the toolbar and the research hover details.
 - Overlays: flow, pheromones (always drawn faintly) and the Seismic Sense / scout glow; no light or full ore-scan overlay.
 - One dynamic light (the possessed ant's); ShadowCaster2D still not used (deferred until glow ants).

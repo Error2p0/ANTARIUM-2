@@ -7,9 +7,10 @@ using UnityEngine;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Placeholder pixel-art atlas generated in code until real art exists: worker and soldier walk cycles,
-    /// queen, egg, item blobs, the golden beetle and the enemies. Item blobs are greyscale and tinted per item
-    /// through vertex colour.
+    /// The colony atlas: worker and soldier walk cycles, queen, egg, item blobs, the golden beetle and the enemies.
+    /// Every sprite is first generated in code (the fallback) and then replaced by its PNG from the
+    /// <see cref="ArtLibrary"/> when there is one (<c>Art/Colony/...</c>, see <c>docs/ART_STYLE.md</c>). Item blobs are
+    /// greyscale and tinted per item through vertex colour.
     /// </summary>
     public sealed class ColonySprites : System.IDisposable
     {
@@ -51,7 +52,9 @@ namespace Antarium.Presentation
         /// <summary>Golden aphid (sits in an Aphid Ranch), 2 frames.</summary>
         public const int AphidRect = PrincessRect + PrincessFrames;
         public const int AphidWidth = 6, AphidHeight = 5;
-        const int RectCount = AphidRect + 2;
+        /// <summary>The queen's second frame (her gaster swells as she breathes); the first is <see cref="QueenRect"/>.</summary>
+        public const int QueenBreathRect = AphidRect + 2;
+        const int RectCount = QueenBreathRect + 1;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -180,7 +183,8 @@ namespace Antarium.Presentation
         static readonly Color32 SoldierDark = Hex(0x3a0c06), SoldierMid = Hex(0x862612), SoldierHigh = Hex(0xc05a2a), Mandible = Hex(0xe0b050);
         static readonly Color32 EggColor = Hex(0xefe6cf), EggShade = Hex(0xc9bc9c);
 
-        public ColonySprites()
+        /// <param name="art">PNG overrides; null = generated sprites only.</param>
+        public ColonySprites(ArtLibrary art = null)
         {
             var pixels = new Color32[AtlasWidth * AtlasHeight];
             Rects = new NativeArray<float4>(RectCount, Allocator.Persistent);
@@ -214,6 +218,8 @@ namespace Antarium.Presentation
             Rects[MarkerRect] = Rect(61, 0, MarkerSize, MarkerSize);
             PaintQueen(pixels, 0, 8);
             Rects[QueenRect] = Rect(0, 8, QueenWidth, QueenHeight);
+            PaintQueen(pixels, 30, 30);
+            Rects[QueenBreathRect] = Rect(30, 30, QueenWidth, QueenHeight);
             for (int f = 0; f < 2; f++)
             {
                 var rows = new string[BeetleHeight];
@@ -266,6 +272,8 @@ namespace Antarium.Presentation
                 ['w'] = Hex(0xf0f8ff), ['v'] = Hex(0x7896c8),
             });
 
+            ApplyOverrides(art, pixels);
+
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
                 filterMode = FilterMode.Point,
@@ -274,6 +282,25 @@ namespace Antarium.Presentation
             };
             Texture.SetPixels32(pixels);
             Texture.Apply(false, false); // small; kept readable for debugging
+        }
+
+        /// <summary>PNG strips that replace generated sprites: name under <c>Art/</c>, first rect, frames.</summary>
+        void ApplyOverrides(ArtLibrary art, Color32[] pixels)
+        {
+            if (art == null) return;
+            void Strip(string name, int firstRect, int frames) =>
+                ArtOverrides.Apply(art, name, pixels, AtlasWidth, AtlasHeight, Rects, firstRect, frames);
+            Strip("Colony/ant_worker", 0, WorkerFrames);
+            // The queen's two frames are not neighbours in the rect list: one strip, applied frame by frame.
+            if (art.TryGet("Colony/queen", out var queen) && ArtOverrides.Fits(queen, QueenWidth * 2, QueenHeight, out _))
+            {
+                var order = new NativeArray<float4>(2, Allocator.Temp);
+                order[0] = Rects[QueenRect];
+                order[1] = Rects[QueenBreathRect];
+                ArtOverrides.Apply(art, "Colony/queen", pixels, AtlasWidth, AtlasHeight, order, 0, 2);
+                order.Dispose();
+            }
+            else Strip("Colony/queen", QueenRect, 1);
         }
 
         /// <summary>One specialist caste: body rows (first = top), legs and palette (D dark, M mid, H high, L leg, K accent).</summary>

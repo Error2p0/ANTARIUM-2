@@ -61,11 +61,11 @@ namespace Antarium.Presentation
             public byte GhostAlpha;
         }
 
-        public BuildingView(ContentDB content, RenderConfig render, Material spriteMaterial, Transform parent, float2 worldSize)
+        public BuildingView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
         {
             _content = content;
             _render = render;
-            _sprites = new BuildingSprites();
+            _sprites = new BuildingSprites(art);
             _mesh = new SpriteMesh("Buildings", spriteMaterial, _sprites.Texture, parent, worldSize, 5);
             _stockMesh = new SpriteMesh("Stock", spriteMaterial, _sprites.Texture, parent, worldSize, 3);
             _itemColors = ColonyView.ItemColors(content);
