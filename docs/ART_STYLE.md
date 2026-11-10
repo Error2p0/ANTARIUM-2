@@ -79,6 +79,8 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
 - **Selective edges**: a darker tone of the same ramp along the lower right, a lighter one along the upper left.
 - **Glow** (fire, crystals, eyes) is the top of its ramp surrounded by the next tones down; the stones or
   walls right next to a fire take a warm tint.
+- Enemies must not read as ants: other body plans (long and banded, round on arching legs, a domed shell, a
+  stone biped), their own ramps, and one hot accent each (red or yellow eyes, glowing seams, a crystal eye).
 - Colony: ants are three clear segments with one-pixel gaps (waist, neck) in the leg tone, an eye and a pale
   mandible. The **gaster is one tone darker** than head and thorax, so the facing direction reads at a glance.
   Castes differ by **silhouette** first and colour second: soldier = big square head and heavy mandibles;
@@ -104,6 +106,14 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
 | Golden beetle | 10 × 6 | 2 walk | | `Colony/golden_beetle` |
 | Golden aphid | 6 × 5 | 2 | 2.5 per second | `Colony/golden_aphid` |
 | Marker | 3 × 3 | 1 | white, tinted | `Colony/marker` (generated) |
+| Termite / centipede | 11 × 6 / 16 × 6 | 2 walk | 4 per walk phase | `Enemies/termite`, `Enemies/centipede` |
+| Cave spider / wolf spider | 11 × 7 / 12 × 7 | 2 walk | | `Enemies/spider`, `Enemies/wolf_spider` |
+| Fungal mite / fire beetle | 6 × 5 / 12 × 7 | 2 walk | | `Enemies/mite`, `Enemies/fire_beetle` |
+| Ruin guardian | 14 × 12 | 2 walk | | `Enemies/guardian` |
+| Fern / bush / flower | 11 × 12 / 13 × 9 / 7 × 16 | 2 sway (the top leans 1 px) | slow, per plant | `Surface/plant_fern`, `plant_bush`, `plant_flower` |
+| Bird / dive | 14 × 6 / 8 × 6 | 2 flap / 1 | 6–8 per second | `Surface/bird`, `Surface/bird_dive` |
+| Ranch aphid | 3 × 2 | 2 | | `Surface/aphid` |
+| Bird shadow | 16 × 4 | 1 | dithered | `Surface/bird_shadow` (generated) |
 | Belts, lifts | 8 × 8 | 4 | the pattern moves 1 px per frame (iron belt: 2 px); speed from the building | `Buildings/silk_belt`, `root_lift`, `iron_belt`, `iron_lift` |
 | Splitter, filter, unloader | 8 × 8 | 1 | filter and unloader point right and are turned by the game | `Buildings/splitter`, `filter`, `unloader` |
 | Chest | 8 × 8 | 2 (closed, open with goods) | | `Buildings/chest` |
@@ -170,7 +180,8 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 ## 9. What exists
 
 Drawn in the new style: **the whole colony** (8 castes, queen, princess, egg, item lumps, golden beetle and
-aphid), **every building** (27 PNGs), **all 26 terrain tiles**, the UI skin (frame, button
+aphid), **every building** (27 PNGs), **the 7 enemies**, **the surface** (plants, bird, aphid), **all 26
+terrain tiles**, the UI skin (frame, button
 bevels, inset) and the icons *food, ants, eggs, storage, knowledge, copper ore, iron ore, coal, copper, iron,
 crystal shard, amber*.
 

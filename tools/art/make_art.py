@@ -15,6 +15,7 @@ import numpy as np
 
 import buildings
 import colony
+import creatures
 import terrain
 import ui
 from palette import RAMPS
@@ -44,6 +45,8 @@ PIECES = {
 }
 PIECES.update({"icon_" + name: (f"UI/Icons/{name}.png", ui.icon(name)) for name in ui.ICONS})
 PIECES.update({"building_" + name: (f"Buildings/{name}.png", painter) for name, painter in buildings.SPRITES.items()})
+PIECES.update({"enemy_" + name: (f"Enemies/{name}.png", painter) for name, painter in creatures.ENEMIES.items()})
+PIECES.update({"surface_" + name: (f"Surface/{name}.png", painter) for name, painter in creatures.SURFACE.items()})
 PIECES.update({"terrain_" + name: (f"Terrain/{name}.png", painter) for name, painter in terrain.TILES.items()})
 
 
