@@ -78,6 +78,10 @@ namespace Antarium.Content
         [Header("Fluids")]
         public List<FluidPocket> fluidPockets = new();
 
+        [Header("Heat")]
+        [Tooltip("Damage per second to ants anywhere in this biome that are not heat-proof (fire ants). 0 = none.")]
+        [Min(0f)] public float heat;
+
         [Header("Creatures")]
         [Tooltip("Creatures that may live in this biome's caves; they wake when the colony breaks in.")]
         public List<EnemyDef> creatures = new();

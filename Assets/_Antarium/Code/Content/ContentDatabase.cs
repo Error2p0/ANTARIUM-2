@@ -23,6 +23,7 @@ namespace Antarium.Content
         public List<GeneticDef> genetics = new();
         public List<WorldModifierDef> worldModifiers = new();
         public List<AchievementDef> achievements = new();
+        public List<EvolutionDef> evolutions = new();
         [Tooltip("Creatures that come from the surface in raids (picked at random).")]
         public List<EnemyDef> raiders = new();
         public WorldGenSettings worldGen;

@@ -292,6 +292,31 @@ namespace Antarium.Sim
         public GeneticBoughtEvent(int trait, int level) { Trait = trait; Level = level; }
     }
 
+    /// <summary>A level of a queen evolution was bought (10.4).</summary>
+    public readonly struct EvolutionBoughtEvent
+    {
+        public readonly int Evolution;
+        public readonly int Level;
+        public EvolutionBoughtEvent(int evolution, int level) { Evolution = evolution; Level = level; }
+    }
+
+    /// <summary>Buying a queen evolution was refused.</summary>
+    public readonly struct EvolutionFailedEvent
+    {
+        public readonly int Evolution;
+        public readonly EvolutionResult Result;
+        public EvolutionFailedEvent(int evolution, EvolutionResult result) { Evolution = evolution; Result = result; }
+    }
+
+    /// <summary>An ant reached a new level in its skill (10.4).</summary>
+    public readonly struct AntLevelUpEvent
+    {
+        public readonly Unity.Mathematics.int2 Cell;
+        public readonly JobKind Skill;
+        public readonly int Level;
+        public AntLevelUpEvent(Unity.Mathematics.int2 cell, JobKind skill, int level) { Cell = cell; Skill = skill; Level = level; }
+    }
+
     /// <summary>Buying a genetic trait was refused.</summary>
     public readonly struct GeneticFailedEvent
     {

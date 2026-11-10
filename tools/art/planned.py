@@ -351,6 +351,10 @@ PIECES = {
     "priority_dig": ("UI/Icons/priority_dig.png", copy_of("tool_dig")),
     "priority_build": ("UI/Icons/priority_build.png", copy_of("tool_build")),
     "priority_nurse": ("UI/Icons/priority_nurse.png", copy_of("eggs")),
+    # Added when 10.4 was built: the castes panel icons and the Quickening ability (the evolution that unlocks it).
+    "caste_glow": ("UI/Icons/caste_glow.png", ui.caste_icon(ant_glow, 12)),
+    "caste_fire": ("UI/Icons/caste_fire.png", ui.caste_icon(ant_fire, 12)),
+    "ability_quickening": ("UI/Icons/ability_quickening.png", lambda: icon("evolution_ability")()),
 }
 PIECES.update({name: (f"UI/Skin/{name}.png", painter) for name, painter in FRAMES.items()})
 PIECES.update({name: (f"UI/Icons/{name}.png", icon(name)) for name in ICONS})

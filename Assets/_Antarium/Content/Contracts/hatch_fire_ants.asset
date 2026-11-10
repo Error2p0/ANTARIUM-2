@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c323df54987554b9a84d957c19353a, type: 3}
+  m_Name: hatch_fire_ants
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ContractDef
+  id: hatch_fire_ants
+  displayName: Into the Fire
+  description: Hatch fire ants to work the magma zone.
+  kind: 8
+  item: {fileID: 0}
+  building: {fileID: 0}
+  caste: 9
+  amount: 4
+  introOrder: 0
+  repeatable: 1
+  growth: 0.35
+  weight: 1
+  minDepth: 0
+  requires: {fileID: 11400000, guid: 59bc26c73c15e684eb66415d4467842a, type: 2}
+  rewardKnowledge: 18
+  rewardFood: 20
+  rewards: []

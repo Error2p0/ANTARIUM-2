@@ -58,6 +58,42 @@ namespace Antarium.Sim
         Killed,
         /// <summary>Taken by a bird on the surface.</summary>
         Bird,
+        /// <summary>Too long near lava, magma rock or fire, or in a hot biome (10.4).</summary>
+        Heat,
+    }
+
+    /// <summary>The jobs of the priority panel; also an ant's skill (the job it gains experience in).</summary>
+    public enum JobKind : byte
+    {
+        Dig,
+        Haul,
+        Build,
+        Supply,
+        /// <summary>Engineers tending machines.</summary>
+        Tend,
+        /// <summary>Nurses carrying eggs to nurseries.</summary>
+        Nurse,
+    }
+
+    public static class Jobs
+    {
+        public const int Count = 6;
+        /// <summary><see cref="Ant.Skill"/> of an ant that has not worked yet.</summary>
+        public const byte NoSkill = 255;
+    }
+
+    /// <summary>A small quirk an ant may hatch with (10.4).</summary>
+    public enum AntTrait : byte
+    {
+        None,
+        /// <summary>Carries one more item.</summary>
+        Strong,
+        /// <summary>Walks faster.</summary>
+        Swift,
+        /// <summary>Cells it breaks sometimes drop one more item.</summary>
+        Lucky,
+        /// <summary>Works and walks slower.</summary>
+        Lazy,
     }
 
     /// <summary>Where a carrying ant decided to take its load.</summary>
@@ -114,10 +150,19 @@ namespace Antarium.Sim
         public float2 PrevPos;
         public float2 Pos;
 
+        /// <summary>Experience in <see cref="Skill"/> (10.4).</summary>
+        public float Xp;
+        /// <summary>The <see cref="JobKind"/> it gains experience in (its first job), or <see cref="Jobs.NoSkill"/>.</summary>
+        public byte Skill;
+        public AntTrait Trait;
+        /// <summary>Lane jitter, -127..127: a little faster or slower than the others and drawn a little ahead or behind.</summary>
+        public sbyte Lane;
+
         public bool IsMoving => !From.Equals(Cell);
         public bool IsCarrying => Carry != ContentDB.NoItem;
         public bool IsSoldier => Caste == AntCaste.Soldier;
         public bool IsDead => State == AntState.Dead;
+        public bool HasSkill(JobKind job) => Skill == (byte)job;
 
         /// <summary>Takes the carried items away (they were delivered or dropped).</summary>
         public void ClearCarry()
@@ -161,6 +206,44 @@ namespace Antarium.Sim
         public float Dig, Haul, Build, Supply, Nurse;
     }
 
+    /// <summary>Per-job numbers: priority multipliers on the job distances (lower = preferred).</summary>
+    public struct JobWeights
+    {
+        public float Dig, Haul, Build, Supply, Tend, Nurse;
+
+        public static JobWeights One => new() { Dig = 1f, Haul = 1f, Build = 1f, Supply = 1f, Tend = 1f, Nurse = 1f };
+    }
+
+    /// <summary>Experience, traits and lane jitter numbers for the ant job (from <see cref="AntGrowthConfig"/>).</summary>
+    public struct GrowthTick
+    {
+        /// <summary>XP for levels 2..5 (unused entries are infinite).</summary>
+        public float4 LevelXp;
+        public float LevelBonus, LevelPreference;
+        public float SwiftSpeed, LazyWork, SpeedJitter;
+        public float RoleWeight;
+
+        public static GrowthTick From(AntGrowthConfig c)
+        {
+            var g = new GrowthTick
+            {
+                LevelXp = new float4(float.PositiveInfinity),
+                LevelBonus = c.levelBonus,
+                LevelPreference = c.levelPreference,
+                SwiftSpeed = c.swiftSpeed,
+                LazyWork = c.lazyWork,
+                SpeedJitter = c.speedJitter,
+                RoleWeight = math.max(0.01f, c.roleWeight),
+            };
+            if (c.levelXp != null)
+                for (int i = 0; i < 4 && i < c.levelXp.Length; i++) g.LevelXp[i] = c.levelXp[i];
+            return g;
+        }
+
+        /// <summary>Level 1..5 for <paramref name="xp"/>.</summary>
+        public int Level(float xp) => 1 + math.csum(math.select(int4.zero, new int4(1), xp >= LevelXp));
+    }
+
     /// <summary>Per-tick inputs of the ant job.</summary>
     public struct AntTick
     {
@@ -176,12 +259,18 @@ namespace Antarium.Sim
         /// <summary>The possessed ant: walking-speed multiplier, share of damage taken, and the direction the player pushes.</summary>
         public float PossessSpeed, PossessDamageTaken;
         public int2 PossessDir;
+        /// <summary>Priority multipliers per job (priority panel).</summary>
+        public JobWeights Priority;
+        /// <summary>Multiplier on the hit points ants regain per second.</summary>
+        public float RegenFactor;
+        public GrowthTick Growth;
 
         public static AntTick Default(float dt) => new()
         {
             Dt = dt, MoveFactor = 1f, DigFactor = 1f, BuildFactor = 1f, HazardResistance = 1f,
             Chances = new JobChances { Dig = 1f, Haul = 1f, Build = 1f, Supply = 1f, Nurse = 1f },
             TrailSpeed = 1f, RallySpeed = 1f, PossessSpeed = 1f, PossessDamageTaken = 1f,
+            Priority = JobWeights.One, RegenFactor = 1f, Growth = GrowthTick.From(new AntGrowthConfig()),
         };
     }
 
@@ -214,10 +303,15 @@ namespace Antarium.Sim
         public NativeArray<int> SupplyField;
         /// <summary>Per item: how many more units machines want fetched from the stock (see <see cref="UpdateSupplyNeed"/>).</summary>
         public NativeArray<int> SupplyNeed;
+        /// <summary>Per world row: heat damage per second of the biome there (set by the simulation).</summary>
+        public NativeArray<float> HeatByRow;
+        /// <summary>Material numbers (hot rock next to an ant heats it). Not owned.</summary>
+        readonly NativeArray<MaterialSim> _materials;
 
         public AntSystem(WorkerConfig config, LogisticsConfig logistics, CombatConfig combat, FluidConfig fluids, int itemCount,
-            NativeArray<CasteSim> castes)
+            NativeArray<CasteSim> castes, NativeArray<MaterialSim> materials = default)
         {
+            _materials = materials;
             _config = config;
             _logistics = logistics;
             _combat = combat;
@@ -230,6 +324,7 @@ namespace Antarium.Sim
             SupplyField = new NativeArray<int>(Math.Max(1, itemCount), Allocator.Persistent);
             SupplyNeed = new NativeArray<int>(Math.Max(1, itemCount), Allocator.Persistent);
             for (int i = 0; i < ConsumerField.Length; i++) ConsumerField[i] = SupplyField[i] = -1;
+            HeatByRow = new NativeArray<float>(1, Allocator.Persistent);
             _supplySeeking = new int[Math.Max(1, itemCount)];
             _supplyCarried = new int[Math.Max(1, itemCount)];
         }
@@ -317,10 +412,16 @@ namespace Antarium.Sim
             return -1;
         }
 
-        public void Spawn(int2 cell, uint seed, AntCaste caste = AntCaste.Worker)
+        /// <summary>Items an ant carries at once (its caste, one more if Strong).</summary>
+        public int CarryCapacity(in Ant a) => math.min(8, _castes[(int)a.Caste].Carry + (a.Trait == AntTrait.Strong ? 1 : 0));
+
+        /// <summary>Spawns an ant; it hatches with a trait with chance <paramref name="traitChance"/>. Returns its index.</summary>
+        public int Spawn(int2 cell, uint seed, AntCaste caste = AntCaste.Worker, float traitChance = 0f)
         {
             float2 pos = new float2(cell) + 0.5f;
             var rng = new Unity.Mathematics.Random(math.hash(new uint2(seed, ++SpawnCounter)) | 1u);
+            sbyte lane = (sbyte)rng.NextInt(-127, 128);
+            var trait = traitChance > 0f && rng.NextFloat() < traitChance ? (AntTrait)rng.NextInt(1, 5) : AntTrait.None;
             Ants.Add(new Ant
             {
                 Caste = caste,
@@ -337,7 +438,11 @@ namespace Antarium.Sim
                 WalkPhase = rng.NextFloat(4f),
                 PrevPos = pos,
                 Pos = pos,
+                Skill = Jobs.NoSkill,
+                Trait = trait,
+                Lane = lane,
             });
+            return Ants.Length - 1;
         }
 
         /// <summary>Removes every ant standing in the rectangle [<paramref name="min"/>, <paramref name="max"/>]. Returns how many.</summary>
@@ -414,6 +519,8 @@ namespace Antarium.Sim
                 Fields = fields.All,
                 CellCount = fields.CellCount,
                 Castes = _castes,
+                Materials = _materials,
+                HeatByRow = HeatByRow,
                 Trail = pheromones.Of(PheromoneKind.Trail),
                 Avoid = pheromones.Of(PheromoneKind.Avoid),
                 StockAccepts = StockAccepts,
@@ -433,12 +540,14 @@ namespace Antarium.Sim
                 ConsumerBias = _logistics.consumerBias,
                 WanderRadius = _config.wanderRadius * FlowFields.StraightCost,
                 HealthMultiplier = HealthMultiplier,
-                RegenPerSecond = _combat.regenPerSecond,
+                RegenPerSecond = _combat.regenPerSecond * tick.RegenFactor,
                 RegenDelay = _combat.regenDelay,
                 DrownDamage = _combat.drownDamage * resist,
                 LavaDamage = _combat.lavaDamage * resist,
                 GasDamage = _combat.gasDamage * resist,
                 FireDamage = _combat.fireDamage * resist,
+                HeatDamage = _combat.heatDamage * resist,
+                HeatResist = resist,
                 GasHarmLevel = (byte)math.clamp(_fluids.gasHarmLevel, 1, 255),
                 SwimFactor = _combat.swimSpeedFactor,
                 SoldierRange = (int)(_combat.soldierRange * FlowFields.StraightCost),
@@ -475,6 +584,7 @@ namespace Antarium.Sim
             if (ConsumerField.IsCreated) ConsumerField.Dispose();
             if (SupplyField.IsCreated) SupplyField.Dispose();
             if (SupplyNeed.IsCreated) SupplyNeed.Dispose();
+            if (HeatByRow.IsCreated) HeatByRow.Dispose();
         }
 
         [BurstCompile]
@@ -486,6 +596,9 @@ namespace Antarium.Sim
             [ReadOnly] public NativeArray<ushort> Fields;
             public int CellCount;
             [ReadOnly] public NativeArray<CasteSim> Castes;
+            /// <summary>May be empty (no hot rock then).</summary>
+            [ReadOnly] public NativeArray<MaterialSim> Materials;
+            [ReadOnly] public NativeArray<float> HeatByRow;
             [ReadOnly] public NativeArray<byte> Trail;
             [ReadOnly] public NativeArray<byte> Avoid;
             [ReadOnly] public NativeArray<byte> StockAccepts;
@@ -512,6 +625,9 @@ namespace Antarium.Sim
             public float LavaDamage;
             public float GasDamage;
             public float FireDamage;
+            public float HeatDamage;
+            /// <summary>1 / hazard resistance (biome heat is scaled by it too).</summary>
+            public float HeatResist;
             public byte GasHarmLevel;
             public float SwimFactor;
             /// <summary>Soldiers: enemy field distance (field units) they react to / stay within of their post.</summary>
@@ -548,7 +664,7 @@ namespace Antarium.Sim
                 if (a.State == AntState.Rallying) a.Timer -= Dt;
 
                 // Hazards where the ant is; regeneration after a while without damage.
-                float damage = Hazard(a.Cell, out var cause);
+                float damage = Hazard(a.Cell, caste, out var cause);
                 if (damage > 0f)
                 {
                     a.Health -= damage * (a.Possessed ? Tick.PossessDamageTaken : 1f) * Dt;
@@ -570,7 +686,7 @@ namespace Antarium.Sim
 
                 if (a.IsMoving)
                 {
-                    float speed = a.State == AntState.Falling ? FallSpeed : MoveSpeed * caste.Speed;
+                    float speed = a.State == AntState.Falling ? FallSpeed : MoveSpeed * caste.Speed * WalkFactor(a);
                     if (a.State == AntState.Swimming) speed *= SwimFactor;
                     else if (a.State != AntState.Falling)
                     {
@@ -597,17 +713,21 @@ namespace Antarium.Sim
             bool OnTrail(int2 c) => Nav.InBounds(c) && Trail[Nav.Index(c)] != 0;
             bool InAvoid(int2 c) => Nav.InBounds(c) && Avoid[Nav.Index(c)] != 0;
 
-            float Hazard(int2 c, out DeathCause cause)
+            float Hazard(int2 c, in CasteSim caste, out DeathCause cause)
             {
                 cause = DeathCause.None;
                 var f = Nav.FluidAt(c);
                 switch (f.Level == 0 ? FluidKind.None : f.Kind)
                 {
-                    case FluidKind.Lava: cause = DeathCause.Burned; return LavaDamage;
+                    case FluidKind.Lava:
+                        cause = DeathCause.Burned;
+                        if (caste.LavaTaken > 0f) return LavaDamage * caste.LavaTaken;
+                        break;
                     case FluidKind.Water when f.Level >= Nav.DeepFluid: cause = DeathCause.Drowned; return DrownDamage;
                     case FluidKind.Gas when f.Level >= GasHarmLevel: cause = DeathCause.Gassed; return GasDamage;
                     case FluidKind.Smoke when f.Level >= GasHarmLevel: cause = DeathCause.Gassed; return GasDamage;
                 }
+                if (caste.HeatProof) return 0f;
                 // A burning cell next to the ant scorches it.
                 if (FireDamage > 0f)
                     for (int d = 0; d < 4; d++)
@@ -617,7 +737,60 @@ namespace Antarium.Sim
                         cause = DeathCause.Burned;
                         return FireDamage;
                     }
+                // Heat: lava, hot rock or a fire around it, else the biome's own heat.
+                if (HeatDamage > 0f && NearHeat(c))
+                {
+                    cause = DeathCause.Heat;
+                    return HeatDamage;
+                }
+                if ((uint)c.y < (uint)HeatByRow.Length && HeatByRow[c.y] > 0f)
+                {
+                    cause = DeathCause.Heat;
+                    return HeatByRow[c.y] * HeatResist;
+                }
                 return 0f;
+            }
+
+            /// <summary>Lava, hot rock or fire in one of the 8 cells around <paramref name="c"/>.</summary>
+            bool NearHeat(int2 c)
+            {
+                bool rock = Materials.IsCreated && Materials.Length > 0;
+                for (int i = 0; i < NavGrid.DirectionCount; i++)
+                {
+                    int2 n = c + NavGrid.Direction(i);
+                    if (!Nav.InBounds(n)) continue;
+                    int ni = Nav.Index(n);
+                    var fl = Nav.Fluid[ni];
+                    if (fl.Level > 0 && (fl.Kind == FluidKind.Lava || fl.Kind == FluidKind.Fire)) return true;
+                    if (!rock) continue;
+                    var cell = Nav.Cells[ni];
+                    if (!cell.IsOpen && cell.Material < Materials.Length && Materials[cell.Material].IsHot) return true;
+                }
+                return false;
+            }
+
+            /// <summary>Level 1..5 of the ant in its skill.</summary>
+            int Level(in Ant a) => Tick.Growth.Level(a.Xp);
+
+            /// <summary>Speed-up from experience when <paramref name="job"/> is the ant's skill.</summary>
+            float SkillBonus(in Ant a, JobKind job) => a.HasSkill(job) ? 1f + Tick.Growth.LevelBonus * (Level(a) - 1) : 1f;
+
+            /// <summary>Its skill's job distance shrinks a little per level (it prefers what it knows).</summary>
+            float SkillPreference(in Ant a, JobKind job) => a.HasSkill(job) ? math.max(0.2f, 1f - Tick.Growth.LevelPreference * (Level(a) - 1)) : 1f;
+
+            /// <summary>Lazy ants work slower.</summary>
+            float WorkTrait(in Ant a) => a.Trait == AntTrait.Lazy ? Tick.Growth.LazyWork : 1f;
+
+            /// <summary>Walking-speed multiplier of this ant: lane jitter, Swift / Lazy, and its skill while doing that job.</summary>
+            float WalkFactor(in Ant a)
+            {
+                float f = 1f + Tick.Growth.SpeedJitter * (a.Lane / 127f);
+                if (a.Trait == AntTrait.Swift) f *= Tick.Growth.SwiftSpeed;
+                else if (a.Trait == AntTrait.Lazy) f *= Tick.Growth.LazyWork;
+                if (a.State == AntState.Carrying) f *= SkillBonus(a, a.Dest == CarryDest.Consumer ? JobKind.Supply : JobKind.Haul);
+                else if (a.State == AntState.SeekSupply) f *= SkillBonus(a, JobKind.Supply);
+                else if (a.State == AntState.CarryEgg || a.State == AntState.SeekEgg) f *= SkillBonus(a, JobKind.Nurse);
+                return f;
             }
 
             /// <summary>
@@ -735,7 +908,8 @@ namespace Antarium.Sim
                     {
                         if (!IsDesignatedSolid(a.Target)) { a.State = AntState.Idle; break; }
                         a.WalkPhase += Dt * 6f;
-                        Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Dig, Cell = a.Target, Amount = DigPower * caste.Dig * Dt });
+                        Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Dig, Cell = a.Target,
+                            Amount = DigPower * caste.Dig * Dt * SkillBonus(a, JobKind.Dig) * WorkTrait(a) });
                         break;
                     }
 
@@ -812,7 +986,8 @@ namespace Antarium.Sim
                     {
                         if (!IsBlueprint(a.Target)) { a.State = AntState.Idle; break; }
                         a.WalkPhase += Dt * 6f;
-                        Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Build, Cell = a.Target, Amount = BuildPower * caste.Build * Dt });
+                        Intents.Enqueue(new AntIntent { Ant = index, Kind = IntentKind.Build, Cell = a.Target,
+                            Amount = BuildPower * caste.Build * Dt * SkillBonus(a, JobKind.Build) * WorkTrait(a) });
                         break;
                     }
 
@@ -955,14 +1130,22 @@ namespace Antarium.Sim
                     a.State = AntState.CarryEgg;
                     return;
                 }
-                // Role jobs first; then the jobs every caste may share by its weights.
+                // Scouts explore first. Nurses and engineers weigh their own job (role weight x priority) against the shared
+                // jobs their caste may take; then the best shared job by the caste's weights and the priorities.
+                var w = Tick.Priority;
+                float roleScore = float.MaxValue;
+                AntState roleState = AntState.Idle;
                 switch (a.Caste)
                 {
                     case AntCaste.Nurse:
-                        if (a.Rng.NextFloat() < Tick.Chances.Nurse && F(BroodField, ci) != Unreachable)
+                        if (a.Rng.NextFloat() < Tick.Chances.Nurse)
                         {
-                            a.State = AntState.SeekEgg;
-                            return;
+                            ushort b = F(BroodField, ci);
+                            if (b != Unreachable)
+                            {
+                                roleScore = (b + 1) * Tick.Growth.RoleWeight * w.Nurse * SkillPreference(a, JobKind.Nurse);
+                                roleState = AntState.SeekEgg;
+                            }
                         }
                         break;
                     case AntCaste.Scout:
@@ -979,32 +1162,36 @@ namespace Antarium.Sim
                         }
                         break;
                     case AntCaste.Engineer:
-                        if (F(MachinesField, ci) != Unreachable)
+                    {
+                        ushort m = F(MachinesField, ci);
+                        if (m != Unreachable)
                         {
-                            a.State = AntState.SeekMachine;
-                            return;
+                            roleScore = (m + 1) * Tick.Growth.RoleWeight * w.Tend * SkillPreference(a, JobKind.Tend);
+                            roleState = AntState.SeekMachine;
                         }
                         break;
+                    }
                 }
 
                 ushort dig = caste.DigJob > 0f && a.Rng.NextFloat() < Tick.Chances.Dig ? F(DigField, ci) : Unreachable;
                 ushort item = caste.HaulJob > 0f && a.Rng.NextFloat() < Tick.Chances.Haul ? F(ItemsField, ci) : Unreachable;
                 ushort build = caste.BuildJob > 0f && a.Rng.NextFloat() < Tick.Chances.Build ? F(BuildField, ci) : Unreachable;
-                float digScore = dig == Unreachable ? float.MaxValue : (dig + 1) * DigWeight * caste.DigJob;
-                float itemScore = item == Unreachable ? float.MaxValue : (item + 1) * HaulWeight * caste.HaulJob;
-                float buildScore = build == Unreachable ? float.MaxValue : (build + 1) * BuildWeight * caste.BuildJob;
+                float digScore = dig == Unreachable ? float.MaxValue : (dig + 1) * DigWeight * caste.DigJob * w.Dig * SkillPreference(a, JobKind.Dig);
+                float itemScore = item == Unreachable ? float.MaxValue : (item + 1) * HaulWeight * caste.HaulJob * w.Haul * SkillPreference(a, JobKind.Haul);
+                float buildScore = build == Unreachable ? float.MaxValue : (build + 1) * BuildWeight * caste.BuildJob * w.Build * SkillPreference(a, JobKind.Build);
 
                 // Supply: the nearest stocked item a machine is waiting for.
                 float supplyScore = float.MaxValue;
                 ushort want = 0;
                 if (caste.SupplyJob > 0f && a.Rng.NextFloat() < Tick.Chances.Supply)
                 {
+                    float factor = SupplyWeight * caste.SupplyJob * w.Supply * SkillPreference(a, JobKind.Supply);
                     for (int i = 0; i < SupplyNeed.Length; i++)
                     {
                         if (SupplyNeed[i] <= 0 || SupplyField[i] < 0) continue;
                         ushort d = F(SupplyField[i], ci);
                         if (d == Unreachable) continue;
-                        float score = (d + 1) * SupplyWeight * caste.SupplyJob;
+                        float score = (d + 1) * factor;
                         if (score >= supplyScore) continue;
                         supplyScore = score;
                         want = (ushort)i;
@@ -1012,6 +1199,11 @@ namespace Antarium.Sim
                 }
 
                 float best = math.min(math.min(digScore, itemScore), math.min(buildScore, supplyScore));
+                if (roleScore < float.MaxValue && roleScore <= best)
+                {
+                    a.State = roleState;
+                    return;
+                }
                 if (best == float.MaxValue)
                 {
                     a.State = AntState.Wander;

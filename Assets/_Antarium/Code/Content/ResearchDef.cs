@@ -58,6 +58,8 @@ namespace Antarium.Content
         RaidFrequency,
         /// <summary>Multiplier: creatures living in each cave.</summary>
         CreatureCount,
+        /// <summary>Multiplier: hit points ants regain per second (10.4).</summary>
+        AntRegen,
     }
 
     public enum ResearchEffectKind : byte

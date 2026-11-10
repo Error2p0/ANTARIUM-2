@@ -895,7 +895,11 @@ namespace Antarium.Sim
         public void ClearTenders()
         {
             foreach (var m in _machines)
-                if (m != null) m.Tenders = 0;
+                if (m != null)
+                {
+                    m.Tenders = 0;
+                    m.TendPower = 0f;
+                }
         }
 
         void TickMachines(float dt)
@@ -921,7 +925,7 @@ namespace Antarium.Sim
                         var recipe = _content.Recipes[m.Recipe];
                         var def = m.Data.Def;
                         m.Status = MachineStatus.Working;
-                        m.Progress += dt * speed * (1f + EngineerBoost * m.Tenders) * (1f + m.WheelBoost) * (m.Heated ? 1f + def.heatBonus : 1f);
+                        m.Progress += dt * speed * (1f + EngineerBoost * m.TendPower) * (1f + m.WheelBoost) * (m.Heated ? 1f + def.heatBonus : 1f);
                         if (m.Progress >= recipe.Duration)
                         {
                             // Irrigated: the machine drinks some water and every 1 / bonus crafts yields a whole extra batch.

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0edf54291200e3645998d54eeb554226, type: 3}
+  m_Name: quickening
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.EvolutionDef
+  id: quickening
+  displayName: Quickening
+  description: 'Unlocks the Quickening ability: every egg hatches at once (5 minute recharge).'
+  icon: evolution_ability
+  treePosition: {x: 2, y: 1}
+  levels:
+  - cost:
+    - item: {fileID: 11400000, guid: 2dd142c0689a8844783f6f96df3eb374, type: 2}
+      count: 3
+    - item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+      count: 2
+    - item: {fileID: 11400000, guid: ea5eb58177b731a4080ab9caec803f62, type: 2}
+      count: 6
+    foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 611462089fddd454193072b59df67586, type: 2}
+  effects:
+  - kind: 2
+    stat: 0
+    value: 0
+    caste: 0
+    ability: {fileID: 11400000, guid: 9c0d1ea110c363f4c869e53bcd7c9b9f, type: 2}
+    level: 1

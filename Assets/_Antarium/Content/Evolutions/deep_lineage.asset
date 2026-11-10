@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0edf54291200e3645998d54eeb554226, type: 3}
+  m_Name: deep_lineage
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.EvolutionDef
+  id: deep_lineage
+  displayName: Deep Lineage
+  description: 'The queen lays late castes without research: level 1 glow ants, level 2 fire ants.'
+  icon: evolution_castes
+  treePosition: {x: 2, y: 0}
+  levels:
+  - cost:
+    - item: {fileID: 11400000, guid: dcdeb32bddf75074f83de6aa0c054e8c, type: 2}
+      count: 6
+    - item: {fileID: 11400000, guid: ea5eb58177b731a4080ab9caec803f62, type: 2}
+      count: 4
+    foodCost: 0
+  - cost:
+    - item: {fileID: 11400000, guid: a524d9ef1e3446941a0495ef34926701, type: 2}
+      count: 4
+    - item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+      count: 2
+    foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 6bc032771df65d040a483a94d419dfa9, type: 2}
+  effects:
+  - kind: 1
+    stat: 0
+    value: 0
+    caste: 8
+    ability: {fileID: 0}
+    level: 1
+  - kind: 1
+    stat: 0
+    value: 0
+    caste: 9
+    ability: {fileID: 0}
+    level: 2

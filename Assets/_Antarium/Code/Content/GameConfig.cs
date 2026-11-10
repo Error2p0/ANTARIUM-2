@@ -28,11 +28,77 @@ namespace Antarium.Content
         public SurfaceConfig surface = new();
         public WaterworksConfig waterworks = new();
         public FireConfig fire = new();
+        /// <summary>10.4: job priorities, ant XP and traits, lane jitter.</summary>
+        public AntGrowthConfig growth = new();
+        /// <summary>10.4: the lights glow ants carry and the shadows near them.</summary>
+        public GlowConfig glow = new();
         [Tooltip("PNG art that replaces the sprites generated in code (Antarium > Art > Import Overrides fills it).")]
         public ArtLibrary art;
     }
 
     /// <summary>Pumps, water wheels, irrigation and magma heat (10.3). Per-building numbers are on the building assets.</summary>
+    [Serializable]
+    public sealed class AntGrowthConfig
+    {
+        [Header("Job priorities (priority panel)")]
+        [Tooltip("Distance multiplier per priority 1..5 (lower = preferred). Priority 3 is normal.")]
+        public float[] priorityWeights = { 4f, 2f, 1f, 0.5f, 0.25f };
+        [Tooltip("Tend and Nurse: distance multiplier of a specialist's own job against the shared jobs at priority 3 (low = it nearly always comes first).")]
+        [Min(0.01f)] public float roleWeight = 0.1f;
+
+        [Header("Experience")]
+        [Tooltip("XP for levels 2, 3, 4, 5 (the last entry is the top level).")]
+        public float[] levelXp = { 15f, 45f, 110f, 240f };
+        [Tooltip("Faster at its skill per level above 1 (0.05 = +5% per level).")]
+        [Range(0f, 0.5f)] public float levelBonus = 0.05f;
+        [Tooltip("Prefers its skill: the job's distance is multiplied by 1 - this per level above 1.")]
+        [Range(0f, 0.2f)] public float levelPreference = 0.05f;
+        [Tooltip("XP per hardness unit dug / per unit of build work.")]
+        [Min(0f)] public float digXp = 1f;
+        [Min(0f)] public float buildXp = 1f;
+        [Tooltip("XP per item delivered to the stock / to a machine.")]
+        [Min(0f)] public float haulXp = 1f;
+        [Min(0f)] public float supplyXp = 1f;
+        [Tooltip("XP per second an engineer tends a working machine.")]
+        [Min(0f)] public float tendXp = 0.1f;
+        [Tooltip("XP per egg a nurse lays into a nursery.")]
+        [Min(0f)] public float nurseXp = 2f;
+
+        [Header("Traits at hatch")]
+        [Tooltip("Chance a new ant hatches with a trait (Strong, Swift, Lucky or Lazy, equally likely).")]
+        [Range(0f, 1f)] public float traitChance = 0.3f;
+        [Tooltip("Swift: walking speed multiplier.")]
+        [Min(1f)] public float swiftSpeed = 1.2f;
+        [Tooltip("Lucky: chance that a cell it breaks drops one more item (if the cell drops anything).")]
+        [Range(0f, 1f)] public float luckyChance = 0.25f;
+        [Tooltip("Lazy: work speed multiplier (dig, build, walking).")]
+        [Range(0.1f, 1f)] public float lazyWork = 0.8f;
+
+        [Header("Lane jitter")]
+        [Tooltip("Walking speed varies per ant by up to this share (0.07 = 93%..107%), so ants on one route spread out.")]
+        [Range(0f, 0.3f)] public float speedJitter = 0.07f;
+        [Tooltip("Ants are drawn up to this many art pixels ahead of / behind their spot on the route.")]
+        [Range(0, 4)] public int laneOffsetPixels = 3;
+    }
+
+    [Serializable]
+    public sealed class GlowConfig
+    {
+        [Tooltip("Most glow ants that get a real light (the ones nearest the view centre). The others only show their halo.")]
+        [Range(0, 128)] public int maxLights = 24;
+        public Color color = new(0.62f, 1f, 0.55f);
+        [Range(0f, 2f)] public float intensity = 0.9f;
+        [Tooltip("Inner radius as a share of the outer radius (full brightness inside).")]
+        [Range(0f, 1f)] public float innerShare = 0.25f;
+        [Tooltip("Rock blocks the glow ants' light: shadow casters are made from rock edges near the lights.")]
+        public bool shadows = true;
+        [Range(0f, 1f)] public float shadowIntensity = 0.85f;
+        [Tooltip("Most shadow caster rectangles at once (pooled).")]
+        [Range(0, 4096)] public int maxCasters = 768;
+        [Tooltip("Seconds between rebuilding the shadow casters (also rebuilt when the terrain changes).")]
+        [Min(0.02f)] public float casterRefresh = 0.25f;
+    }
+
     [Serializable]
     public sealed class WaterworksConfig
     {
@@ -287,6 +353,8 @@ namespace Antarium.Content
         [Min(0f)] public float gasDamage = 4f;
         [Tooltip("Damage per second to an ant next to a burning cell.")]
         [Min(0f)] public float fireDamage = 10f;
+        [Tooltip("Heat: damage per second to an ant next to lava, magma rock or a fire, unless heat-proof (fire ants). Biomes add their own heat.")]
+        [Min(0f)] public float heatDamage = 3f;
         [Tooltip("Damage (once) to an ant buried by falling sand.")]
         [Min(0f)] public float caveInDamage = 25f;
         [Tooltip("Ants swim at this share of their walking speed.")]

@@ -150,6 +150,7 @@ namespace Antarium.Sim
                     while (SlotTaken(id, slot)) slot++;
                     Colony.Eggs.Add(new Egg { Cell = NurserySlotCell(b, slot), Age = ant.EggAge, Caste = ant.EggCaste, Nursery = id, Slot = slot });
                     ant.CarryingEgg = false;
+                    GainXp(ref ant, JobKind.Nurse, Config.growth.nurseXp);
                     ant.State = AntState.Idle;
                     _broodChanged = true;
                     return true;
@@ -185,7 +186,7 @@ namespace Antarium.Sim
         // ---------------------------------------------------------------- engineers
 
         /// <summary>Counts the engineers tending each machine (sending away those whose machine is gone or full).</summary>
-        void UpdateEngineers()
+        void UpdateEngineers(float dt)
         {
             Buildings.ClearTenders();
             int max = Config.castes.engineersPerMachine;
@@ -203,6 +204,13 @@ namespace Antarium.Sim
                     continue;
                 }
                 m.Tenders++;
+                bool tended = a.HasSkill(JobKind.Tend);
+                m.TendPower += tended ? 1f + _growth.LevelBonus * (AntLevel(a) - 1) : 1f;
+                if (m.Status == MachineStatus.Working)
+                {
+                    GainXp(ref a, JobKind.Tend, Config.growth.tendXp * dt);
+                    ants[i] = a;
+                }
             }
             // Machines join or leave the engineers' field as they gain or lose a tender.
             int openings = 0;

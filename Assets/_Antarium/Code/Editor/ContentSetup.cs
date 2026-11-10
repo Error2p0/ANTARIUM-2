@@ -146,6 +146,7 @@ namespace Antarium.Editor
             }
             CreateSurface(database, worldGen, copperItem, copperBar, fungusItem, AssetDatabase.LoadAssetAtPath<ItemDef>($"{ItemsFolder}/chitin.asset"));
             CreateWaterworks(worldGen, copperBar, ironBar);
+            CreateColonyDepth(worldGen);
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;
@@ -812,13 +813,14 @@ namespace Antarium.Editor
             database.genetics = FindAll<GeneticDef>();
             database.worldModifiers = FindAll<WorldModifierDef>();
             database.achievements = FindAll<AchievementDef>();
+            database.evolutions = FindAll<EvolutionDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
                       $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
                       $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events, " +
                       $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes, " +
-                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers, {database.achievements.Count} achievements.");
+                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers, {database.achievements.Count} achievements, {database.evolutions.Count} evolutions.");
         }
 
         static List<T> FindAll<T>() where T : Object

@@ -48,7 +48,8 @@ namespace Antarium.Sim
         /// Version 4 (Milestone 7): COLN 4 (princesses) and LGCY (Genetic Memory, genetic traits, world modifiers) exist.
         /// Version 5 (Milestone 10): COLN 5 (storage filters, item reserves; chests are no longer in the container list) and
         /// BLDG 3 (chest contents and filter, machine recipe choice, unloaders); 10.2 adds SURF (time of day, weather, the
-        /// bird, night spiders still to come, the queen's honeydew).
+        /// bird, night spiders still to come, the queen's honeydew). 10.4 adds ANTS 4 (experience, skill, trait, lane) and QUEN
+        /// (queen evolutions by id, job priorities).
         /// </summary>
         public const int Version = 5;
 
@@ -79,12 +80,13 @@ namespace Antarium.Sim
             snap.Sections.Add(new("IDS", Section(w => WriteIds(w, sim.Content), 2)));
             snap.Sections.Add(new("SIM", Section(w => WriteSim(w, sim))));
             snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 5)));
-            snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 3)));
+            snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 4)));
             snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 3)));
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
             snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim))));
             snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim))));
             snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim))));
+            snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim))));
             return snap;
         }
 
@@ -362,7 +364,44 @@ namespace Antarium.Sim
                 w.Write(a.CarryingEgg);
                 w.Write((byte)a.EggCaste);
                 w.Write(a.EggAge);
+                w.Write(a.Xp); // v4
+                w.Write(a.Skill);
+                w.Write((byte)a.Trait);
+                w.Write(a.Lane);
             }
+        }
+
+        /// <summary>Queen evolutions (levels by id) and the job priorities (10.4).</summary>
+        static void WriteQueen(BinaryWriter w, Simulation sim)
+        {
+            var evolutions = sim.Content.Evolutions;
+            int bought = 0;
+            foreach (int level in sim.Evolutions.Levels) if (level > 0) bought++;
+            w.Write(bought);
+            for (int i = 0; i < evolutions.Length; i++)
+            {
+                if (sim.Evolutions.Levels[i] <= 0) continue;
+                w.Write(evolutions[i].Def.Id);
+                w.Write(sim.Evolutions.Levels[i]);
+            }
+            var priorities = sim.Colony.JobPriority;
+            w.Write((byte)priorities.Length);
+            w.Write(priorities);
+        }
+
+        static void ReadQueen(BinaryReader r, Simulation sim)
+        {
+            int bought = r.ReadInt32();
+            for (int k = 0; k < bought; k++)
+            {
+                string id = r.ReadString();
+                int level = r.ReadInt32();
+                if (sim.Content.TryGetEvolutionIndex(id, out int index) && level > 0) sim.Evolutions.SetLevel(index, level);
+            }
+            int jobs = r.ReadByte();
+            var priorities = r.ReadBytes(jobs);
+            for (int j = 0; j < priorities.Length && j < sim.Colony.JobPriority.Length; j++)
+                sim.Colony.JobPriority[j] = (byte)math.clamp((int)priorities[j], Simulation.MinPriority, Simulation.MaxPriority);
         }
 
         static void WriteSlot(BinaryWriter w, in ItemSlot s)
@@ -585,6 +624,7 @@ namespace Antarium.Sim
                 Read(sections, "PHER", (r, _) => ReadPheromones(r, sim));
                 Read(sections, "SIM", (r, _) => ReadSim(r, sim));
                 Read(sections, "PROG", (r, _) => ReadProgress(r, sim, map)); // research first: it sets capacities and unlocks
+                Read(sections, "QUEN", (r, _) => ReadQueen(r, sim));         // evolutions unlock too (before the caste shares)
                 Read(sections, "COLN", (r, v) => ReadColony(r, sim, map, v, nurseryEggs));
                 Read(sections, "ANTS", (r, v) => ReadAnts(r, sim, map, v));
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
@@ -978,6 +1018,21 @@ namespace Antarium.Sim
                     a.EggCaste = (AntCaste)r.ReadByte();
                     a.EggAge = r.ReadSingle();
                     if (!Enum.IsDefined(typeof(AntCaste), a.EggCaste)) a.CarryingEgg = false;
+                }
+                if (version >= 4)
+                {
+                    a.Xp = math.max(0f, r.ReadSingle());
+                    a.Skill = r.ReadByte();
+                    if (a.Skill >= Jobs.Count) a.Skill = Jobs.NoSkill;
+                    a.Trait = (AntTrait)r.ReadByte();
+                    if (!Enum.IsDefined(typeof(AntTrait), a.Trait)) a.Trait = AntTrait.None;
+                    a.Lane = r.ReadSByte();
+                }
+                else
+                {
+                    // Older ants: no skill or trait yet; a lane from their random state so they spread out too.
+                    a.Skill = Jobs.NoSkill;
+                    a.Lane = (sbyte)((int)(math.hash(new uint2(rng, (uint)i)) % 255u) - 127);
                 }
                 float max = ants.MaxHealth(a.Caste);
                 a.Health = version >= 2 ? math.clamp(a.Health, 1f, max) : max;

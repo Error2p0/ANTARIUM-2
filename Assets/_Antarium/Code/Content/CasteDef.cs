@@ -24,11 +24,15 @@ namespace Antarium.Content
         Scout,
         /// <summary>Tends working machines, which then work faster.</summary>
         Engineer,
+        /// <summary>A worker whose gaster glows: lights the tunnels around it (10.4).</summary>
+        Glow,
+        /// <summary>A heat-proof worker for the magma zone: no fire or heat damage, little from lava (10.4).</summary>
+        Fire,
     }
 
     public static class Castes
     {
-        public const int Count = 8;
+        public const int Count = 10;
     }
 
     /// <summary>
@@ -76,6 +80,16 @@ namespace Antarium.Content
         [Min(0)] public int senseRadius = 10;
         [Tooltip("Engineer: extra machine speed while it tends a machine (0.5 = +50%).")]
         [Min(0f)] public float machineBoost = 0.5f;
+
+        [Header("Heat")]
+        [Tooltip("Takes no damage from fire next to it or from heat (near lava, magma rock, in a hot biome).")]
+        public bool heatProof;
+        [Tooltip("Share of lava damage it takes (1 = all).")]
+        [Range(0f, 1f)] public float lavaDamageTaken = 1f;
+
+        [Header("Light")]
+        [Tooltip("Glow ants: radius in cells of the light it carries (0 = none). Drawn near the camera only.")]
+        [Min(0f)] public float lightRadius;
 
         [Header("Presentation")]
         [Tooltip("Swatch colour in the castes panel.")]

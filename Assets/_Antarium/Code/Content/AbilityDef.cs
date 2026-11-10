@@ -12,6 +12,8 @@ namespace Antarium.Content
         RoyalDecree,
         /// <summary>Ants within <see cref="AbilityDef.radius"/> of the cursor rush there, <see cref="AbilityDef.magnitude"/> faster, for <see cref="AbilityDef.duration"/>.</summary>
         PheromoneBurst,
+        /// <summary>Every egg (by the queen, in nurseries, carried) hatches at once (queen evolution, 10.4).</summary>
+        Quickening,
     }
 
     /// <summary>An active ability the player triggers by hand (cast at the cursor), with a cooldown.</summary>

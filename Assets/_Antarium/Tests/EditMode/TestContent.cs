@@ -40,6 +40,12 @@ namespace Antarium.Tests
         /// <summary>Rich: far more ore, raids twice as big. Shallow: biomes half as thick. Hard: locked behind GeneStrange.</summary>
         public readonly WorldModifierDef ModRich, ModShallow, ModHard;
         public readonly CasteDef WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste, EngineerCaste;
+        /// <summary>10.4: glow ants (light radius 6) and fire ants (heat-proof, a quarter of lava damage), locked behind EvoLineage.</summary>
+        public readonly CasteDef GlowCaste, FireCaste;
+        /// <summary>10.4 evolutions. Brood: laying +15% per level (L1 2 honeydew, L2 2 honeydew + 1 chitin). Lineage (needs Brood):
+        /// glow ants at level 1, fire ants at level 2 (1 chitin each). Quicken: unlocks the Quickening (1 honeydew).</summary>
+        public readonly EvolutionDef EvoBrood, EvoLineage, EvoQuicken;
+        public readonly AbilityDef Quickening;
         /// <summary>Unlocks every specialist caste but soldiers.</summary>
         public readonly ResearchDef CasteResearch;
         public readonly AbilityDef Burst;
@@ -210,6 +216,11 @@ namespace Antarium.Tests
             ScoutCaste = Caste("scout", AntCaste.Scout, jobs: false);
             ScoutCaste.senseRadius = 6;
             EngineerCaste = Caste("engineer", AntCaste.Engineer, jobs: false);
+            GlowCaste = Caste("glow", AntCaste.Glow, health: 35f);
+            GlowCaste.lightRadius = 6f;
+            FireCaste = Caste("fire", AntCaste.Fire, health: 60f);
+            FireCaste.heatProof = true;
+            FireCaste.lavaDamageTaken = 0.25f;
             EngineerCaste.machineBoost = 1f;
 
             Raider = Make<EnemyDef>("raider");
@@ -273,6 +284,18 @@ namespace Antarium.Tests
             SoldierResearch.treePosition = new Vector2Int(2, 0);
             SoldierResearch.knowledgeCost = 1f;
             SoldierResearch.effects.Add(ResearchEffect.Unlock(AntCaste.Soldier));
+            Quickening = Make<AbilityDef>("quickening");
+            Quickening.kind = AbilityKind.Quickening;
+            Quickening.order = 4;
+            Quickening.cooldown = 60f;
+
+            EvoBrood = Evolution("evo_brood", 0, 0, new[] { EvolutionEffect.Add(StatKind.LayingSpeed, 0.15f) },
+                Level(0f, (Honeydew, 2)), Level(0f, (Honeydew, 2), (Chitin, 1)));
+            EvoLineage = Evolution("evo_lineage", 1, 0, new[] { EvolutionEffect.Unlock(AntCaste.Glow, 1), EvolutionEffect.Unlock(AntCaste.Fire, 2) },
+                Level(0f, (Chitin, 1)), Level(0f, (Chitin, 1)));
+            EvoLineage.prerequisites.Add(EvoBrood);
+            EvoQuicken = Evolution("evo_quicken", 0, 1, new[] { EvolutionEffect.Unlock(Quickening) }, Level(0f, (Honeydew, 1)));
+
             CasteResearch = Make<ResearchDef>("caste_research");
             CasteResearch.treePosition = new Vector2Int(2, 1);
             CasteResearch.knowledgeCost = 1f;
@@ -356,8 +379,9 @@ namespace Antarium.Tests
             {
                 Achievements = new[] { AchFlight, AchDig },
                 Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch },
-                Abilities = new[] { Decree, Frenzy, Seismic, Burst },
-                Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste },
+                Abilities = new[] { Decree, Frenzy, Seismic, Burst, Quickening },
+                Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste, GlowCaste, FireCaste },
+                Evolutions = new[] { EvoLineage, EvoQuicken, EvoBrood },
                 Contracts = new[] { DeliverOre, DigIntro },
                 Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent, AphidEvent },
                 Enemies = new[] { Spider, Raider },
@@ -407,6 +431,9 @@ namespace Antarium.Tests
             Config.surface.firstWeatherSeconds = 1e9f;
             Config.surface.firstBirdSeconds = 1e9f;
             Config.surface.firstSpiderSeconds = 1e9f;
+            // Ants hatch without traits and walk at one speed unless a test asks (10.4).
+            Config.growth.traitChance = 0f;
+            Config.growth.speedJitter = 0f;
 
             // Deliberately not air-first, to exercise ContentDB ordering.
             DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash },
@@ -456,6 +483,24 @@ namespace Antarium.Tests
             g.effects.AddRange(effects);
             return g;
         }
+
+        EvolutionDef Evolution(string id, int column, int row, EvolutionEffect[] effects, params EvolutionLevel[] levels)
+        {
+            var e = Make<EvolutionDef>(id);
+            e.treePosition = new Vector2Int(column, row);
+            e.effects.AddRange(effects);
+            e.levels.AddRange(levels);
+            return e;
+        }
+
+        static EvolutionLevel Level(float food, params (ItemDef item, int count)[] cost)
+        {
+            var level = new EvolutionLevel { foodCost = food };
+            foreach (var (item, count) in cost) level.cost.Add(new ItemAmount(item, count));
+            return level;
+        }
+
+        public int EvolutionIndex(EvolutionDef def) => DB.TryGetEvolutionIndex(def.Id, out int i) ? i : -1;
 
         public int GeneticIndex(GeneticDef def) => DB.TryGetGeneticIndex(def.Id, out int i) ? i : -1;
         public int ModifierIndex(WorldModifierDef def) => DB.TryGetModifierIndex(def.Id, out int i) ? i : -1;

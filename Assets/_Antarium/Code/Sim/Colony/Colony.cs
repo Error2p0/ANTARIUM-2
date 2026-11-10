@@ -36,6 +36,8 @@ namespace Antarium.Sim
         public readonly bool[] CasteUnlocked = new bool[Castes.Count];
         /// <summary>Per <see cref="AntCaste"/>: share of the colony (ants and eggs) the queen keeps of it. Workers fill the rest.</summary>
         public readonly float[] CasteShare = new float[Castes.Count];
+        /// <summary>Per <see cref="JobKind"/>: priority 1..5 set in the priority panel (3 = normal).</summary>
+        public readonly byte[] JobPriority = { 3, 3, 3, 3, 3, 3 };
         public readonly ItemPiles Piles;
         public readonly List<Egg> Eggs = new();
         /// <summary>Cells of the royal chamber where its share of the stock is shown, in fill order.</summary>

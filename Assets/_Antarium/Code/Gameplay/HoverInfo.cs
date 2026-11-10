@@ -348,7 +348,7 @@ namespace Antarium.Gameplay
                 _sb.Append("\nPrincesses ").Append(sim.Colony.Princesses).Append('/').Append(sim.Colony.PrincessCap)
                     .Append("   they wait here for the Nuptial Flight (N)");
             if (m.Tenders > 0)
-                _sb.Append(", tended by an engineer (+").Append(Mathf.RoundToInt(buildings.EngineerBoost * m.Tenders * 100f)).Append("%)");
+                _sb.Append(", tended by an engineer (+").Append(Mathf.RoundToInt(buildings.EngineerBoost * m.TendPower * 100f)).Append("%)");
             var mdef = m.Data.Def;
             if (mdef.heatBonus > 0f)
                 _sb.Append(m.Heated

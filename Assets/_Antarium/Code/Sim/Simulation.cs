@@ -17,7 +17,7 @@ namespace Antarium.Sim
         {
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
-            ContainerFilter, Reserve, Recipe,
+            ContainerFilter, Reserve, Recipe, Evolve, Priority,
         }
 
         readonly struct Command
@@ -83,6 +83,10 @@ namespace Antarium.Sim
         public readonly FireSystem Fire;
         public readonly EnemySystem Enemies;
         public readonly PheromoneSystem Pheromones;
+        /// <summary>The queen's evolution tree (10.4).</summary>
+        public readonly EvolutionSystem Evolutions;
+        /// <summary>Experience numbers (levels), from <see cref="AntGrowthConfig"/> (re-read every tick, so tuning applies live).</summary>
+        GrowthTick _growth;
 
         /// <summary>Soldiers alive (counted once per tick).</summary>
         public int Soldiers => _alive[(int)AntCaste.Soldier];
@@ -168,7 +172,9 @@ namespace Antarium.Sim
             int slots = content.ConsumerSlotCount;
             Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
             Pheromones = new PheromoneSystem(World, config.pheromones);
-            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length, content.CasteSim);
+            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length, content.CasteSim,
+                content.MaterialSim);
+            _growth = GrowthTick.From(config.growth);
             for (int i = 0; i < content.Items.Length; i++)
             {
                 int slot = content.ConsumerSlot[i];
@@ -176,18 +182,20 @@ namespace Antarium.Sim
                 Ants.SupplyField[i] = slot >= 0 ? FlowFields.SupplyField(slot, slots) : -1;
             }
             Research = new ResearchSystem(content, Colony, Events);
+            Evolutions = new EvolutionSystem(content, Colony, Events);
             Abilities = new AbilitySystem(content, Colony);
             Contracts = new ContractSystem(content, config.progression, this, seed);
             RandomEvents = new RandomEventSystem(content, config.progression, this, seed);
             Enemies = new EnemySystem(content, config, this, seed);
             InitSurface();
             ApplyLegacyEffects();
+            BuildHeatRows();
             if (!fresh) return;
 
             ApplyStartBonuses();
             int workers = config.colony.startingWorkers + (int)Legacy.Total(GeneticEffectKind.StartWorkers);
             for (int i = 0; i < workers; i++)
-                Ants.Spawn(RandomRoyalFloorCell(), seed);
+                Ants.Spawn(RandomRoyalFloorCell(), seed, AntCaste.Worker, TraitChance);
             RefreshFields(force: true);
             Contracts.Tick();
         }
@@ -329,10 +337,11 @@ namespace Antarium.Sim
             _pending.Clear();
 
             PlayTime += dt;
+            _growth = GrowthTick.From(Config.growth);
             UpdateSurface(dt);
             UpdateColony(dt);
             Abilities.Tick(dt);
-            UpdateEngineers();
+            UpdateEngineers(dt);
             Buildings.Tick(dt);
             Colony.Inventory.UpdateRates(dt, Config.logistics.rateSmoothing);
             Colony.Meter.Update(dt);
@@ -362,6 +371,9 @@ namespace Antarium.Sim
             tick.PossessSpeed = Config.possession.speed;
             tick.PossessDamageTaken = Config.possession.damageTaken;
             tick.PossessDir = PossessInput;
+            tick.Priority = PriorityWeights();
+            tick.RegenFactor = mods.Mult(StatKind.AntRegen);
+            tick.Growth = _growth;
             Ants.Think(World, Fields, Pheromones, tick);
             Ants.Resolve(this);
             ReinforceTrails();
@@ -399,7 +411,7 @@ namespace Antarium.Sim
         public void SpawnAnts(int count, AntCaste caste)
         {
             for (int i = 0; i < count; i++)
-                Ants.Spawn(RandomRoyalFloorCell(), Seed, caste);
+                Ants.Spawn(RandomRoyalFloorCell(), Seed, caste, TraitChance);
             Ants.CountCastes(_alive, _aliveWithEggs);
         }
 
@@ -433,6 +445,8 @@ namespace Antarium.Sim
                 case CommandKind.PossessAct: PossessAct(cmd.CellPos, cmd.Power); break;
                 case CommandKind.PossessInteract: PossessInteract(); break;
                 case CommandKind.Genetic: BuyGenetic(cmd.Def); break;
+                case CommandKind.Evolve: Evolutions.Buy(cmd.Def); break;
+                case CommandKind.Priority: SetPriority((JobKind)cmd.Item, cmd.Def); break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -663,11 +677,13 @@ namespace Antarium.Sim
                 case IntentKind.Dig:
                 {
                     var result = Digging.DamageCell(World, Content.MaterialSim, intent.Cell, intent.Amount, Events);
+                    if (result != DamageResult.None) GainXp(ref ant, JobKind.Dig, intent.Amount * Config.growth.digXp);
                     if (result == DamageResult.None) ant.State = AntState.Idle;
                     else if (result == DamageResult.Opened) _terrainChanged = true;
                     else if (result == DamageResult.Broken)
                     {
                         OnCellBroken(intent.Cell);
+                        LuckyDrop(ant, intent.Cell);
                         ant.State = AntState.Idle;
                     }
                     break;
@@ -676,7 +692,7 @@ namespace Antarium.Sim
                     if (Colony.Piles.TryTake(intent.Cell, inventory, out ushort item))
                     {
                         // Haulers take more of the same item from the pile while it still fits somewhere.
-                        int capacity = Ants.Caste(ant.Caste).Carry;
+                        int capacity = Ants.CarryCapacity(ant);
                         int count = 1;
                         while (count < capacity && Colony.Piles.TryTakeItem(intent.Cell, item, inventory)) count++;
                         ant.Carry = item;
@@ -691,7 +707,10 @@ namespace Antarium.Sim
                 {
                     // A machine that needs the item first, then the stock, then a belt that can take it.
                     int2 c = intent.Cell;
+                    bool toMachine = ant.Dest == CarryDest.Consumer;
                     int delivered = DeliverCarried(ref ant, c);
+                    if (delivered > 0)
+                        GainXp(ref ant, toMachine ? JobKind.Supply : JobKind.Haul, delivered * (toMachine ? Config.growth.supplyXp : Config.growth.haulXp));
                     if (!ant.IsCarrying) ant.State = AntState.Idle;
                     else if (delivered > 0)
                     {
@@ -706,8 +725,12 @@ namespace Antarium.Sim
                     break;
                 }
                 case IntentKind.Build:
-                    if (Buildings.Work(intent.Cell, intent.Amount) != WorkResult.Working) ant.State = AntState.Idle;
+                {
+                    var work = Buildings.Work(intent.Cell, intent.Amount);
+                    if (work != WorkResult.None) GainXp(ref ant, JobKind.Build, intent.Amount * Config.growth.buildXp);
+                    if (work != WorkResult.Working) ant.State = AntState.Idle;
                     break;
+                }
                 case IntentKind.Withdraw:
                 {
                     int2 c = intent.Cell;
@@ -716,7 +739,7 @@ namespace Antarium.Sim
                     if (!ant.IsCarrying && inventory.TryWithdraw(ant.Want, index, royal))
                     {
                         // Haulers fetch as many as machines still want (shared with the others fetching this tick).
-                        int count = 1, capacity = Ants.Caste(ant.Caste).Carry;
+                        int count = 1, capacity = Ants.CarryCapacity(ant);
                         while (count < capacity && Ants.SupplyNeed[ant.Want] > 0 && inventory.TryWithdraw(ant.Want, index, royal))
                         {
                             Ants.SupplyNeed[ant.Want]--;
@@ -796,6 +819,10 @@ namespace Antarium.Sim
                     case AbilityKind.PheromoneBurst:
                         amount = StartRally(cell, def);
                         if (amount == 0) result = AbilityResult.NoEffect;
+                        break;
+                    case AbilityKind.Quickening:
+                        if (Colony.Eggs.Count == 0 && !AnyCarriedEgg()) result = AbilityResult.NoEffect;
+                        else amount = HatchAllEggs();
                         break;
                 }
             }
@@ -907,9 +934,16 @@ namespace Antarium.Sim
             UpdateForage(dt);
         }
 
+        bool AnyCarriedEgg()
+        {
+            foreach (var a in Ants.Ants)
+                if (a.CarryingEgg) return true;
+            return false;
+        }
+
         void Hatch(int2 cell, AntCaste caste)
         {
-            Ants.Spawn(cell, Seed, caste);
+            Ants.Spawn(cell, Seed, caste, TraitChance);
             _alive[(int)caste]++;
             Colony.Stats.AntsHatched++;
             Colony.Stats.HatchedCaste[(int)caste]++;

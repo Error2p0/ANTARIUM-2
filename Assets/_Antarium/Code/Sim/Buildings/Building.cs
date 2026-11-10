@@ -145,8 +145,10 @@ namespace Antarium.Sim
         public int Crafted;
         /// <summary>Bit per input item with free buffer space (tracked to rebuild consumer fields on change).</summary>
         public ulong NeedMask;
-        /// <summary>Engineers tending it this tick (each adds <see cref="BuildingSystem.EngineerBoost"/> speed).</summary>
+        /// <summary>Engineers tending it this tick.</summary>
         public int Tenders;
+        /// <summary>Their combined skill: each adds 1 (+ its experience bonus); times <see cref="BuildingSystem.EngineerBoost"/> is the speed-up.</summary>
+        public float TendPower;
         /// <summary>The only recipe it runs (index into <see cref="BuildingData.Recipes"/>), or -1 for any it can.</summary>
         public int Choice { get; private set; } = -1;
         /// <summary>Bit per item it takes in now: every input, or only the chosen recipe's (fuel left out while heated).</summary>

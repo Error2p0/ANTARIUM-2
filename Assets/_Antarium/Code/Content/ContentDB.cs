@@ -36,6 +36,10 @@ namespace Antarium.Content
         /// <summary>Job distance multipliers; 0 = never takes that job.</summary>
         public float DigJob, HaulJob, BuildJob, SupplyJob;
         public int SenseRadius;
+        /// <summary>No fire or heat damage.</summary>
+        public bool HeatProof;
+        /// <summary>Share of lava damage taken.</summary>
+        public float LavaTaken;
     }
 
     /// <summary>Baked recipe: dense item indices instead of asset references.</summary>
@@ -99,6 +103,8 @@ namespace Antarium.Content
         public IReadOnlyList<GeneticDef> Genetics;
         public IReadOnlyList<WorldModifierDef> WorldModifiers;
         public IReadOnlyList<AchievementDef> Achievements;
+        /// <summary>The queen's evolution tree (10.4).</summary>
+        public IReadOnlyList<EvolutionDef> Evolutions;
         /// <summary>Items that fall from surface plants by day (leaves).</summary>
         public IReadOnlyList<ItemDef> PlantForage;
         /// <summary>Item the queen eats from the stock to lay faster (honeydew).</summary>
@@ -120,6 +126,23 @@ namespace Antarium.Content
         public int MaxLevel => Math.Max(1, Def.maxLevel);
         /// <summary>Genetic Memory for the next level when <paramref name="level"/> levels are bought.</summary>
         public int Cost(int level) => Math.Max(0, Def.cost) + Math.Max(0, Def.costPerLevel) * level;
+    }
+
+    /// <summary>Baked queen evolution: dense indices, one cost per level.</summary>
+    public sealed class EvolutionData
+    {
+        public EvolutionDef Def;
+        /// <summary>Indices into <see cref="ContentDB.Evolutions"/>.</summary>
+        public int[] Prerequisites;
+        /// <summary>Per level: cost items and counts, and food.</summary>
+        public ushort[][] CostItems;
+        public int[][] CostCounts;
+        public float[] FoodCost;
+        public EvolutionEffect[] Effects;
+        /// <summary>Per effect: the ability index it unlocks, else -1.</summary>
+        public int[] Targets;
+
+        public int MaxLevel => FoodCost.Length;
     }
 
     /// <summary>Baked research node: dense indices.</summary>
@@ -203,6 +226,8 @@ namespace Antarium.Content
         public readonly EnemyData[] Enemies;
         /// <summary>Genetic traits ordered by tree position.</summary>
         public readonly GeneticData[] Genetics;
+        /// <summary>Queen evolutions ordered by tree position.</summary>
+        public readonly EvolutionData[] Evolutions;
         /// <summary>World modifiers in flight-screen order.</summary>
         public readonly WorldModifierDef[] Modifiers;
         /// <summary>Per world modifier: true if a genetic trait unlocks it (it starts locked).</summary>
@@ -249,6 +274,7 @@ namespace Antarium.Content
         readonly Dictionary<string, int> _enemyIndex = new();
         readonly Dictionary<string, int> _geneticIndex = new();
         readonly Dictionary<string, int> _modifierIndex = new();
+        readonly Dictionary<string, int> _evolutionIndex = new();
 
         ContentDB(TerrainMaterialDef[] materials, ItemDef[] items, IReadOnlyList<ItemDef> forage, WorldGenSettings worldGen,
             IReadOnlyList<BuildingDef> buildings, ProgressionContent progression)
@@ -309,6 +335,7 @@ namespace Antarium.Content
             for (int i = 0; i < Modifiers.Length; i++) _modifierIndex.Add(Modifiers[i].Id, i);
             ModifierStartsLocked = new bool[Modifiers.Length];
             Genetics = BakeGenetics(progression.Genetics);
+            Evolutions = BakeEvolutions(progression.Evolutions);
             Achievements = BakeAchievements(progression.Achievements);
 
             Biomes = new BiomeData[worldGen.biomes.Count];
@@ -457,6 +484,77 @@ namespace Antarium.Content
             return result;
         }
 
+        EvolutionData[] BakeEvolutions(IReadOnlyList<EvolutionDef> defs)
+        {
+            var sorted = Sorted(defs, "evolution", (a, b) =>
+                a.treePosition.x != b.treePosition.x ? a.treePosition.x.CompareTo(b.treePosition.x)
+                : a.treePosition.y != b.treePosition.y ? a.treePosition.y.CompareTo(b.treePosition.y)
+                : string.CompareOrdinal(a.Id, b.Id));
+            for (int i = 0; i < sorted.Length; i++) _evolutionIndex.Add(sorted[i].Id, i);
+
+            var result = new EvolutionData[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var def = sorted[i];
+                if (def.levels == null || def.levels.Count == 0) throw new ArgumentException($"Evolution '{def.Id}' has no levels.");
+                var prereqs = new List<int>();
+                foreach (var p in def.prerequisites)
+                {
+                    if (p == null) continue;
+                    if (!_evolutionIndex.TryGetValue(p.Id, out int pi))
+                        throw new ArgumentException($"Evolution '{def.Id}' needs '{p.Id}', which is not registered.");
+                    prereqs.Add(pi);
+                }
+                int levels = def.levels.Count;
+                var data = new EvolutionData
+                {
+                    Def = def,
+                    Prerequisites = prereqs.ToArray(),
+                    CostItems = new ushort[levels][],
+                    CostCounts = new int[levels][],
+                    FoodCost = new float[levels],
+                    Effects = def.effects.ToArray(),
+                };
+                for (int l = 0; l < levels; l++)
+                {
+                    var level = def.levels[l] ?? new EvolutionLevel();
+                    var items = new List<ushort>();
+                    var counts = new List<int>();
+                    foreach (var c in level.cost)
+                    {
+                        if (c.item == null || c.count <= 0) continue;
+                        items.Add(GetItemIndex(c.item));
+                        counts.Add(c.count);
+                    }
+                    data.CostItems[l] = items.ToArray();
+                    data.CostCounts[l] = counts.ToArray();
+                    data.FoodCost[l] = math.max(0f, level.foodCost);
+                }
+                data.Targets = new int[data.Effects.Length];
+                for (int k = 0; k < data.Effects.Length; k++)
+                {
+                    var e = data.Effects[k];
+                    data.Targets[k] = -1;
+                    switch (e.kind)
+                    {
+                        case EvolutionEffectKind.UnlockAbility:
+                            if (e.ability == null || !_abilityIndex.TryGetValue(e.ability.Id, out data.Targets[k]))
+                                throw new ArgumentException($"Evolution '{def.Id}' unlocks an ability that is not registered.");
+                            AbilityStartsLocked[data.Targets[k]] = true;
+                            break;
+                        case EvolutionEffectKind.UnlockCaste:
+                            if ((int)e.caste >= Castes.Count) throw new ArgumentException($"Evolution '{def.Id}' unlocks an unknown caste.");
+                            if (e.caste != AntCaste.Worker) CasteStartsLocked[(int)e.caste] = true;
+                            break;
+                    }
+                }
+                result[i] = data;
+            }
+            return result;
+        }
+
+        public bool TryGetEvolutionIndex(string id, out int index) => _evolutionIndex.TryGetValue(id ?? "", out index);
+
         GeneticData[] BakeGenetics(IReadOnlyList<GeneticDef> defs)
         {
             var sorted = Sorted(defs, "genetic trait", (a, b) =>
@@ -558,6 +656,8 @@ namespace Antarium.Content
                     BuildJob = math.max(0f, d.buildJob),
                     SupplyJob = math.max(0f, d.supplyJob),
                     SenseRadius = math.max(0, d.senseRadius),
+                    HeatProof = d.heatProof,
+                    LavaTaken = math.saturate(d.lavaDamageTaken),
                 };
             }
         }
@@ -738,6 +838,7 @@ namespace Antarium.Content
                     Genetics = database.genetics,
                     WorldModifiers = database.worldModifiers,
                     Achievements = database.achievements,
+                    Evolutions = database.evolutions,
                     PlantForage = database.plantForage,
                     RoyalTreat = database.royalTreat,
                     NightHunters = database.nightHunters,
