@@ -1,16 +1,24 @@
-"""Terrain tiles: one tileable 32 x 32 texture per material (Art/Terrain/<material id>.png).
+"""Terrain tiles: one tileable 64 x 64 texture per material (Art/Terrain/<material id>.png).
 
 The terrain shader adds edges, light bands, fluids and fog on top and reuses the tile (flattened and darkened) for
-the background wall, so tiles stay calm: three or four tones of one ramp, soft relief lit from the top left, and
-only a few small features, because every feature repeats every four cells.
+the background wall. Tiles are lively rather than flat: five tones of a ramp, patches that run lighter, darker,
+warmer or cooler, shapes of mixed sizes (clods, boulders, facets), and ore in big lumps. They stay flat-toned and
+lit from the top left; every feature repeats every eight cells, so nothing is so bold that it reads as a grid.
+The shader adds large patches of lighter / darker and warmer / cooler ground in world space, which never repeat.
+
+The painters were tuned on a 32 px tile: SCALE and AREA keep every feature at its pixel size on the larger tile
+(noise lattices and layer counts times SCALE, scattered features times AREA).
 """
+import math
 import zlib
 
 import numpy as np
 
 from palette import RAMPS
 
-SIZE = 32
+SIZE = 64
+SCALE = SIZE // 32
+AREA = SCALE * SCALE
 
 
 def rng_for(name):
@@ -18,7 +26,9 @@ def rng_for(name):
 
 
 def value_noise(rng, cells):
-    """Tileable value noise: a cells x cells lattice of random values, smoothly interpolated up to SIZE."""
+    """Tileable value noise: a lattice of random values, smoothly interpolated up to SIZE. `cells` is the lattice
+    size on a 32 px tile."""
+    cells *= SCALE
     lattice = rng.random((cells, cells))
     step = SIZE / cells
     out = np.zeros((SIZE, SIZE))
@@ -42,10 +52,12 @@ def relief(height, strength=1.0):
 
 
 def voronoi(rng, count, stretch=(1.0, 1.0), min_gap=4.0):
-    """Tileable Voronoi: per pixel the nearest seed and the gap between the nearest and second-nearest distance."""
+    """Tileable Voronoi: per pixel the nearest seed and the gap between the nearest and second-nearest distance.
+    `count` is per 32 px tile."""
+    count *= AREA
     seeds = []
     tries = 0
-    while len(seeds) < count and tries < 4000:
+    while len(seeds) < count and tries < 4000 * AREA:
         tries += 1
         p = rng.random(2) * SIZE
         ok = True
@@ -90,11 +102,12 @@ def stamp(img, x, y, rows, key):
 
 
 def scatter(rng, count, min_gap, taken=None):
-    """Random tile positions that keep a wrap-around distance from each other."""
+    """Random tile positions that keep a wrap-around distance from each other. `count` is per 32 px tile."""
+    count *= AREA
     points = list(taken or [])
     first = len(points)
     tries = 0
-    while len(points) - first < count and tries < 2000:
+    while len(points) - first < count and tries < 2000 * AREA:
         tries += 1
         p = rng.integers(0, SIZE, 2)
         if all(np.hypot(*np.minimum(np.abs(p - q), SIZE - np.abs(p - q))) >= min_gap for q in points):
@@ -114,32 +127,23 @@ def tones(ramp, mid, spread=0.55):
 
 
 def dirt():
-    """Topsoil: crumbly warm earth. Small clods (dark gaps with a lit rim on their lower right), a few stones."""
+    """Topsoil: crumbly warm earth in clods of mixed sizes, with lighter and darker patches, earth lumps and stones."""
     rng = rng_for("dirt")
-    height = value_noise(rng, 8) * 0.55 + value_noise(rng, 16) * 0.45
-    gap = height < 0.4
-    tone = np.full((SIZE, SIZE), 2)
-    tone[gap] = 1
-    tone[(value_noise(rng, 4) < 0.3) & gap] = 0
-    lit = np.roll(gap, (1, 1), (0, 1)) & ~gap
-    tone[lit & (rng.random((SIZE, SIZE)) < 0.75)] = 3
-    grain = rng.random((SIZE, SIZE))
-    tone[(grain > 0.985) & (tone == 2)] = 3
-    tone[(grain < 0.02) & (tone == 2)] = 1
-    img = tones("earth", 3)[tone]
+    tone = clods(rng)
+    tone = boulders(tone, rng, 3, 2, 4, min_gap=11, fills=(3, 2, 2), soft=True)
+    img = tint_patches(EARTH()[tone], rng)
     E, S = RAMPS["earth"], RAMPS["stone"]
-    key = {"h": E[5], "m": E[4], "s": mix(E[5], S[5], 0.5), "g": mix(E[4], S[3], 0.5), "k": E[1]}
-    spots = scatter(rng, 2, 12)
-    for (x, y), rows in zip(spots, [[".s.", "sgk", ".k."], ["s", "k"]]):
-        stamp(img, x, y, rows, key)
-    for (x, y), rows in zip(scatter(rng, 2, 9, spots), [["h..", ".m.", "..m"], ["..m", ".h."]]):
-        stamp(img, x, y, rows, key)
+    key = {"h": mix(S[5], E[5], 0.4), "m": mix(S[4], E[4], 0.4), "d": mix(S[3], E[2], 0.4), "w": S[5], "k": E[1]}
+    embed(img, rng, 3, key, [[".hm.", "hmmd", ".mdk"], ["hm", "md"], ["h", "d"]], min_gap=11)
     return img
 
 
 def strata(rng, layers, wobble=1.6):
-    """Wavy horizontal layers that tile: per pixel the layer index, the row inside the layer and the layer height."""
-    edges = np.sort(rng.choice(np.arange(0, SIZE, 2), layers, replace=False))
+    """Wavy horizontal layers that tile: per pixel the layer index, the row inside the layer and the layer height.
+    `layers` is per 32 px of height."""
+    layers *= SCALE
+    # Evenly spaced with a pixel of jitter: layers that start too close would cross where they wobble.
+    edges = np.array([int(k * SIZE / layers) + int(rng.integers(-1, 2)) for k in range(layers)]) % SIZE
     layer = np.zeros((SIZE, SIZE), int)
     row = np.zeros((SIZE, SIZE), int)
     height = np.zeros((SIZE, SIZE), int)
@@ -155,12 +159,12 @@ def strata(rng, layers, wobble=1.6):
     return layer, row, height
 
 
-def facets(rng, count, stretch, crack_share=0.45, min_gap=5.0):
+def facets(rng, count, stretch, crack_share=0.45, min_gap=5.0, choices=(1, 1, 2, 2, 2, 3, 3)):
     """Faceted rock: Voronoi plates, each one flat tone (as if tilted to or from the light), lit on the edges that
     face the top left; some plates get a dark fracture along their lower right edge. Tones 0..4 around 2."""
     owner, _ = voronoi(rng, count, stretch, min_gap)
     n = owner.max() + 1
-    tone = rng.choice([1, 2, 2, 2, 3], n)[owner]
+    tone = rng.choice(list(choices), n)[owner]
     cracked = (rng.random(n) < crack_share)[owner]
     other_below = (owner != np.roll(owner, -1, 0)) | (owner != np.roll(owner, -1, 1))
     other_above = (owner != np.roll(owner, 1, 0)) | (owner != np.roll(owner, 1, 1))
@@ -171,20 +175,54 @@ def facets(rng, count, stretch, crack_share=0.45, min_gap=5.0):
     return np.clip(tone, 0, 4), fracture
 
 
+def boulders(tone, rng, count, rmin=3, rmax=5, min_gap=10, fills=(2, 3), soft=False):
+    """Rounded lumps set into a tone map: a flat face, a lit rim on the upper left, a shaded rim on the lower right
+    (`soft`: a clod of earth, without the dark crevice under it)."""
+    tone = tone.copy()
+    for cx, cy in scatter(rng, count, min_gap):
+        ry = int(rng.integers(rmin, rmax + 1))
+        rx = ry + int(rng.integers(0, 2))
+        fill = int(rng.choice(list(fills)))
+        for dy in range(-ry, ry + 1):
+            for dx in range(-rx, rx + 1):
+                d = math.hypot(dx / (rx + 0.3), dy / (ry + 0.3))
+                if d > 1.0:
+                    continue
+                t = fill
+                if d > 0.66:
+                    if dx + dy < 0:
+                        t = fill + 1
+                    elif dx + dy > 0:
+                        t = fill - 2 if d > 0.86 and not soft else fill - 1
+                tone[(cy + dy) % SIZE, (cx + dx) % SIZE] = max(0, min(4, t))
+    return tone
+
+
+def tint_patches(img, rng, strength=0.07):
+    """Colour variety: large soft patches of the tile lean a little warmer or cooler (flat within a patch)."""
+    n = value_noise(rng, 4)
+    out = img.astype(float)
+    warm, cool = n > 0.6, n < 0.38
+    out[warm, 0] *= 1 + strength
+    out[warm, 2] *= 1 - strength
+    out[cool, 0] *= 1 - strength
+    out[cool, 2] *= 1 + strength * 0.8
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
 def stone():
-    """Stone strata: cool grey rock in flat, wide facets with a few dark fractures."""
+    """Stone strata: cool grey rock in facets of mixed tones with boulders set in, and a few dark fractures."""
     rng = rng_for("stone")
-    tone, fracture = facets(rng, 13, (1.0, 1.7))
-    grain = rng.random((SIZE, SIZE))
-    tone = np.where((grain > 0.97) & ~fracture & (tone < 4), tone + 1, tone)
-    tone = np.where((grain < 0.03) & ~fracture & (tone > 1), tone - 1, tone)
-    return tones("stone", 3, 0.5)[tone]
+    tone, fracture = rock(rng, 15, (1.0, 1.6), 0.45, min_gap=4.0)
+    tone = boulders(tone, rng, 3, 3, 5, min_gap=12)
+    return tint_patches(STONE()[tone], rng)
 
 
 def scatter_1d(rng, count, min_gap):
+    count *= SCALE
     xs = []
     tries = 0
-    while len(xs) < count and tries < 500:
+    while len(xs) < count and tries < 500 * SCALE:
         tries += 1
         x = int(rng.integers(0, SIZE))
         if all(min(abs(x - q), SIZE - abs(x - q)) >= min_gap for q in xs):
@@ -207,16 +245,26 @@ def speckle(rng, tone, light=0.02, dark=0.02, keep=None):
     return np.where((grain < dark) & ok, tone - 1, tone)
 
 
-def clods(rng, gap_level=0.4, deep_level=0.3):
-    """Soil relief as tones 0..3: dark gaps between clods, a lit rim on the lower right of each gap."""
+def clods(rng, gap_level=0.4, deep_level=0.3, patches=True):
+    """Soil relief as tones 0..4: dark gaps between clods with a lit rim on their lower right. With `patches`
+    the ground runs in lighter (drier) and darker (damper) areas and the clods are finer in some and coarser
+    in others."""
     height = value_noise(rng, 8) * 0.55 + value_noise(rng, 16) * 0.45
-    gap = height < gap_level
-    tone = np.full((SIZE, SIZE), 2)
-    tone[gap] = 1
-    tone[(value_noise(rng, 4) < deep_level) & gap] = 0
+    big = value_noise(rng, 4)
+    level = gap_level + ((big - 0.5) * 0.3 if patches else 0.0)
+    gap = height < level
+    base = np.full((SIZE, SIZE), 2)
+    if patches:
+        base[big > 0.6] = 3
+        base[big < 0.3] = 1
+    tone = np.where(gap, base - 1, base)
+    tone[(value_noise(rng, 4) < deep_level) & gap] -= 1
     lit = np.roll(gap, (1, 1), (0, 1)) & ~gap
-    tone[lit & (rng.random((SIZE, SIZE)) < 0.75)] = 3
-    return speckle(rng, tone, 0.015, 0.02)
+    tone = np.where(lit & (rng.random((SIZE, SIZE)) < 0.75), base + 1, tone)
+    grain = rng.random((SIZE, SIZE))
+    tone = np.where((grain > 0.985) & ~gap, tone + 1, tone)
+    tone = np.where((grain < 0.02) & ~gap, tone - 1, tone)
+    return np.clip(tone, 0, 4)
 
 
 def rock(rng, count=13, stretch=(1.0, 1.7), crack_share=0.45, min_gap=5.0):
@@ -239,6 +287,21 @@ LUMPS = [
 ]
 
 
+# Ore comes in big lumps (the old generated ore was readable from far out: keep that).
+BIG = [
+    ["..hhm..", ".hwhmm.", "hhmmmmd", "hmmmmdd", ".mmdddk", "..ddkk."],
+    [".hhm..", "hwmmm.", "hmmmdd", ".mmddk", "..ddk."],
+    [".hh..", "hwhm.", "hmmmd", "hmmdd", ".mddk", "..dk."],
+    ["..hm..", ".hwmm.", "hhmmmd", "hmmmdd", ".mmddk", "..ddk."],
+]
+
+
+def veins(img, rng, key, big=4, small=5, shapes=LUMPS):
+    """An ore body: a few big lumps and smaller ones between them."""
+    spots = embed(img, rng, big, key, BIG, min_gap=11)
+    embed(img, rng, small, key, shapes, min_gap=8, taken=spots)
+
+
 def embed(img, rng, count, key, shapes=LUMPS, min_gap=6, taken=None):
     """Stamps `count` lumps at spread-out positions; returns the positions."""
     spots = scatter(rng, count, min_gap, taken)
@@ -252,8 +315,8 @@ def lump_key(ramp, hi, deep, shine=None):
     return {"h": r[hi], "m": r[hi - 1], "d": r[hi - 2], "w": r[shine if shine is not None else min(hi + 1, len(r) - 1)], "k": deep}
 
 
-EARTH = lambda: tones("earth", 3)
-STONE = lambda: tones("stone", 3, 0.5)
+EARTH = lambda: tones("earth", 3, 0.7)
+STONE = lambda: tones("stone", 3, 0.7)
 
 
 # ---------------------------------------------------------------- topsoil
@@ -270,13 +333,13 @@ def grass():
             tone[(y + d) % SIZE, x] = 3
         tone[y % SIZE, x] = 4 if rng.random() < 0.5 else 3
         tone[(y + h) % SIZE, (x + 1) % SIZE] = 1
-    return tones("grass", 2, 0.5)[tone]
+    return tint_patches(tones("grass", 2, 0.6)[tone], rng, 0.09)
 
 
 def pebbles():
     """Topsoil full of small grey stones."""
     rng = rng_for("pebbles")
-    img = EARTH()[clods(rng)]
+    img = tint_patches(EARTH()[clods(rng)], rng)
     S, E = RAMPS["stone"], RAMPS["earth"]
     # Half the topsoil is this material, so the stones stay few, small and warm: they must not read as a pattern.
     key = {"h": mix(S[5], E[5], 0.35), "m": mix(S[4], E[4], 0.35), "d": mix(S[3], E[2], 0.4), "w": S[5], "k": E[1]}
@@ -287,7 +350,7 @@ def pebbles():
 def grub_nest():
     """Topsoil with pale grubs curled in small dark pockets."""
     rng = rng_for("grub_nest")
-    img = EARTH()[clods(rng)]
+    img = tint_patches(EARTH()[clods(rng)], rng)
     K, E = RAMPS["silk"], RAMPS["earth"]
     key = {"w": K[5], "c": K[4], "s": K[3], "d": K[2], "k": mix(E[1], E[2], 0.5)}
     grubs = [
@@ -303,7 +366,7 @@ def sand():
     """Fine pale sand with soft ripples."""
     rng = rng_for("sand")
     tone = np.full((SIZE, SIZE), 2)
-    for k, base in enumerate([3, 11, 19, 27]):
+    for base in range(3, SIZE, 8):
         wave = (value_noise(rng, 4)[0] - 0.5) * 5
         for x in range(SIZE):
             if rng.random() < 0.2:
@@ -314,7 +377,8 @@ def sand():
     tone = speckle(rng, tone, 0.05, 0.05)
     grain = rng.random((SIZE, SIZE))
     tone = np.where(grain > 0.992, 4, tone)
-    return tones("sand", 3, 0.4)[tone]
+    tone = np.where((value_noise(rng, 4) > 0.62) & (tone == 2), 3, tone)
+    return tint_patches(tones("sand", 3, 0.5)[tone], rng, 0.05)
 
 
 def root():
@@ -345,8 +409,8 @@ def packed_earth():
     """Tamped earth: flat dark layers pressed by the builders, small stones set in."""
     rng = rng_for("packed_earth")
     layer, row, height = strata(rng, 6, wobble=0.7)
-    tone = np.array([2, 2, 1, 2, 2, 1])[layer]
-    tone = np.where(clods(rng, 0.3, 0.0) == 1, np.maximum(tone - 1, 1), tone)
+    tone = np.array([2, 2, 1, 2, 2, 1])[layer % 6]
+    tone = np.where(clods(rng, 0.3, 0.0, patches=False) == 1, np.maximum(tone - 1, 1), tone)
     seam = row == 0
     dashes = value_noise(rng, 8) > 0.45
     tone = np.where((row == 1) & dashes & (rng.random((SIZE, SIZE)) < 0.5), tone + 1, tone)
@@ -364,8 +428,8 @@ def packed_earth():
 def clay():
     """Clay: smooth bedded layers in close warm tones, thin broken seams, a few drying cracks."""
     rng = rng_for("clay")
-    layer, row, height = strata(rng, 5, wobble=2.2)
-    tone = np.array([2, 1, 2, 3, 2])[layer]
+    layer, row, height = strata(rng, 5, wobble=1.6)
+    tone = np.array([2, 1, 2, 3, 2, 2, 3, 1, 2, 2])[layer % 10]
     seam = row == 0
     tone = np.where((row == 1) & (rng.random((SIZE, SIZE)) < 0.5) & (tone < 3), tone + 1, tone)
     tone = np.where(seam & (rng.random((SIZE, SIZE)) < 0.55), np.maximum(tone - 2, 0), tone)
@@ -374,7 +438,8 @@ def clay():
         for d in range(length):
             tone[(y0 + d) % SIZE, (x + (d // 2) % 2) % SIZE] = 0
     tone = speckle(rng, tone, 0.012, 0.02)
-    return tones("clay", 3, 0.45)[np.clip(tone, 0, 4)]
+    tone = boulders(np.clip(tone, 0, 4), rng, 2, 2, 3, min_gap=14, fills=(3,), soft=True)
+    return tint_patches(tones("clay", 3, 0.6)[tone], rng)
 
 
 # ---------------------------------------------------------------- ores and finds
@@ -383,8 +448,8 @@ def copper_ore():
     """Copper ore: brown host rock with bright copper nuggets."""
     rng = rng_for("copper_ore")
     tone, _ = rock(rng, 12, (1.0, 1.3), 0.2)
-    img = tones5(0x3a2619, 0x4e3626, 0x5e4330, 0x70523a, 0x866648)[tone]
-    embed(img, rng, 9, lump_key("copper", 4, (0x2e, 0x1e, 0x14, 255)), min_gap=7)
+    img = tint_patches(tones5(0x33200f, 0x4a3222, 0x5e4330, 0x745640, 0x8c6a4c)[tone], rng)
+    veins(img, rng, lump_key("copper", 4, (0x2e, 0x1e, 0x14, 255)))
     return img
 
 
@@ -396,7 +461,7 @@ def iron_ore():
     I = RAMPS["iron"]
     key = {"h": I[5], "m": I[4], "d": I[3], "w": I[6], "k": (0x4a, 0x22, 0x18, 255)}
     flecks = [["hm", "md"], [".h.", "hmd", ".d."], ["hmd", ".dk"], ["h", "m"], ["hm"], [".hm", "hmd", "md."]]
-    embed(img, rng, 9, key, flecks, min_gap=7)
+    veins(img, rng, key, 4, 5, flecks)
     return img
 
 
@@ -404,7 +469,7 @@ def coal():
     """Coal seam: stone crowded with black, glinting lumps."""
     rng = rng_for("coal")
     tone, _ = rock(rng, 10, (1.0, 1.5), 0.3)
-    img = STONE()[tone]
+    img = tint_patches(STONE()[tone], rng)
     B, S = RAMPS["basalt"], RAMPS["stone"]
     key = {"h": B[3], "m": B[1], "d": B[0], "w": RAMPS["iron"][4], "k": S[1]}
     lumps = [
@@ -414,7 +479,7 @@ def coal():
         ["hm", "md"],
         [".hmmm.", "hmwmmd", "mmmddd", ".ddddk"],
     ]
-    embed(img, rng, 10, key, lumps, min_gap=7)
+    veins(img, rng, key, 5, 5, lumps)
     return img
 
 
@@ -424,7 +489,7 @@ def amber():
     tone, _ = rock(rng, 11, (1.0, 1.5), 0.35)
     img = STONE()[tone]
     drops = [[".hm.", "hwmd", "mmmd", ".ddk"], ["hm", "md"], [".h.", "hwd", "mmd", ".dk"], ["h", "d"]]
-    embed(img, rng, 7, lump_key("gold", 4, RAMPS["stone"][1]), drops, min_gap=8)
+    veins(img, rng, lump_key("gold", 4, RAMPS["stone"][1]), 3, 4, drops)
     return img
 
 
@@ -456,8 +521,11 @@ def relic():
         ["kkkkkkkkk", "kmmmhmmmk", "kmkkkkkmk", "kmkhmkkmk", "kmkkdkkdk", "kmkkkkkdk", "kdmmdmddk", "kkkkkkkkk"],
         [".kkkkk.", "kmhkhmk", "kkmhmkk", "kmkdkmk", "kdkkkdk", ".kkkkk."],
     ]
-    for (x, y), rows in zip([(4, 3), (20, 18)], glyphs):
-        stamp(img, x, y, rows, key)
+    for oy in range(0, SIZE, 32):
+        for ox in range(0, SIZE, 32):
+            flip = (ox + oy) // 32 % 2
+            for (x, y), rows in zip([(4, 3), (20, 18)], glyphs[::-1] if flip else glyphs):
+                stamp(img, ox + x, oy + y, rows, key)
     return img
 
 
@@ -466,22 +534,23 @@ def relic():
 def basalt():
     """Basalt: near-black columns, taller than wide."""
     rng = rng_for("basalt")
-    tone, _ = rock(rng, 13, (1.9, 1.0), 0.55)
-    return tones("basalt", 3, 0.5)[tone]
+    tone, _ = rock(rng, 14, (1.9, 1.0), 0.55, min_gap=4.0)
+    return tint_patches(tones("basalt", 3, 0.75)[tone], rng, 0.06)
 
 
 def bedrock():
     """Bedrock: the darkest, heaviest rock; big blocks, deep cracks. Cannot be dug."""
     rng = rng_for("bedrock")
     tone, _ = rock(rng, 7, (1.0, 1.0), 0.85, min_gap=8.0)
-    return tones5(0x0c0b10, 0x1a191e, 0x2b2a30, 0x3a3940, 0x4a4954)[tone]
+    return tint_patches(tones5(0x0c0b10, 0x1a191e, 0x2b2a30, 0x3a3940, 0x4a4954)[tone], rng, 0.06)
 
 
 def quartzite():
     """Quartzite: pale lavender-grey, angular, with glints."""
     rng = rng_for("quartzite")
     tone, fracture = rock(rng, 18, (1.0, 1.0), 0.4, min_gap=4.5)
-    img = tones5(0x55526a, 0x737089, 0x8e8a9a, 0xa9a5b9, 0xc8c4da)[tone]
+    tone = boulders(tone, rng, 2, 3, 4, min_gap=14)
+    img = tint_patches(tones5(0x55526a, 0x737089, 0x8e8a9a, 0xa9a5b9, 0xc8c4da)[tone], rng, 0.05)
     glint = (rng.random((SIZE, SIZE)) > 0.988) & ~fracture
     img[glint] = (0xee, 0xea, 0xff, 255)
     return img
@@ -502,7 +571,12 @@ def glow_crystal():
         ["w", "m", "d"],
         [".gwg.", "ghhmg", "gmmdg", ".gdg."],
     ]
-    embed(img, rng, 8, key, shards, min_gap=8)
+    big = [
+        ["...w...", "..ghg..", ".ghhmg.", ".ghmdg.", "gghmdg.", ".ghmdg.", ".gmddg.", "..gdg..", "...g..."],
+        ["....gw.", "...ghmg", "..ghmdg", ".ghmdg.", "ghmdg..", "gmdg...", ".gg...."],
+    ]
+    spots = embed(img, rng, 3, key, big, min_gap=12)
+    embed(img, rng, 5, key, shards, min_gap=8, taken=spots)
     return img
 
 
@@ -562,7 +636,7 @@ def mycelium():
     rng = rng_for("mycelium")
     tone = clods(rng, 0.42, 0.32)
     F = RAMPS["fungus"]
-    img = np.array([F[0], mix(F[0], F[1], 0.6), mix(F[1], F[2], 0.35), mix(F[1], F[2], 0.8), F[2]], np.uint8)[tone]
+    img = tint_patches(np.array([F[0], mix(F[0], F[1], 0.6), mix(F[1], F[2], 0.35), mix(F[1], F[2], 0.8), F[2]], np.uint8)[tone], rng, 0.08)
     thread, knot = F[4], F[5]
     for x, y in scatter(rng, 7, 8):
         for branch in range(2):

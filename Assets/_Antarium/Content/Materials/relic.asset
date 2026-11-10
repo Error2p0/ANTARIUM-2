@@ -26,7 +26,7 @@ MonoBehaviour:
   pattern: 4
   baseColor: {r: 0.38431373, g: 0.34901962, b: 0.28235295, a: 1}
   shadowColor: {r: 0.16470589, g: 0.14901961, b: 0.1254902, a: 1}
-  highlightColor: {r: 0.57254905, g: 0.50980395, b: 0.3764706, a: 1}
+  highlightColor: {r: 0.5764706, g: 0.5137255, b: 0.38039216, a: 1}
   accentColor: {r: 0.9098039, g: 0.8156863, b: 0.4392157, a: 1}
   accentAmount: 0.7
   topRimColor: {r: 0, g: 0, b: 0, a: 0}

@@ -501,6 +501,10 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float wallOcclusion = 0.55f;
         [Tooltip("Texture contrast of dug-out background walls (0 = flat base colour, 1 = full texture).")]
         [Range(0f, 1f)] public float wallContrast = 0.35f;
+        [Tooltip("Ground runs in large flat patches that are lighter or darker than the tile: the strongest step (0 = none). They are placed in the world, so they never repeat like the tile does.")]
+        [Range(0f, 0.6f)] public float patchContrast = 0.26f;
+        [Tooltip("The same patches lean warmer or cooler by this much (0 = none).")]
+        [Range(0f, 0.3f)] public float patchTint = 0.07f;
         [Tooltip("Intensity of the global Light2D: the minimum brightness of revealed, unlit areas.")]
         [Range(0f, 1f)] public float ambient = 0.025f;
         public Color skyTop = new(0.36f, 0.62f, 0.86f);

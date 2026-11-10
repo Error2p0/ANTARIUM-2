@@ -31,6 +31,7 @@ namespace Antarium.Presentation
         static readonly int WorldId = Shader.PropertyToID("_AntWorld");
         static readonly int PixelId = Shader.PropertyToID("_AntPixel");
         static readonly int WallId = Shader.PropertyToID("_AntWall");
+        static readonly int TileId = Shader.PropertyToID("_AntTile");
         static readonly int SkyTopId = Shader.PropertyToID("_AntSkyTop");
         static readonly int SkyHorizonId = Shader.PropertyToID("_AntSkyHorizon");
         static readonly int SkyRangeId = Shader.PropertyToID("_AntSkyRange");
@@ -147,6 +148,7 @@ namespace Antarium.Presentation
             Shader.SetGlobalVector(PixelId, new Vector4(WorldConstants.PixelsPerUnit, WorldConstants.PixelsPerCell, render.lightBands, render.edgeNoise));
             float gamma = IsLinear ? 2.2f : 1f;
             Shader.SetGlobalVector(WallId, new Vector4(render.wallBrightness, render.wallOcclusion, gamma, render.wallContrast));
+            Shader.SetGlobalVector(TileId, new Vector4(WorldConstants.MaterialTextureSize - 1, render.patchContrast, render.patchTint, 0f));
             Shader.SetGlobalVector(SpriteMinLightId, new Vector4(render.spriteMinLight, 0f, 0f, 0f));
             Shader.SetGlobalColor(OverlayId, render.miningOrderColor);
             Shader.SetGlobalColor(StorageColorId, render.storageColor);

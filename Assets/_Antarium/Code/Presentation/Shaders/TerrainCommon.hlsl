@@ -22,6 +22,7 @@ TEXTURE2D_ARRAY(_AntMaterialTex);
 
 float4 _AntWorld;      // x = width (cells), y = height (cells), z = chunks per row
 float4 _AntPixel;      // x = pixels per unit, y = pixels per cell, z = light bands, w = edge noise
+float4 _AntTile;       // x = material tile size - 1 (a power of two), y = patch contrast, z = patch tint
 float4 _AntWall;       // x = wall brightness, y = wall occlusion, z = gamma exponent (2.2 in linear colour space, else 1), w = wall contrast
 float4 _AntSkyTop;
 float4 _AntSkyHorizon;
@@ -239,6 +240,32 @@ float ValueNoise4(int2 px)
     return lerp(lerp(a, b, f.x), lerp(d, e, f.x), f.y);
 }
 
+// Smooth value noise on a (1 << shift)-pixel lattice.
+float ValueNoiseAt(int2 px, int shift)
+{
+    int size = 1 << shift;
+    int2 c = px >> shift;
+    float2 f = ((float2)(px & (size - 1)) + 0.5) / size;
+    f = f * f * (3.0 - 2.0 * f);
+    float a = Hash21(c), b = Hash21(c + int2(1, 0));
+    float d = Hash21(c + int2(0, 1)), e = Hash21(c + int2(1, 1));
+    return lerp(lerp(a, b, f.x), lerp(d, e, f.x), f.y);
+}
+
+// The ground runs in large flat patches, a little lighter or darker and warmer or cooler than the material tile.
+// They are placed in world pixels, so unlike the tile they never repeat; flat steps keep it pixel art.
+float3 PatchShade(float3 c, int2 px)
+{
+    float n = ValueNoiseAt(px, 5) * 0.6 + ValueNoiseAt(px + int2(911, 357), 4) * 0.4;
+    float level = (floor(saturate(n * 1.5 - 0.25) * 4.999) - 2.0) * 0.5;   // five steps, -1 .. 1
+    float w = ValueNoiseAt(px + int2(4513, 1291), 6);
+    float warm = w > 0.58 ? 1.0 : w < 0.42 ? -1.0 : 0.0;
+    c *= 1.0 + level * _AntTile.y;
+    c.r *= 1.0 + warm * _AntTile.z;
+    c.b *= 1.0 - warm * _AntTile.z;
+    return c;
+}
+
 bool IsSolid(Neighborhood n, float2 cellPos, int2 px)
 {
     return FieldAt(n, cellPos) + (ValueNoise4(px) - 0.5) * 2.0 * _AntPixel.w > 0.5;
@@ -365,7 +392,7 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
         int mi = n.density[jc] >= 0.5 ? jc : SolidIndex(n, p.cellPos);
         uint m = n.material[mi];
         AntMaterial mat = _AntMaterials[m];
-        float3 c = LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & 31, m).rgb;
+        float3 c = PatchShade(LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & (int)_AntTile.x, m).rgb, p.px);
 
         bool up = IsSolid(n, p.cellPos + float2(0, st), p.px + int2(0, 1));
         bool down = IsSolid(n, p.cellPos - float2(0, st), p.px - int2(0, 1));
@@ -439,7 +466,7 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
         {
             // Background wall: darker material, with stepped occlusion bands following the tunnel edge.
             // Low-contrast background keeps the foreground (terrain edges, ants, items) readable.
-            float3 tex = LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & 31, m).rgb;
+            float3 tex = PatchShade(LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & (int)_AntTile.x, m).rgb, p.px);
             float3 c = lerp(mat.baseColor.rgb, tex, _AntWall.w) * Perceptual(_AntWall.x);
             float occ = floor(saturate(FieldAt(n, p.cellPos) * 2.0 - 0.2) * 3.0) / 3.0;
             s.albedo = c * Perceptual(1.0 - _AntWall.y * occ);

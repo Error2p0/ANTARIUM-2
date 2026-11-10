@@ -67,7 +67,7 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float accentAmount = 0.3f;
         [Tooltip("Colour of the top edge facing open space (e.g. grass). Alpha 0 = use highlight.")]
         public Color topRimColor = new(0, 0, 0, 0);
-        [Tooltip("Optional hand-drawn 32x32 tile (Read/Write enabled). Overrides the procedural pattern.")]
+        [Tooltip("Optional hand-drawn tile (64x64, tileable, Read/Write enabled): Art/Terrain/<id>.png, set by Antarium > Art > Import Overrides. Overrides the procedural pattern.")]
         public Texture2D textureOverride;
 
         public bool IsAir => (flags & MaterialFlags.Air) != 0;

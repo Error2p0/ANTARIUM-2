@@ -24,9 +24,9 @@ MonoBehaviour:
   emissionStrength: 0.45
   selfGlow: 0.4
   pattern: 4
-  baseColor: {r: 0.31764707, g: 0.15294118, b: 0.09803922, a: 1}
-  shadowColor: {r: 0.18039216, g: 0.08627451, b: 0.07058824, a: 1}
-  highlightColor: {r: 0.6627451, g: 0.30588236, b: 0.13333334, a: 1}
+  baseColor: {r: 0.3764706, g: 0.18431373, b: 0.11372549, a: 1}
+  shadowColor: {r: 0.19215687, g: 0.09411765, b: 0.07450981, a: 1}
+  highlightColor: {r: 0.76862746, g: 0.3647059, b: 0.14509805, a: 1}
   accentColor: {r: 1, g: 0.47843137, b: 0.16470589, a: 1}
   accentAmount: 0.6
   topRimColor: {r: 0, g: 0, b: 0, a: 0}

@@ -129,7 +129,7 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
 | Water wheel | 16 × 16 | 4 | by water power | `Buildings/water_wheel` |
 | Generic machine | 16 × 16 | 1 | | `Buildings/generic` |
 | Belt item / stored item / dot | 3 × 3 / 3 × 2 / 4 × 4 | 1 | greyscale, tinted | `Buildings/belt_item`, `stored_item`, `dot` |
-| Terrain tile | 32 × 32, tileable | 1 | | `Terrain/<material id>` |
+| Terrain tile | 64 × 64, tileable | 1 | | `Terrain/<material id>` |
 | Icon | 10 × 10 | 1 | | `UI/Icons/<name>` |
 | Panel frame | 12 × 12, slice 4 | | | `UI/Skin/frame` |
 | Button bevels | 7 × 7, slice 2 | | | `UI/Skin/button`, `UI/Skin/button_down` |
@@ -141,15 +141,23 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 
 ## 6. Terrain tiles
 
-- One tileable **32 × 32** PNG per material, named by the material id. It repeats every 4 cells, so **keep it
-  calm**: close tones (half steps of a ramp: see `tones()` in `terrain.py`), small soft shapes, and only two or
-  three distinct features per tile. Anything bold shows up as a grid.
-- The shader adds the outline and lit top edge, light bands, fluids, fire and fog, and draws the same tile
-  flattened and darkened as the background wall. Do not draw edges or lighting into the tile.
-- Soil is clods (dark gaps with a lit rim on their lower right); rock is flat facets with a few dark fractures
-  (`clods()`, `rock()`); bedded materials use `strata()`; ores and finds are lumps stamped into a host rock
-  (`embed()`), lit top left with a shadow pixel under them. A material that covers large areas (pebbles: half the
-  topsoil) gets fewer and smaller features than a rare one (relic).
+- One tileable **64 × 64** PNG per material, named by the material id (`WorldConstants.MaterialTextureSize`). It
+  repeats every 8 cells.
+- **Lively, but flat-toned**: five tones of a ramp (wide steps: `tones(ramp, mid, 0.7)`), ground that runs in
+  lighter and darker patches, warmer and cooler patches (`tint_patches`), and shapes of mixed sizes. Soil is
+  clods of varying coarseness with earth lumps (`clods`, `boulders(soft=True)`); rock is facets of mixed tones
+  with boulders set in and a few dark fractures (`rock`, `boulders`); bedded materials use `strata`.
+- **Ore is big**: an ore body is a few lumps of 5–7 px with smaller ones between (`veins`), lit top left with a
+  shadow pixel under each. It has to read from far out.
+- A feature must still not be so bold and regular that the tile shows as a grid (rings, rows of equal dots). A
+  material that covers large areas (pebbles: half the topsoil) gets fewer and smaller features than a rare one.
+- The painters were tuned on a 32 px tile; `SCALE` / `AREA` in `terrain.py` keep features at their pixel size
+  (counts passed to `scatter`, `voronoi`, `strata`, `value_noise` are *per 32 px tile*).
+- The shader adds the outline and lit top edge, light bands, fluids, fire and fog, draws the same tile flattened
+  and darkened as the background wall, and lays **world-space patches** over everything (`PatchShade` in
+  `TerrainCommon.hlsl`: five flat brightness steps and a warm / cool lean; strength in `RenderConfig.patchContrast`
+  and `patchTint`). Those never repeat, which is what hides the tile grid. Do not draw edges or lighting into
+  the tile.
 - Glowing materials (crystal, magma rock, giant fungus, meteorite) are drawn bright; the game adds the glow
   (`selfGlow`, emission) on top.
 

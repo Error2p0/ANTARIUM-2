@@ -6,13 +6,15 @@ using UnityEngine;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Builds the terrain Texture2DArray: one tileable 32x32 pixel-art slice per material. Uses the
+    /// Builds the terrain Texture2DArray: one tileable pixel-art slice per material (64x64). Uses the
     /// material's texture override when present, otherwise paints a deterministic procedural pattern
     /// from its palette, so new materials look reasonable before any art exists.
     /// </summary>
     public static class MaterialTextureBuilder
     {
         const int Size = WorldConstants.MaterialTextureSize;
+        /// <summary>The pattern counts below were chosen for a 32 px tile: scale them with the tile's area.</summary>
+        const int Area = Size * Size / (32 * 32);
 
         public static Texture2DArray Build(TerrainMaterialDef[] materials)
         {
@@ -74,25 +76,25 @@ namespace Antarium.Presentation
             switch (def.pattern)
             {
                 case PixelPattern.Pebbles:
-                    Blobs(pixels, ref rng, (int)(10 * def.accentAmount + 4), 1, 2, def.accentColor, Lighten(def.accentColor), Darken(def.accentColor));
+                    Blobs(pixels, ref rng, (int)(10 * def.accentAmount + 4) * Area, 1, 2, def.accentColor, Lighten(def.accentColor), Darken(def.accentColor));
                     break;
                 case PixelPattern.Rock:
-                    Blobs(pixels, ref rng, 7, 3, 5, mid, light, dark);
+                    Blobs(pixels, ref rng, 7 * Area, 3, 5, mid, light, dark);
                     break;
                 case PixelPattern.Ore:
-                    Blobs(pixels, ref rng, (int)(8 * def.accentAmount + 3), 1, 3, def.accentColor, Lighten(def.accentColor), Darken(def.accentColor));
+                    Blobs(pixels, ref rng, (int)(8 * def.accentAmount + 3) * Area, 1, 3, def.accentColor, Lighten(def.accentColor), Darken(def.accentColor));
                     break;
                 case PixelPattern.Crystal:
-                    Shards(pixels, ref rng, (int)(6 * def.accentAmount + 3), def.accentColor, def.highlightColor);
+                    Shards(pixels, ref rng, (int)(6 * def.accentAmount + 3) * Area, def.accentColor, def.highlightColor);
                     break;
                 case PixelPattern.Brick:
                     Bricks(pixels, ref rng, mid, light, dark, def.accentColor, def.accentAmount);
                     break;
                 case PixelPattern.Mycelium:
-                    Threads(pixels, ref rng, (int)(10 * def.accentAmount + 4), def.accentColor, Lighten(def.accentColor));
+                    Threads(pixels, ref rng, (int)(10 * def.accentAmount + 4) * Area, def.accentColor, Lighten(def.accentColor));
                     break;
                 case PixelPattern.Sand:
-                    Speckle(pixels, ref rng, (int)(60 * def.accentAmount + 20), def.accentColor, dark);
+                    Speckle(pixels, ref rng, (int)(60 * def.accentAmount + 20) * Area, def.accentColor, dark);
                     break;
             }
         }
