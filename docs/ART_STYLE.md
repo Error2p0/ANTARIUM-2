@@ -81,14 +81,29 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
   walls right next to a fire take a warm tint.
 - Colony: ants are three clear segments with one-pixel gaps (waist, neck) in the leg tone, an eye and a pale
   mandible. The **gaster is one tone darker** than head and thorax, so the facing direction reads at a glance.
-  Castes differ by **silhouette** first and colour second.
+  Castes differ by **silhouette** first and colour second: soldier = big square head and heavy mandibles;
+  miner = front-heavy with long pale mandibles; hauler = big gaster carried high; nurse = small and round;
+  builder = humped thorax, flat shovel jaw; scout = slim on long legs with two long antennae; engineer = cyan
+  goggles and antenna tip. A new caste (10.4: glow ant, fire ant) gets its own `caste_<name>` ramp of 6 tones
+  and one feature no other caste has.
+- A walk strip is 4 frames: the legs alternate in a tripod gait, and the antennae move in frames 2–3.
+- **Tinted sprites** (pile, carried lump, belt item, stored item, marker, dots) are greyscale: the renderer
+  multiplies them with the item's colour. Keep them white-to-mid-grey.
 
 ## 5. Sizes, frames and timing
 
 | Piece | Size (px) | Frames | Timing | Name |
 |---|---|---|---|---|
-| Worker | 12 × 7 | 4 walk | 4 frames per walk phase; 2 frames alternate while working | `Colony/ant_worker` |
+| Worker, nurse, builder, scout, engineer | 12 × 7 | 4 walk | 4 frames per walk phase; frames 0–1 alternate while working | `Colony/ant_<caste>` |
+| Miner, hauler | 13 × 7 | 4 walk | same | `Colony/ant_miner`, `Colony/ant_hauler` |
+| Soldier | 14 × 8 | 4 walk | same | `Colony/ant_soldier` |
 | Queen | 24 × 12 | 2 (rest, gaster swollen) | 0.7 breaths per second | `Colony/queen` |
+| Princess | 14 × 10 | 3 (resting, wings up, wings back) | flight: frames 1–2 at 12 per second | `Colony/princess` |
+| Egg | 4 × 5 | 1 | | `Colony/egg` |
+| Pile / carried lump | 6 × 4 / 3 × 3 | 1 | greyscale, tinted with the item colour | `Colony/pile`, `Colony/carry` |
+| Golden beetle | 10 × 6 | 2 walk | | `Colony/golden_beetle` |
+| Golden aphid | 6 × 5 | 2 | 2.5 per second | `Colony/golden_aphid` |
+| Marker | 3 × 3 | 1 | white, tinted | `Colony/marker` (generated) |
 | Smelter | 24 × 24 | 2 (idle, working) | by machine state | `Buildings/smelter` |
 | Terrain tile | 32 × 32, tileable | 1 | | `Terrain/<material id>` |
 | Icon | 10 × 10 | 1 | | `UI/Icons/<name>` |
@@ -138,7 +153,8 @@ Buildings are always cells × 8 px. More rows are added to this table as each ca
 
 ## 9. What exists
 
-Drawn in the new style: worker, queen, smelter, **all 26 terrain tiles**, the UI skin (frame, button
+Drawn in the new style: **the whole colony** (8 castes, queen, princess, egg, item lumps, golden beetle and
+aphid), the smelter, **all 26 terrain tiles**, the UI skin (frame, button
 bevels, inset) and the icons *food, ants, eggs, storage, knowledge, copper ore, iron ore, coal, copper, iron,
 crystal shard, amber*.
 

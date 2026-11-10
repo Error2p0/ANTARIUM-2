@@ -15,8 +15,34 @@ MonoBehaviour:
   entries:
   - name: Buildings/smelter
     texture: {fileID: 2800000, guid: 845febede4c18594ea422549ee168535, type: 3}
+  - name: Colony/ant_builder
+    texture: {fileID: 2800000, guid: 176df814974107c4b9c88eca1b39efb7, type: 3}
+  - name: Colony/ant_engineer
+    texture: {fileID: 2800000, guid: 38755752a1cbfe94eae6f1267e728551, type: 3}
+  - name: Colony/ant_hauler
+    texture: {fileID: 2800000, guid: 36b7bbd131c0d60468ab928cbf6cab65, type: 3}
+  - name: Colony/ant_miner
+    texture: {fileID: 2800000, guid: ffdf689ed05495140af269b14ee80232, type: 3}
+  - name: Colony/ant_nurse
+    texture: {fileID: 2800000, guid: 04c0fae14b4f3c7468a6e9409cc9e5f4, type: 3}
+  - name: Colony/ant_scout
+    texture: {fileID: 2800000, guid: 1099b548ae8a9f74b87fc925fd6967e5, type: 3}
+  - name: Colony/ant_soldier
+    texture: {fileID: 2800000, guid: 25dc33cf78f11b646bb4144d3627e300, type: 3}
   - name: Colony/ant_worker
     texture: {fileID: 2800000, guid: 77c0423eaa263a74faf99b90043274e2, type: 3}
+  - name: Colony/carry
+    texture: {fileID: 2800000, guid: 8d4f69de9031d5a4da9015c7c782bbed, type: 3}
+  - name: Colony/egg
+    texture: {fileID: 2800000, guid: a4b52dd7b8964f64184132d25eb4cfe2, type: 3}
+  - name: Colony/golden_aphid
+    texture: {fileID: 2800000, guid: e3bd71b680843ec4dbb06a93465f1219, type: 3}
+  - name: Colony/golden_beetle
+    texture: {fileID: 2800000, guid: 130817aaf16c561478d54ce564d335af, type: 3}
+  - name: Colony/pile
+    texture: {fileID: 2800000, guid: 9749947094527004283770e1e87ea1d8, type: 3}
+  - name: Colony/princess
+    texture: {fileID: 2800000, guid: 2028d2c6fe842b54c8b6b43ee530f64a, type: 3}
   - name: Colony/queen
     texture: {fileID: 2800000, guid: 4ed4c0ce88ccded47a83d136f3de8da7, type: 3}
   - name: Terrain/amber

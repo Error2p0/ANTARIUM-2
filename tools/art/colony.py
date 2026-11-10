@@ -94,3 +94,184 @@ def queen_frame(spans):
 
 def queen():
     return strip([queen_frame(s) for s in QUEEN_SPANS])
+
+
+# ---------------------------------------------------------------- castes
+# Every caste keeps the worker's build (three segments, eye, pale mandible, gaster a tone darker) and differs by
+# silhouette first, colour second. Keys: 1 legs / deepest ... 5 light, 6 shine; e eye, k mandible, a antenna.
+
+def caste_key(ramp, mandible="#f0d49c", extra=""):
+    return keys(f"1={ramp}:0 2={ramp}:1 3={ramp}:2 4={ramp}:3 5={ramp}:4 6={ramp}:5 a={ramp}:1 e=#1c0a0a k={mandible} " + extra)
+
+
+def shifted(legs, shift, width):
+    """The worker's leg rows moved right by `shift` and cut to `width`."""
+    return [[("." * shift + row).ljust(width, ".")[:width] for row in pose] for pose in legs]
+
+
+def caste(body, flick, legs, key):
+    """Four walk frames: `flick` replaces body rows (by index) in frames 2 and 3, so the antennae twitch."""
+    alt = [flick.get(i, row) for i, row in enumerate(body)]
+    return strip([sprite((body if f < 2 else alt) + legs[f], key) for f in range(4)])
+
+
+# Soldier, 14 x 8: a big square head with heavy crossed mandibles, dark crimson.
+def soldier():
+    body = [
+        "............a.",
+        ".344....4554a.",
+        "3432.44.455e4.",
+        "2322133134443k",
+        ".222.22.2332kk",
+        ".........22...",
+    ]
+    return caste(body, {0: "...........a..", 1: ".344....4554a."}, shifted(WORKER_LEGS, 0, 14), caste_key("caste_soldier", "#f0c060"))
+
+
+# Miner, 13 x 7: front-heavy, a boxy head with long pale digging mandibles, small gaster, dusty grey-brown.
+def miner():
+    body = [
+        "..........a..",
+        ".34.....455a.",
+        "343.444.45e4k",
+        "23213331" + "3444" + "k",
+        ".22.222.222kk",
+    ]
+    return caste(body, {0: "...........a.", 1: ".34.....455a."}, shifted(WORKER_LEGS, 0, 13), caste_key("caste_miner", "#eee2c4"))
+
+
+# Hauler, 13 x 7: a big swollen gaster carried high, small thorax and head, golden tan.
+def hauler():
+    body = [
+        "..455.......a",
+        ".45543....45.",
+        "454333.44.4e3",
+        "3433221331" + "34k",
+        ".22222.22.22.",
+    ]
+    return caste(body, {0: "..455......a."}, shifted(WORKER_LEGS, 2, 13), caste_key("caste_hauler"))
+
+
+# Nurse, 12 x 7: small and rounded, short antennae, pale cream.
+def nurse():
+    body = [
+        ".........a..",
+        "..45....45..",
+        ".4543.4445e.",
+        ".3433133344k",
+        "..222.22.22.",
+    ]
+    return caste(body, {0: "..........a."}, shifted(WORKER_LEGS, 1, 12), caste_key("caste_nurse", "#ffffff"))
+
+
+# Builder, 12 x 7: a humped thorax and a flat shovel jaw, olive green.
+def builder():
+    body = [
+        "..........a.",
+        ".344.45.45a.",
+        "3432.44.45e3",
+        "23221331344.",
+        ".222.22.22kk",
+    ]
+    return caste(body, {0: "...........a"}, shifted(WORKER_LEGS, 0, 12), caste_key("caste_builder", "#dce6a8"))
+
+
+# Scout, 12 x 7: slim, on long legs (three leg rows), two long antennae swept forward, bright orange.
+SCOUT_LEGS = [
+    ["....2.2.2...", "...2..2..2..", "..2...2...2."],
+    [".....22.2...", "....2.2...2.", "....2.2....2"],
+    ["....2.2.2...", "....2.2..2..", "...2..2..2.."],
+    ["....22..2...", "...2..2...2.", "..2...2....2"],
+]
+
+
+def scout():
+    body = [
+        "..........aa",
+        ".34.....45a.",
+        "3432.44.4e3.",
+        ".2211331.2k.",
+    ]
+    return caste(body, {0: ".........a.a"}, SCOUT_LEGS, caste_key("caste_scout"))
+
+
+# Engineer, 12 x 7: goggle eyes and an antenna tip that glow cyan, steel blue.
+def engineer():
+    body = [
+        "..........c.",
+        ".344....45a.",
+        "3432.44.4cc3",
+        "23221331344k",
+        ".222.22.222.",
+    ]
+    return caste(body, {0: "...........c"}, shifted(WORKER_LEGS, 0, 12), caste_key("caste_engineer", "#d2dae2", "c=#a0f0ff"))
+
+
+# ---------------------------------------------------------------- princess, brood, critters
+
+# Princess, 14 x 10, frames: resting (wings folded along the back), flying with wings up, wings swept back.
+PRINCESS = keys("1=gold:0 2=gold:1 3=gold:2 4=gold:3 5=gold:4 6=gold:5 a=gold:1 e=#1c0a0a k=#fff4c8 "
+                "w=#f4faff v=#b4cce8 u=#7c98c4")
+PRINCESS_BODY = [
+    ".455.....45...",
+    "45543.55.45e3.",
+    "3444314413" + "44k.",
+    ".2332.22.222..",
+]
+
+
+def princess():
+    rest = [
+        "..............",
+        "..............",
+        "............a.",
+        ".uvwwwwv...a..",
+        "vwwwwwwvv.45..",
+    ] + PRINCESS_BODY[1:] + [".....2.2.2....", "....2..2..2..."]
+    up = [
+        "..vww..vw.....",
+        "...vwww.ww....",
+        "....vwwwww..a.",
+        "......uww..a..",
+    ] + PRINCESS_BODY + [".....2.2.2....", ".....2.2.2...."]
+    back = [
+        "..............",
+        "..............",
+        "vwwwwwv.....a.",
+        ".uvwwwwww..a..",
+    ] + PRINCESS_BODY + [".....2.2.2....", ".....2.2.2...."]
+    return strip([sprite(rest, PRINCESS), sprite(up, PRINCESS), sprite(back, PRINCESS)])
+
+
+def egg():
+    return sprite([".56.", "5665", "5654", "4543", ".33."], keys("6=silk:5 5=silk:4 4=silk:3 3=silk:2"))
+
+
+# Item lumps are greyscale and tinted with the item's colour by the renderer.
+GREY = keys("w=#ffffff g=#c8c8c8 k=#8c8c8c d=#5a5a5a")
+
+
+def pile():
+    return sprite(["..wg..", ".wggk.", "wgggkk", "gkkkdd"], GREY)
+
+
+def carry():
+    return sprite([".wg", "wgk", "gkd"], GREY)
+
+
+def golden_beetle():
+    key = keys("2=gold:1 3=gold:2 4=gold:3 5=gold:4 6=gold:5 b=wood:1 e=#fff2a8 l=wood:1")
+    body = [
+        "...4554...",
+        "..456554b.",
+        ".34565543b",
+        ".23444432e",
+        "..233322b.",
+    ]
+    return strip([sprite(body + [legs], key) for legs in (".l.l..l.l.", "..l.ll.l..")])
+
+
+def golden_aphid():
+    key = keys("2=gold:1 3=gold:2 4=gold:3 5=gold:4 6=gold:5 a=gold:1 l=wood:1")
+    body = [".4554.", "456543", "344432"]
+    return strip([sprite(["..a.a."] + body + [".l.l.."], key), sprite(["...aa."] + body + ["..l.l."], key)])
