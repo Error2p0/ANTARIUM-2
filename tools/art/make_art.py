@@ -37,13 +37,13 @@ PIECES = {
     "carry": ("Colony/carry.png", colony.carry),
     "golden_beetle": ("Colony/golden_beetle.png", colony.golden_beetle),
     "golden_aphid": ("Colony/golden_aphid.png", colony.golden_aphid),
-    "smelter": ("Buildings/smelter.png", buildings.smelter),
     "skin_frame": ("UI/Skin/frame.png", ui.frame),
     "skin_button": ("UI/Skin/button.png", ui.button),
     "skin_button_down": ("UI/Skin/button_down.png", ui.button_down),
     "skin_inset": ("UI/Skin/inset.png", ui.inset),
 }
 PIECES.update({"icon_" + name: (f"UI/Icons/{name}.png", ui.icon(name)) for name in ui.ICONS})
+PIECES.update({"building_" + name: (f"Buildings/{name}.png", painter) for name, painter in buildings.SPRITES.items()})
 PIECES.update({"terrain_" + name: (f"Terrain/{name}.png", painter) for name, painter in terrain.TILES.items()})
 
 

@@ -13,8 +13,60 @@ MonoBehaviour:
   m_Name: ArtLibrary
   m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ArtLibrary
   entries:
+  - name: Buildings/aphid_ranch
+    texture: {fileID: 2800000, guid: 7a399cded4f84314d890ebae0a6d8e87, type: 3}
+  - name: Buildings/archive
+    texture: {fileID: 2800000, guid: 198a7556b6924264eb9c49ae826b07d2, type: 3}
+  - name: Buildings/belt_item
+    texture: {fileID: 2800000, guid: 179731c64311f364f93cb936f3a6a305, type: 3}
+  - name: Buildings/chest
+    texture: {fileID: 2800000, guid: ce7816fde99a90c4d8424b015677819e, type: 3}
+  - name: Buildings/crusher
+    texture: {fileID: 2800000, guid: 049cac4200723984892d522ce63ff037, type: 3}
+  - name: Buildings/dot
+    texture: {fileID: 2800000, guid: 777b29bd163f46745b6a82db687d3b8b, type: 3}
+  - name: Buildings/earth_wall
+    texture: {fileID: 2800000, guid: 9756eddef7ddcdf42a94adce54624a2b, type: 3}
+  - name: Buildings/filter
+    texture: {fileID: 2800000, guid: e562de469bbac6146833159b586e69f5, type: 3}
+  - name: Buildings/fungus_garden
+    texture: {fileID: 2800000, guid: a3044ec875876f242b300b33357c9b8a, type: 3}
+  - name: Buildings/generic
+    texture: {fileID: 2800000, guid: 531f871f14322604fa7ec4f4ac90f598, type: 3}
+  - name: Buildings/guard_post
+    texture: {fileID: 2800000, guid: 49ba254ecd7a51845a67ad969390c7ac, type: 3}
+  - name: Buildings/iron_belt
+    texture: {fileID: 2800000, guid: cfc0d904d07b41d42ad45f28f3d6fa6d, type: 3}
+  - name: Buildings/iron_gate
+    texture: {fileID: 2800000, guid: f1037c35aeb996b4b9f18ffb94049909, type: 3}
+  - name: Buildings/iron_lift
+    texture: {fileID: 2800000, guid: 5ea837b3e6a70874285c62f89b78e271, type: 3}
+  - name: Buildings/nursery
+    texture: {fileID: 2800000, guid: 4ecaee451f8d50b4b93ebc77bbfce58f, type: 3}
+  - name: Buildings/pheromone_emitter
+    texture: {fileID: 2800000, guid: 47a9b753bcb575a428fb4dfd6006a79d, type: 3}
+  - name: Buildings/princess_chamber
+    texture: {fileID: 2800000, guid: ac0c15bf0b7062c4e93a882b7658bc7c, type: 3}
+  - name: Buildings/pump
+    texture: {fileID: 2800000, guid: 04fd1c2d0a5b7514183d5c404b75a7f9, type: 3}
+  - name: Buildings/resin_gate
+    texture: {fileID: 2800000, guid: 50c96f00507a3da4eb6676e0df1cb96d, type: 3}
+  - name: Buildings/resin_trap
+    texture: {fileID: 2800000, guid: 202ce3a16bcc232439175f42a536d369, type: 3}
+  - name: Buildings/root_lift
+    texture: {fileID: 2800000, guid: 5e111f6ba9a818f45a028744e7d6f3ff, type: 3}
+  - name: Buildings/silk_belt
+    texture: {fileID: 2800000, guid: 5a325923c38e4b046a800f252d85c564, type: 3}
   - name: Buildings/smelter
     texture: {fileID: 2800000, guid: 845febede4c18594ea422549ee168535, type: 3}
+  - name: Buildings/splitter
+    texture: {fileID: 2800000, guid: 67adb71c0bdc4c84c9eb0226f23684b3, type: 3}
+  - name: Buildings/stored_item
+    texture: {fileID: 2800000, guid: 8c6ae28892df8884993af4f1cb9ca259, type: 3}
+  - name: Buildings/unloader
+    texture: {fileID: 2800000, guid: 4f953924370318d48918216b8d2d0ead, type: 3}
+  - name: Buildings/water_wheel
+    texture: {fileID: 2800000, guid: 71ee29b37d3d2bb48a126ecdecab2839, type: 3}
   - name: Colony/ant_builder
     texture: {fileID: 2800000, guid: 176df814974107c4b9c88eca1b39efb7, type: 3}
   - name: Colony/ant_engineer

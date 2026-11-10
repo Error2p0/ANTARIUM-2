@@ -104,14 +104,30 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
 | Golden beetle | 10 × 6 | 2 walk | | `Colony/golden_beetle` |
 | Golden aphid | 6 × 5 | 2 | 2.5 per second | `Colony/golden_aphid` |
 | Marker | 3 × 3 | 1 | white, tinted | `Colony/marker` (generated) |
+| Belts, lifts | 8 × 8 | 4 | the pattern moves 1 px per frame (iron belt: 2 px); speed from the building | `Buildings/silk_belt`, `root_lift`, `iron_belt`, `iron_lift` |
+| Splitter, filter, unloader | 8 × 8 | 1 | filter and unloader point right and are turned by the game | `Buildings/splitter`, `filter`, `unloader` |
+| Chest | 8 × 8 | 2 (closed, open with goods) | | `Buildings/chest` |
 | Smelter | 24 × 24 | 2 (idle, working) | by machine state | `Buildings/smelter` |
+| Crusher | 16 × 16 | 2 (idle, working) | | `Buildings/crusher` |
+| Fungus garden, aphid ranch | 32 × 16 | 2 (idle, working) | | `Buildings/fungus_garden`, `aphid_ranch` |
+| Archive | 24 × 16 | 2 (idle, working) | | `Buildings/archive` |
+| Nursery | 24 × 16 | 1 | cradles centred at x 4, 12, 20; eggs rest 2 px above the floor | `Buildings/nursery` |
+| Princess chamber | 32 × 24 | 2 (idle, working) | beds at (8, 0), (24, 0), (16, 9) from the bottom left | `Buildings/princess_chamber` |
+| Emitter, gates, guard post, wall | 8 × 8 | 1 | the emitter's scent dot is drawn in its socket | `Buildings/pheromone_emitter`, `resin_gate`, `iron_gate`, `guard_post`, `earth_wall` |
+| Resin trap | 8 × 8 | 2 (armed, sprung) | | `Buildings/resin_trap` |
+| Pump | 8 × 8 | 2 (impeller) | 8 per second while pumping; spout right, turned by the game | `Buildings/pump` |
+| Water wheel | 16 × 16 | 4 | by water power | `Buildings/water_wheel` |
+| Generic machine | 16 × 16 | 1 | | `Buildings/generic` |
+| Belt item / stored item / dot | 3 × 3 / 3 × 2 / 4 × 4 | 1 | greyscale, tinted | `Buildings/belt_item`, `stored_item`, `dot` |
 | Terrain tile | 32 × 32, tileable | 1 | | `Terrain/<material id>` |
 | Icon | 10 × 10 | 1 | | `UI/Icons/<name>` |
 | Panel frame | 12 × 12, slice 4 | | | `UI/Skin/frame` |
 | Button bevels | 7 × 7, slice 2 | | | `UI/Skin/button`, `UI/Skin/button_down` |
 | Inset | 4 × 4, slice 1 | | | `UI/Skin/inset` |
 
-Buildings are always cells × 8 px. More rows are added to this table as each category is drawn (steps 3–8).
+Buildings are always cells × 8 px and stand on their bottom row. A machine's **working frame** changes only
+what works (fire, dust, sprouts, a candle), never the outline. Where the game draws something into a building
+(eggs, princesses, the top item, a scent dot), the sprite leaves a dark socket or an open bowl there.
 
 ## 6. Terrain tiles
 
@@ -154,7 +170,7 @@ Buildings are always cells × 8 px. More rows are added to this table as each ca
 ## 9. What exists
 
 Drawn in the new style: **the whole colony** (8 castes, queen, princess, egg, item lumps, golden beetle and
-aphid), the smelter, **all 26 terrain tiles**, the UI skin (frame, button
+aphid), **every building** (27 PNGs), **all 26 terrain tiles**, the UI skin (frame, button
 bevels, inset) and the icons *food, ants, eggs, storage, knowledge, copper ore, iron ore, coal, copper, iron,
 crystal shard, amber*.
 
