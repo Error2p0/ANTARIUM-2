@@ -38,7 +38,9 @@ namespace Antarium.Gameplay
         readonly Button _overlayButton;
         readonly Label _food, _foodRate, _ants, _eggs, _storage;
         readonly Label _clock, _weather;
-        readonly VisualElement _clockEntry, _clockSwatch;
+        readonly VisualElement _clockEntry, _clockSwatch, _clockIcon;
+        readonly Texture2D _sunIcon, _moonIcon;
+        bool _clockShowsDay = true;
         readonly VisualElement _storageEntry;
         readonly VisualElement[] _itemEntries;
         readonly Label[] _itemLabels, _itemRates;
@@ -125,8 +127,14 @@ namespace Antarium.Gameplay
                 return;
             }
 
-            _clock = AddEntry(new Color(1f, 0.85f, 0.35f), out _clockEntry, out _weather);
+            _clock = AddEntry(new Color(1f, 0.85f, 0.35f), out _clockEntry, out _weather, "sun");
             _clockSwatch = _clockEntry.Q(className: "resource__swatch");
+            _clockIcon = _clockEntry.Q(className: "resource__icon");
+            if (art != null)
+            {
+                art.TryGet("UI/Icons/sun", out _sunIcon);
+                art.TryGet("UI/Icons/moon", out _moonIcon);
+            }
             Tip(_clockEntry, "Day and night: seeds and leaves only grow by day, birds hunt by day and spiders come out at night. " +
                              "Rain floods the tunnels near the surface for a while; a drought halves forage.");
             _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out _, out _foodRate, "food");
@@ -135,9 +143,9 @@ namespace Antarium.Gameplay
             _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _, "storage");
             _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate, "knowledge");
             knowledgeEntry.AddToClassList("resource--knowledge");
-            _princesses = AddEntry(new Color(1f, 0.75f, 0.4f), out _princessEntry, out _);
+            _princesses = AddEntry(new Color(1f, 0.75f, 0.4f), out _princessEntry, out _, "princesses");
             _princessEntry.AddToClassList("hidden");
-            _memory = AddEntry(new Color(1f, 0.85f, 0.45f), out _memoryEntry, out _);
+            _memory = AddEntry(new Color(1f, 0.85f, 0.45f), out _memoryEntry, out _, "memory");
             _memoryEntry.AddToClassList("resource--memory");
             _memoryEntry.AddToClassList("hidden");
             _itemEntries = new VisualElement[content.Items.Length];
@@ -155,28 +163,28 @@ namespace Antarium.Gameplay
             _storageEntry.AddToClassList("resource--clickable");
             _storageEntry.RegisterCallback<ClickEvent>(_ => StockClicked?.Invoke());
 
-            AddTool(toolbar, ToolMode.Dig, "Dig", input.ToolDig, "Dig: hold the mouse on rock to dig it out yourself. Combos dig faster.");
-            AddTool(toolbar, ToolMode.Mine, "Mine", input.ToolMine, "Mine orders: paint rock for workers to dig. Right drag erases.");
-            AddTool(toolbar, ToolMode.Storage, "Storage", input.ToolStorage, "Storage zones: paint dug-out cells where workers store items.");
-            AddTool(toolbar, ToolMode.Build, "Build", input.ToolBuild, "Build: belts, lifts, machines and defenses. Q / E pick, R rotates.");
-            AddTool(toolbar, ToolMode.Pheromone, "Scent", input.ToolPheromone, "Scent: paint pheromones that steer the ants. They fade unless an emitter keeps them.");
-            _possessButton = Toggle(toolbar, "Possess", () => PossessClicked?.Invoke(), input.Possess, "Possess: take control of an ant and dig, carry and fight yourself.");
-            _castesButton = Toggle(toolbar, "Castes", () => CastesClicked?.Invoke(), input.Castes, "Castes: choose which kinds of ants the queen lays.");
+            AddTool(toolbar, ToolMode.Dig, "Dig", input.ToolDig, "tool_dig", "Dig: hold the mouse on rock to dig it out yourself. Combos dig faster.");
+            AddTool(toolbar, ToolMode.Mine, "Mine", input.ToolMine, "tool_mine", "Mine orders: paint rock for workers to dig. Right drag erases.");
+            AddTool(toolbar, ToolMode.Storage, "Storage", input.ToolStorage, "storage", "Storage zones: paint dug-out cells where workers store items.");
+            AddTool(toolbar, ToolMode.Build, "Build", input.ToolBuild, "tool_build", "Build: belts, lifts, machines and defenses. Q / E pick, R rotates.");
+            AddTool(toolbar, ToolMode.Pheromone, "Scent", input.ToolPheromone, "tool_scent", "Scent: paint pheromones that steer the ants. They fade unless an emitter keeps them.");
+            _possessButton = Toggle(toolbar, "Possess", () => PossessClicked?.Invoke(), input.Possess, "tool_possess", "Possess: take control of an ant and dig, carry and fight yourself.");
+            _castesButton = Toggle(toolbar, "Castes", () => CastesClicked?.Invoke(), input.Castes, "tool_castes", "Castes: choose which kinds of ants the queen lays.");
             _castesButton.AddToClassList("hidden");
-            _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
-            _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "Flow overlay: belt traffic, jams, machine status and idle workers.");
-            _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "Genetic Memory: permanent traits for every colony of your bloodline.");
+            _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "tool_research", "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
+            _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "tool_flow", "Flow overlay: belt traffic, jams, machine status and idle workers.");
+            _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "memory", "Genetic Memory: permanent traits for every colony of your bloodline.");
             _geneticsButton.AddToClassList("hidden");
-            _flightButton = Toggle(toolbar, "Flight", () => FlightToggled?.Invoke(), input.Flight, "Nuptial Flight: send princesses to found a new colony and earn Genetic Memory.");
+            _flightButton = Toggle(toolbar, "Flight", () => FlightToggled?.Invoke(), input.Flight, "tool_flight", "Nuptial Flight: send princesses to found a new colony and earn Genetic Memory.");
             _flightButton.AddToClassList("hidden");
             _raisesPrincesses = new bool[content.Buildings.Length];
             for (int i = 0; i < content.Buildings.Length; i++)
                 foreach (int r in content.Buildings[i].Recipes)
                     if (content.Recipes[r].Princesses > 0) _raisesPrincesses[i] = true;
-            Abilities = new AbilityBar(abilities, content, input.Abilities);
+            Abilities = new AbilityBar(abilities, content, art, input.Abilities);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
-            Castes = new CastesPanel(castes, content);
-            Configure = new ConfigurePanel(configure, content);
+            Castes = new CastesPanel(castes, content, art);
+            Configure = new ConfigurePanel(configure, content, art);
 
             _unlockedBy = new string[content.Buildings.Length];
             foreach (var r in content.Research)
@@ -197,7 +205,7 @@ namespace Antarium.Gameplay
             Settings = new SettingsDialog(input);
             AchievementsPanel = new AchievementsDialog(content);
             Help = new HelpDialog(input);
-            Title = new TitleScreen();
+            Title = new TitleScreen(art);
             Title.Root.AddToClassList("hidden");
             _hudRoot?.Insert(_hudRoot.IndexOf(_modal), Title.Root);
 
@@ -254,23 +262,56 @@ namespace Antarium.Gameplay
             return true;
         }
 
-        void AddTool(VisualElement toolbar, ToolMode mode, string name, InputAction action, string tip)
+        /// <summary>
+        /// Puts the icon <c>UI/Icons/<paramref name="icon"/></c> in front of a button's text. A button with children is
+        /// no longer sized by its own text, so the text moves into a label next to the icon: set it with
+        /// <see cref="SetButtonText"/> from then on. Nothing happens without that icon.
+        /// </summary>
+        public static void AddButtonIcon(Button button, ArtLibrary art, string icon)
+        {
+            var element = new VisualElement { pickingMode = PickingMode.Ignore };
+            if (!SetIcon(element, art, icon, "tool__icon")) return;
+            var label = new Label(button.text) { pickingMode = PickingMode.Ignore };
+            label.AddToClassList("tool__label");
+            button.text = "";
+            button.AddToClassList("tool--icon");
+            button.Add(element);
+            button.Add(label);
+        }
+
+        /// <summary>Sets a button's text, in its label when it has an icon (see <see cref="AddButtonIcon"/>).</summary>
+        public static void SetButtonText(Button button, string text)
+        {
+            var label = button.Q<Label>(className: "tool__label");
+            if (label != null) label.text = text;
+            else button.text = text;
+        }
+
+        static string ButtonText(Button button)
+        {
+            var label = button.Q<Label>(className: "tool__label");
+            return label != null ? label.text : button.text;
+        }
+
+        void AddTool(VisualElement toolbar, ToolMode mode, string name, InputAction action, string icon, string tip)
         {
             var button = new Button(() => ToolClicked?.Invoke(mode)) { focusable = false };
             button.AddToClassList("tool");
             button.AddToClassList("tool--narrow");
+            AddButtonIcon(button, _art, icon);
             toolbar.Add(button);
             _toolButtons[(int)mode] = button;
             _keyed.Add((button, action, name));
             Tip(button, tip);
         }
 
-        Button Toggle(VisualElement toolbar, string name, Action clicked, InputAction action, string tip)
+        Button Toggle(VisualElement toolbar, string name, Action clicked, InputAction action, string icon, string tip)
         {
             var button = new Button(clicked) { focusable = false };
             button.AddToClassList("tool");
             button.AddToClassList("tool--narrow");
             button.AddToClassList("tool--toggle");
+            AddButtonIcon(button, _art, icon);
             toolbar.Add(button);
             _keyed.Add((button, action, name));
             Tip(button, tip);
@@ -293,7 +334,7 @@ namespace Antarium.Gameplay
             if (_input == null || _keysVersion == _input.BindingsVersion) return;
             _keysVersion = _input.BindingsVersion;
             foreach (var (button, action, name) in _keyed)
-                button.text = KeyLabel(action, name);
+                SetButtonText(button, KeyLabel(action, name));
             Abilities?.RefreshKeys();
         }
 
@@ -345,8 +386,11 @@ namespace Antarium.Gameplay
             var button = new Button(() => BuildingClicked?.Invoke(index)) { focusable = false };
             button.AddToClassList("building");
             var swatch = new VisualElement();
-            swatch.AddToClassList("building__swatch");
-            swatch.style.backgroundColor = def.color;
+            if (!SetIcon(swatch, _art, "building_" + def.Id, "building__icon"))
+            {
+                swatch.AddToClassList("building__swatch");
+                swatch.style.backgroundColor = def.color;
+            }
             var text = new VisualElement();
             text.AddToClassList("building__text");
             text.pickingMode = PickingMode.Ignore;
@@ -662,7 +706,7 @@ namespace Antarium.Gameplay
                 _possessButton.EnableInClassList("tool--possessing", possessing);
                 _possessButton.EnableInClassList("tool--targeting", targetingPossess);
                 string label = KeyLabel(_input.Possess, possessing ? "Let go" : "Possess");
-                if (_possessButton.text != label) _possessButton.text = label;
+                if (ButtonText(_possessButton) != label) SetButtonText(_possessButton, label);
             }
             if (_resources == null) return;
             if (_toastTimer > 0f)
@@ -757,7 +801,13 @@ namespace Antarium.Gameplay
         {
             int minutes = (int)(surface.TimeOfDay * 24f * 60f) % (24 * 60);
             _clock.text = $"Day {surface.Day}  {minutes / 60:00}:{minutes % 60:00}";
-            _clockSwatch.style.backgroundColor = surface.IsDay ? new Color(1f, 0.85f, 0.35f) : new Color(0.55f, 0.65f, 1f);
+            if (_clockSwatch != null) _clockSwatch.style.backgroundColor = surface.IsDay ? new Color(1f, 0.85f, 0.35f) : new Color(0.55f, 0.65f, 1f);
+            if (_clockIcon != null && surface.IsDay != _clockShowsDay)
+            {
+                _clockShowsDay = surface.IsDay;
+                var icon = surface.IsDay || _moonIcon == null ? _sunIcon : _moonIcon;
+                if (icon != null) _clockIcon.style.backgroundImage = new StyleBackground(icon);
+            }
             string weather = surface.Weather switch
             {
                 WeatherKind.Rain => "Rain",

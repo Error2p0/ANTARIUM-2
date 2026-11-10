@@ -135,8 +135,8 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 
 ## The screen
 
-- **Resource bar (top):** entries have a small **icon** (food, ants, eggs, storage, knowledge and the first items so far; the others still show a coloured square).
-  - **Day and time**, e.g. *Day 3  14:20*, with a sun (day) or moon (night) swatch; next to it *Rain*, *Drought* or *Night*. Point at it for what day, night and weather do.
+- **Resource bar (top):** every entry has a small **icon** (a sun or a moon for the time of day, then food, ants, eggs, storage, knowledge, a crown for princesses, a gold helix for Genetic Memory, and one per item). The same item icons are used in the stock view and in the configure panel; buildings have theirs in the build palette, castes in the castes panel, and the toolbar and ability buttons carry an icon next to their key and name.
+  - **Day and time**, e.g. *Day 3  14:20*, with a sun (day) or moon (night) icon; next to it *Rain*, *Drought* or *Night*. Point at it for what day, night and weather do.
   - **Food** current / capacity, with the **net food rate** per minute (food delivered minus what the colony eats; red when negative). **Ants** (with how many of them are workers once you have other castes), **Eggs**.
   - **Storage** used / total: how many items (of any type) the royal chamber and your storage cells hold. Turns orange when full.
   - **Knowledge** (violet): the research currency, with the knowledge your Archives study per minute.

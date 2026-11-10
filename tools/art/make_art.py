@@ -44,6 +44,12 @@ PIECES = {
     "skin_inset": ("UI/Skin/inset.png", ui.inset),
 }
 PIECES.update({"icon_" + name: (f"UI/Icons/{name}.png", ui.icon(name)) for name in ui.ICONS})
+ONE_CELL = ["silk_belt", "root_lift", "iron_belt", "iron_lift", "splitter", "filter", "unloader", "chest", "pheromone_emitter",
+            "resin_gate", "iron_gate", "resin_trap", "guard_post", "earth_wall", "pump"]
+PIECES.update({"icon_building_" + n: (f"UI/Icons/building_{n}.png", ui.building_icon(buildings.SPRITES[n])) for n in ONE_CELL})
+CASTES = {"worker": 12, "soldier": 14, "miner": 13, "hauler": 13, "nurse": 12, "builder": 12, "scout": 12, "engineer": 12}
+PIECES.update({"icon_caste_" + n: (f"UI/Icons/caste_{n}.png", ui.caste_icon(getattr(colony, n), w)) for n, w in CASTES.items()})
+PIECES["title_emblem"] = ("UI/title_emblem.png", ui.title_emblem(colony.soldier, ui.icon("princesses")))
 PIECES.update({"building_" + name: (f"Buildings/{name}.png", painter) for name, painter in buildings.SPRITES.items()})
 PIECES.update({"enemy_" + name: (f"Enemies/{name}.png", painter) for name, painter in creatures.ENEMIES.items()})
 PIECES.update({"surface_" + name: (f"Surface/{name}.png", painter) for name, painter in creatures.SURFACE.items()})

@@ -18,7 +18,7 @@ namespace Antarium.Gameplay
 
         public event Action<int> Clicked;
 
-        public AbilityBar(VisualElement container, ContentDB content, InputAction[] actions)
+        public AbilityBar(VisualElement container, ContentDB content, ArtLibrary art, InputAction[] actions)
         {
             _content = content;
             _actions = actions;
@@ -34,6 +34,7 @@ namespace Antarium.Gameplay
                 button.AddToClassList("tool");
                 button.AddToClassList("tool--ability");
                 button.style.borderLeftColor = def.color;
+                HudController.AddButtonIcon(button, art, "ability_" + def.Id);
                 container.Add(button);
                 _buttons[i] = button;
             }
@@ -65,7 +66,7 @@ namespace Antarium.Gameplay
                 string text = running > 0f ? $"{key}{name}  {Mathf.CeilToInt(running)}s"
                     : cooldown > 0f ? $"{key}{name}  {HudText.Clock(cooldown)}"
                     : key + name;
-                if (text != _texts[i]) button.text = _texts[i] = text;
+                if (text != _texts[i]) HudController.SetButtonText(button, _texts[i] = text);
                 button.EnableInClassList("tool--running", running > 0f);
                 button.EnableInClassList("tool--cooling", running <= 0f && cooldown > 0f);
                 button.EnableInClassList("tool--targeting", targeting == i);

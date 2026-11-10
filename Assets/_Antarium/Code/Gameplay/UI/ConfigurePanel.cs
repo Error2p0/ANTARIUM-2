@@ -34,6 +34,7 @@ namespace Antarium.Gameplay
         const int ReserveStepSize = 5;
 
         readonly ContentDB _content;
+        readonly ArtLibrary _art;
         readonly VisualElement _root;
         readonly Label _title, _hint;
         readonly VisualElement _list;
@@ -56,8 +57,9 @@ namespace Antarium.Gameplay
         /// <summary>Change the reserve of an item by this many.</summary>
         public event Action<ushort, int> ReserveStep;
 
-        public ConfigurePanel(VisualElement root, ContentDB content)
+        public ConfigurePanel(VisualElement root, ContentDB content, ArtLibrary art = null)
         {
+            _art = art;
             _root = root;
             _content = content;
             for (int i = 0; i < content.Items.Length && i < 64; i++) _allItems |= 1ul << i;
@@ -161,7 +163,7 @@ namespace Antarium.Gameplay
                     {
                         if (_content.Items[i].IsFood) continue;
                         ushort item = i;
-                        AddOption(_content.Items[i].DisplayName, _content.Items[i].color, i, () => ToggleItem(sim, item));
+                        AddOption(_content.Items[i].DisplayName, _content.Items[i].color, i, () => ToggleItem(sim, item), "item_" + _content.Items[i].Id);
                     }
                     _hint.text = Target == ConfigTarget.Chest
                         ? "Ants and belts only bring the items you choose. What is already inside stays."
@@ -178,7 +180,7 @@ namespace Antarium.Gameplay
                     {
                         if (unloader && _content.Items[i].IsFood) continue;
                         ushort item = i;
-                        AddOption(_content.Items[i].DisplayName, _content.Items[i].color, i, () => ItemPicked?.Invoke(Cell, item));
+                        AddOption(_content.Items[i].DisplayName, _content.Items[i].color, i, () => ItemPicked?.Invoke(Cell, item), "item_" + _content.Items[i].Id);
                     }
                     _hint.text = unloader
                         ? "It takes from the storage, chest or royal chamber behind it (opposite its arrow). R turns new ones."
@@ -220,8 +222,11 @@ namespace Antarium.Gameplay
                         var row = new VisualElement();
                         row.AddToClassList("configure__row");
                         var swatch = new VisualElement { pickingMode = PickingMode.Ignore };
-                        swatch.AddToClassList("caste__swatch");
-                        swatch.style.backgroundColor = _content.Items[i].color;
+                        if (!HudController.SetIcon(swatch, _art, "item_" + _content.Items[i].Id, "resource__icon"))
+                        {
+                            swatch.AddToClassList("caste__swatch");
+                            swatch.style.backgroundColor = _content.Items[i].color;
+                        }
                         var name = new Label(_content.Items[i].DisplayName) { pickingMode = PickingMode.Ignore };
                         name.AddToClassList("configure__name");
                         var value = new Label { pickingMode = PickingMode.Ignore };
@@ -262,14 +267,18 @@ namespace Antarium.Gameplay
             return sb.ToString();
         }
 
-        void AddOption(string text, Color swatchColor, int value, Action clicked)
+        /// <param name="icon">Icon name (<c>UI/Icons/</c>); without one the option shows the colour swatch.</param>
+        void AddOption(string text, Color swatchColor, int value, Action clicked, string icon = null)
         {
             var button = new Button(clicked) { focusable = false };
             button.AddToClassList("building");
             button.AddToClassList("configure__option");
             var swatch = new VisualElement { pickingMode = PickingMode.Ignore };
-            swatch.AddToClassList("building__swatch");
-            swatch.style.backgroundColor = swatchColor;
+            if (!HudController.SetIcon(swatch, _art, icon, "configure__icon"))
+            {
+                swatch.AddToClassList("building__swatch");
+                swatch.style.backgroundColor = swatchColor;
+            }
             var label = new Label(text) { pickingMode = PickingMode.Ignore };
             label.AddToClassList("building__name");
             label.AddToClassList("configure__option-name");

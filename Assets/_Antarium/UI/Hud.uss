@@ -1165,3 +1165,113 @@
     margin-right: 4px;
     flex-shrink: 0;
 }
+
+/* Icons on buttons and rows (10.7a step 7). */
+.tool--icon {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding-left: 8px;
+    padding-right: 10px;
+}
+.tool__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.tool__label {
+    margin: 0;
+    padding: 0;
+}
+.tool--ability.tool--icon {
+    justify-content: flex-start;
+}
+.building {
+    width: 118px;
+    height: 50px;
+}
+.palette {
+    max-width: 1010px;
+}
+.configure__list .configure__option {
+    width: 352px;
+}
+.configure__list--grid .configure__option {
+    width: 174px;
+}
+.building__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.configure__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.caste__icon {
+    width: 28px;
+    height: 16px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.configure__row .resource__icon {
+    margin-right: 6px;
+}
+
+/* Cards with their own state colours (events, toasts, alerts): the bevel at the skin's scale. */
+.toast, .alert, .event {
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/button.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 2; -unity-slice-bottom: 2;
+    -unity-slice-scale: 4px;
+}
+.toast, .alert {
+    padding: 5px 12px;
+}
+
+/* Dialog titles get the same rule as panel titles. */
+.dialog__title {
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(88, 64, 42);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+}
+.research__detail, .achievement, .modifier, .node {
+    border-color: rgb(58, 42, 28);
+}
+
+/* Scrollbars in the skin. */
+.unity-scroller--vertical {
+    width: 14px;
+}
+.unity-scroller .unity-base-slider__tracker {
+    background-color: rgb(14, 8, 6);
+    border-width: 0;
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/inset.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 4px;
+}
+.unity-scroller .unity-base-slider__dragger {
+    background-color: rgb(122, 92, 60);
+    border-width: 0;
+    border-radius: 0;
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/button.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 2; -unity-slice-bottom: 2;
+    -unity-slice-scale: 4px;
+}
+.unity-scroller .unity-base-slider__dragger:hover {
+    background-color: rgb(160, 126, 84);
+}
+
+/* Title screen: the crest (44 x 12 art pixels at 4 px each) over the logo. */
+.title__emblem {
+    width: 176px;
+    height: 48px;
+    margin-bottom: 4px;
+}
+.title__menu {
+    padding: 14px 16px;
+}

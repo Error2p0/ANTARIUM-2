@@ -25,7 +25,7 @@ namespace Antarium.Gameplay
         /// <summary>A share button: caste and -1 / +1 step.</summary>
         public event Action<AntCaste, int> ShareStep;
 
-        public CastesPanel(VisualElement root, ContentDB content)
+        public CastesPanel(VisualElement root, ContentDB content, ArtLibrary art = null)
         {
             _root = root;
             _content = content;
@@ -40,8 +40,11 @@ namespace Antarium.Gameplay
                 row.AddToClassList("caste");
                 row.tooltip = def.description;
                 var swatch = new VisualElement { pickingMode = PickingMode.Ignore };
-                swatch.AddToClassList("caste__swatch");
-                swatch.style.backgroundColor = def.color;
+                if (!HudController.SetIcon(swatch, art, "caste_" + caste.ToString().ToLowerInvariant(), "caste__icon"))
+                {
+                    swatch.AddToClassList("caste__swatch");
+                    swatch.style.backgroundColor = def.color;
+                }
                 var name = new Label(def.DisplayName) { pickingMode = PickingMode.Ignore };
                 name.AddToClassList("caste__name");
                 _counts[c] = new Label { pickingMode = PickingMode.Ignore };

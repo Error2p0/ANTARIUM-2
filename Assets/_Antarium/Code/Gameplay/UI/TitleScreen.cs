@@ -20,10 +20,18 @@ namespace Antarium.Gameplay
         public VisualElement Root { get; }
         public event Action Continue, NewColony, Settings, Achievements, Help, Quit;
 
-        public TitleScreen()
+        /// <param name="art">For the crest above the logo (<c>UI/title_emblem</c>); none without it.</param>
+        public TitleScreen(Antarium.Content.ArtLibrary art = null)
         {
             Root = new VisualElement();
             Root.AddToClassList("title");
+            if (art != null && art.TryGet("UI/title_emblem", out var emblem))
+            {
+                var crest = new VisualElement { pickingMode = PickingMode.Ignore };
+                crest.AddToClassList("title__emblem");
+                crest.style.backgroundImage = new StyleBackground(emblem);
+                Root.Add(crest);
+            }
             var logo = new Label("Antarium");
             logo.AddToClassList("title__logo");
             Root.Add(logo);

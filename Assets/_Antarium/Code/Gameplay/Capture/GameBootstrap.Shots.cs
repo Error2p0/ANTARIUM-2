@@ -5,6 +5,7 @@ using Antarium.Content;
 using Antarium.Core;
 using Antarium.Sim;
 using Unity.Mathematics;
+using UnityEngine.UIElements;
 
 namespace Antarium.Gameplay
 {
@@ -380,6 +381,34 @@ namespace Antarium.Gameplay
                 yield return Still("art_" + name);
             }
             if (globalLight != null) globalLight.intensity = config.render.ambient;
+
+            // The UI: build palette with the castes panel, the stock view, dialogs, the title screen.
+            Cam(q + new float2(14f, -4f), 3);
+            _tools.SetMode(ToolMode.Build);
+            _hud.Castes?.Toggle();
+            yield return Frames(4);
+            yield return Still("art_ui_build");
+            _hud.Castes?.Toggle();
+            ToggleStock();
+            yield return Frames(4);
+            yield return Still("art_ui_stock");
+            ToggleStock();
+            _tools.SetMode(ToolMode.Dig);
+            foreach (var (name, root) in new (string, VisualElement)[]
+                     {
+                         ("research", _hud.Research.Root), ("menu", _hud.Menu.Root), ("achievements", _hud.AchievementsPanel.Root),
+                         ("settings", _hud.Settings.Root), ("genetics", _hud.Genetics.Root),
+                     })
+            {
+                _hud.ShowModal(root);
+                yield return Frames(12);
+                yield return Still("art_ui_" + name);
+                _hud.HideModal();
+            }
+            _hud.SetTitle(true);
+            yield return Frames(30);
+            yield return Still("art_ui_title");
+            _hud.SetTitle(false);
         }
     }
 }

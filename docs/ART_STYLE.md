@@ -163,9 +163,20 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
   danger…). The skin only lays a bevel over them, inside the border. The UI blends in **linear** colour space:
   white overlays need a tiny alpha (about 4%), black ones a large one (40–65%).
 - Fonts stay: VT323 (text), Silkscreen (titles).
-- An icon is looked up by name: `UI/Icons/item_<item id>` for items; `food`, `ants`, `eggs`, `storage`,
-  `knowledge` for the fixed entries. Without an icon the old colour swatch is shown
-  (`HudController.SetIcon`).
+- An icon is looked up by name under `UI/Icons/` (`HudController.SetIcon`); without one the old colour swatch
+  is shown, so new content works before its icon exists:
+  - `item_<item id>`: resource bar, stock view, configure panel;
+  - `building_<building id>`: build palette (a one-cell building's icon is its sprite on a 10 × 10 canvas,
+    made by `ui.building_icon`; larger buildings get a hand-drawn miniature);
+  - `caste_<caste>` (14 × 8, the first walk frame, shown at 28 × 16): castes panel;
+  - `ability_<ability id>`: ability bar;
+  - `tool_dig`, `tool_mine`, `tool_build`, `tool_scent`, `tool_possess`, `tool_castes`, `tool_research`,
+    `tool_flow`, `tool_flight`: toolbar (Storage uses `storage`, Genes uses `memory`);
+  - `food`, `ants`, `eggs`, `storage`, `knowledge`, `princesses`, `memory`, `sun`, `moon`: fixed entries.
+- A button with an icon holds its text in a label beside the icon: add the icon with
+  `HudController.AddButtonIcon` and set the text with `HudController.SetButtonText`.
+- Cards that carry a state colour (events, toasts, alerts, research nodes, contracts) keep it and only get the
+  bevel. `UI/title_emblem` (44 × 12, shown at 4 px per art pixel) is the crest on the title screen.
 
 ## 8. Adding a sprite
 
@@ -181,8 +192,7 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 
 Drawn in the new style: **the whole colony** (8 castes, queen, princess, egg, item lumps, golden beetle and
 aphid), **every building** (27 PNGs), **the 7 enemies**, **the surface** (plants, bird, aphid), **all 26
-terrain tiles**, the UI skin (frame, button
-bevels, inset) and the icons *food, ants, eggs, storage, knowledge, copper ore, iron ore, coal, copper, iron,
-crystal shard, amber*.
+terrain tiles**, the UI skin (frame, button bevels, inset), **74 icons** (items, buildings, castes, tools,
+abilities, fixed entries) and the title crest.
 
 Not used yet: nothing (art for planned content comes in step 8 and is listed here then).
