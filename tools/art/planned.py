@@ -312,6 +312,13 @@ ICONS = {
     "lore_fragment_locked": (keys("p=ui:5 q=ui:3 s=ui:4"), [
         "..........", ".ppppp....", ".pqqqpp...", ".pppppps..", ".pqqqqpp..", "..ppppps..", "..pqqqp...", "...pppps..", "....sss...", "..........",
     ]),
+    # Build palette icons for the 10.5 buildings (added when 10.5 was built).
+    "building_crystal_resonator": (keys("6=crystal:6 5=crystal:5 4=crystal:4 3=crystal:3 i=iron:4 j=iron:2 k=iron:1"), [
+        "..5....5..", ".546..546.", ".545..545.", ".444..444.", ".434..434.", ".333..333.", ".iiiiiiii.", "...jjjj...", ".iiiiiiii.", ".kkkkkkkk.",
+    ]),
+    "building_ancient_engine": (keys("4=ruin:4 3=ruin:3 1=ruin:1 0=ruin:0 g=gold:4 G=gold:5 d=gold:2 c=crystal:5"), [
+        "...3443...", "..343343..", ".33100133.", ".3gdgdg33.", "c31gGGg13c", "c3dG..Gd3c", ".31gddg13.", ".33100133.", "4444444444", "1111111111",
+    ]),
     # Respec (10.6).
     "respec": (keys("5=gold:4 4=gold:3"), [
         "..........", "...5555.5.", "..5....55.", ".5....555.", ".5........", "........4.", ".444....4.", ".44....4..", ".4.4444...", "..........",

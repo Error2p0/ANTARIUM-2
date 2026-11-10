@@ -97,7 +97,7 @@ namespace Antarium.Sim
                 float dist = Rng.NextFloat(lo, hi);
                 int2 c = queen + new int2((int)math.round(math.cos(angle) * dist), (int)math.round(math.sin(angle) * dist * 0.6f));
                 if (!world.InBounds(c.x, c.y) || world.Depth(c.x, c.y) < 4) continue;
-                if (!CanDig(world[c.x, c.y], def) || TouchesColony(c)) continue;
+                if (!CanDig(world[c.x, c.y], def) || NearColony(c, _threats.moleClearance)) continue;
                 cell = c;
                 return true;
             }
@@ -113,11 +113,14 @@ namespace Antarium.Sim
         }
 
         /// <summary>The cell or one next to it is open ground the colony has explored (its tunnels).</summary>
-        bool TouchesColony(int2 c)
+        bool TouchesColony(int2 c) => NearColony(c, 1);
+
+        /// <summary>Open ground the colony has explored lies within <paramref name="radius"/> cells (Chebyshev) of the cell.</summary>
+        bool NearColony(int2 c, int radius)
         {
             var world = _sim.World;
-            for (int dy = -1; dy <= 1; dy++)
-            for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -radius; dy <= radius; dy++)
+            for (int dx = -radius; dx <= radius; dx++)
             {
                 int x = c.x + dx, y = c.y + dy;
                 if (!world.InBounds(x, y)) continue;
@@ -198,6 +201,7 @@ namespace Antarium.Sim
             if (e.Timer < 1f) return;
             e.Timer = 0f;
             _sim.DigByCreature(best);
+            _sim.Events.Publish(new DiggerEvent(DiggerPhase.Dug, e.Def, best));
             e.Trail = c;
             StartStep(ref e, best);
         }

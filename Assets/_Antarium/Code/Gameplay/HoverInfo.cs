@@ -74,6 +74,7 @@ namespace Antarium.Gameplay
             else if (!pointerOverUi)
             {
                 DescribeStock(sim, cell);
+                if (_sb.Length == 0) DescribeFind(sim, cell);
                 if (_sb.Length == 0) DescribeFluid(sim, cell);
                 if (_sb.Length == 0) DescribeFire(sim, cell);
             }
@@ -184,12 +185,26 @@ namespace Antarium.Gameplay
                 EnemyState.Dormant => "lurking",
                 EnemyState.Wander => "wandering",
                 EnemyState.Hunt => "hunting ants",
-                EnemyState.Raid => "raiding the colony",
+                EnemyState.Raid => def.behavior == EnemyBehavior.Thief ? "raiding the stock" : "raiding the colony",
+                EnemyState.Burrow => "digging toward the nest",
+                _ when def.behavior == EnemyBehavior.Thief => e.LootCount > 0 ? "running off with your items" : "leaving",
                 _ => "leaving with stolen food",
             });
+            if (e.LootCount > 0 && e.Loot < _content.Items.Length)
+                _sb.Append(" (").Append(e.LootCount).Append(' ').Append(_content.Items[e.Loot].DisplayName).Append(')');
             if (e.Held > 0f) _sb.Append(", stuck in a trap");
             if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
             _sb.Append("\nBites for ").Append(def.damage.ToString("0")).Append(". Soldiers (and workers, weakly) fight back.");
+        }
+
+        /// <summary>A tablet in a ruin floor (10.5): what it is good for.</summary>
+        void DescribeFind(Simulation sim, int2 cell)
+        {
+            if (!IsVisible(sim, cell)) return;
+            var c = sim.World[cell.x, cell.y];
+            if (c.IsOpen || c.Material != _content.TabletMaterial || _content.TabletMaterial == ContentDB.AirIndex) return;
+            _sb.Append(_content.Materials[c.Material].DisplayName)
+                .Append("  -  a unique find of the lost colony. Dig it out and study it in an Archive: a lot of knowledge and a fragment of their story.");
         }
 
         void DescribeFluid(Simulation sim, int2 cell)
@@ -242,7 +257,9 @@ namespace Antarium.Gameplay
             if (b.State == BuildingState.Blueprint)
             {
                 float progress = b.WorkTotal > 0f ? 1f - b.WorkLeft / b.WorkTotal : 0f;
-                _sb.Append("  -  under construction ").Append((int)(progress * 100f)).Append("%. Workers will build it.");
+                if (b.Restoring && b.Stage < data.StageCount)
+                    _sb.Append("  -  restoring \"").Append(data.Def.stages[b.Stage].name).Append("\" ").Append((int)(progress * 100f)).Append("%. Workers are building it.");
+                else _sb.Append("  -  under construction ").Append((int)(progress * 100f)).Append("%. Workers will build it.");
                 return;
             }
 
@@ -314,6 +331,38 @@ namespace Antarium.Gameplay
                         .Append("\nFluid can't pass through it; ants can. R turns new ones; chain pumps to lift water higher.");
                     return;
                 }
+                case BuildingKind.Resonator:
+                {
+                    var def = data.Def;
+                    var r = buildings.ResonanceOf(id);
+                    int boosted = buildings.MachinesNear(id);
+                    _sb.Append("  -  ").Append(b.Craft > 0f ? $"resonating ({Mathf.RoundToInt(b.Craft * 100f)}% power)" : "silent");
+                    _sb.Append("\nCluster: ").Append(r.Crystals).Append(r.Crystals == 1 ? " crystal" : " crystals").Append(" in ").Append(r.Cells)
+                        .Append(" conductive cells (").Append(def.fullResonance.ToString("0")).Append(" crystals for full power)");
+                    _sb.Append("\nMakes ").Append(Rate(b.Craft * def.knowledgePerSecond * 60f * sim.Colony.Mods.Mult(StatKind.KnowledgeGain)))
+                        .Append(" knowledge/min");
+                    if (b.Craft > 0f)
+                    {
+                        _sb.Append(boosted > 0 ? $", speeds up {boosted} {(boosted == 1 ? "machine" : "machines")}" : ", machines")
+                            .Append(" within ").Append(def.boostRadius.ToString("0")).Append(" cells ").Append(boosted > 0 ? "by +" : "would work +")
+                            .Append(Mathf.RoundToInt(b.Craft * def.machineBoost * 100f)).Append(boosted > 0 ? "%" : "% faster");
+                    }
+                    _sb.Append("\nGlow crystals touching it (or joined to it through copper or iron ore) feed it; mining them weakens it.");
+                    return;
+                }
+                case BuildingKind.Engine:
+                {
+                    var def = data.Def;
+                    int stages = data.StageCount;
+                    if (b.Stage >= stages)
+                        _sb.Append("  -  running\nMakes ").Append(Rate(def.knowledgePerSecond * 60f * sim.Colony.Mods.Mult(StatKind.KnowledgeGain)))
+                            .Append(" knowledge/min; this colony's Nuptial Flight earns ")
+                            .Append(Mathf.RoundToInt((1f + sim.Config.prestige.engineMemoryBonus) * 100f)).Append("% Genetic Memory.");
+                    else
+                        _sb.Append("  -  ").Append(b.Stage).Append('/').Append(stages).Append(" restored. Next: ").Append(def.stages[b.Stage].name)
+                            .Append("\n").Append(_hud.ConfigureKey).Append(" (or click it): restore the next step.");
+                    return;
+                }
                 case BuildingKind.WaterWheel:
                 {
                     var def = data.Def;
@@ -374,6 +423,8 @@ namespace Antarium.Gameplay
                     : $"\nDry: water in or next to it gives +{Mathf.RoundToInt(mdef.irrigationBonus * 100f)}% output");
             if (m.WheelBoost > 0f)
                 _sb.Append("\nWater wheel nearby: +").Append(Mathf.RoundToInt(m.WheelBoost * 100f)).Append("% speed");
+            if (m.ResonanceBoost > 0f)
+                _sb.Append("\nCrystal Resonator nearby: +").Append(Mathf.RoundToInt(m.ResonanceBoost * 100f)).Append("% speed");
             if (m.Recipe >= 0)
             {
                 var recipe = _content.Recipes[m.Recipe];

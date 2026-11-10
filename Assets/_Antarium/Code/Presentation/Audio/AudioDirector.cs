@@ -363,6 +363,19 @@ namespace Antarium.Presentation
                     case RaidPhase.Repelled: QueueUi(SoundCue.RaidRepelled); break;
                 }
             }
+            foreach (var e in events.Read<ItemStolenEvent>()) Queue(SoundCue.ItemStolen, e.Cell);
+            foreach (var e in events.Read<DiggerEvent>())
+            {
+                if (e.Phase == DiggerPhase.Dug) Queue(SoundCue.Burrow, e.Cell);
+                else if (e.Phase != DiggerPhase.GaveUp) QueueUi(SoundCue.CreaturesFound);
+            }
+            if (events.Read<LoreFoundEvent>().Length > 0) QueueUi(SoundCue.LoreFound);
+            foreach (var e in events.Read<EngineStageEvent>())
+            {
+                if (e.Phase == EngineStagePhase.Awakened) QueueUi(SoundCue.EngineAwakened);
+                else if (e.Phase != EngineStagePhase.Cancelled) Queue(SoundCue.EngineStage, e.Origin);
+            }
+            if (events.Read<StageFailedEvent>().Length > 0) QueueUi(SoundCue.Refused);
             foreach (var e in events.Read<TrapTriggeredEvent>()) Queue(SoundCue.TrapSnap, e.Cell);
             foreach (var e in events.Read<GateBrokenEvent>()) Queue(SoundCue.GateBroken, e.Cell);
 

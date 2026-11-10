@@ -42,7 +42,7 @@ namespace Antarium.Presentation
         public const int PixelRect = SoldierRect + WorkerFrames;
         /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
         public const int EnemyRect = PixelRect + 1;
-        public const int EnemyArtCount = 7;
+        public const int EnemyArtCount = 9;
         /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer, glow, fire): 4 walk frames each, in caste order.</summary>
         public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
         const int SpecialistCount = 8;
@@ -59,7 +59,9 @@ namespace Antarium.Presentation
         public const int HaloSize = 13;
         /// <summary>Pixels from the sprite's left edge to the middle of the glow ant's gaster (the halo's centre).</summary>
         public const float GasterX = 2f;
-        const int RectCount = HaloRect + 1;
+        /// <summary>The mole cricket digging: 2 frames, same size as its walk frames (10.5).</summary>
+        public const int MoleDigRect = HaloRect + 1;
+        const int RectCount = MoleDigRect + 2;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -152,6 +154,23 @@ namespace Antarium.Presentation
         {
             new[] { ".mmmm.", "mMMMMm", "mMMMMe", ".mmmm.", "i.ii.i" },
             new[] { ".mmmm.", "mMMMMm", "mMMMMe", ".mmmm.", ".i..i." },
+        };
+        // Rival ant (10.5): a worker-sized ant in cold steel blue with pale mandibles.
+        static readonly string[][] RivalAnt =
+        {
+            new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMMK", ".DMD.DD.DD..", "....L.L.L...", "...L..L..L.." },
+            new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMMK", ".DMD.DD.DD..", ".....LL.L...", "....L.L...L." },
+        };
+        // Mole cricket (10.5): a fat brown body, a shield on its back and big digging claws in front.
+        static readonly string[][] MoleCricket =
+        {
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbhhC", "bbbbbbbbbbbbbhCC", ".dddddddddddd.C.", "..l..l..l.......", ".l..l..l........" },
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbhhC", "bbbbbbbbbbbbbhCC", ".dddddddddddd.C.", ".l..l..l........", "..l..l..l......." },
+        };
+        static readonly string[][] MoleCricketDig =
+        {
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbhCC", "bBBBBBBBBBBBbhC.", "bbbbbbbbbbbbbh..", ".dddddddddddd...", "..l..l..l.......", ".l..l..l........" },
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbh..", "bbbbbbbbbbbbbhC.", ".dddddddddddd.CC", "..l..l..l.....C.", ".l..l..l........" },
         };
         static readonly string[][] FireBeetle =
         {
@@ -266,6 +285,18 @@ namespace Antarium.Presentation
             {
                 ['b'] = Hex(0x4a3c2e), ['B'] = Hex(0x7a6650), ['s'] = Hex(0xc8b89a), ['e'] = Hex(0x101010), ['E'] = Hex(0xffd060), ['v'] = Hex(0x2e241a),
             });
+            var rival = new Dictionary<char, Color32>
+            {
+                ['D'] = Hex(0x2e3a5a), ['M'] = Hex(0x5a6e9a), ['H'] = Hex(0x9ab0d8), ['L'] = Hex(0x1e2638), ['K'] = Hex(0xe8e0c8),
+            };
+            AddEnemy(pixels, EnemyArt.RivalAnt, RivalAnt, 70, 112, rival);
+            var mole = new Dictionary<char, Color32>
+            {
+                ['b'] = Hex(0x6a4a2a), ['B'] = Hex(0x8a6438), ['d'] = Hex(0x4a3018), ['S'] = Hex(0xb08a58), ['s'] = Hex(0x8a6a40),
+                ['h'] = Hex(0x5a3a20), ['C'] = Hex(0xd8c090), ['l'] = Hex(0x3a2614),
+            };
+            AddEnemy(pixels, EnemyArt.MoleCricket, MoleCricket, 0, 112, mole);
+            AddFrames(pixels, MoleCricketDig, 32, 112, MoleDigRect, mole);
             AddFrames(pixels, GoldenAphid, 90, 82, AphidRect, new Dictionary<char, Color32>
             {
                 ['Y'] = Hex(0xfff6b0), ['O'] = Hex(0xf0c040), ['o'] = Hex(0xb08020), ['a'] = Hex(0x8a6a20), ['l'] = Hex(0x5a3a10),
@@ -291,7 +322,7 @@ namespace Antarium.Presentation
             Texture.Apply(false, false); // small; kept readable for debugging
         }
 
-        static readonly string[] EnemyNames = { "termite", "centipede", "spider", "mite", "fire_beetle", "guardian", "wolf_spider" };
+        static readonly string[] EnemyNames = { "termite", "centipede", "spider", "mite", "fire_beetle", "guardian", "wolf_spider", "rival_ant", "mole_cricket" };
 
         /// <summary>
         /// Every sprite a PNG can replace (<c>Art/Colony/</c>, <c>Art/Enemies/</c>): ants are <c>Colony/ant_&lt;caste&gt;</c>,
@@ -320,6 +351,7 @@ namespace Antarium.Presentation
                 slots.Add(ArtSlot.Strip("Colony/ant_" + Specialists[s].Caste.ToString().ToLowerInvariant(), SpecialistRect + s * WorkerFrames, WorkerFrames));
             for (int e = 0; e < EnemyArtCount; e++)
                 slots.Add(ArtSlot.Strip("Enemies/" + EnemyNames[e], EnemyRect + e * 2, 2));
+            slots.Add(ArtSlot.Strip("Enemies/mole_cricket_dig", MoleDigRect, 2));
             return slots.ToArray();
         }
 

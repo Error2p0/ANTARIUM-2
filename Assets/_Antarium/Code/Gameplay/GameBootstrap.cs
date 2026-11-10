@@ -183,6 +183,8 @@ namespace Antarium.Gameplay
             _hud.PossessClicked += () => { if (_sim != null) _tools.ClickPossess(_sim); };
             _hud.CastesClicked += () => _hud.Castes?.Toggle();
             _hud.QueenToggled += ToggleQueen;
+            _hud.CodexToggled += ToggleCodex;
+            if (_hud.Codex != null) _hud.Codex.CloseClicked += _hud.HideModal;
             _hud.PrioritiesClicked += () => _hud.Priorities?.Toggle();
             if (_hud.Priorities != null)
                 _hud.Priorities.Step += (job, step) =>
@@ -217,6 +219,7 @@ namespace Antarium.Gameplay
                 _hud.Configure.StorageFilterChanged += (cell, mask) => _sim?.EnqueueStorageFilter(cell, mask);
                 _hud.Configure.ItemPicked += (cell, item) => _sim?.EnqueueSetFilter(cell, item);
                 _hud.Configure.RecipePicked += (cell, choice) => _sim?.EnqueueRecipe(cell, choice);
+                _hud.Configure.StageClicked += cell => _sim?.EnqueueStage(cell);
                 _hud.Configure.ReserveStep += (item, step) =>
                 {
                     if (_sim != null) _sim.EnqueueReserve(item, Math.Max(0, _sim.Colony.Inventory.Reserve[item] + step));
@@ -579,6 +582,12 @@ namespace Antarium.Gameplay
                 && (_tools.Mode == ToolMode.Dig || _tools.Mode == ToolMode.Mine) && _tools.TargetingAbility < 0 && !_tools.TargetingPossess
                 && PointerOnQueen(pointerWorld))
                 ToggleQueen();
+            // Clicking the Ancient Engine (Dig or Mine tool) opens its restoration steps.
+            else if (!paused && !Capturing && !overUi && !possessing && _input.Primary.WasPressedThisFrame()
+                     && (_tools.Mode == ToolMode.Dig || _tools.Mode == ToolMode.Mine) && _tools.TargetingAbility < 0 && !_tools.TargetingPossess
+                     && _hud.Configure != null && ConfigurePanel.TargetAt(_sim, _pointerCell, out _) == ConfigTarget.Engine
+                     && !(_hud.Configure.Visible && _hud.Configure.Target == ConfigTarget.Engine))
+                _hud.Configure.Open(_sim, _pointerCell);
             if (!title && !Capturing)
             {
                 if (_input.Overlay.WasPressedThisFrame()) ToggleOverlay();
@@ -602,6 +611,7 @@ namespace Antarium.Gameplay
             _pops.Consume(events, _sim);
             _pops.Render(_sim, dt);
             _audio?.Consume(events);
+            PlayRuinCues(events);
             _tools.Consume(events, now);
             _hud.Consume(events, _sim);
             _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null, _tools.Possessing, _tools.TargetingPossess);
@@ -648,6 +658,19 @@ namespace Antarium.Gameplay
             }
         }
 
+        /// <summary>The ruin-tier music cues (10.5): a lore fragment found, the Ancient Engine waking. Silent until clips are assigned.</summary>
+        void PlayRuinCues(EventBus events)
+        {
+            if (_audio == null || sounds == null) return;
+            foreach (var e in events.Read<EngineStageEvent>())
+                if (e.Phase == EngineStagePhase.Awakened)
+                {
+                    _audio.PlayMusicCue(sounds.music.engineCue);
+                    return;
+                }
+            if (events.Read<LoreFoundEvent>().Length > 0) _audio.PlayMusicCue(sounds.music.loreCue);
+        }
+
         void DebugKeys()
         {
             if (_input.SpawnAnts.WasPressedThisFrame()) _sim.SpawnWorkers(50);
@@ -658,7 +681,13 @@ namespace Antarium.Gameplay
                 _sim.Colony.Inventory.AddKnowledge(50f, studied: false);
             }
             if (_input.TriggerEvent.WasPressedThisFrame()) _sim.EnqueueTriggerEvent(-1);
-            if (_input.TriggerRaid.WasPressedThisFrame()) _sim.EnqueueTriggerRaid();
+            if (_input.TriggerRaid.WasPressedThisFrame())
+            {
+                // F11: a raid; with Shift rival ants, with Ctrl a mole cricket (10.5).
+                var keys = UnityEngine.InputSystem.Keyboard.current;
+                if (keys != null && keys.ctrlKey.isPressed) _sim.EnqueueTriggerDigger();
+                else _sim.EnqueueTriggerRaid(rival: keys != null && keys.shiftKey.isPressed);
+            }
             if (_input.GivePrestige.WasPressedThisFrame()) _sim.DebugGivePrestige(2, 10);
             if (_input.GameSpeed.WasPressedThisFrame())
             {
@@ -699,6 +728,7 @@ namespace Antarium.Gameplay
             if (_input.Flight.WasPressedThisFrame()) ToggleFlight();
             if (_input.Castes.WasPressedThisFrame() && _hud.Castes != null && CastesPanel.HasSpecialists(_sim)) _hud.Castes.Toggle();
             if (_input.Queen.WasPressedThisFrame()) ToggleQueen();
+            if (_input.Codex.WasPressedThisFrame()) ToggleCodex();
             if (_input.Priorities.WasPressedThisFrame()) _hud.Priorities?.Toggle();
             if (_input.Configure.WasPressedThisFrame()) ToggleConfigure();
             if (_input.QuickSave.WasPressedThisFrame()) Save(background: true, announce: true);
@@ -738,7 +768,7 @@ namespace Antarium.Gameplay
             }
             if (panel.Open(_sim, _pointerCell)) return;
             if (panel.Visible) panel.Hide();
-            else _hud.ShowToast("Nothing to set up there. Point at a storage zone, chest, unloader, filter, emitter or a machine with several recipes.");
+            else _hud.ShowToast("Nothing to set up there. Point at a storage zone, chest, unloader, filter, emitter, a machine with several recipes or the Ancient Engine.");
         }
 
         /// <summary>The stock view (keep items for building), from the resource bar.</summary>
@@ -761,6 +791,13 @@ namespace Antarium.Gameplay
             if (_hud.Research == null) return;
             if (_hud.IsShowing(_hud.Research.Root)) _hud.HideModal();
             else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Research.Root);
+        }
+
+        void ToggleCodex()
+        {
+            if (_hud.Codex == null || _sim == null) return;
+            if (_hud.IsShowing(_hud.Codex.Root)) _hud.HideModal();
+            else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Codex.Root);
         }
 
         void ToggleQueen()

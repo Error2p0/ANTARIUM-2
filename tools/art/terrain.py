@@ -529,6 +529,31 @@ def relic():
     return img
 
 
+def tablet():
+    """Ancient tablet (10.5): a gold-inlaid slab set into ruin masonry, brighter than a relic wall."""
+    rng = rng_for("tablet")
+    img = bricks(rng, moss=0.0, block=(16, 8))
+    G, R = RAMPS["gold"], RAMPS["ruin"]
+    key = {"w": (0xff, 0xf4, 0xc0, 255), "h": G[5], "m": G[4], "d": G[2], "k": R[0], "s": R[1]}
+    slab = [
+        "kkkkkkkkkkkk",
+        "khhhhhhhhhmk",
+        "khmmmmmmmmdk",
+        "khmwhkkhmmdk",
+        "khmkkmmkkmdk",
+        "khmhkwwkhmdk",
+        "khmkkmmkkmdk",
+        "khmwhkkhwmdk",
+        "khmmmmmmmmdk",
+        "kmddddddddsk",
+        "kkkkkkkkkkkk",
+    ]
+    for oy in range(0, SIZE, 32):
+        for ox in range(0, SIZE, 32):
+            stamp(img, ox + 10, oy + 10, slab, key)
+    return img
+
+
 # ---------------------------------------------------------------- deep rock
 
 def basalt():
@@ -733,4 +758,5 @@ TILES = {
     "amber": amber, "fossil": fossil, "stone": stone, "basalt": basalt, "bedrock": bedrock, "quartzite": quartzite,
     "glow_crystal": glow_crystal, "obsidian": obsidian, "magma_rock": magma_rock, "meteorite": meteorite,
     "mycelium": mycelium, "giant_fungus": giant_fungus, "ruin_brick": ruin_brick, "relic": relic, "ash": ash,
+    "tablet": tablet,
 }

@@ -481,7 +481,7 @@
 
 /* Research tree */
 .research {
-    width: 1180px;
+    width: 1360px;
     max-width: 96%;
     padding: 10px 12px;
 }
@@ -1392,4 +1392,78 @@
 }
 .hud--title .priorities {
     display: none;
+}
+
+/* ---------------------------------------------------------------- Milestone 10.5: the Codex */
+.codex {
+    width: 860px;
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/frame_codex.png");
+}
+.codex .research__knowledge {
+    color: rgb(240, 210, 130);
+    font-size: 16px;
+}
+.codex__body {
+    flex-direction: row;
+    margin-top: 6px;
+    height: 420px;
+}
+.codex__list {
+    width: 280px;
+    margin-right: 12px;
+}
+.codex__entry {
+    flex-direction: row;
+    align-items: center;
+    height: 30px;
+    margin: 2px 0;
+    padding: 2px 6px;
+    background-color: rgb(30, 22, 16);
+    border-width: 2px;
+    border-color: rgb(52, 40, 30);
+    border-radius: 0;
+}
+.codex__entry:hover {
+    background-color: rgb(48, 36, 24);
+}
+.codex__entry--found {
+    border-color: rgb(140, 116, 64);
+}
+.codex__entry--selected {
+    border-color: rgb(255, 214, 120);
+    background-color: rgb(64, 48, 26);
+}
+.codex__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+.codex__name {
+    color: rgb(150, 136, 118);
+    font-size: 16px;
+    padding: 0;
+    margin: 0;
+}
+.codex__entry--found .codex__name {
+    color: rgb(250, 232, 190);
+}
+.codex__page {
+    flex-grow: 1;
+    padding: 10px 14px;
+    background-color: rgb(30, 20, 14);
+}
+.codex__heading {
+    color: rgb(255, 220, 140);
+    font-size: 22px;
+    margin: 0 0 8px 0;
+    padding: 0;
+    -unity-font-definition: url("Fonts/Silkscreen-Regular.asset");
+}
+.codex__text {
+    color: rgb(232, 222, 202);
+    font-size: 18px;
+    white-space: normal;
+    margin: 0;
+    padding: 0;
 }

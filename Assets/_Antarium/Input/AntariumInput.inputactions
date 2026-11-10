@@ -866,6 +866,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Codex",
+                    "type": "Button",
+                    "id": "762c68b1-f531-4b1a-aa51-921a719f4745",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Priorities",
                     "type": "Button",
                     "id": "bb1c5ea9-de0b-445e-8f18-79d50779e40c",
@@ -950,6 +959,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Priorities",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7c47dfab-5f1c-49a7-96b1-5f8384d8dd6a",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Codex",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -20,7 +20,7 @@ namespace Antarium.Gameplay
         const float InstantLinger = 30f;
         const float EndedLinger = 8f;
 
-        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders, Fire }
+        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders, Fire, Digger }
 
         sealed class Card
         {
@@ -28,6 +28,8 @@ namespace Antarium.Gameplay
             public int Id, Def;
             public int2 Cell;
             public bool Ended;
+            /// <summary>Raid cards: rival ants (thieves) rather than termites.</summary>
+            public bool Rival;
             public float Linger;
             public VisualElement Root;
             public Label Title, Body, Timer;
@@ -59,8 +61,16 @@ namespace Antarium.Gameplay
             foreach (var e in sim.RandomEvents.Active)
                 AddRandomCard(new RandomEventEvent(e.Def, e.Id, RandomEventPhase.Started, e.Cell), _content.Events[e.Def].Def);
             var threats = sim.Enemies;
-            if (threats.RaidIncoming) AddRaidCard(new RaidEvent(RaidPhase.Warning, threats.RaidsStarted + 1, threats.RaidCell, threats.NextRaidSize(), 0f));
-            else if (threats.CountRaiders() > 0) AddRaidCard(new RaidEvent(RaidPhase.Started, threats.ActiveRaid, threats.RaidCell, threats.CountRaiders(), 0f));
+            if (threats.RaidIncoming)
+                AddRaidCard(new RaidEvent(RaidPhase.Warning, threats.RaidsStarted + 1, threats.RaidCell, threats.NextRaidSize(), 0f, threats.RaidIsRival));
+            else if (threats.CountRaiders() > 0)
+                AddRaidCard(new RaidEvent(RaidPhase.Started, threats.ActiveRaid, threats.RaidCell, threats.CountRaiders(), 0f, threats.RaidIsRival));
+            foreach (var enemy in threats.Enemies)
+            {
+                if (_content.Enemies[enemy.Def].Def.behavior != EnemyBehavior.Digger) continue;
+                OnDigger(new DiggerEvent(enemy.State == EnemyState.Burrow ? DiggerPhase.Appeared : DiggerPhase.BrokeIn, enemy.Def, enemy.Cell));
+                break;
+            }
             var surface = sim.Surface;
             if (surface.Weather == WeatherKind.Rain) OnSurface(new SurfaceEvent(SurfaceEventKind.RainStarted, sim.Colony.QueenCell));
             else if (surface.Weather == WeatherKind.Drought) OnSurface(new SurfaceEvent(SurfaceEventKind.DroughtStarted, sim.Colony.QueenCell));
@@ -99,7 +109,50 @@ namespace Antarium.Gameplay
                 toast = OnSurface(e) ?? toast;
             foreach (var e in events.Read<FireEvent>())
                 toast = OnFire(e) ?? toast;
+            foreach (var e in events.Read<DiggerEvent>())
+                toast = OnDigger(e) ?? toast;
+            var stolen = events.Read<ItemStolenEvent>();
+            if (stolen.Length > 0 && !_stolenToastShown)
+            {
+                _stolenToastShown = true;
+                toast = $"Rival ants are carrying off your {_content.Items[stolen[0].Item].DisplayName.ToLowerInvariant()}! Kill them and they drop it.";
+            }
             return toast;
+        }
+
+        bool _stolenToastShown;
+
+        /// <summary>A mole cricket's card: digging toward the nest, then inside it; returns a toast, or null.</summary>
+        string OnDigger(in DiggerEvent e)
+        {
+            var def = _content.Enemies[e.Enemy].Def;
+            Card card = null;
+            foreach (var c in _cards)
+                if (c.Kind == CardKind.Digger && !c.Ended) card = c;
+            if (e.Phase == DiggerPhase.Dug) return null;
+            switch (e.Phase)
+            {
+                case DiggerPhase.Appeared:
+                    card ??= NewCard(CardKind.Digger, _nextSurfaceCard++, e.Enemy, e.Cell, $"{def.DisplayName} digging!",
+                        $"Something is tunnelling toward the nest through the soft ground; its tunnel shows through the dark as it comes. " +
+                        "Walls of earth won't stop it, rock will. Have soldiers waiting where it breaks in.");
+                    card.Root.AddToClassList("event--danger");
+                    card.Cell = e.Cell;
+                    return $"A {def.DisplayName.ToLowerInvariant()} is digging toward the nest!";
+                case DiggerPhase.BrokeIn:
+                    card ??= NewCard(CardKind.Digger, _nextSurfaceCard++, e.Enemy, e.Cell, "", "");
+                    card.Root.AddToClassList("event--danger");
+                    card.Title.text = $"{def.DisplayName} broke in!";
+                    card.Body.text = $"The {def.DisplayName.ToLowerInvariant()} broke into your tunnels and hunts ants. {def.description}";
+                    card.Cell = e.Cell;
+                    return $"The {def.DisplayName.ToLowerInvariant()} broke into the tunnels!";
+                default:
+                {
+                    string text = $"The {def.DisplayName.ToLowerInvariant()} found no way through and dug off.";
+                    if (card != null) End(card, text, "Gone", true);
+                    return text;
+                }
+            }
         }
 
         /// <summary>A new fire opens (or moves) the fire card; returns a toast for new fires, or null.</summary>
@@ -219,9 +272,9 @@ namespace Antarium.Gameplay
             }
         }
 
-        string RaiderName(int count)
+        string RaiderName(int count, bool rival = false)
         {
-            var raiders = _content.Raiders;
+            var raiders = rival && _content.Thieves.Length > 0 ? _content.Thieves : _content.Raiders;
             string name = raiders.Length > 0 ? _content.Enemies[raiders[0]].Def.DisplayName : "raider";
             return HudText.Plural(count, name);
         }
@@ -233,22 +286,27 @@ namespace Antarium.Gameplay
             {
                 case RaidPhase.Warning:
                     card ??= AddRaidCard(e);
-                    return $"Raid incoming! {RaiderName(e.Size)} will arrive from the {Side(e.Cell)}.";
+                    return $"Raid incoming! {RaiderName(e.Size, e.Rival)} will arrive from the {Side(e.Cell)}.";
                 case RaidPhase.Started:
                     card ??= AddRaidCard(e);
-                    card.Title.text = "Raid!";
-                    card.Body.text = $"{RaiderName(e.Size)} are heading for the royal chamber. Fight them off before they eat your food.";
+                    card.Title.text = e.Rival ? "Rival ants!" : "Raid!";
+                    card.Body.text = e.Rival
+                        ? $"{RaiderName(e.Size, true)} are heading for the royal chamber to steal from your stock. Kill them and they drop what they carry."
+                        : $"{RaiderName(e.Size)} are heading for the royal chamber. Fight them off before they eat your food.";
                     card.Cell = e.Cell;
-                    return "The raiders are here!";
+                    _stolenToastShown = false;
+                    return e.Rival ? "Rival ants are here!" : "The raiders are here!";
                 case RaidPhase.Repelled:
                 {
-                    string text = "Raid repelled! The raiders are gone, the food is safe.";
+                    string text = e.Rival ? "Rival raid beaten! Nothing was stolen." : "Raid repelled! The raiders are gone, the food is safe.";
                     if (card != null) End(card, text, "Repelled", true);
                     return text;
                 }
                 default:
                 {
-                    string text = $"The raid is over. Raiders got away with {NumberFormat.Format(e.FoodLost)} food.";
+                    string text = e.Rival
+                        ? $"The rival raid is over. They carried off {HudText.Plural(e.ItemsLost, "item")}."
+                        : $"The raid is over. Raiders got away with {NumberFormat.Format(e.FoodLost)} food.";
                     if (card != null) End(card, text, "Over", false);
                     return text;
                 }
@@ -276,8 +334,11 @@ namespace Antarium.Gameplay
 
         Card AddRaidCard(in RaidEvent e)
         {
-            var card = NewCard(CardKind.Raid, e.Id, -1, e.Cell, "Raid incoming!",
-                $"{RaiderName(e.Size)} are coming from the {Side(e.Cell)}. Gates, traps and soldiers help.");
+            var card = NewCard(CardKind.Raid, e.Id, -1, e.Cell, e.Rival ? "Rival ants incoming!" : "Raid incoming!",
+                e.Rival
+                    ? $"{RaiderName(e.Size, true)} from a rival colony are coming from the {Side(e.Cell)}. They steal items from the stock, not food. Gates, traps and soldiers help."
+                    : $"{RaiderName(e.Size)} are coming from the {Side(e.Cell)}. Gates, traps and soldiers help.");
+            card.Rival = e.Rival;
             card.Root.AddToClassList("event--danger");
             return card;
         }
@@ -382,6 +443,26 @@ namespace Antarium.Gameplay
                         }
                         End(card, "The fire is out.", "Out", true);
                     }
+                    if (card.Kind == CardKind.Digger)
+                    {
+                        int2 at = default;
+                        bool burrowing = false, alive = false;
+                        foreach (var enemy in sim.Enemies.Enemies)
+                        {
+                            if (_content.Enemies[enemy.Def].Def.behavior != EnemyBehavior.Digger) continue;
+                            alive = true;
+                            burrowing |= enemy.State == EnemyState.Burrow;
+                            at = enemy.Cell;
+                        }
+                        if (alive)
+                        {
+                            card.Timer.text = burrowing
+                                ? $"{(int)math.round(math.distance(new float2(at), new float2(sim.Colony.QueenCell)))} cells from the queen"
+                                : "In the tunnels!";
+                            continue;
+                        }
+                        End(card, "The mole cricket is dead.", "Killed", true);
+                    }
                     if (card.Kind == CardKind.Raid)
                     {
                         var threats = sim.Enemies;
@@ -423,6 +504,10 @@ namespace Antarium.Gameplay
                     return card.Cell;
                 case CardKind.Fire:
                     return _sim.Fire.Count > 0 ? GridIndex.ToCell(_sim.Fire.Burning[0], _sim.World.ChunksX) : card.Cell;
+                case CardKind.Digger:
+                    foreach (var enemy in _sim.Enemies.Enemies)
+                        if (_content.Enemies[enemy.Def].Def.behavior == EnemyBehavior.Digger) return enemy.Cell;
+                    return card.Cell;
                 default:
                     return card.Cell;
             }

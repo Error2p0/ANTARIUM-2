@@ -41,6 +41,8 @@ namespace Antarium.Gameplay
         public readonly InputAction Queen;
         /// <summary>P: the job priority panel.</summary>
         public readonly InputAction Priorities;
+        /// <summary>L: the Codex (the ruins' story, 10.5).</summary>
+        public readonly InputAction Codex;
         /// <summary>Z / X / C / V / B: the abilities in bar order.</summary>
         public readonly InputAction[] Abilities;
         public readonly InputAction Menu;
@@ -101,6 +103,7 @@ namespace Antarium.Gameplay
             Flight = asset.FindAction("View/Flight", true);
             Queen = asset.FindAction("View/Queen", true);
             Priorities = asset.FindAction("View/Priorities", true);
+            Codex = asset.FindAction("View/Codex", true);
             Abilities = new[]
             {
                 asset.FindAction("Tools/Ability1", true),
@@ -163,6 +166,7 @@ namespace Antarium.Gameplay
             Add("Panels", "Castes", Castes);
             Add("Panels", "Queen", Queen);
             Add("Panels", "Job priorities", Priorities);
+            Add("Panels", "Codex", Codex);
             Add("Panels", "Genetic Memory", Genetics);
             Add("Panels", "Nuptial Flight", Flight);
             Add("Game", "Menu / back", Menu);

@@ -423,6 +423,8 @@ namespace Antarium.Content
         [Min(0)] public int moleMinAnts = 15;
         [Tooltip("A mole cricket starts this far (cells) from the queen, in soft ground.")]
         public Vector2Int moleDistance = new(26, 42);
+        [Tooltip("A mole cricket starts at least this many cells from the colony's tunnels.")]
+        [Min(1)] public int moleClearance = 8;
         [Tooltip("A mole cricket that can't get closer for this many seconds gives up and digs away (it is removed).")]
         [Min(1f)] public float moleGiveUpSeconds = 30f;
     }

@@ -22,6 +22,8 @@ namespace Antarium.Gameplay
         Machine,
         /// <summary>The colony stock: how much of each item is kept for building.</summary>
         Stock,
+        /// <summary>The Ancient Engine: its restoration steps (10.5).</summary>
+        Engine,
     }
 
     /// <summary>
@@ -56,6 +58,8 @@ namespace Antarium.Gameplay
         public event Action<int2, int> RecipePicked;
         /// <summary>Change the reserve of an item by this many.</summary>
         public event Action<ushort, int> ReserveStep;
+        /// <summary>Pay and start the next restoration step of the engine at the cell.</summary>
+        public event Action<int2> StageClicked;
 
         public ConfigurePanel(VisualElement root, ContentDB content, ArtLibrary art = null)
         {
@@ -106,6 +110,7 @@ namespace Antarium.Gameplay
                     case BuildingKind.Emitter: return ConfigTarget.Emitter;
                     case BuildingKind.Processor:
                         return b.IsActive && sim.Content.Buildings[b.Def].Recipes.Length > 1 ? ConfigTarget.Machine : ConfigTarget.None;
+                    case BuildingKind.Engine: return ConfigTarget.Engine;
                 }
             }
             building = -1;
@@ -213,6 +218,20 @@ namespace Antarium.Gameplay
                     _hint.text = "With one recipe chosen the machine only takes in what that recipe needs.";
                     break;
                 }
+                case ConfigTarget.Engine:
+                {
+                    var data = sim.Content.Buildings[_defShown];
+                    _title.text = data.Def.DisplayName;
+                    for (int k = 0; k < data.StageCount; k++)
+                    {
+                        var stage = data.Def.stages[k];
+                        var sb = new System.Text.StringBuilder();
+                        sb.Append(k + 1).Append(". ").Append(stage.name).Append(": ");
+                        HudText.AppendCost(sb, _content, 0f, data.StageCostItems[k], data.StageCostCounts[k], stage.foodCost);
+                        AddOption(sb.ToString(), data.Def.color, k, () => StageClicked?.Invoke(Cell));
+                    }
+                    break;
+                }
                 case ConfigTarget.Stock:
                     _title.text = "Keep for building";
                     for (ushort i = 0; i < _content.Items.Length; i++)
@@ -246,6 +265,51 @@ namespace Antarium.Gameplay
                     _hint.text = "Machines and unloaders leave this many of each item in storage, so you can still build.";
                     break;
             }
+        }
+
+        /// <summary>Finished steps marked, the next one clickable when the stock can pay it; the hint says what comes next.</summary>
+        void RefreshEngine(Simulation sim)
+        {
+            var b = sim.Buildings.Get(_building);
+            var data = sim.Content.Buildings[b.Def];
+            int stages = data.StageCount;
+            bool firstBuild = b.State == BuildingState.Blueprint && !b.Restoring;
+            foreach (var (button, value) in _options)
+            {
+                bool done = value < b.Stage;
+                bool next = value == b.Stage && b.IsActive;
+                button.EnableInClassList("building--active", done);
+                button.EnableInClassList("building--locked", !done && !(next && sim.Buildings.CanAffordStage(data, value)));
+                button.SetEnabled(next);
+            }
+            string title, hint;
+            if (firstBuild)
+            {
+                title = $"{data.Def.DisplayName}: being cleared";
+                hint = "Workers are clearing the ruin first. Then restore it step by step.";
+            }
+            else if (b.Restoring)
+            {
+                var stage = data.Def.stages[b.Stage];
+                int pct = b.WorkTotal > 0f ? (int)math.round(100f * (1f - b.WorkLeft / b.WorkTotal)) : 0;
+                title = $"{data.Def.DisplayName}: {stage.name} {pct}%";
+                hint = $"{stage.description} Workers are building it. Remove the engine (right mouse with Build) to cancel the step and get it refunded.";
+            }
+            else if (b.Stage >= stages)
+            {
+                title = $"{data.Def.DisplayName}: running";
+                hint = $"It hums with the lost colony's song: {NumberFormat.Format(data.Def.knowledgePerSecond * 60f)} knowledge a minute, and this colony's " +
+                       $"Nuptial Flight earns {Mathf.RoundToInt((1f + sim.Config.prestige.engineMemoryBonus) * 100f)}% Genetic Memory.";
+            }
+            else
+            {
+                var stage = data.Def.stages[b.Stage];
+                title = $"{data.Def.DisplayName}: {b.Stage}/{stages} restored";
+                hint = $"Next: {stage.name}. {stage.description} " +
+                       (sim.Buildings.CanAffordStage(data, b.Stage) ? "Click it to pay; workers build it." : "The stock can't pay it yet.");
+            }
+            if (_title.text != title) _title.text = title;
+            if (_hint.text != hint) _hint.text = hint;
         }
 
         string RecipeText(RecipeData recipe)
@@ -339,6 +403,9 @@ namespace Antarium.Gameplay
                     foreach (var (button, value) in _options) button.EnableInClassList("building--active", value == current);
                     break;
                 }
+                case ConfigTarget.Engine:
+                    RefreshEngine(sim);
+                    break;
                 case ConfigTarget.Stock:
                 {
                     var inv = sim.Colony.Inventory;

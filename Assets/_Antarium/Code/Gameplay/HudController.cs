@@ -34,7 +34,7 @@ namespace Antarium.Gameplay
         Button _hovered;
         readonly VisualElement _scentPalette;
         readonly Button[] _scentButtons = new Button[Pheromones.Count];
-        readonly Button _possessButton, _castesButton, _queenButton, _jobsButton;
+        readonly Button _possessButton, _castesButton, _queenButton, _jobsButton, _codexButton;
         float _masterToastCooldown;
         readonly Button _overlayButton;
         readonly Label _food, _foodRate, _ants, _eggs, _storage;
@@ -65,6 +65,8 @@ namespace Antarium.Gameplay
         public QueenPanel Queen { get; }
         /// <summary>Job priorities (P, 10.4); null if the layout has no "priorities" element.</summary>
         public PrioritiesPanel Priorities { get; }
+        /// <summary>The Codex (L): the ruins' story (10.5).</summary>
+        public CodexPanel Codex { get; }
         public ConfigurePanel Configure { get; }
         /// <summary>An item in the resource bar was clicked (opens the stock view).</summary>
         public event Action StockClicked;
@@ -98,6 +100,7 @@ namespace Antarium.Gameplay
         public event Action PossessClicked;
         public event Action CastesClicked;
         public event Action QueenToggled;
+        public event Action CodexToggled;
         public event Action PrioritiesClicked;
 
         public HudController(UIDocument document, ContentDB content, RenderConfig render, ArtLibrary art, float autosaveSeconds, GameInput input)
@@ -183,6 +186,9 @@ namespace Antarium.Gameplay
                 "Job priorities: which jobs the ants pick first.");
             _queenButton = Toggle(toolbar, "Queen", () => QueenToggled?.Invoke(), input.Queen, "evolution_brood",
                 "The Queen: how she lays, and her evolutions (paid with rare finds).");
+            _codexButton = Toggle(toolbar, "Codex", () => CodexToggled?.Invoke(), input.Codex, "lore_fragment",
+                "Codex: the story of the lost colony, found by studying relics and tablets in an Archive.");
+            _codexButton.AddToClassList("hidden");
             _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "tool_research", "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
             _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "tool_flow", "Flow overlay: belt traffic, jams, machine status and idle workers.");
             _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "memory", "Genetic Memory: permanent traits for every colony of your bloodline.");
@@ -198,6 +204,7 @@ namespace Antarium.Gameplay
             Castes = new CastesPanel(castes, content, art);
             if (priorities != null) Priorities = new PrioritiesPanel(priorities, art);
             Queen = new QueenPanel(content, art);
+            Codex = new CodexPanel(content, art);
             Configure = new ConfigurePanel(configure, content, art);
 
             _unlockedBy = new string[content.Buildings.Length];
@@ -341,6 +348,9 @@ namespace Antarium.Gameplay
 
         /// <summary>The key currently bound to Configure (for hints).</summary>
         public string ConfigureKey => _input != null ? GameInput.KeyName(_input.Configure) : "I";
+
+        /// <summary>The key currently bound to the Codex (for hints).</summary>
+        public string CodexKey => _input != null ? GameInput.KeyName(_input.Codex) : "L";
 
         /// <summary>The key currently bound to the Queen panel (for hints).</summary>
         public string QueenKey => _input != null ? GameInput.KeyName(_input.Queen) : "H";
@@ -564,6 +574,8 @@ namespace Antarium.Gameplay
                 ShowToast(e.Result switch
                 {
                     ResearchResult.NeedsPrerequisites => $"{name} needs the research before it first.",
+                    ResearchResult.NeedsLore =>
+                        $"{name} needs {_content.Research[e.Research].Def.loreRequired} lore fragments; {sim.Lore.FoundCount} found. Study relics in an Archive (Codex: {CodexKey}).",
                     ResearchResult.CantAfford => $"Not enough for {name} yet.",
                     _ => $"{name} is already researched.",
                 });
@@ -655,6 +667,36 @@ namespace Antarium.Gameplay
                 ShowToast(e.Total >= sim.Colony.PrincessCap
                     ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen (N)."
                     : $"A princess is ready ({e.Total}/{sim.Colony.PrincessCap}). Each one raises the Genetic Memory of a Nuptial Flight (N).");
+            foreach (var e in events.Read<LoreFoundEvent>())
+            {
+                Codex.Select(e.Lore);
+                ShowToast($"Lore found: \"{_content.Lore[e.Lore].Def.DisplayName}\" ({e.Found}/{e.Total}). Read it in the Codex ({CodexKey}).");
+            }
+            foreach (var e in events.Read<EngineStageEvent>())
+            {
+                var data = e.Building >= 0 && e.Building < sim.Buildings.All.Length ? _content.Buildings[sim.Buildings.All[e.Building].Def] : null;
+                if (data == null || e.Stage < 0 || e.Stage >= data.StageCount) continue;
+                string step = data.Def.stages[e.Stage].name;
+                ShowToast(e.Phase switch
+                {
+                    EngineStagePhase.Started => $"{data.Def.DisplayName}: \"{step}\" is paid. Workers are building it now.",
+                    EngineStagePhase.Finished => $"{data.Def.DisplayName}: \"{step}\" is done ({e.Stage + 1}/{data.StageCount}). Restore the next step with {ConfigureKey}.",
+                    EngineStagePhase.Awakened => $"The {data.Def.DisplayName} wakes! It makes knowledge, and this colony's Nuptial Flight earns " +
+                                                 $"{Mathf.RoundToInt((1f + sim.Config.prestige.engineMemoryBonus) * 100f)}% Genetic Memory.",
+                    _ => $"{data.Def.DisplayName}: \"{step}\" cancelled and refunded.",
+                });
+            }
+            foreach (var e in events.Read<StageFailedEvent>())
+            {
+                var data = e.Def >= 0 && e.Def < _content.Buildings.Length ? _content.Buildings[e.Def] : null;
+                if (data == null) continue;
+                ShowToast(e.Result switch
+                {
+                    StageResult.Busy => $"The {data.Def.DisplayName} is being built; workers have to finish first.",
+                    StageResult.Finished => $"The {data.Def.DisplayName} is fully restored.",
+                    _ => $"Not enough in the stock for the next step of the {data.Def.DisplayName}.",
+                });
+            }
             foreach (var e in events.Read<ContractClaimedEvent>())
                 ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
             if (events.Read<GateBrokenEvent>().Length > 0) ShowToast("Enemies broke a gate! Workers will repair it once it is safe.");
@@ -730,6 +772,13 @@ namespace Antarium.Gameplay
                 case PlaceResult.NeedsFloor:
                     return data != null && data.Def.kind == BuildingKind.Trap ? "Traps need a solid floor under them." : "Machines need a flat, solid floor under their whole width.";
                 case PlaceResult.OutOfBounds: return "That is outside the world.";
+                case PlaceResult.Unique: return data != null ? $"There is only one {data.Def.DisplayName}." : "Only one of those.";
+                case PlaceResult.WrongBiome:
+                    return data != null && data.RequiredBiome >= 0
+                        ? $"The {data.Def.DisplayName} can only be built in the {_content.Biomes[data.RequiredBiome].Def.DisplayName}."
+                        : "It can't be built here.";
+                case PlaceResult.NeedsCrystal: return "A Crystal Resonator must touch glow crystals (or copper / iron ore leading to them).";
+                case PlaceResult.Permanent: return data != null ? $"The {data.Def.DisplayName} can't be taken down once it stands." : "That stays.";
                 case PlaceResult.Locked:
                     return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first (T)." : "Locked.";
                 case PlaceResult.CantAfford:
@@ -790,6 +839,10 @@ namespace Antarium.Gameplay
                 Priorities.Refresh(sim);
                 _jobsButton.EnableInClassList("tool--on", Priorities.Visible);
             }
+            bool codexOpen = IsShowing(Codex.Root);
+            _codexButton.EnableInClassList("hidden", sim.Lore.FoundCount == 0 && !codexOpen);
+            _codexButton.EnableInClassList("tool--on", codexOpen);
+            if (codexOpen) Codex.Refresh(sim);
             bool queenOpen = IsShowing(Queen.Root);
             _queenButton.EnableInClassList("tool--on", queenOpen);
             if (queenOpen)

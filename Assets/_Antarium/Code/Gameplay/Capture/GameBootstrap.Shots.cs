@@ -33,6 +33,7 @@ namespace Antarium.Gameplay
             yield return ("survey", ShotSurvey);
             yield return ("art", ShotArt);
             yield return ("depth", ShotColonyDepth);
+            yield return ("ruins", ShotRuins);
         }
 
         // ---------------------------------------------------------------- stills

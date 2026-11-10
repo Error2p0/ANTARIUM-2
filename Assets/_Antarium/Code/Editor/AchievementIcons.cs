@@ -101,6 +101,8 @@ namespace Antarium.Editor
             AchievementKind.HatchAnts => (Colony, Atlas(ColonySprites.EggRect)),
             AchievementKind.HatchCaste => (def.caste == AntCaste.Soldier ? Combat : Colony, Caste(def.caste)),
             AchievementKind.AntsAlive => (Colony, Crowd()),
+            AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Resonator =>
+                (Mind, Glyph(Sparkle, Pal('Y', 0x7fd8ff, 'W', 0xe0fbff))),
             AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Chest =>
                 (Industry, Glyph(Chest, Pal('o', 0x2a1a10, 'W', 0x6b4a2c, 'P', 0x93693f, 'h', 0xe0c070, 'n', 0xd47a3c, 'N', 0xaeb8c6))),
             AchievementKind.Build => (Industry, Glyph(Belt, Pal('o', 0x1c2228, 'H', 0xa8b4c0, 'M', 0x6a7684, 'D', 0x3a4450, 'n', ItemHex(def), 'N', Lighter(ItemHex(def))))),
@@ -115,6 +117,10 @@ namespace Antarium.Editor
             AchievementKind.EventsWon => (Royal, Atlas(ColonySprites.BeetleRect)),
             AchievementKind.TraitLevels => (Mind, Glyph(Dna, Pal('A', 0xf06a8a, 'B', 0x6ac0f0, '-', 0xe8e0f0))),
             AchievementKind.MemoryEarned => (Royal, Glyph(Dna, Pal('A', 0xffe070, 'B', 0xf0a030, '-', 0xfff4d0))),
+            // 10.5: the Codex (a gold scroll), the Ancient Engine (a crystal sparkle on a royal plate), rival ants.
+            AchievementKind.LoreFound => (Mind, Glyph(Scroll, Pal('P', 0xf0d070, 'p', 0xc09a40, 'l', 0x7a5a20, 'r', 0x7fd8ff))),
+            AchievementKind.EngineRestored => (Royal, Glyph(Sparkle, Pal('Y', 0x7fd8ff, 'W', 0xe0fbff))),
+            AchievementKind.RivalsRepelled => (Combat, Atlas(ColonySprites.EnemyRect + (int)EnemyArt.RivalAnt * 2)),
             _ => (Earth, Atlas(0)),
         };
 

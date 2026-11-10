@@ -131,6 +131,8 @@ namespace Antarium.Presentation
                 case BuildingKind.Emitter: v.Rect = BuildingSprites.EmitterRect; break;
                 case BuildingKind.Pump: v.Rect = BuildingSprites.PumpRect; v.Frames = 2; break;
                 case BuildingKind.WaterWheel: v.Rect = BuildingSprites.WheelRect; v.Frames = BuildingSprites.AnimFrames; break;
+                case BuildingKind.Resonator: v.Rect = BuildingSprites.ResonatorRect; v.Frames = 2; break;
+                case BuildingKind.Engine: v.Rect = BuildingSprites.EngineRect; v.Frames = BuildingSprites.EngineFrames; break;
                 default:
                     v.Rect = def.art switch
                     {
@@ -328,6 +330,13 @@ namespace Antarium.Presentation
                     float pulse = ((int)(time * 2f) & 1) == 0 ? 0f : 1f / WorldConstants.PixelsPerUnit;
                     float2 dotCenter = cellCenter + new float2(0f, pulse);
                     SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.DotSize), new int2(0, 1), 1, rects[BuildingSprites.DotRect], dot, light);
+                    break;
+                }
+                case BuildingKind.Engine:
+                {
+                    // One frame per restoration stage; a step in progress still shows the stage before it (as a blueprint).
+                    int frame = math.clamp((int)b.Stage, 0, vis.Frames - 1);
+                    SpriteQuads.WriteUpright(v, quad, origin, vis.SizePx, rects[vis.Rect + frame], color, light);
                     break;
                 }
                 default:

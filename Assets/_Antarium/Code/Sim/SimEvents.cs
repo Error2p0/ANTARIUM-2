@@ -259,6 +259,8 @@ namespace Antarium.Sim
         BrokeIn,
         /// <summary>It found no way on and dug off.</summary>
         GaveUp,
+        /// <summary>It dug out a cell (Cell).</summary>
+        Dug,
     }
 
     /// <summary>A creature that digs (the mole cricket).</summary>

@@ -76,11 +76,15 @@ namespace Antarium.Gameplay
                 var p = def.treePosition;
                 if (p.x >= 0 && p.y >= 0) cells[p.x, p.y] = node;
             }
+            var ancient = new bool[columns];
+            foreach (var r in research)
+                if (r.Def.loreRequired > 0 && r.Def.treePosition.x >= 0) ancient[r.Def.treePosition.x] = true;
             for (int x = 0; x < columns; x++)
             {
                 var column = new VisualElement();
                 column.AddToClassList("research__column");
-                var tier = new Label($"Tier {x + 1}");
+                column.style.width = Length.Percent(98f / Math.Max(1, columns)); // 7 tiers since 10.5
+                var tier = new Label(ancient[x] ? $"Tier {x + 1}: ancient" : $"Tier {x + 1}");
                 tier.AddToClassList("research__tier");
                 column.Add(tier);
                 for (int y = 0; y < rows; y++)
@@ -109,7 +113,7 @@ namespace Antarium.Gameplay
             for (int i = 0; i < _nodes.Length; i++)
             {
                 bool done = research.Done[i];
-                bool available = !done && research.IsAvailable(i);
+                bool available = !done && research.IsAvailable(i) && research.HasLore(i);
                 bool affordable = available && research.CanAfford(i);
                 var node = _nodes[i];
                 node.EnableInClassList("node--done", done);
@@ -118,6 +122,7 @@ namespace Antarium.Gameplay
                 var data = _content.Research[i];
                 _sb.Clear();
                 if (done) _sb.Append("Researched");
+                else if (!research.HasLore(i)) _sb.Append("Lore ").Append(sim.Lore.FoundCount).Append('/').Append(research.LoreRequired(i));
                 else HudText.AppendCost(_sb, _content, data.Def.knowledgeCost, data.CostItems, data.CostCounts, data.Def.foodCost);
                 string cost = _sb.ToString();
                 if (_costs[i].text != cost) _costs[i].text = cost;
@@ -148,6 +153,12 @@ namespace Antarium.Gameplay
             {
                 if (research.Done[p]) continue;
                 _sb.Append(first ? "\nNeeds first: " : ", ").Append(_content.Research[p].Def.DisplayName);
+                first = false;
+            }
+            if (!research.HasLore(_hovered))
+            {
+                _sb.Append("\nNeeds ").Append(research.LoreRequired(_hovered)).Append(" lore fragments (").Append(sim.Lore.FoundCount)
+                    .Append(" found): study relics and tablets in an Archive.");
                 first = false;
             }
             _sb.Append("\nCost: ");

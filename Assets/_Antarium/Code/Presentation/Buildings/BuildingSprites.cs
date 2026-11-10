@@ -19,7 +19,7 @@ namespace Antarium.Presentation
         public const int GardenWidth = 32, GardenHeight = 16;
         public const int ArchiveWidth = 24, ArchiveHeight = 16;
 
-        const int AtlasWidth = 128, AtlasHeight = 96;
+        const int AtlasWidth = 128, AtlasHeight = 128;
 
         // Rect indices.
         public const int BeltRect = 0;                      // 4 frames
@@ -68,7 +68,13 @@ namespace Antarium.Presentation
         /// <summary>Water wheel (2×2 cells): 4 frames turning an eighth of a paddle each.</summary>
         public const int WheelRect = PumpRect + 2;
         public const int WheelSize = 16;
-        const int RectCount = WheelRect + AnimFrames;
+        /// <summary>Crystal Resonator (2 x 2): idle, resonating (10.5).</summary>
+        public const int ResonatorRect = WheelRect + AnimFrames;
+        public const int ResonatorSize = 16;
+        /// <summary>Ancient Engine (4 x 3): one frame per restoration stage, the last one running (10.5).</summary>
+        public const int EngineRect = ResonatorRect + 2;
+        public const int EngineWidth = 32, EngineHeight = 24, EngineFrames = 4;
+        const int RectCount = EngineRect + EngineFrames;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -100,6 +106,8 @@ namespace Antarium.Presentation
             ArtSlot.Strip("Buildings/earth_wall", WallRect),
             ArtSlot.Strip("Buildings/pump", PumpRect, 2),
             ArtSlot.Strip("Buildings/water_wheel", WheelRect, AnimFrames),
+            ArtSlot.Strip("Buildings/crystal_resonator", ResonatorRect, 2),
+            ArtSlot.Strip("Buildings/ancient_engine", EngineRect, EngineFrames),
             ArtSlot.Strip("Buildings/generic", GenericRect),
             ArtSlot.Strip("Buildings/belt_item", ItemRect),
             ArtSlot.Strip("Buildings/dot", DotRect),
@@ -221,6 +229,17 @@ namespace Antarium.Presentation
                 Rects[WheelRect + f] = Rect(64 + f * WheelSize, 80, WheelSize, WheelSize);
             }
 
+            for (int f = 0; f < 2; f++)
+            {
+                PaintResonator(80 + f * ResonatorSize, 32, f == 1);
+                Rects[ResonatorRect + f] = Rect(80 + f * ResonatorSize, 32, ResonatorSize, ResonatorSize);
+            }
+            for (int f = 0; f < EngineFrames; f++)
+            {
+                PaintEngine(f * EngineWidth, 96, f);
+                Rects[EngineRect + f] = Rect(f * EngineWidth, 96, EngineWidth, EngineHeight);
+            }
+
             ArtOverrides.Apply(art, Slots, _px, AtlasWidth, AtlasHeight, Rects);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
@@ -318,6 +337,68 @@ namespace Antarium.Presentation
                 Set(ox + 8, oy + 2, Dust);
                 Set(ox + 6, oy + 2, Dust);
                 Set(ox + 9, oy + 4, Dust);
+            }
+        }
+
+        static readonly Color32 CrystalHigh = Hex(0xe0fbff), CrystalMid = Hex(0x7fd8ff), CrystalDark = Hex(0x3a6a9a);
+        static readonly Color32 Ruin = Hex(0x9a8e7a), RuinDark = Hex(0x4a4238), RuinHigh = Hex(0xbab09a), Gold = Hex(0xf0c850), GoldDark = Hex(0xa07a28);
+
+        /// <summary>Fallback Crystal Resonator: two crystal prongs on an iron base; resonating, light arcs between them.</summary>
+        void PaintResonator(int ox, int oy, bool working)
+        {
+            for (int x = 1; x < 15; x++)
+            {
+                Set(ox + x, oy, IronShadow);
+                Set(ox + x, oy + 1, x % 4 == 0 ? Rivet : IronMid);
+            }
+            for (int y = 2; y < 4; y++)
+            for (int x = 6; x < 10; x++)
+                Set(ox + x, oy + y, IronDark);
+            for (int x = 3; x < 13; x++) Set(ox + x, oy + 4, IronMid);
+            foreach (int px in new[] { 3, 10 })
+            for (int y = 5; y < 15; y++)
+            {
+                Set(ox + px, oy + y, CrystalDark);
+                Set(ox + px + 1, oy + y, y > 11 ? CrystalHigh : CrystalMid);
+                Set(ox + px + 2, oy + y, CrystalDark);
+            }
+            if (!working) return;
+            for (int y = 6; y < 14; y += 2)
+            for (int x = 6; x < 10; x++)
+                if (((x + y) & 1) == 0) Set(ox + x, oy + y, CrystalHigh);
+        }
+
+        /// <summary>Fallback Ancient Engine: a ruined arch; stages add the iron gear, the crystals, then gold and light.</summary>
+        void PaintEngine(int ox, int oy, int stage)
+        {
+            for (int y = 0; y < 4; y++)
+            for (int x = 0; x < EngineWidth; x++)
+                Set(ox + x, oy + y, (x + (y % 2) * 4) % 8 == 0 ? RuinDark : y == 3 ? RuinHigh : Ruin);
+            for (int y = 4; y < 21; y++)
+            for (int x = 2; x < 30; x++)
+            {
+                float dx = (x + 0.5f - 16f) / 14f, dy = (y - 4f) / 17f;
+                if (dx * dx + dy * dy > 1f) continue;
+                if (stage == 0 && y > 12 && ((x * 7 + y * 3) % 5) == 0) continue; // fallen blocks
+                bool joint = y % 4 == 0 || (x + (y / 4 % 2) * 3) % 6 == 0;
+                Set(ox + x, oy + y, joint ? RuinDark : dx < -0.4f ? RuinHigh : Ruin);
+            }
+            for (int y = 5; y < 19; y++)
+            for (int x = 8; x < 24; x++)
+            {
+                float r = math.length(new float2(x + 0.5f - 16f, y + 0.5f - 12f));
+                if (r >= 7f) continue;
+                Color32 c = Mouth;
+                if (stage >= 1 && r > 4f && r < 6f) c = stage == 3 ? Gold : IronMid;
+                if (stage >= 1 && r <= 1.5f) c = stage == 3 ? FireHot : IronDark;
+                Set(ox + x, oy + y, c);
+            }
+            if (stage < 2) return;
+            foreach (int sx in new[] { 4, 26 })
+            for (int y = 9; y < 15; y++)
+            {
+                Set(ox + sx, oy + y, stage == 3 ? CrystalHigh : CrystalDark);
+                Set(ox + sx + 1, oy + y, CrystalMid);
             }
         }
 

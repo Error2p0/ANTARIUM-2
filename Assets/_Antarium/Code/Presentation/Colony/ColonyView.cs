@@ -28,7 +28,7 @@ namespace Antarium.Presentation
     {
         /// <summary>Body, carried item / egg (or idle marker), a second carried item or the possessed marker, health bar back and front.</summary>
         const int QuadsPerAnt = 5;
-        const int QuadsPerEnemy = 3;
+        const int QuadsPerEnemy = 4;
         const float FlashSeconds = 0.15f;
         const float QueenBreathsPerSecond = 0.7f;
 
@@ -190,7 +190,19 @@ namespace Antarium.Presentation
                 var center = Body(nav, cellPos, e.Heading, size.y, out int2 up, out int facing, out float2 world);
                 int frame = e.IsMoving ? (int)(e.WalkPhase * 4f) & 1 : e.Attacking ? (int)(time * 6f) & 1 : 0;
                 var tint = e.SinceHurt < FlashSeconds ? _bars.Flash : White;
-                SpriteQuads.WriteQuad(vertices, quad++, center, size, up, facing, rects[ColonySprites.EnemyRect + art * 2 + frame], tint, world);
+                // A mole cricket digging uses its dig frames.
+                int rect = art == (int)EnemyArt.MoleCricket && e.State == EnemyState.Burrow && e.Attacking
+                    ? ColonySprites.MoleDigRect + frame : ColonySprites.EnemyRect + art * 2 + frame;
+                SpriteQuads.WriteQuad(vertices, quad++, center, size, up, facing, rects[rect], tint, world);
+                // A rival ant carries its loot in its jaws, like a worker.
+                if (e.LootCount > 0 && e.Loot < _itemColors.Length)
+                {
+                    float2 forward = new float2(up.y, -up.x) * facing;
+                    float2 carry = center + forward * ((size.x * 0.5f) / WorldConstants.PixelsPerUnit) + new float2(up) * (2f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(vertices, quad++, carry, new int2(ColonySprites.CarryWidth, ColonySprites.CarryHeight), up, facing,
+                        rects[ColonySprites.CarryRect], _itemColors[e.Loot], world);
+                }
+                else SpriteQuads.WriteEmpty(vertices, quad++);
                 WriteBar(vertices, quad, rects[ColonySprites.PixelRect], center + new float2(0f, (size.y * 0.5f + 2f) / WorldConstants.PixelsPerUnit),
                     e.Health / math.max(1f, def.health), _bars.Back, _bars.Enemy, world);
                 quad += 2;
