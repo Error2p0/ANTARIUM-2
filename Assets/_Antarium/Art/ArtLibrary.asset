@@ -201,6 +201,162 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 8ac42b04d3326204b8873a388dcefe5e, type: 3}
   - name: Terrain/tablet
     texture: {fileID: 2800000, guid: c7f227d9a1d6b8b468f60627693cb85a, type: 3}
+  - name: UI/Achievements/ACH_ANCIENT_ENGINE
+    texture: {fileID: 2800000, guid: dd7457472e0ee404391945a8a667f8b7, type: 3}
+  - name: UI/Achievements/ACH_ANCIENT_ENGINE_locked
+    texture: {fileID: 2800000, guid: 747fd9881a213c647b00a0a93231143b, type: 3}
+  - name: UI/Achievements/ACH_ANTS_1000
+    texture: {fileID: 2800000, guid: c8860971759a0d84ebc52acc6f39aa71, type: 3}
+  - name: UI/Achievements/ACH_ANTS_1000_locked
+    texture: {fileID: 2800000, guid: aa09a4d621898ed47bc6c8f451ebc2d9, type: 3}
+  - name: UI/Achievements/ACH_ANTS_250
+    texture: {fileID: 2800000, guid: b6494ac4e2d15b54c8c618c852bc0581, type: 3}
+  - name: UI/Achievements/ACH_ANTS_250_locked
+    texture: {fileID: 2800000, guid: 5f2296fd41fffc247b666bf4ade864ed, type: 3}
+  - name: UI/Achievements/ACH_ANTS_50
+    texture: {fileID: 2800000, guid: b9c7a0e71090baa478921235a7ee9b54, type: 3}
+  - name: UI/Achievements/ACH_ANTS_50_locked
+    texture: {fileID: 2800000, guid: 340faa90742f0444087b118cfbba795a, type: 3}
+  - name: UI/Achievements/ACH_BELTS_200
+    texture: {fileID: 2800000, guid: e598580b2d668c048a6f591e4f7919f0, type: 3}
+  - name: UI/Achievements/ACH_BELTS_200_locked
+    texture: {fileID: 2800000, guid: 2b5918b2ee248164c88c13038fa093d5, type: 3}
+  - name: UI/Achievements/ACH_BREAKING_GROUND
+    texture: {fileID: 2800000, guid: 6c084e82123a29c4fa46c56565b85d31, type: 3}
+  - name: UI/Achievements/ACH_BREAKING_GROUND_locked
+    texture: {fileID: 2800000, guid: 65305383dc1b10d4ba12188fa1f0879b, type: 3}
+  - name: UI/Achievements/ACH_CHESTS_10
+    texture: {fileID: 2800000, guid: b57cc65b0c580c54bab90c55a093f73b, type: 3}
+  - name: UI/Achievements/ACH_CHESTS_10_locked
+    texture: {fileID: 2800000, guid: 1b637d735cc261649ad65d19df07615c, type: 3}
+  - name: UI/Achievements/ACH_CODEX
+    texture: {fileID: 2800000, guid: 4214e291ff32dbf4e8efeb9ddd4bce92, type: 3}
+  - name: UI/Achievements/ACH_CODEX_locked
+    texture: {fileID: 2800000, guid: 43dcfca92ca2559489979e2683865e27, type: 3}
+  - name: UI/Achievements/ACH_CONTRACTS_10
+    texture: {fileID: 2800000, guid: 7855f8ccbb83cf34d9823f59adfab430, type: 3}
+  - name: UI/Achievements/ACH_CONTRACTS_10_locked
+    texture: {fileID: 2800000, guid: fff2d47062db13e4caa33e0fb58c265b, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_100
+    texture: {fileID: 2800000, guid: ec1d47799075b58489b4e39a153d865f, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_100_locked
+    texture: {fileID: 2800000, guid: d64ce0eaf5bf81241b366305624b6b4d, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1050
+    texture: {fileID: 2800000, guid: df2ea95b21e3d5f4cace21b7fdf7c967, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1050_locked
+    texture: {fileID: 2800000, guid: 040c410b3e6df96479162a2a78f81519, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1250
+    texture: {fileID: 2800000, guid: 586f291ab4cf18140bc2f4a9f8c00b32, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1250_locked
+    texture: {fileID: 2800000, guid: d4b48c918e8e303469a67b13db3085e3, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_300
+    texture: {fileID: 2800000, guid: 828ff9543ef53224eb0e88007c81568d, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_300_locked
+    texture: {fileID: 2800000, guid: 18d541f6c5f991e4882064bcc65dc091, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_700
+    texture: {fileID: 2800000, guid: b8c99fcf2495c0d4caebb8e8e6cf3d98, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_700_locked
+    texture: {fileID: 2800000, guid: ab1bbf65334861d499913c88736cba84, type: 3}
+  - name: UI/Achievements/ACH_EVENTS_5
+    texture: {fileID: 2800000, guid: 41f8c0e4546cf9c4dbcec49f46099a7a, type: 3}
+  - name: UI/Achievements/ACH_EVENTS_5_locked
+    texture: {fileID: 2800000, guid: a029a782174e6944e90aea92283ffbfd, type: 3}
+  - name: UI/Achievements/ACH_EXCAVATOR
+    texture: {fileID: 2800000, guid: 5943465a89835fb4cbbfc39d97c5955c, type: 3}
+  - name: UI/Achievements/ACH_EXCAVATOR_locked
+    texture: {fileID: 2800000, guid: 669fa4060de98da43963bf94d171e22c, type: 3}
+  - name: UI/Achievements/ACH_FIRST_BELT
+    texture: {fileID: 2800000, guid: 45a8cab6e1807874fbb07905ecee2d91, type: 3}
+  - name: UI/Achievements/ACH_FIRST_BELT_locked
+    texture: {fileID: 2800000, guid: 09de5f86723d1e94493c5363fc576668, type: 3}
+  - name: UI/Achievements/ACH_FIRST_COPPER
+    texture: {fileID: 2800000, guid: 2cb98c7d7aa912a4596a7baa2930cba9, type: 3}
+  - name: UI/Achievements/ACH_FIRST_COPPER_locked
+    texture: {fileID: 2800000, guid: 2385ef7bbdf03154ea592775fc1a53d1, type: 3}
+  - name: UI/Achievements/ACH_FIRST_FLIGHT
+    texture: {fileID: 2800000, guid: 3eb833e9c3660a8489d969110b4fa659, type: 3}
+  - name: UI/Achievements/ACH_FIRST_FLIGHT_locked
+    texture: {fileID: 2800000, guid: 8ccd95ecfbcbecf4b99f0692aa0106bf, type: 3}
+  - name: UI/Achievements/ACH_FIRST_KILL
+    texture: {fileID: 2800000, guid: dfa221fb57419784d86a96feafb618e9, type: 3}
+  - name: UI/Achievements/ACH_FIRST_KILL_locked
+    texture: {fileID: 2800000, guid: 92f40ab22961f244b9a6d69b3e71ec5a, type: 3}
+  - name: UI/Achievements/ACH_FIRST_PRINCESS
+    texture: {fileID: 2800000, guid: 7fb458705e562764eab41d9667ee1937, type: 3}
+  - name: UI/Achievements/ACH_FIRST_PRINCESS_locked
+    texture: {fileID: 2800000, guid: 7a0b480702c5fb34ba7d7a2b9879700f, type: 3}
+  - name: UI/Achievements/ACH_FLIGHTS_5
+    texture: {fileID: 2800000, guid: 2e5f8317ca570cf48baed9dc8de4d084, type: 3}
+  - name: UI/Achievements/ACH_FLIGHTS_5_locked
+    texture: {fileID: 2800000, guid: 83642c9441f0ffd4caf93ed34d55f0ac, type: 3}
+  - name: UI/Achievements/ACH_FUNGUS_200
+    texture: {fileID: 2800000, guid: 8227dc1bc86310648a667fa50edbe291, type: 3}
+  - name: UI/Achievements/ACH_FUNGUS_200_locked
+    texture: {fileID: 2800000, guid: 20610b6a3bc31b0449876f4feb8d7617, type: 3}
+  - name: UI/Achievements/ACH_IRON_50
+    texture: {fileID: 2800000, guid: 7dd06b2441525c646be9ee6cc8821df5, type: 3}
+  - name: UI/Achievements/ACH_IRON_50_locked
+    texture: {fileID: 2800000, guid: 192ad0d4d112a9a4a94bf242fb35a711, type: 3}
+  - name: UI/Achievements/ACH_IRON_BELTS_100
+    texture: {fileID: 2800000, guid: 9801876ebc9488a42bcd9425d1c3bd5d, type: 3}
+  - name: UI/Achievements/ACH_IRON_BELTS_100_locked
+    texture: {fileID: 2800000, guid: 87817cc733f0c4545bf940e38127eb00, type: 3}
+  - name: UI/Achievements/ACH_KILLS_200
+    texture: {fileID: 2800000, guid: 458e1923c82b0c343b8f731621a8be86, type: 3}
+  - name: UI/Achievements/ACH_KILLS_200_locked
+    texture: {fileID: 2800000, guid: 09ca92b17230e8e40857808641031f30, type: 3}
+  - name: UI/Achievements/ACH_KNOWLEDGE_1000
+    texture: {fileID: 2800000, guid: 41a6318a9abde2e4092be38e15fe7817, type: 3}
+  - name: UI/Achievements/ACH_KNOWLEDGE_1000_locked
+    texture: {fileID: 2800000, guid: 22d508eb1a30eb34d9c5d33a471237a6, type: 3}
+  - name: UI/Achievements/ACH_MEMORY_500
+    texture: {fileID: 2800000, guid: 15200cd4492fe4540aad2aef220b3798, type: 3}
+  - name: UI/Achievements/ACH_MEMORY_500_locked
+    texture: {fileID: 2800000, guid: 2f194c668e7b26f458c84911a9af649b, type: 3}
+  - name: UI/Achievements/ACH_RAIDS_10
+    texture: {fileID: 2800000, guid: c6a53019227e0b1469e623f40d3aa274, type: 3}
+  - name: UI/Achievements/ACH_RAIDS_10_locked
+    texture: {fileID: 2800000, guid: 2fa0d576d2783d74aa34b3419a540ef1, type: 3}
+  - name: UI/Achievements/ACH_RAID_REPELLED
+    texture: {fileID: 2800000, guid: 0874d203f16018f42a0e93d8b694f034, type: 3}
+  - name: UI/Achievements/ACH_RAID_REPELLED_locked
+    texture: {fileID: 2800000, guid: 7d84bc37267045d4aae6fd19b1638138, type: 3}
+  - name: UI/Achievements/ACH_RELICS_5
+    texture: {fileID: 2800000, guid: f1284d7846e8b8b4d8e7d4dbc2540bf3, type: 3}
+  - name: UI/Achievements/ACH_RELICS_5_locked
+    texture: {fileID: 2800000, guid: 2f66273ca01c6734b94bea7e30173228, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_20
+    texture: {fileID: 2800000, guid: 5ba6dba04fde4b449a7c0af1636ccd06, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_20_locked
+    texture: {fileID: 2800000, guid: 8465f62f1a58f77498ba4633846dbde7, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_5
+    texture: {fileID: 2800000, guid: 56e6de96fc8d7694bb55e43ee82a889a, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_5_locked
+    texture: {fileID: 2800000, guid: cd9a025229e01e142b4c59e55609b693, type: 3}
+  - name: UI/Achievements/ACH_RESONATORS_5
+    texture: {fileID: 2800000, guid: 9781c09caf5b6f847a25b7ef2842473d, type: 3}
+  - name: UI/Achievements/ACH_RESONATORS_5_locked
+    texture: {fileID: 2800000, guid: cbcacdf5e72d99849ad535045992faa2, type: 3}
+  - name: UI/Achievements/ACH_RIVALS_3
+    texture: {fileID: 2800000, guid: 970c28e417b3633419bc16c41a1ac6e7, type: 3}
+  - name: UI/Achievements/ACH_RIVALS_3_locked
+    texture: {fileID: 2800000, guid: 3f88b05b4d96b9142ad3d66d35fbc906, type: 3}
+  - name: UI/Achievements/ACH_SOLDIERS_25
+    texture: {fileID: 2800000, guid: 81f612dbdf5395549bf1dc6887986f07, type: 3}
+  - name: UI/Achievements/ACH_SOLDIERS_25_locked
+    texture: {fileID: 2800000, guid: feb478110ba5c5848ba2bd4f12008b3e, type: 3}
+  - name: UI/Achievements/ACH_STAR_FRAGMENT
+    texture: {fileID: 2800000, guid: ee6d840ee2c219d4183d5f79ebbbc41d, type: 3}
+  - name: UI/Achievements/ACH_STAR_FRAGMENT_locked
+    texture: {fileID: 2800000, guid: 578b950a822b40f458312cbe8c703ccb, type: 3}
+  - name: UI/Achievements/ACH_THRONE
+    texture: {fileID: 2800000, guid: 40a077fa0a13cec408612d4e774d90a5, type: 3}
+  - name: UI/Achievements/ACH_THRONE_locked
+    texture: {fileID: 2800000, guid: 4b058d77ae102784a8c1afd50911ee86, type: 3}
+  - name: UI/Achievements/ACH_TRAITS_10
+    texture: {fileID: 2800000, guid: 6377d4171679a2c4eb0f358d51741a1e, type: 3}
+  - name: UI/Achievements/ACH_TRAITS_10_locked
+    texture: {fileID: 2800000, guid: 81a9d571421e3364d83dc8cf7d702581, type: 3}
   - name: UI/Icons/ability_frenzy
     texture: {fileID: 2800000, guid: 8dbe73bd50fd5214c9a7b3c1f3b3b793, type: 3}
   - name: UI/Icons/ability_pheromone_burst

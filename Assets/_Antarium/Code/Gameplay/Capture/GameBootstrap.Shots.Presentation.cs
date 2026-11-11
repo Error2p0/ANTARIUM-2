@@ -8,7 +8,7 @@ namespace Antarium.Gameplay
     /// <summary>
     /// 10.7 review stills (<c>CaptureMenu.Run("presentation", false)</c>): the light overlay by the nest and at a deep outpost,
     /// the ore overlay with its legend, the flow overlay with its legend; tooltips on a palette building, an item in the resource
-    /// bar, an ability and a caste row; the info panel's icon over an ore cell and over an ant. Not store media.
+    /// bar, an ability and a caste row; the info panel's icon over an ore cell and over an ant; the achievements dialog. Not store media.
     /// </summary>
     public sealed partial class GameBootstrap
     {
@@ -86,6 +86,12 @@ namespace Antarium.Gameplay
                 yield return Still("presentation_hover_ant");
             }
             Pointer(q, false);
+
+            // The achievements dialog with the achievements' own icons.
+            _hud.ShowModal(_hud.AchievementsPanel.Root);
+            yield return Seconds(0.5f);
+            yield return Still("presentation_achievements");
+            _hud.HideModal();
         }
 
         ushort ItemIndex(string id)

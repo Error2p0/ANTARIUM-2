@@ -48,7 +48,14 @@ namespace Antarium.Editor
         public (Texture2D Unlocked, Texture2D Locked) Draw(AchievementDef def)
         {
             var canvas = Compose(def);
-            return (ToTexture(canvas, locked: false), ToTexture(canvas, locked: true));
+            return (ToTexture(canvas, locked: false, Scale), ToTexture(canvas, locked: true, Scale));
+        }
+
+        /// <summary>The same icons at one texel per art pixel (<see cref="Canvas"/>², 10.7: the game's achievements dialog).</summary>
+        public (Texture2D Unlocked, Texture2D Locked) DrawArt(AchievementDef def)
+        {
+            var canvas = Compose(def);
+            return (ToTexture(canvas, locked: false, 1), ToTexture(canvas, locked: true, 1));
         }
 
         Img Compose(AchievementDef def)
@@ -69,20 +76,21 @@ namespace Antarium.Editor
             return c;
         }
 
-        static Texture2D ToTexture(Img c, bool locked)
+        static Texture2D ToTexture(Img c, bool locked, int scale)
         {
-            var tex = new Texture2D(Size, Size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
-            var px = new Color32[Size * Size];
-            for (int y = 0; y < Size; y++)
-            for (int x = 0; x < Size; x++)
+            int size = Canvas * scale;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            var px = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
             {
-                var p = c[x / Scale, y / Scale];
+                var p = c[x / scale, y / scale];
                 if (locked)
                 {
                     byte g = (byte)((p.r * 30 + p.g * 59 + p.b * 11) / 100 * 55 / 100 + 14);
                     p = new Color32(g, g, g, p.a);
                 }
-                px[y * Size + x] = p;
+                px[y * size + x] = p;
             }
             tex.SetPixels32(px);
             tex.Apply(false, false);

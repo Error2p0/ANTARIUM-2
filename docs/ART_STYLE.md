@@ -203,7 +203,7 @@ item lumps, golden beetle and aphid), **every building** (30 PNGs, with the Crys
 (with the rival ant and the mole cricket's walk and dig frames), **the surface** (plants, bird, aphid), **all 30
 terrain tiles** (with the ancient tablet and the three 10.6 biome variant rocks `ember_stone`, `gley_clay`, `amethyst`: the stone, clay and
 quartzite painters with the ramps `ember`, `gley` and `AMETHYST`), the UI skin (frame, button bevels, inset; `frame_queen`, `frame_codex`, `frame_slot`), **the icons** (items, buildings, castes, tools,
-abilities, fixed entries, evolutions, priorities, traits, lore fragments, respec) and the title crest. The building atlas is 128 × 144 since 10.6
+abilities, fixed entries, evolutions, priorities, traits, lore fragments, respec) and the title crest. Since 10.7 also the **78 achievement icons** in `UI/Achievements/<API name>(_locked).png` (32 × 32, shown at 64 px): they are not drawn by `tools/art` but by the Steam export (*Antarium → Steam → Export Achievements and Icons*, `AchievementIcons`), which writes the 64 × 64 Steam copies at the same time; re-run it after changing an achievement or the sprites it uses. The building atlas is 128 × 144 since 10.6
 (the engine's four 32 × 24 frames fill rows 96–119, the throne sits at 0, 120).
 
 ## 10. Not used yet

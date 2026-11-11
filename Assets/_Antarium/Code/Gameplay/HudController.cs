@@ -259,7 +259,7 @@ namespace Antarium.Gameplay
             Genetics = new GeneticPanel(content, art);
             Flight = new FlightDialog(content);
             Settings = new SettingsDialog(input);
-            AchievementsPanel = new AchievementsDialog(content);
+            AchievementsPanel = new AchievementsDialog(content, art);
             Help = new HelpDialog(input);
             Title = new TitleScreen(art);
             Title.Root.AddToClassList("hidden");

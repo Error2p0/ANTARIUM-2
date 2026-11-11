@@ -1581,3 +1581,14 @@
     white-space: normal;
     -unity-text-align: middle-center;
 }
+
+/* Achievement icons (10.7): the Steam icon art at two screen pixels per texel */
+.achievement__icon--art,
+.achievement--done .achievement__icon--art {
+    width: 64px;
+    height: 64px;
+    margin-right: 10px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    flex-shrink: 0;
+}

@@ -48,6 +48,11 @@ namespace Antarium.Editor
             Directory.CreateDirectory(iconDir);
             foreach (var old in Directory.GetFiles(iconDir, "*.png")) File.Delete(old);
 
+            // The game's own copies (10.7): one texel per art pixel in the art library, for the achievements dialog.
+            string artDir = ArtImport.ArtFolder + "/UI/Achievements";
+            Directory.CreateDirectory(artDir);
+            foreach (var old in Directory.GetFiles(artDir, "*.png")) AssetDatabase.DeleteAsset(old.Replace('\\', '/'));
+
             using (var icons = new AchievementIcons())
                 foreach (var a in achievements)
                 {
@@ -56,7 +61,13 @@ namespace Antarium.Editor
                     File.WriteAllBytes(Path.Combine(iconDir, a.apiName + "_locked.png"), locked.EncodeToPNG());
                     Object.DestroyImmediate(unlocked);
                     Object.DestroyImmediate(locked);
+                    var (art, artLocked) = icons.DrawArt(a);
+                    File.WriteAllBytes(Path.Combine(artDir, a.apiName + ".png"), art.EncodeToPNG());
+                    File.WriteAllBytes(Path.Combine(artDir, a.apiName + "_locked.png"), artLocked.EncodeToPNG());
+                    Object.DestroyImmediate(art);
+                    Object.DestroyImmediate(artLocked);
                 }
+            ArtImport.ImportOverrides();
 
             var stats = achievements.Where(a => !string.IsNullOrEmpty(a.statName)).GroupBy(a => a.statName).ToList();
             var md = new StringBuilder();
