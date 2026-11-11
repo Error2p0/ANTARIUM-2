@@ -180,8 +180,8 @@
 - The belt step is plain C# (fine at 6,000 cells); move it to Burst when networks get much bigger.
 - The flow overlay shows colours only; exact rates are in the hover panel. No numbers drawn in the world.
 - Offline progress replays the last 5 minutes of net production: it does not notice mining orders running out or machines running dry, and more workers hatched offline do not raise income. Fine at 50%; revisit if players exploit it.
-- One save slot (+ backup); no slot picker. The save folder depends on Player Settings → Company Name (*Elevate Studios* since 0.9; the old `DefaultCompany` folder is copied once): never change it again, it would orphan saves and Steam Cloud files.
-- Research is bought instantly (no research time, no Archive requirement); there is no respec. The tree has no lines between nodes; prerequisites show in the hover text.
+- Three save slots (+ `.bak` and `.old` each, 10.6). The save folder depends on Player Settings → Company Name (*Elevate Studios* since 0.9; the old `DefaultCompany` folder is copied once): never change it again, it would orphan saves and Steam Cloud files.
+- Research is bought instantly (no research time, no Archive requirement); research itself has no respec (genetic traits do, 10.6). The tree has no lines between nodes; prerequisites show in the hover text.
 - Contracts can't be skipped or rerolled. Contract progress counts everything after a contract appears, including offline deliveries.
 - Random events only start while the game runs; meteorites always land near the nest. The golden beetle can't be caught with a gamepad unless the pointer is moved onto it.
 - Royal Decree eggs may share a floor cell (drawn on top of each other).
@@ -369,11 +369,17 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Verified in the editor (capture shot `ruins`, `Captures/stills/ruins_*`): a resonator at the crystal outpost (62% power, its hover text), the engine at all four stages and its panel, the Codex, the 7-tier research tree, rival ants in the royal chamber with their card, a mole cricket tunnelling toward the nest with its card.
 - Known limits: the engine gives no light of its own; resonance counts unrevealed crystals too; rival raids only come from the surface (no deep variant); a mole cricket never digs through buildings or hard rock, so a rock shell around the nest stops it for good (it gives up); the showcase world predates tablets (none there); lore / engine / resonator numbers are first-pass; stolen items are simply lost (no rival nest to raid back).
 
-**10.6 Prestige and saves** (open: respec cost)
-- [ ] **Respec** genetic memory (refund at a cost, or free once per flight).
-- [ ] **New bloodline**: start a fresh legacy from the menu (with confirmation), keeping achievements.
-- [ ] **Prestige-only mechanics**: traits that unlock a caste from the start, biome variants (world modifiers that swap a biome's palette / creature), a building only known through flights (e.g. *Queen's Throne*).
-- [ ] **Save slots**: 3 slots + backups, slot picker on the title screen (generation, depth, play time from the header), Steam Cloud keeps working (`Saves/*`).
+**10.6 Prestige and saves** ✅ (GDD 2.12.2. Asked and confirmed 2026-11-11: respec is **free once per colony, then 25% of the refund is lost**; the throne is a **royal court** (laying, egg slots, a work aura); **one bloodline per slot**; biome variants swap **palette and creature**)
+- [x] **Respec** (Genetic Memory tree, *Respec* button, two clicks): every point spent comes back; the first respec in a colony is free, later ones lose 25% of the refund (rounded up, at least 1; `PrestigeConfig.freeRespecs`, `respecFee`). Colony stats stop at once, trait-unlocked world modifiers and buildings lock again (built ones stay), inherited research stays done in this colony only, starting bonuses already given stay.
+- [x] **New bloodline**: Esc menu (two clicks) starts a fresh legacy in the current slot; an empty slot on the title screen does the same. Achievements stay (they belong to the player).
+- [x] **Prestige-only mechanics**: *Glow Lineage* / *Fire Lineage* (tier 5: glow / fire ants from the start, inherited research), *Royal Throne* (tier 5) unlocks the **Queen's Throne** (`GeneticEffectKind.UnlockBuilding`; 4 × 2, 8 amber + 10 copper + 4 iron, unique, built around the queen: +30% laying, +2 egg slots, ants within 12 cells dig and build 15% faster; the queen rests on its dais), *Wild Lineages* (tier 4) unlocks three **biome variants**: *Ember Strata* (stone → ember stone, fire beetles instead of centipedes, +20% memory), *Drowned Clay* (clay → gley clay, centipedes, +15%), *Amethyst Caverns* (quartzite → amethyst, fungal mites instead of cave spiders, +15%). The variants rename the layer (`Simulation.BiomeName`).
+- [x] **Save slots**: 3 slots (`colony.sav`, `colony2.sav`, `colony3.sav` in `Saves/`, so Steam Cloud's `Saves/*` keeps working and an older save is slot 1), each with `.bak` (previous save) and `.old` (a copy at most every 30 minutes); loading falls back main → bak → old. Title screen: *Save slots* picker (`frame_slot` cards with generation, ants, depth, play time and age from the header; Play / Continue, Delete with a second click, New bloodline in an empty slot); *Continue* opens the slot saved last.
+- [x] Achievement *Long Live the Queen* (`ACH_THRONE`, build the throne). **(you)** enter it on Steamworks with the icons from `steam/achievement_icons/` (`steam/achievements.md`, row 39).
+- [x] Save format **6**: the header holds the generation (flights + 1, read without loading); `LGCY` 2 the colony's respecs. Format 1–5 saves load.
+- [x] Art wired: `queens_throne` (building atlas grew to 128 × 144, generated fallback), `frame_slot`, `respec`; new: palette icon `building_queens_throne`, tiles `ember_stone`, `gley_clay`, `amethyst` (the stone / clay / quartzite painters with new ramps).
+- [x] 223 EditMode tests (8 new: respec refund / fee / once per colony, respec keeps inherited research in this colony only, respec locks trait unlocks, trait-only building, throne placement / stats / aura / removal / reload, biome variant rock / name / creatures / reload, header generation and saved respecs, slot files / backups / latest slot / fallback / delete).
+- Verified in the editor (capture shot `bloodline`, `Captures/stills/bloodline_*`): the 5-tier tree with *Respec (free)*, the tree and toast after a respec, the throne in the palette and built around the queen with its hover text, the flight screen with the variants, the Esc menu with *New bloodline*, the slot picker (two slots, one empty), and the three variant layers.
+- Known limits: the respec has no undo and no preview of what would lock; the throne must be built in the queen's row (the default chamber's floor is 7 cells wide), and the royal stock may be drawn over it; *New colony* from the menu also gives a new free respec (it abandons the colony, so it costs more than the fee); a variant's creatures only show once the colony breaks into its caves; slot picker has no rename / copy; the generation of saves written before format 6 is unknown (not shown).
 
 **10.7 Presentation** (no open questions; the art override pipeline, caste silhouettes, better sprites, terrain textures, UI skin and item icons moved to **10.7a**, built before 10.4)
 - [ ] Wire in any 10.7a art for planned content that 10.4–10.6 didn't use yet; new sprites for anything added since, following `docs/ART_STYLE.md`.
@@ -394,17 +400,17 @@ Things the current build is still missing, grouped by area. Many are planned for
 - 10 castes, including glow ants (light) and fire ants (heat-proof); a queen evolution tree per colony; job priorities; ant experience, levels and traits (10.4).
 
 **World**
-- All 7 planned biomes exist, with crystal resonance (Crystal Resonator), the ruins' story (lore, tablets, the Codex) and the endgame tech (ancient tier, Ancient Engine) since 10.5.
+- All 7 planned biomes exist (three with a variant world modifier since 10.6), with crystal resonance (Crystal Resonator), the ruins' story (lore, tablets, the Codex) and the endgame tech (ancient tier, Ancient Engine) since 10.5.
 - Fluids: pumps, water wheels, irrigation and magma heat exist; no fluid pressure (decided), no lava pumping.
 - Material flags: *Conductive* = crystal resonance (10.5), *Flammable* = fire, *Unstable* = sand and ash collapse, *Hot* = magma heat.
 - Weather is rain and drought only (no storms, no seasons).
 
 **Gameplay layers**
 - Auto-designating veins exists as the genetic trait *Vein Instinct*.
-- One save slot (synced by Steam Cloud).
+- Three save slots, each its own bloodline (synced by Steam Cloud, 10.6).
 - Threats: termite raids and rival ant raids (they steal items), birds by day, wolf spiders at night, the mole cricket (digs in) and one cave creature per deep biome. No deep raids.
 - Pheromones don't diffuse or mix; no "Haul to" scent (storage zones do that).
-- Prestige: no respec, no "new bloodline" reset, no prestige-only mechanics beyond Vein Instinct yet (later flights could unlock castes, biome variants, buildings).
+- Prestige: respec, new bloodline, caste lineages, the Queen's Throne and three biome variants exist (10.6). No prestige layer above the bloodline.
 
 **Presentation**
 - World art is PNG now (colony, buildings, enemies, surface, terrain; 10.7a). Still generated in code: the marker diamond, the bird's shadow, rain, dig debris and number pops.

@@ -1,6 +1,6 @@
 # How to play Antarium 2
 
-This covers everything that exists in the current build (Milestones 1–8). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
+This covers everything that exists in the current build (Milestones 1–8 and 10.1–10.6). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
 
 To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene is missing, run **Antarium → Setup → Create Main Scene** in the editor menu. The game opens on the **title screen** over your saved colony (see *Title screen, settings and achievements*). To always start fresh, untick **Continue Last Save** on the `GameBootstrap` object; to skip the title screen while developing, untick **Show Title**.
 
@@ -116,7 +116,7 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
-| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, Settings, Achievements, Controls and help, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements, the help or the **Steam overlay** (Shift+Tab) are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
+| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, New bloodline, Settings, Achievements, Controls and help, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements, the help or the **Steam overlay** (Shift+Tab) are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
 | **F1** | Controls and help: every key as it is bound now, the mouse controls and a few tips |
 | **F5** | Save now |
 | **F9** | Load the last save (no offline progress) |
@@ -367,6 +367,7 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Archive** | 10 Copper Ore | 3 × 2 | 10 s | Studies finds into **Knowledge**: 1 Copper → 1 (8 s), 1 Crystal Shard → 4 (6 s), 1 Amber → 5 (8 s), 1 Fossil → 6 (8 s), 1 Star Fragment → 12 (10 s), 1 Relic → 25 (12 s), 1 Ancient Tablet → 60 (20 s). Relics and tablets studied also find **lore fragments** (Codex). |
 | **Crystal Resonator** | 8 Crystal Shards, 4 Copper, 2 Iron | 2 × 2, on a floor, **touching glow crystals** (or copper / iron ore leading to them) | 8 s | Makes up to **15 knowledge a minute** and speeds up machines within **8 cells** by up to **30%**, by how many glow crystals it reaches (24 for full power). See *Crystal resonance*. |
 | **Ancient Engine** | 4 Relics, 10 Copper | 4 × 3, on a floor, **only in the Ancient Ruins**, one per colony | 30 s | Then **restored in three steps** (I or click it). Running: **60 knowledge a minute** and this colony's Nuptial Flight earns **twice the Genetic Memory**. Can't be taken down. |
+| **Queen's Throne** | 8 Amber, 10 Copper, 4 Iron | 4 × 2, on the royal chamber floor **around the queen** (her cell in its bottom row), one per colony | 25 s | Only with the genetic trait **Royal Throne** (hidden from the palette until then). While it stands: the queen lays **30% faster**, **+2 waiting eggs**, and ants within **12 cells** dig and build **15% faster**. The queen rests on its dais. |
 | **Earth Wall** | Free | 1 cell | 1.5 s | When finished the cell becomes **solid packed earth** (soft, easy to mine again). Seals off water, gas, lava and caves. Not in the royal chamber or a storage zone. |
 | **Resin Gate** | 4 Copper | 1 cell | 3 s | Ants walk through; **enemies must break it** (150 hit points, mends 1 per second). A broken gate becomes a blueprint again and workers rebuild it for free. |
 | **Resin Trap** | 2 Copper, 2 Chitin | 1 cell, on a floor | 2 s | The first enemy that steps on it takes **30 damage** and is **stuck for 4 seconds**. Re-arms after 8 seconds. |
@@ -579,7 +580,7 @@ Glow crystals that grow together hum, and a **Crystal Resonator** (research *Cry
 - Make **chokepoints**: a few gates across a tunnel stop raiders while soldiers and traps work on them.
 
 ### Saving and offline progress
-- The game **saves automatically every 2 minutes** (change it in **Settings → Gameplay**: off, 1, 2, 5 or 10 minutes), when you quit, and when you press **F5** or use *Save* in the menu. Nothing is saved while the title screen is up. There is one save slot; the previous save is kept as a backup and used if the main file is damaged. Saves live in the game's data folder (`%USERPROFILE%/AppData/LocalLow/Elevate Studios/ANTARIUM 2/Saves` on Windows). On Steam the saves (and the achievements kept on this computer) are synced with **Steam Cloud**; settings stay on each computer. The first start after the 0.9 update copies saves from the old `DefaultCompany` folder once.
+- The game **saves automatically every 2 minutes** (change it in **Settings → Gameplay**: off, 1, 2, 5 or 10 minutes), when you quit, and when you press **F5** or use *Save* in the menu. Nothing is saved while the title screen is up. There are **three save slots**, each its own bloodline (see *Save slots and bloodlines*); every slot keeps the previous save as a backup and an older copy (at most 30 minutes old), used if the newer file is damaged. Saves live in the game's data folder (`%USERPROFILE%/AppData/LocalLow/Elevate Studios/ANTARIUM 2/Saves` on Windows). On Steam the saves (and the achievements kept on this computer) are synced with **Steam Cloud**; settings stay on each computer. The first start after the 0.9 update copies saves from the old `DefaultCompany` folder once.
 - When you start the game, the saved colony waits (paused) behind the title screen. When you press **Continue**, and it has been closed for **at least a minute** (the time on the title screen counts too), the colony gets **offline progress**:
   - It runs at **50% of its recent pace** (75% with *Dormancy*) for up to **8 hours** (12 with *Dormancy*).
   - "Recent pace" is what the stock gained over the last 5 minutes you played: items delivered minus items taken out for machines, food brought in, and knowledge studied. Items only arrive while storage has room.
@@ -589,6 +590,16 @@ Glow crystals that grow together hum, and a **Crystal Resonator** (research *Cry
   - A **Welcome back** panel lists what changed.
 - Saves keep castes, eggs in nurseries, what haulers and nurses carry, every painted scent, princesses, your Genetic Memory and traits, the colony's world modifiers, the time of day, the weather, a circling bird and the queen's honeydew. The ant you control is let go when you load. Saves from earlier versions load (with no Genetic Memory yet).
 - **Load last save** (menu or **F9**) goes back to the last save without offline progress. **New colony** (click twice to confirm) abandons the current colony and starts on a new random world without world modifiers; you **keep your Genetic Memory and traits** but earn nothing for the abandoned colony. The next save overwrites the old colony.
+
+### Save slots and bloodlines
+- There are **3 save slots**. Each holds **its own bloodline**: one colony and the Genetic Memory, traits and flights of every colony before it. Achievements are shared by all slots (they are yours).
+- **Continue** on the title screen opens the slot you played last. **Save slots** opens the slot picker: each slot shows its generation, ants, depth, play time and when it was saved.
+  - **Play** loads a slot (with its offline progress); the slot you are playing says *playing* and has **Continue**.
+  - **Delete** (click twice) deletes a slot's save and backups for good.
+  - An **empty** slot has **New bloodline**: a fresh colony with no Genetic Memory, saved to that slot from then on.
+  - **Esc** or **Back** returns to the menu.
+- **New bloodline** in the Esc menu (click twice) starts over in the current slot: a new world, no Genetic Memory, no traits, no flights. The next save overwrites that slot's old bloodline. Achievements stay.
+- Saves made before slots existed are slot 1.
 
 ### Nuptial Flight and Genetic Memory
 When a colony slows down, the queen can send winged **princesses** to found a new one. The colony ends, but its **Genetic Memory** lives on: you spend it on **genetic traits** that are kept forever, in every colony after.
@@ -612,10 +623,16 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 | **Volcanic** | More lava lakes and gas pockets in the deep; +30% Genetic Memory | *Strange Worlds* |
 | **Famine** | Seeds appear half as often; +35% Genetic Memory | *Strange Worlds* |
 | **Swarming** | Raids 50% bigger and 30% more often, twice the cave creatures; +50% Genetic Memory | *Strange Worlds* |
+| **Ember Strata** | The stone strata are rust-red **ember stone** (same hardness and finds) and **fire beetles** live in their caves instead of centipedes; +20% Genetic Memory | *Wild Lineages* |
+| **Drowned Clay** | The clay layer is blue-grey **gley clay** and **centipedes** hunt in its caves; +15% Genetic Memory | *Wild Lineages* |
+| **Amethyst Caverns** | The crystal caverns are purple **amethyst** and swarms of **fungal mites** live there instead of cave spiders; +15% Genetic Memory | *Wild Lineages* |
+
+The last three are **biome variants**: the layer looks different, has its own name and other creatures, but digs and drops like the original.
 
 - **Take flight** (click twice to confirm): the princesses fly up out of the nest into the sky, then the new colony is founded on a new random world with your modifiers, and the game saves at once. The genetic tree opens so you can spend what you earned.
 - **What carries over**: unspent Genetic Memory, every trait, the number of flights and your records (deepest colony, best flight). Everything else (ants, buildings, research, items, princesses) starts over.
 - **The genetic tree (G)**: click a trait to buy its next level. Colony bonuses and inherited research work **right away**; starting bonuses (workers, food, knowledge, items, revealed map) from the **next colony** on. Node colours: **gold** = you can buy it now; **dim gold** = available but not enough memory; **grey** = needs another trait first; a **green edge** = some levels bought; **green** = fully bought. Hover a trait for details.
+- **Respec** (button at the top of the tree, click twice): every trait is unlearned and the Genetic Memory spent on it comes back. The **first respec in each colony is free**; after that a respec loses **25%** of the refund (rounded up, at least 1). The button shows the price: *Respec (free)* or *Respec (−3)*; hover it for details. Colony bonuses stop at once, world modifiers and buildings the traits unlocked lock again (a throne already built stays), research a trait passed on stays done **in this colony** (the next colony has it only if you buy the trait again), and starting bonuses already received stay.
 
 | Tier | Trait | Cost (memory) | Levels | Needs | Effect (per level) |
 |---|---|---|---|---|---|
@@ -638,6 +655,10 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 | 4 | **Deep Memory** | 5, +3 | 5 | Royal Lineage | +10% Genetic Memory from flights |
 | 4 | **Dormant Wisdom** | 4, +2 | 3 | Vein Instinct | +10 percentage points offline efficiency |
 | 4 | **Silk Mastery** | 4, +2 | 3 | Vein Instinct | Belts 15% and machines 10% faster |
+| 4 | **Wild Lineages** | 6 | 1 | Strange Worlds | Unlocks the biome variants Ember Strata, Drowned Clay and Amethyst Caverns |
+| 5 | **Glow Lineage** | 8 | 1 | Ancient Knowledge | Every colony knows *Glow Ants* (lay glow ants from the start) |
+| 5 | **Royal Throne** | 8 | 1 | Deep Memory | Unlocks the **Queen's Throne** in every colony |
+| 5 | **Fire Lineage** | 10 | 1 | Dormant Wisdom | Every colony knows *Fire Ants* (lay fire ants from the start) |
 
 ### Light and darkness
 - Sunlight reaches into shafts and tunnels near the surface and fades deeper down. It follows the time of day: dim bluish moonlight at night, a little darker while it rains.
@@ -649,13 +670,13 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 ---
 
 ### Title screen, settings and achievements
-- **Title screen:** the colony drifts paused in the background. **Continue** (with the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world, keeping your Genetic Memory; if a save exists it asks for a second click. **Settings**, **Achievements**, **Controls and help** and **Quit**. The version is in the bottom right corner. On Steam, friends see what you are doing (*In the main menu*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*). *Save and return to title* in the Esc menu brings you back here.
+- **Title screen:** the colony drifts paused in the background. **Continue** (with the slot, the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world in the same slot, keeping your Genetic Memory; if a save exists it asks for a second click. **Save slots** opens the slot picker (see *Save slots and bloodlines*). **Settings**, **Achievements**, **Controls and help** and **Quit**. The version is in the bottom right corner. On Steam, friends see what you are doing (*In the main menu*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*). *Save and return to title* in the Esc menu brings you back here.
 - **Settings** (title screen or Esc menu). Every change applies at once and is saved when you close the dialog, in `settings.json` next to the saves (settings are not part of the colony save).
   - **Audio:** master, music, effects, ambience and interface volume (off to 100% in steps of 10%), *Mute when in the background*.
   - **Display:** window (borderless fullscreen, exclusive fullscreen, windowed), resolution (*Native* or any your display offers), v-sync, frame limit without v-sync (30 to 240 fps or unlimited), interface size (*Auto*: 1× below 1440 lines, 2× from 1440, 3× from 3240; or 1× to 4×). Window and resolution changes only take effect in a built game, not in the editor.
-  - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes the colony save and its backup, your Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
+  - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes every save slot and its backups, every Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
   - **Controls:** every keyboard / mouse action with its key. Click a key, then press the new key or mouse button (**Esc** cancels). **Reset to defaults** restores them all. The gamepad keeps its own fixed layout.
-- **Achievements** (title screen or Esc menu): 38 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and the hidden *Lost Civilization*, *The Engine Wakes* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
+- **Achievements** (title screen or Esc menu): 39 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and *Long Live the Queen* (build the Queen's Throne) and the hidden *Lost Civilization*, *The Engine Wakes* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
 
 ### Sound
 - Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. A circling bird cries and its strike whooshes; rain starts with a rumble of thunder; dusk and dawn each have a soft chime. A fire starting crackles; water putting one out hisses. Research, contracts, events, abilities, traits, princesses, the flight and achievements each have their own chime.
@@ -691,4 +712,4 @@ The **contracts** on the right walk you through the first steps; this is the sam
 
 ## Not in the game yet
 
-Several save slots, a respec of Genetic Memory, a new bloodline from the menu, and a Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
+A Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.
