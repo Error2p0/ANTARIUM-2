@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Obsidian
   color: {r: 0.2901961, g: 0.23529412, b: 0.38431373, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 0.7058824, g: 0.36078432, b: 1, a: 1}

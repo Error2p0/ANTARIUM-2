@@ -192,7 +192,10 @@ namespace Antarium.Gameplay
                 "Codex: the story of the lost colony, found by studying relics and tablets in an Archive.");
             _codexButton.AddToClassList("hidden");
             _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "tool_research", "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
-            _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "tool_flow", "Flow overlay: belt traffic, jams, machine status and idle workers.");
+            _overlayButton = Toggle(toolbar, "Overlay", () => OverlayClicked?.Invoke(), input.Overlay, "tool_flow",
+                "Overlays, one at a time (click to go through them): flow (belt traffic, jams, machine status, idle workers), light, and the ores you know of.");
+            var legend = root.Q<VisualElement>("legend");
+            if (legend != null) Legend = new OverlayLegend(legend, content, render, art, input);
             _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "memory", "Genetic Memory: permanent traits for every colony of your bloodline.");
             _geneticsButton.AddToClassList("hidden");
             _flightButton = Toggle(toolbar, "Flight", () => FlightToggled?.Invoke(), input.Flight, "tool_flight", "Nuptial Flight: send princesses to found a new colony and earn Genetic Memory.");
@@ -473,7 +476,14 @@ namespace Antarium.Gameplay
                 _buildingButtons[i].EnableInClassList("building--active", i == index);
         }
 
-        public void SetOverlay(bool on) => _overlayButton?.EnableInClassList("tool--on", on);
+        /// <summary>The overlay that is on (the toolbar button lights up) and its legend above the toolbar.</summary>
+        public void SetOverlay(OverlayMode mode, OreSurvey survey)
+        {
+            _overlayButton?.EnableInClassList("tool--on", mode != OverlayMode.None);
+            Legend?.Show(mode, survey);
+        }
+
+        public OverlayLegend Legend { get; private set; }
 
         // ---------------------------------------------------------------- modal layer (menu, research, welcome back)
 

@@ -649,6 +649,18 @@ namespace Antarium.Content
         [Tooltip("Brightness of items kept in storage relative to loose items (they sit on the back wall).")]
         [Range(0.3f, 1f)] public float stockBrightness = 0.8f;
 
+        [Header("Light and ore overlays (10.7)")]
+        [Tooltip("Light overlay: one flat colour per band of light, darkest first (at most 8).")]
+        public Color[] lightOverlayRamp =
+        {
+            new(0.07f, 0.07f, 0.2f), new(0.2f, 0.13f, 0.45f), new(0.47f, 0.16f, 0.5f), new(0.75f, 0.24f, 0.24f),
+            new(0.9f, 0.55f, 0.2f), new(0.98f, 0.86f, 0.35f), new(1f, 0.98f, 0.9f),
+        };
+        [Tooltip("Ore overlay: brightness of everything that is not a find (greyscale).")]
+        [Range(0f, 1f)] public float oreOverlayDim = 0.45f;
+        [Tooltip("Seconds between counts of the known finds for the ore overlay's legend.")]
+        [Min(0.1f)] public float oreSurveySeconds = 1f;
+
         [Header("Fluids")]
         [Tooltip("Water tint; alpha = how strongly it covers the wall behind it.")]
         public Color waterColor = new(0.22f, 0.48f, 0.9f, 0.62f);

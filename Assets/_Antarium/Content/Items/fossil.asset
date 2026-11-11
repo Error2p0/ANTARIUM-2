@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Fossil
   color: {r: 0.9098039, g: 0.8627451, b: 0.7529412, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 1, g: 0.9529412, b: 0.8627451, a: 1}

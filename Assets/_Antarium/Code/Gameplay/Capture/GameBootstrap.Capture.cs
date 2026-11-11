@@ -154,7 +154,7 @@ namespace Antarium.Gameplay
             _rig.ShowUi = true;
             _rig.SetSize(1920, 1080);
             SetFps(60);
-            if (_overlay) ToggleOverlay();
+            SetOverlay(OverlayMode.None);
             _hud.HideModal();
             _hud.SetTitle(false);
             Hud(true);

@@ -1513,3 +1513,59 @@
 .genetics__respec {
     margin-left: auto;
 }
+
+/* Overlay legend (10.7): a strip above the toolbar while an overlay is on */
+.legend {
+    flex-direction: column;
+    align-items: center;
+    max-width: 900px;
+    padding: 6px 12px;
+}
+.legend__title {
+    color: rgb(240, 214, 150);
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+.legend__entries {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.legend__entry {
+    flex-direction: row;
+    align-items: center;
+    margin: 2px 7px;
+}
+.legend__swatch {
+    width: 14px;
+    height: 14px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.6);
+    margin-right: 4px;
+}
+.legend__swatch--small {
+    width: 6px;
+    height: 14px;
+    margin-right: 3px;
+}
+.legend__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+.legend__label {
+    color: rgb(240, 230, 210);
+    font-size: 16px;
+}
+.legend__count {
+    color: rgb(168, 144, 112);
+    font-size: 16px;
+    margin-left: 4px;
+}
+.legend__note {
+    color: rgb(168, 144, 112);
+    font-size: 14px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}

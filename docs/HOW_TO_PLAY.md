@@ -103,7 +103,10 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
-| **O** (or the **O Flow** button) | Toggle the flow overlay (see *The screen*) |
+| **O** | Toggle the flow overlay (see *The screen*) |
+| **J** | Toggle the light overlay |
+| **M** | Toggle the ore overlay |
+| **O Overlay** button | Go through the overlays: flow, light, ores, off. Only one overlay is on at a time; a legend above the toolbar explains the one that is on. |
 | **T** (or the **T Research** button) | Open / close the research tree |
 | **K** (or the **K Castes** button) | Open / close the castes panel (once the queen can lay anything but workers) |
 | **P** (or the **P Jobs** button) | Open / close the job priority panel |
@@ -157,7 +160,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - A red **Fire!** card while anything burns (*12 cells burning*); **Go** jumps to the fire.
   - **Rival ants** get their own red raid card (*Rival ants incoming!*): they come for your stock, not your food. At the end it says how many items they carried off.
   - A red **Mole Cricket digging!** card while one tunnels toward the nest (*27 cells from the queen*), then *broke in!* once it reaches your tunnels. **Go** jumps to it.
-- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **P Jobs**, **H Queen**, **L Codex** (once you have found a lore fragment), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
+- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **P Jobs**, **H Queen**, **L Codex** (once you have found a lore fragment), **T Research**, **O Overlay** (click to go through the overlays), **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
 - **Job priority panel** (next to the castes panel, **P**): one row per job (Dig, Haul, Build, Supply, Tend, Nurse) with its priority from **1 lowest** to **5 highest** and **-** / **+**. See *Job priorities*.
 - **Queen panel** (middle of the screen, **H** or click the queen): how often she lays, her eggs, the colony's food upkeep, how many ants are skilled or masters and their traits, a **Caste mix** button that opens the castes panel, and her **evolution tree**. See *The queen's evolutions*.
@@ -203,11 +206,14 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **Number pops** float up where things arrive: *+3* in the item's colour where items are stored (deliveries close together merge into one growing number), green food points where food is delivered, the product over a machine when it finishes, and violet knowledge over a studying Archive. Turn them off in **Settings → Gameplay**.
   - Working machines **puff**: grey smoke (and the odd spark) from smelters, drifting spores from fungus gardens, pale sparkles from Archives and golden ones from princess chambers.
   - A **resin lattice** across a tunnel is a gate (it turns redder as it is damaged); **resin with bone teeth** on the floor is a trap (jaws open = armed); a **red banner** is a guard post; a **packed earth block** is a wall blueprint.
+- **Overlays**: one at a time, each with a **legend** above the toolbar. **O** flow, **J** light, **M** ores; the **Overlay** button goes through them.
 - **Flow overlay (O):**
   - Belts and lifts go from **grey** (nothing moving) to **green** (busy). **Red** = jammed: full and not moving.
   - Machines are **green** while working, **yellow** while waiting for input, **red** when their products are not being taken away.
   - Unloaders are **green** while unloading, **grey** with nothing to take, **red** when what they feed is full. Pumps likewise (red: no room in front); water wheels are green while turning.
   - Idle workers get a **blue dot** above them.
+- **Light overlay (J):** the light that reaches each spot, in flat colour bands from **dark blue** (dark) through purple, red, orange and yellow to **white** (bright). Light comes from the sky (less at night and in rain), glowing rock and crystals, lava, fire and glow ants. Light is only for seeing: ants work the same in the dark.
+- **Ore overlay (M):** every find you know of in its own bright colour, everything else grey: **copper ore** orange, **iron ore** red, **coal** blue, **amber** gold, **fossils** cream, **crystal shards** cyan, **obsidian** violet, **relics** green, **tablets** pink, **star fragments** lime, **roots** tan. Finds hidden in the dark that **Seismic Sense** found show at half strength. The legend lists every find you have seen with how many cells of it you know (counted about once a second).
 
 ---
 

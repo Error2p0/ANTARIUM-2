@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Root Fibre
   color: {r: 0.78431374, g: 0.627451, b: 0.4392157, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 0.6901961, g: 0.5411765, b: 0.3529412, a: 1}

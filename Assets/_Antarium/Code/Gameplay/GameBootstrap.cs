@@ -78,7 +78,6 @@ namespace Antarium.Gameplay
         PanelSettings _panelSettings;
         string[] _targetingHints;
         Light2D _possessLight;
-        bool _overlay;
         float2 _worldSize;
         int2 _pointerCell;
         float _autosaveTimer;
@@ -182,7 +181,7 @@ namespace Antarium.Gameplay
             _hud.ToolClicked += mode => _tools?.SetMode(mode);
             _hud.BuildingClicked += def => _tools?.SelectBuilding(def);
             _hud.ScentClicked += kind => _tools?.SelectScent(kind);
-            _hud.OverlayClicked += ToggleOverlay;
+            _hud.OverlayClicked += CycleOverlay;
             _hud.ResearchToggled += ToggleResearch;
             _hud.PossessClicked += () => { if (_sim != null) _tools.ClickPossess(_sim); };
             _hud.CastesClicked += () => _hud.Castes?.Toggle();
@@ -337,6 +336,7 @@ namespace Antarium.Gameplay
             _worldSize = new float2(sim.World.Width, sim.World.Height) * WorldConstants.CellSize;
             _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform);
             _terrain.Upload();
+            SetOverlay(_overlayMode);
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
             _buildingView = new BuildingView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize,
@@ -680,7 +680,7 @@ namespace Antarium.Gameplay
                 _hud.Configure.Open(_sim, _pointerCell);
             if (!title && !Capturing)
             {
-                if (_input.Overlay.WasPressedThisFrame()) ToggleOverlay();
+                OverlayKeys();
                 if (_input.ToggleHud.WasPressedThisFrame()) _debugHud.Visible = !_debugHud.Visible;
                 if (Debug.isDebugBuild) DebugKeys();
             }
@@ -689,6 +689,7 @@ namespace Antarium.Gameplay
             _sim.UpdateDerived();
             _terrain.SetSky(_sim.Surface, config.light.skyLight, dt);
             _terrain.Upload();
+            UpdateOverlay(dt);
             float alpha = _sim.Clock.Alpha;
             _buildingView.Render(_sim, alpha, Time.time, _overlay);
             _colonyView.Render(_sim, alpha, _overlay, Time.time);
@@ -870,12 +871,6 @@ namespace Antarium.Gameplay
             else panel.OpenStock(_sim);
         }
 
-        void ToggleOverlay()
-        {
-            _overlay = !_overlay;
-            _hud.SetOverlay(_overlay);
-        }
-
         void ToggleResearch()
         {
             if (_hud.Research == null) return;
@@ -1055,6 +1050,7 @@ namespace Antarium.Gameplay
             _audio?.Dispose();
             _platform?.Dispose();
             if (_panelSettings != null) Destroy(_panelSettings);
+            _oreSurvey?.Dispose();
             _content?.Dispose();
         }
     }

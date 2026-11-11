@@ -22,7 +22,12 @@ namespace Antarium.Presentation
             public Vector4 EdgeDark;
             public Vector4 Params;
             public Vector4 BaseColor;
+            /// <summary>Colour of the find it drops for the ore overlay; w = 1 if it is a find.</summary>
+            public Vector4 OreColor;
         }
+
+        /// <summary>What the terrain shader draws over the world (10.7); the flow overlay is drawn by the building and colony views.</summary>
+        public enum Overlay { None = 0, Light = 1, Ores = 2 }
 
         static readonly int CellsId = Shader.PropertyToID("_AntCells");
         static readonly int LightId = Shader.PropertyToID("_AntLight");
@@ -54,6 +59,8 @@ namespace Antarium.Presentation
         static readonly int ScentCoverId = Shader.PropertyToID("_AntScentCover");
         static readonly int SkyLightId = Shader.PropertyToID("_AntSkyLight");
         static readonly int StarsId = Shader.PropertyToID("_AntStars");
+        static readonly int ViewId = Shader.PropertyToID("_AntView");
+        static readonly int LightRampId = Shader.PropertyToID("_AntLightRamp");
         float _rain;
 
         readonly WorldGrid _world;
@@ -103,6 +110,7 @@ namespace Antarium.Presentation
                     EdgeDark = ToWorking(Color.Lerp(m.shadowColor, Color.black, 0.3f)),
                     Params = new Vector4(m.IsAir ? 1f : 0f, m.selfGlow, 0f, 0f),
                     BaseColor = ToWorking(m.baseColor),
+                    OreColor = OreColorOf(content, (ushort)i),
                 };
             }
             _materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, gpu.Length, Marshal.SizeOf<MaterialGpu>()) { name = "AntMaterials" };
@@ -156,6 +164,12 @@ namespace Antarium.Presentation
             Shader.SetGlobalColor(SkyHorizonId, render.skyHorizon);
             Shader.SetGlobalVector(SkyLightId, Vector4.one);
             Shader.SetGlobalVector(StarsId, Vector4.zero);
+            var ramp = new Vector4[8];
+            int bands = render.lightOverlayRamp != null ? Mathf.Min(render.lightOverlayRamp.Length, ramp.Length) : 0;
+            for (int i = 0; i < bands; i++) ramp[i] = ToWorking(render.lightOverlayRamp[i]);
+            Shader.SetGlobalVectorArray(LightRampId, ramp);
+            _rampSize = Mathf.Max(1, bands);
+            SetOverlay(Overlay.None);
             float horizon = (_world.Height - content.WorldGen.skyHeight) * WorldConstants.CellSize;
             Shader.SetGlobalVector(SkyRangeId, new Vector4(horizon, _world.Height * WorldConstants.CellSize, 0f, 0f));
         }
@@ -186,6 +200,21 @@ namespace Antarium.Presentation
             float stars = Mathf.Clamp01(1f - d * 2f) * (1f - _rain);
             Shader.SetGlobalVector(StarsId, new Vector4(r.starColor.r, r.starColor.g, r.starColor.b, stars));
             _light.SkyScale = Mathf.Lerp(r.nightLightStrength, 1f, d) * Mathf.Lerp(1f, r.rainLight, _rain);
+        }
+
+        int _rampSize = 1;
+
+        /// <summary>The light or ore overlay over the terrain, or none.</summary>
+        public void SetOverlay(Overlay overlay) =>
+            Shader.SetGlobalVector(ViewId, new Vector4((int)overlay, _render.oreOverlayDim, _rampSize, 0f));
+
+        /// <summary>The item colour of a find (a material dropping a non-food item), w = 1; zero for anything else.</summary>
+        static Vector4 OreColorOf(ContentDB content, ushort material)
+        {
+            ushort item = OreSurvey.FindItem(content, material);
+            if (item == ContentDB.NoItem) return Vector4.zero;
+            var c = ToWorking(content.Items[item].MapColor);
+            return new Vector4(c.r, c.g, c.b, 1f);
         }
 
         /// <summary>Pheromones are drawn faintly, or clearly while the Pheromone tool is active.</summary>

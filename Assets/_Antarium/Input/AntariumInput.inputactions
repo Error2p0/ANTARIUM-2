@@ -821,6 +821,24 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "LightOverlay",
+                    "type": "Button",
+                    "id": "80353870-e8db-442e-9c21-190caa30bf28",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "OreOverlay",
+                    "type": "Button",
+                    "id": "c7f0637b-3c69-4ef7-9cf2-e0ed55e02dd1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Research",
                     "type": "Button",
                     "id": "17940a86-bfb3-4d6e-8e98-6436f0de7011",
@@ -970,6 +988,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Codex",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bb606549-efcf-4fb3-9af5-c1ce4def4562",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LightOverlay",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7f4e58e3-515c-4660-beb2-c9f847b9b313",
+                    "path": "<Keyboard>/m",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OreOverlay",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

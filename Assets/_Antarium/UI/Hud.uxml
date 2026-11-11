@@ -13,6 +13,7 @@
         <ui:VisualElement name="bottom" class="bottom" picking-mode="Ignore">
             <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />
             <ui:Label name="info" class="info hidden" picking-mode="Ignore" />
+            <ui:VisualElement name="legend" class="palette legend hidden" picking-mode="Ignore" />
             <ui:VisualElement name="build-palette" class="palette hidden" picking-mode="Ignore" />
             <ui:VisualElement name="scent-palette" class="palette hidden" picking-mode="Ignore" />
             <ui:VisualElement name="toolbar" class="toolbar" picking-mode="Ignore" />

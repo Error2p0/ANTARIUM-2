@@ -13,6 +13,7 @@ struct AntMaterial
     float4 edgeDark;  // outline for side/bottom-facing edges
     float4 params;    // x = is air, y = self glow
     float4 baseColor; // average colour, used to flatten background walls
+    float4 oreColor;  // rgb = colour of the find it drops (ore overlay), a = 1 if it is a find
 };
 
 StructuredBuffer<uint> _AntCells;        // material(16) | density(8) | flags(8)
@@ -29,6 +30,8 @@ float4 _AntSkyHorizon;
 float4 _AntSkyRange;   // x = horizon world y, y = top world y
 float4 _AntSkyLight;   // rgb = colour and strength of the sky light now (time of day, weather)
 float4 _AntStars;      // rgb = star colour, a = how visible the stars are (night)
+float4 _AntView;       // x = overlay: 0 none, 1 light, 2 ores; y = ore overlay dimming of everything else; z = light ramp size
+float4 _AntLightRamp[8]; // light overlay colours, darkest first
 
 static const float kBayer4[16] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
 
@@ -296,6 +299,10 @@ struct TerrainSurface
     bool hidden;     // fog of war
     bool fogOrder;   // hidden, but shows a mining-order stripe
     float3 normalWS;
+    bool solid;      // a solid pixel (else open: sky, wall, fluid)
+    uint material;   // material of a solid pixel
+    bool scanned;    // its cell was found by Seismic Sense or a rich vein
+    bool sky;        // open sky (no back wall)
 };
 
 // Fluid over an open pixel. Liquids fill a cell from the bottom up to their level (full when the same liquid
@@ -385,6 +392,10 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
     s.hidden = false;
     s.fogOrder = false;
     s.normalWS = float3(0, 0, -1);
+    s.solid = solid;
+    s.material = 0u;
+    s.scanned = false;
+    s.sky = false;
 
     if (solid)
     {
@@ -393,6 +404,8 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
         uint m = n.material[mi];
         AntMaterial mat = _AntMaterials[m];
         float3 c = PatchShade(LOAD_TEXTURE2D_ARRAY(_AntMaterialTex, p.px & (int)_AntTile.x, m).rgb, p.px);
+        s.material = m;
+        s.scanned = (n.flags[mi] & ANT_FLAG_SCANNED) != 0;
 
         bool up = IsSolid(n, p.cellPos + float2(0, st), p.px + int2(0, 1));
         bool down = IsSolid(n, p.cellPos - float2(0, st), p.px - int2(0, 1));
@@ -460,6 +473,7 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
                 if (star > 0.9965) s.albedo = lerp(s.albedo, _AntStars.rgb, saturate(_AntStars.a * t * 1.6) * twinkle);
             }
             s.unlit = true;
+            s.sky = true;
             ApplyFluid(s, n, p);
         }
         else
@@ -497,6 +511,35 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
     // Mining orders stay visible as faint stripes over the fog so the player can see the plan.
     s.fogOrder = s.hidden && (n.flags[4] & ANT_FLAG_DIG_DESIGNATED) != 0 && ((p.px.x + p.px.y) & 3) == 0;
     return s;
+}
+
+float Luma(float3 c) { return dot(c, float3(0.299, 0.587, 0.114)); }
+
+// Light overlay (10.7): the light reaching a pixel, in flat colour bands from dark to bright; the terrain's own
+// brightness only shades the bands a little so tunnels stay readable.
+float3 LightOverlay(TerrainSurface s, float3 light, float2 positionWS)
+{
+    float level = s.unlit ? (s.sky ? Luma(_AntSkyLight.rgb) : 1.0) : Luma(light);
+    level = pow(saturate(level), 1.0 / max(_AntWall.z, 1.0));   // back to perceptual steps
+    int count = max((int)_AntView.z, 1);
+    int band = min((int)floor(level * count), count - 1);
+    float shade = 0.7 + 0.3 * saturate(Luma(s.albedo) * 4.0);
+    return _AntLightRamp[band].rgb * shade;
+}
+
+// Ore overlay (10.7): finds in their map colour, flat and unlit; everything else grey and dim, unlit too so the map reads
+// the same in dark rock. Finds hidden in the fog show at half strength if Seismic Sense found them.
+half4 OreOverlay(TerrainSurface s, float2 positionWS)
+{
+    AntMaterial mat = _AntMaterials[s.material];
+    bool find = s.solid && mat.oreColor.a > 0.5;
+    float3 c = find ? mat.oreColor.rgb : saturate(Luma(s.albedo) * 1.5 * _AntView.y).xxx;
+    if (s.hidden)
+    {
+        PixelInfo p = GetPixel(positionWS);
+        c = find && s.scanned && Bayer4(p.px) < 0.5 ? mat.oreColor.rgb * 0.6 : float3(0, 0, 0);
+    }
+    return half4(c, 1);
 }
 
 float3 QuantizedGridLight(float2 positionWS)

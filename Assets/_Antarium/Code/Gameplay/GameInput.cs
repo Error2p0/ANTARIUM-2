@@ -32,6 +32,10 @@ namespace Antarium.Gameplay
         public readonly InputAction NextBuilding;
         public readonly InputAction PrevBuilding;
         public readonly InputAction Overlay;
+        /// <summary>J: the light overlay (10.7).</summary>
+        public readonly InputAction LightOverlay;
+        /// <summary>M: the ore overlay (10.7).</summary>
+        public readonly InputAction OreOverlay;
         public readonly InputAction Research;
         /// <summary>G: the Genetic Memory tree.</summary>
         public readonly InputAction Genetics;
@@ -98,6 +102,8 @@ namespace Antarium.Gameplay
             NextBuilding = asset.FindAction("Tools/NextBuilding", true);
             PrevBuilding = asset.FindAction("Tools/PrevBuilding", true);
             Overlay = asset.FindAction("View/Overlay", true);
+            LightOverlay = asset.FindAction("View/LightOverlay", true);
+            OreOverlay = asset.FindAction("View/OreOverlay", true);
             Research = asset.FindAction("View/Research", true);
             Genetics = asset.FindAction("View/Genetics", true);
             Flight = asset.FindAction("View/Flight", true);
@@ -162,6 +168,8 @@ namespace Antarium.Gameplay
             Add("Tools", "Possessed ant: pick up / drop", Interact);
             for (int i = 0; i < Abilities.Length; i++) Add("Abilities", $"Ability {i + 1}", Abilities[i]);
             Add("Panels", "Flow overlay", Overlay);
+            Add("Panels", "Light overlay", LightOverlay);
+            Add("Panels", "Ore overlay", OreOverlay);
             Add("Panels", "Research", Research);
             Add("Panels", "Castes", Castes);
             Add("Panels", "Queen", Queen);

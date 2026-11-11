@@ -17,3 +17,4 @@ MonoBehaviour:
   color: {r: 0.9411765, g: 0.78431374, b: 0.3137255, a: 1}
   foodValue: 0
   fuel: 0
+  mapColor: {r: 1, g: 0.36078432, b: 0.78431374, a: 1}
