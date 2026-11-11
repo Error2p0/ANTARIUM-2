@@ -363,6 +363,22 @@ namespace Antarium.Gameplay
                             .Append("\n").Append(_hud.ConfigureKey).Append(" (or click it): restore the next step.");
                     return;
                 }
+                case BuildingKind.Throne:
+                {
+                    var def = data.Def;
+                    _sb.Append("  -  the queen holds court");
+                    foreach (var s in def.stats)
+                    {
+                        _sb.Append("\n").Append(s.value >= 0f ? "+" : "");
+                        if (HudText.IsPercent(s.stat)) _sb.Append(Mathf.RoundToInt(s.value * 100f)).Append('%');
+                        else _sb.Append(s.value.ToString("0.#"));
+                        _sb.Append(' ').Append(HudText.StatName(s.stat));
+                    }
+                    if (def.auraRadius > 0f && def.auraWork > 0f)
+                        _sb.Append("\nAnts within ").Append(def.auraRadius.ToString("0")).Append(" cells dig and build +")
+                            .Append(Mathf.RoundToInt(def.auraWork * 100f)).Append("% faster.");
+                    return;
+                }
                 case BuildingKind.WaterWheel:
                 {
                     var def = data.Def;

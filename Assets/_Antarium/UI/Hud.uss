@@ -721,7 +721,8 @@
     color: rgb(130, 118, 100);
 }
 .genetics {
-    width: 1000px;
+    width: 1200px;
+    max-width: 98%;
 }
 .genetics .research__knowledge {
     color: rgb(255, 215, 120);
@@ -1466,4 +1467,49 @@
     white-space: normal;
     margin: 0;
     padding: 0;
+}
+
+/* ---------------------------------------------------------------- Milestone 10.6: save slots, respec */
+.title__slots {
+    width: 560px;
+    max-width: 96%;
+    padding: 14px 16px;
+}
+.slot {
+    background-image: url("project://database/Assets/_Antarium/Art/UI/Skin/frame_slot.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+    padding: 10px 14px;
+    margin: 6px 0;
+}
+.slot__name {
+    color: rgb(220, 226, 236);
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+}
+.slot--current .slot__name {
+    color: rgb(255, 210, 140);
+}
+.slot__line {
+    color: rgb(230, 220, 200);
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+.slot--empty .slot__line {
+    color: rgb(160, 150, 135);
+}
+.slot__buttons {
+    flex-direction: row;
+    margin-top: 6px;
+}
+.slot__button {
+    height: 26px;
+    margin: 0 8px 0 0;
+    padding: 0 10px;
+}
+.genetics__respec {
+    margin-left: auto;
 }

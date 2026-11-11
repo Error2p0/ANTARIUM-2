@@ -11,7 +11,7 @@ Enter these on partner.steamgames.com → your app → **Edit Steamworks Setting
 | `STAT_MAX_ANTS` | INT | Client | yes | 0 | Most ants alive |
 | `STAT_FLIGHTS` | INT | Client | yes | 0 | Nuptial Flights |
 
-## Achievements (38)
+## Achievements (39)
 
 Icons: `steam/achievement_icons/<API name>.png` (achieved) and `<API name>_locked.png` (unachieved), 64×64.
 *Progress stat*: pick the stat and enter 0 as the minimum and the amount as the maximum (Steam then shows a progress bar).
@@ -56,3 +56,4 @@ Icons: `steam/achievement_icons/<API name>.png` (achieved) and `<API name>_locke
 | 36 | `ACH_CODEX` | Keeper of the Codex | Find every lore fragment of the ruins in one colony. |  |  |
 | 37 | `ACH_ANCIENT_ENGINE` | The Engine Wakes | Restore the Ancient Engine. | yes |  |
 | 38 | `ACH_RIVALS_3` | Not One Crumb | Beat 3 raids of rival ants without losing an item. |  |  |
+| 39 | `ACH_THRONE` | Long Live the Queen | Build the Queen's Throne. |  |  |

@@ -58,6 +58,8 @@ namespace Antarium.Gameplay
         readonly bool[] _raisesPrincesses;
         /// <summary>Per building: name of the research that unlocks it (null if it starts unlocked).</summary>
         readonly string[] _unlockedBy;
+        /// <summary>Per building: name of the genetic trait that unlocks it when no research does (10.6: the Queen's Throne), else null.</summary>
+        readonly string[] _unlockedByTrait;
         float _caveInToastCooldown;
 
         public CastesPanel Castes { get; }
@@ -210,6 +212,11 @@ namespace Antarium.Gameplay
             _unlockedBy = new string[content.Buildings.Length];
             foreach (var r in content.Research)
                 foreach (int b in r.UnlockBuildings) _unlockedBy[b] = r.Def.DisplayName;
+            _unlockedByTrait = new string[content.Buildings.Length];
+            foreach (var g in content.Genetics)
+                for (int k = 0; k < g.Effects.Length; k++)
+                    if (g.Effects[k].kind == GeneticEffectKind.UnlockBuilding && _unlockedBy[g.Targets[k]] == null)
+                        _unlockedByTrait[g.Targets[k]] = g.Def.DisplayName;
             _buildingButtons = new Button[content.Buildings.Length];
             _buildingCosts = new Label[content.Buildings.Length];
             _buildingLockShown = new bool[content.Buildings.Length];
@@ -221,7 +228,7 @@ namespace Antarium.Gameplay
             Research = new ResearchPanel(content);
             Menu = new MenuDialog(autosaveSeconds);
             WelcomeBack = new WelcomeBackDialog(content);
-            Genetics = new GeneticPanel(content);
+            Genetics = new GeneticPanel(content, art);
             Flight = new FlightDialog(content);
             Settings = new SettingsDialog(input);
             AchievementsPanel = new AchievementsDialog(content);
@@ -619,6 +626,10 @@ namespace Antarium.Gameplay
                 if (startOnly) _sb.Append(" It takes effect in the next colony.");
                 ShowToast(_sb.ToString());
             }
+            foreach (var e in events.Read<RespecEvent>())
+                ShowToast(e.Fee > 0
+                    ? $"Your bloodline forgot its traits: {e.Refund} Genetic Memory came back ({e.Fee} lost to the respec)."
+                    : $"Your bloodline forgot its traits: all {e.Refund} Genetic Memory came back. Spend it again in the tree.");
             foreach (var e in events.Read<GeneticFailedEvent>())
             {
                 if (e.Trait < 0 || e.Trait >= _content.Genetics.Length) continue;
@@ -775,11 +786,14 @@ namespace Antarium.Gameplay
                 case PlaceResult.Unique: return data != null ? $"There is only one {data.Def.DisplayName}." : "Only one of those.";
                 case PlaceResult.WrongBiome:
                     return data != null && data.RequiredBiome >= 0
-                        ? $"The {data.Def.DisplayName} can only be built in the {_content.Biomes[data.RequiredBiome].Def.DisplayName}."
+                        ? $"The {data.Def.DisplayName} can only be built in the {sim.BiomeName(data.RequiredBiome)}."
                         : "It can't be built here.";
                 case PlaceResult.NeedsCrystal: return "A Crystal Resonator must touch glow crystals (or copper / iron ore leading to them).";
                 case PlaceResult.Permanent: return data != null ? $"The {data.Def.DisplayName} can't be taken down once it stands." : "That stays.";
+                case PlaceResult.NeedsQueen: return "The Queen's Throne is built around the queen: her cell must be in its bottom row.";
                 case PlaceResult.Locked:
+                    if (data != null && _unlockedByTrait[def] != null)
+                        return $"{data.Def.DisplayName} is known only to your bloodline: buy {_unlockedByTrait[def]} in the Genetic Memory tree (G).";
                     return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first (T)." : "Locked.";
                 case PlaceResult.CantAfford:
                 {
@@ -894,6 +908,7 @@ namespace Antarium.Gameplay
             for (int i = 0; i < _buildingButtons.Length; i++)
             {
                 bool locked = !colony.BuildingUnlocked[i];
+                _buildingButtons[i].EnableInClassList("hidden", locked && _unlockedByTrait[i] != null); // a bloodline secret until bought
                 _buildingButtons[i].EnableInClassList("building--poor", !locked && !inv.CanAfford(_content.Buildings[i]));
                 _buildingButtons[i].EnableInClassList("building--locked", locked);
                 if (locked == _buildingLockShown[i]) continue;

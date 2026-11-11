@@ -128,7 +128,17 @@ namespace Antarium.Presentation
 
             // The queen breathes: her gaster swells and settles about once a second.
             int queenRect = ((int)(time * QueenBreathsPerSecond * 2f) & 1) == 0 ? ColonySprites.QueenRect : ColonySprites.QueenBreathRect;
-            WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[queenRect], White, quad++);
+            int throne = sim.Buildings.Throne;
+            if (throne >= 0 && sim.Buildings.ThroneStanding)
+            {
+                // On the Queen's Throne (10.6): centred on the dais, raised to its top.
+                float centerX = sim.Buildings.ThroneCenter(throne).x;
+                float2 at = new float2(centerX + 0.5f, sim.Buildings.Get(throne).Origin.y + 0.5f) * WorldConstants.CellSize
+                            + new float2(0f, BuildingSprites.ThroneDais / (float)WorldConstants.PixelsPerUnit);
+                SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(at, new int2(0, 1), ColonySprites.QueenHeight),
+                    new int2(ColonySprites.QueenWidth, ColonySprites.QueenHeight), new int2(0, 1), 1, rects[queenRect], White, at);
+            }
+            else WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[queenRect], White, quad++);
             foreach (var egg in colony.Eggs)
             {
                 if (egg.InNursery && egg.Nursery < sim.Buildings.All.Length)

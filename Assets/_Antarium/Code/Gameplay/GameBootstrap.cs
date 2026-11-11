@@ -53,7 +53,9 @@ namespace Antarium.Gameplay
 
         ContentDB _content;
         IPlatformServices _platform;
+        /// <summary>The slot being played (10.6: three slots, each its own bloodline).</summary>
         SaveStore _store;
+        SaveStore[] _stores;
         SettingsStore _settingsStore;
         GameSettings _settings;
         Simulation _sim;
@@ -122,7 +124,9 @@ namespace Antarium.Gameplay
             _platform = capture != null ? new LocalPlatform(capture.ScratchDirectory)
                 : PlatformServices.Create(Application.persistentDataPath, AchievementNames(), StatNames());
             _platform.OverlayChanged += open => _overlayOpen = open;
-            _store = new SaveStore(_platform.SaveDirectory);
+            _stores = new SaveStore[SaveStore.SlotCount];
+            for (int i = 0; i < _stores.Length; i++) _stores[i] = new SaveStore(_platform.SaveDirectory, i);
+            _store = _stores[SaveStore.LatestSlot(_stores)]; // Continue = the slot played last
             _settingsStore = new SettingsStore(Application.persistentDataPath);
             _settings = capture != null ? new GameSettings() : _settingsStore.Load();
             if (globalLight != null) globalLight.intensity = config.render.ambient;
@@ -236,6 +240,12 @@ namespace Antarium.Gameplay
             _hud.Menu.Save += () => Save(background: true, announce: true);
             _hud.Menu.Load += () => { if (!TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load."); };
             _hud.Menu.NewGame += () => StartNewColony(NewSeed(), _sim?.Legacy.Clone());
+            _hud.Menu.NewBloodline += () =>
+            {
+                _hud.HideModal();
+                StartNewColony(NewSeed(), announce: false);
+                _hud.ShowToast($"A new bloodline begins in slot {_store.Slot + 1}: no Genetic Memory, no traits. Achievements stay yours.");
+            };
             _hud.Menu.Settings += () => OpenSettings(fromMenu: true);
             _hud.Menu.Achievements += () => OpenAchievements(fromMenu: true);
             _hud.Menu.Help += () => OpenHelp(fromMenu: true);
@@ -246,6 +256,7 @@ namespace Antarium.Gameplay
             };
             _hud.Menu.Quit += Quit;
             _hud.Genetics.BuyClicked += trait => _sim?.EnqueueGenetic(trait);
+            _hud.Genetics.RespecClicked += () => _sim?.EnqueueRespec();
             _hud.Genetics.CloseClicked += _hud.HideModal;
             _hud.Flight.FlyClicked += BeginFlight;
             _hud.Flight.GeneticsClicked += () => _hud.ShowModal(_hud.Genetics.Root);
@@ -261,6 +272,9 @@ namespace Antarium.Gameplay
                 if (!_freshColony) StartNewColony(NewSeed(), _sim?.Legacy.Clone());
                 LeaveTitle();
             };
+            _hud.Title.PlaySlot += PlaySlot;
+            _hud.Title.NewBloodline += NewBloodlineIn;
+            _hud.Title.DeleteSlot += DeleteSlot;
             _hud.Title.Settings += () => OpenSettings(fromMenu: false);
             _hud.Title.Achievements += () => OpenAchievements(fromMenu: false);
             _hud.Title.Help += () => OpenHelp(fromMenu: false);
@@ -423,12 +437,13 @@ namespace Antarium.Gameplay
 
         void OnApplicationFocus(bool focus) => _focused = focus;
 
-        /// <summary>Settings → Erase all progress: no save, no bloodline, no local achievements; a fresh colony behind the title.</summary>
+        /// <summary>Settings → Erase all progress: no saves in any slot, no bloodline, no local achievements; a fresh colony behind the title.</summary>
         void EraseProgress()
         {
             try
             {
-                _store.Delete();
+                foreach (var store in _stores) store.Delete();
+                _store = _stores[0];
             }
             catch (Exception e)
             {
@@ -442,6 +457,80 @@ namespace Antarium.Gameplay
             _hud.ShowToast("All progress was erased.");
         }
 
+        // ---------------------------------------------------------------- save slots (10.6)
+
+        /// <summary>Title → a slot's Play: loads it (the colony on screen is saved already: the title never changes it).</summary>
+        void PlaySlot(int slot)
+        {
+            if (slot == _store.Slot && !_freshColony)
+            {
+                _hud.Title.ShowSlots(false);
+                LeaveTitle();
+                return;
+            }
+            var previous = _store;
+            previous.Wait();
+            _store = _stores[slot];
+            if (!TryLoad(applyOffline: false))
+            {
+                _store = previous;
+                ShowTitle();
+                return;
+            }
+            _hud.Title.ShowSlots(false);
+            LeaveTitle(); // credits the offline time of the slot just loaded
+        }
+
+        /// <summary>Title → an empty slot's New bloodline: a fresh colony with no legacy, saved to that slot from now on.</summary>
+        void NewBloodlineIn(int slot)
+        {
+            _store.Wait();
+            _store = _stores[slot];
+            StartNewColony(NewSeed(), announce: false);
+            _hud.Title.ShowSlots(false);
+            LeaveTitle();
+        }
+
+        /// <summary>Title → Delete (confirmed): the slot's save and backups go; deleting the current slot leaves a fresh colony in it.</summary>
+        void DeleteSlot(int slot)
+        {
+            try
+            {
+                _stores[slot].Delete();
+            }
+            catch (Exception e)
+            {
+                _hud.ShowToast("Could not delete the save: " + e.Message);
+                return;
+            }
+            if (slot == _store.Slot) StartNewColony(NewSeed(), announce: false);
+            ShowTitle();
+            _hud.ShowToast($"Slot {slot + 1} was deleted.");
+        }
+
+        SlotView[] SlotViews()
+        {
+            var views = new SlotView[_stores.Length];
+            var now = DateTime.UtcNow;
+            for (int i = 0; i < _stores.Length; i++)
+            {
+                var h = _stores[i].TryReadHeader();
+                if (h == null)
+                {
+                    views[i] = new SlotView { Empty = true };
+                    continue;
+                }
+                string generation = h.Generation > 0 ? $"Generation {h.Generation}, " : "";
+                views[i] = new SlotView
+                {
+                    Current = i == _store.Slot && !_freshColony,
+                    Summary = $"{generation}{NumberFormat.Format(h.Ants)} ants, {h.MaxDepth} cells deep",
+                    Detail = $"Played {HudText.Duration(h.PlayTime)}, saved {HudText.Duration((now - h.SavedUtc).TotalSeconds)} ago",
+                };
+            }
+            return views;
+        }
+
         // ---------------------------------------------------------------- title screen and system dialogs
 
         void ShowTitle()
@@ -452,10 +541,11 @@ namespace Antarium.Gameplay
             if (!_freshColony && _sim != null)
             {
                 string saved = _lastSaved.HasValue ? $"saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "";
-                status = $"{NumberFormat.Format(_sim.Ants.Count)} ants, {_sim.Colony.Stats.MaxDepth} cells deep, played {HudText.Duration(_sim.PlayTime)}, {saved}";
+                status = $"Slot {_store.Slot + 1}: {NumberFormat.Format(_sim.Ants.Count)} ants, {_sim.Colony.Stats.MaxDepth} cells deep, played {HudText.Duration(_sim.PlayTime)}, {saved}";
                 if (_sim.Legacy.Flights > 0) status += $". Generation {_sim.Legacy.Flights + 1}";
             }
             _hud.Title.SetSave(status);
+            _hud.Title.SetSlots(SlotViews());
             _hud.SetTitle(true);
             _titleTime = 0f;
         }
@@ -712,7 +802,7 @@ namespace Antarium.Gameplay
                 if (_tools.CancelTargeting()) { }
                 else if (SystemDialogOpen) CloseSystemDialog();
                 else if (_hud.ModalOpen) _hud.HideModal();
-                else if (_hud.TitleShowing) { }
+                else if (_hud.TitleShowing) { if (_hud.Title.SlotsShowing) _hud.Title.ShowSlots(false); }
                 else if (_tools.Possessing) _sim.EnqueueRelease();
                 else if (_hud.Configure != null && _hud.Configure.Visible) _hud.Configure.Hide();
                 else _hud.ShowModal(_hud.Menu?.Root);
@@ -753,7 +843,7 @@ namespace Antarium.Gameplay
         string MenuStatus()
         {
             string saved = _lastSaved.HasValue ? $"saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "not saved yet";
-            return $"Seed {_sim.Seed}   played {HudText.Duration(_sim.PlayTime)}   {saved}";
+            return $"Slot {_store.Slot + 1}   seed {_sim.Seed}   played {HudText.Duration(_sim.PlayTime)}   {saved}";
         }
 
         /// <summary>I: configure what is under the pointer (again on the same thing closes the panel).</summary>

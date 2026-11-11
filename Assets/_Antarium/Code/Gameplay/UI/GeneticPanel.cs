@@ -8,7 +8,8 @@ namespace Antarium.Gameplay
 {
     /// <summary>
     /// The Genetic Memory tree (G): traits bought with Genetic Memory from Nuptial Flights, kept in every colony after.
-    /// One column per tier; nodes show their level and the cost of the next one. Hover for details, click to buy.
+    /// One column per tier; nodes show their level and the cost of the next one. Hover for details, click to buy. Respec
+    /// (10.6, two clicks) unlearns every trait for a refund: free once per colony, then a fee.
     /// </summary>
     public sealed class GeneticPanel
     {
@@ -16,14 +17,20 @@ namespace Antarium.Gameplay
         readonly Button[] _nodes;
         readonly Label[] _levels;
         readonly Label _memory, _detail;
+        readonly Button _respec;
         readonly StringBuilder _sb = new();
         int _hovered = -1;
+        bool _respecHovered;
+        /// <summary>Real time until which a second click on Respec confirms it.</summary>
+        float _respecConfirmUntil;
+        const float ConfirmSeconds = 3f;
 
         public VisualElement Root { get; }
         public event Action<int> BuyClicked;
+        public event Action RespecClicked;
         public event Action CloseClicked;
 
-        public GeneticPanel(ContentDB content)
+        public GeneticPanel(ContentDB content, ArtLibrary art = null)
         {
             _content = content;
             Root = new VisualElement();
@@ -39,6 +46,22 @@ namespace Antarium.Gameplay
             _memory = new Label();
             _memory.AddToClassList("research__knowledge");
             header.Add(_memory);
+            _respec = new Button(() =>
+            {
+                float now = UnityEngine.Time.realtimeSinceStartup;
+                if (now < _respecConfirmUntil)
+                {
+                    _respecConfirmUntil = 0f;
+                    RespecClicked?.Invoke();
+                }
+                else _respecConfirmUntil = now + ConfirmSeconds;
+            }) { text = "Respec", focusable = false };
+            _respec.AddToClassList("small-button");
+            _respec.AddToClassList("genetics__respec");
+            HudController.AddButtonIcon(_respec, art, "respec");
+            _respec.RegisterCallback<PointerEnterEvent>(_ => _respecHovered = true);
+            _respec.RegisterCallback<PointerLeaveEvent>(_ => _respecHovered = false);
+            header.Add(_respec);
             var close = new Button(() => CloseClicked?.Invoke()) { text = "Close (G)", focusable = false };
             close.AddToClassList("small-button");
             header.Add(close);
@@ -128,7 +151,24 @@ namespace Antarium.Gameplay
                 string text = _sb.ToString();
                 if (_levels[i].text != text) _levels[i].text = text;
             }
-            _detail.text = Detail(sim);
+            var (refund, fee) = sim.RespecPrice();
+            bool confirming = UnityEngine.Time.realtimeSinceStartup < _respecConfirmUntil && refund + fee > 0;
+            string label = refund + fee <= 0 ? "Respec" : confirming ? "Click again to respec" : fee > 0 ? $"Respec (-{fee})" : "Respec (free)";
+            HudController.SetButtonText(_respec, label);
+            _respec.SetEnabled(refund + fee > 0);
+            _respec.EnableInClassList("menu-button--warn", confirming);
+            _detail.text = _respecHovered ? RespecDetail(sim, refund, fee) : Detail(sim);
+        }
+
+        string RespecDetail(Simulation sim, int refund, int fee)
+        {
+            if (refund + fee <= 0) return "Respec: unlearn every trait and get the Genetic Memory back. Nothing to unlearn yet.";
+            _sb.Clear().Append("Respec: unlearn every trait and get ").Append(refund).Append(" of the ").Append(refund + fee)
+                .Append(" Genetic Memory spent back");
+            _sb.Append(fee > 0 ? $" ({fee} lost: this colony's free respec is used)." : " (free: one respec per colony costs nothing).");
+            _sb.Append("\nColony bonuses stop at once and unlocked world modifiers and buildings lock again (what is built stays). Research a trait ")
+                .Append("passed on stays done in this colony. Click twice.");
+            return _sb.ToString();
         }
 
         string Detail(Simulation sim)
@@ -180,6 +220,7 @@ namespace Antarium.Gameplay
                 case GeneticEffectKind.MaxPrincesses: _sb.Append('+').Append(e.value).Append(" princess counted per level"); break;
                 case GeneticEffectKind.RevealRadius: _sb.Append("New colonies see ").Append(e.value).Append(" cells around the nest per level"); break;
                 case GeneticEffectKind.VeinInstinct: _sb.Append("Ore next to dug-out cells is ordered for mining automatically"); break;
+                case GeneticEffectKind.UnlockBuilding: _sb.Append("Unlocks the ").Append(_content.Buildings[target].Def.DisplayName).Append(" in every colony"); break;
             }
         }
     }

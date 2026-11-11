@@ -103,6 +103,7 @@ namespace Antarium.Editor
             AchievementKind.AntsAlive => (Colony, Crowd()),
             AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Resonator =>
                 (Mind, Glyph(Sparkle, Pal('Y', 0x7fd8ff, 'W', 0xe0fbff))),
+            AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Throne => (Royal, Atlas(ColonySprites.QueenRect)),
             AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Chest =>
                 (Industry, Glyph(Chest, Pal('o', 0x2a1a10, 'W', 0x6b4a2c, 'P', 0x93693f, 'h', 0xe0c070, 'n', 0xd47a3c, 'N', 0xaeb8c6))),
             AchievementKind.Build => (Industry, Glyph(Belt, Pal('o', 0x1c2228, 'H', 0xa8b4c0, 'M', 0x6a7684, 'D', 0x3a4450, 'n', ItemHex(def), 'N', Lighter(ItemHex(def))))),

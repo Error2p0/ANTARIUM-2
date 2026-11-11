@@ -133,6 +133,7 @@ namespace Antarium.Presentation
                 case BuildingKind.WaterWheel: v.Rect = BuildingSprites.WheelRect; v.Frames = BuildingSprites.AnimFrames; break;
                 case BuildingKind.Resonator: v.Rect = BuildingSprites.ResonatorRect; v.Frames = 2; break;
                 case BuildingKind.Engine: v.Rect = BuildingSprites.EngineRect; v.Frames = BuildingSprites.EngineFrames; break;
+                case BuildingKind.Throne: v.Rect = BuildingSprites.ThroneRect; break;
                 default:
                     v.Rect = def.art switch
                     {

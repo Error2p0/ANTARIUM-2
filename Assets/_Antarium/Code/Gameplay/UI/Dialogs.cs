@@ -8,19 +8,19 @@ using UnityEngine.UIElements;
 namespace Antarium.Gameplay
 {
     /// <summary>
-    /// Esc menu: resume, save, load, start a new colony (confirmed by a second click), settings, achievements, help,
-    /// back to the title screen, quit.
+    /// Esc menu: resume, save, load, start a new colony or a new bloodline (both confirmed by a second click), settings,
+    /// achievements, help, back to the title screen, quit.
     /// </summary>
     public sealed class MenuDialog
     {
         const float ConfirmSeconds = 3f;
 
-        readonly Button _newGame;
+        readonly Button _newGame, _newBloodline;
         readonly Label _status;
-        float _confirm;
+        float _confirm, _confirmBloodline;
 
         public VisualElement Root { get; }
-        public event Action Resume, Save, Load, NewGame, Settings, Achievements, Help, MainMenu, Quit;
+        public event Action Resume, Save, Load, NewGame, NewBloodline, Settings, Achievements, Help, MainMenu, Quit;
 
         public MenuDialog(float autosaveSeconds)
         {
@@ -37,6 +37,15 @@ namespace Antarium.Gameplay
                     NewGame?.Invoke();
                 }
                 else _confirm = ConfirmSeconds;
+            });
+            _newBloodline = Dialogs.Button(Root, "New bloodline", () =>
+            {
+                if (_confirmBloodline > 0f)
+                {
+                    _confirmBloodline = 0f;
+                    NewBloodline?.Invoke();
+                }
+                else _confirmBloodline = ConfirmSeconds;
             });
             Dialogs.Button(Root, "Settings", () => Settings?.Invoke());
             Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
@@ -55,6 +64,10 @@ namespace Antarium.Gameplay
             bool confirming = _confirm > 0f;
             _newGame.text = confirming ? "Click again: abandon this colony?" : "New colony";
             _newGame.EnableInClassList("menu-button--warn", confirming);
+            if (_confirmBloodline > 0f) _confirmBloodline -= dt;
+            bool restart = _confirmBloodline > 0f;
+            _newBloodline.text = restart ? "Click again: start over without Genetic Memory?" : "New bloodline";
+            _newBloodline.EnableInClassList("menu-button--warn", restart);
         }
     }
 

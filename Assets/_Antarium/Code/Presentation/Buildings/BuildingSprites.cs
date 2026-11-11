@@ -19,7 +19,7 @@ namespace Antarium.Presentation
         public const int GardenWidth = 32, GardenHeight = 16;
         public const int ArchiveWidth = 24, ArchiveHeight = 16;
 
-        const int AtlasWidth = 128, AtlasHeight = 128;
+        const int AtlasWidth = 128, AtlasHeight = 144;
 
         // Rect indices.
         public const int BeltRect = 0;                      // 4 frames
@@ -74,7 +74,12 @@ namespace Antarium.Presentation
         /// <summary>Ancient Engine (4 x 3): one frame per restoration stage, the last one running (10.5).</summary>
         public const int EngineRect = ResonatorRect + 2;
         public const int EngineWidth = 32, EngineHeight = 24, EngineFrames = 4;
-        const int RectCount = EngineRect + EngineFrames;
+        /// <summary>Queen's Throne (4 x 2): a dais between two lamp pillars; the queen is drawn on the dais (10.6).</summary>
+        public const int ThroneRect = EngineRect + EngineFrames;
+        public const int ThroneWidth = 32, ThroneHeight = 16;
+        /// <summary>Height of the dais top above the floor, in art pixels: the queen rests there.</summary>
+        public const int ThroneDais = 5;
+        const int RectCount = ThroneRect + 1;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
@@ -108,6 +113,7 @@ namespace Antarium.Presentation
             ArtSlot.Strip("Buildings/water_wheel", WheelRect, AnimFrames),
             ArtSlot.Strip("Buildings/crystal_resonator", ResonatorRect, 2),
             ArtSlot.Strip("Buildings/ancient_engine", EngineRect, EngineFrames),
+            ArtSlot.Strip("Buildings/queens_throne", ThroneRect),
             ArtSlot.Strip("Buildings/generic", GenericRect),
             ArtSlot.Strip("Buildings/belt_item", ItemRect),
             ArtSlot.Strip("Buildings/dot", DotRect),
@@ -239,6 +245,9 @@ namespace Antarium.Presentation
                 PaintEngine(f * EngineWidth, 96, f);
                 Rects[EngineRect + f] = Rect(f * EngineWidth, 96, EngineWidth, EngineHeight);
             }
+
+            PaintThrone(0, 120);
+            Rects[ThroneRect] = Rect(0, 120, ThroneWidth, ThroneHeight);
 
             ArtOverrides.Apply(art, Slots, _px, AtlasWidth, AtlasHeight, Rects);
 
@@ -399,6 +408,38 @@ namespace Antarium.Presentation
             {
                 Set(ox + sx, oy + y, stage == 3 ? CrystalHigh : CrystalDark);
                 Set(ox + sx + 1, oy + y, CrystalMid);
+            }
+        }
+
+        /// <summary>Queen's Throne (generated fallback): a gold-trimmed dais of ruin stone between two pillars with crystal lamps.</summary>
+        void PaintThrone(int ox, int oy)
+        {
+            for (int x = 0; x < ThroneWidth; x++) Set(ox + x, oy, RuinDark);
+            for (int x = 1; x < ThroneWidth - 1; x++)
+            {
+                Set(ox + x, oy + 1, x % 6 == 0 ? RuinDark : Ruin);
+                Set(ox + x, oy + 2, x % 4 == 0 ? Gold : GoldDark);
+            }
+            for (int x = 3; x < ThroneWidth - 3; x++)
+            {
+                Set(ox + x, oy + 3, x % 5 == 0 ? RuinDark : RuinHigh);
+                Set(ox + x, oy + 4, x % 3 == 0 ? Gold : GoldDark);
+            }
+            foreach (int px in new[] { 0, ThroneWidth - 3 })
+            {
+                for (int y = 3; y < 13; y++)
+                {
+                    Set(ox + px, oy + y, Ruin);
+                    Set(ox + px + 1, oy + y, y % 4 == 0 ? RuinDark : RuinHigh);
+                    Set(ox + px + 2, oy + y, RuinDark);
+                }
+                for (int x = 0; x < 3; x++)
+                {
+                    Set(ox + px + x, oy + 13, Gold);
+                    Set(ox + px + x, oy + 12, GoldDark);
+                }
+                Set(ox + px + 1, oy + 14, CrystalMid);
+                Set(ox + px + 1, oy + 15, CrystalHigh);
             }
         }
 

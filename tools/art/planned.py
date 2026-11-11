@@ -319,6 +319,10 @@ ICONS = {
     "building_ancient_engine": (keys("4=ruin:4 3=ruin:3 1=ruin:1 0=ruin:0 g=gold:4 G=gold:5 d=gold:2 c=crystal:5"), [
         "...3443...", "..343343..", ".33100133.", ".3gdgdg33.", "c31gGGg13c", "c3dG..Gd3c", ".31gddg13.", ".33100133.", "4444444444", "1111111111",
     ]),
+    # Build palette icon for the Queen's Throne (added when 10.6 was built).
+    "building_queens_throne": (keys("4=ruin:4 3=ruin:3 1=ruin:1 g=gold:4 G=gold:5 d=gold:2 c=crystal:5 q=chitin:4 Q=chitin:5 k=chitin:2"), [
+        "c........c", "3........3", "4..qQQq..4", "3.kqqqqk.3", "4..k..k..4", "3gGgGgGgg3", "4dddddddd4", "1444444441", "3333333333", "1111111111",
+    ]),
     # Respec (10.6).
     "respec": (keys("5=gold:4 4=gold:3"), [
         "..........", "...5555.5.", "..5....55.", ".5....555.", ".5........", "........4.", ".444....4.", ".44....4..", ".4.4444...", "..........",

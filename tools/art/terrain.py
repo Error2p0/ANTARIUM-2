@@ -210,12 +210,13 @@ def tint_patches(img, rng, strength=0.07):
     return np.clip(out, 0, 255).astype(np.uint8)
 
 
-def stone():
-    """Stone strata: cool grey rock in facets of mixed tones with boulders set in, and a few dark fractures."""
+def stone(ramp="stone"):
+    """Stone strata: cool grey rock in facets of mixed tones with boulders set in, and a few dark fractures.
+    With another ramp it is a biome variant's rock (10.6): the same shapes, another palette."""
     rng = rng_for("stone")
     tone, fracture = rock(rng, 15, (1.0, 1.6), 0.45, min_gap=4.0)
     tone = boulders(tone, rng, 3, 3, 5, min_gap=12)
-    return tint_patches(STONE()[tone], rng)
+    return tint_patches(tones(ramp, 3, 0.7)[tone], rng)
 
 
 def scatter_1d(rng, count, min_gap):
@@ -425,8 +426,8 @@ def packed_earth():
 
 # ---------------------------------------------------------------- clay
 
-def clay():
-    """Clay: smooth bedded layers in close warm tones, thin broken seams, a few drying cracks."""
+def clay(ramp="clay"):
+    """Clay: smooth bedded layers in close warm tones, thin broken seams, a few drying cracks (another ramp: a variant)."""
     rng = rng_for("clay")
     layer, row, height = strata(rng, 5, wobble=1.6)
     tone = np.array([2, 1, 2, 3, 2, 2, 3, 1, 2, 2])[layer % 10]
@@ -439,7 +440,7 @@ def clay():
             tone[(y0 + d) % SIZE, (x + (d // 2) % 2) % SIZE] = 0
     tone = speckle(rng, tone, 0.012, 0.02)
     tone = boulders(np.clip(tone, 0, 4), rng, 2, 2, 3, min_gap=14, fills=(3,), soft=True)
-    return tint_patches(tones("clay", 3, 0.6)[tone], rng)
+    return tint_patches(tones(ramp, 3, 0.6)[tone], rng)
 
 
 # ---------------------------------------------------------------- ores and finds
@@ -570,14 +571,18 @@ def bedrock():
     return tint_patches(tones5(0x0c0b10, 0x1a191e, 0x2b2a30, 0x3a3940, 0x4a4954)[tone], rng, 0.06)
 
 
-def quartzite():
-    """Quartzite: pale lavender-grey, angular, with glints."""
+QUARTZITE = (0x55526a, 0x737089, 0x8e8a9a, 0xa9a5b9, 0xc8c4da)
+AMETHYST = (0x3a2050, 0x56307a, 0x744a9c, 0x9468bc, 0xb890dc)
+
+
+def quartzite(five=QUARTZITE, shine=(0xee, 0xea, 0xff)):
+    """Quartzite: pale lavender-grey, angular, with glints (other tones: the amethyst variant)."""
     rng = rng_for("quartzite")
     tone, fracture = rock(rng, 18, (1.0, 1.0), 0.4, min_gap=4.5)
     tone = boulders(tone, rng, 2, 3, 4, min_gap=14)
-    img = tint_patches(tones5(0x55526a, 0x737089, 0x8e8a9a, 0xa9a5b9, 0xc8c4da)[tone], rng, 0.05)
+    img = tint_patches(tones5(*five)[tone], rng, 0.05)
     glint = (rng.random((SIZE, SIZE)) > 0.988) & ~fracture
-    img[glint] = (0xee, 0xea, 0xff, 255)
+    img[glint] = (*shine, 255)
     return img
 
 
@@ -759,4 +764,8 @@ TILES = {
     "glow_crystal": glow_crystal, "obsidian": obsidian, "magma_rock": magma_rock, "meteorite": meteorite,
     "mycelium": mycelium, "giant_fungus": giant_fungus, "ruin_brick": ruin_brick, "relic": relic, "ash": ash,
     "tablet": tablet,
+    # Biome variants (10.6): a world modifier swaps a biome's base rock for one of these.
+    "ember_stone": lambda: stone("ember"),
+    "gley_clay": lambda: clay("gley"),
+    "amethyst": lambda: quartzite(AMETHYST, (0xf4, 0xe0, 0xff)),
 }
