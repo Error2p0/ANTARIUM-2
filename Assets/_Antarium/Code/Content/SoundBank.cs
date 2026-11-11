@@ -26,6 +26,8 @@ namespace Antarium.Content
         FireIgnite,
         // the deep endgame (Milestone 10.5)
         LoreFound, EngineStage, EngineAwakened, Burrow, ItemStolen,
+        // presentation pass (Milestone 10.7): queen evolutions, ant levels, the respec, the Quickening, raiders getting away
+        Evolution, LevelUp, Respec, Quickening, Escaped,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }

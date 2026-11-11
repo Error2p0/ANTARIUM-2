@@ -364,6 +364,7 @@ namespace Antarium.Presentation
                 }
             }
             foreach (var e in events.Read<ItemStolenEvent>()) Queue(SoundCue.ItemStolen, e.Cell);
+            foreach (var e in events.Read<EnemyEscapedEvent>()) Queue(SoundCue.Escaped, e.Cell);
             foreach (var e in events.Read<DiggerEvent>())
             {
                 if (e.Phase == DiggerPhase.Dug) Queue(SoundCue.Burrow, e.Cell);
@@ -384,6 +385,10 @@ namespace Antarium.Presentation
                 || events.Read<GeneticFailedEvent>().Length > 0) QueueUi(SoundCue.Refused);
             if (events.Read<ContractClaimedEvent>().Length > 0) QueueUi(SoundCue.ContractClaim);
             if (events.Read<GeneticBoughtEvent>().Length > 0) QueueUi(SoundCue.GeneticBought);
+            if (events.Read<RespecEvent>().Length > 0) QueueUi(SoundCue.Respec);
+            if (events.Read<EvolutionBoughtEvent>().Length > 0) QueueUi(SoundCue.Evolution);
+            if (events.Read<EvolutionFailedEvent>().Length > 0) QueueUi(SoundCue.Refused);
+            foreach (var e in events.Read<AntLevelUpEvent>()) Queue(SoundCue.LevelUp, e.Cell);
             foreach (var e in events.Read<AbilityUsedEvent>())
             {
                 var kind = e.Ability >= 0 && e.Ability < _content.Abilities.Length ? _content.Abilities[e.Ability].kind : AbilityKind.Frenzy;
@@ -392,6 +397,7 @@ namespace Antarium.Presentation
                     AbilityKind.SeismicSense => SoundCue.Seismic,
                     AbilityKind.RoyalDecree => SoundCue.Decree,
                     AbilityKind.PheromoneBurst => SoundCue.PheromoneBurst,
+                    AbilityKind.Quickening => SoundCue.Quickening,
                     _ => SoundCue.Frenzy,
                 });
             }

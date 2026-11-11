@@ -116,6 +116,15 @@ namespace Antarium.Editor
             Sfx(SoundCue.Burrow, Patch(SynthWave.Noise, 0.35f, 180f, 90f, attack: 0.05f, decay: 1.5f, lowpass: 450f, gain: 1.2f), 0.4f, 0.6f, 1);
             Sfx(SoundCue.ItemStolen, Patch(SynthWave.Triangle, 0.12f, 900f, 1500f, decay: 2.5f), 0.3f, 0.15f, 2);
 
+            // the presentation pass: a warm rising swell when the queen evolves, a tiny two-note blip where an ant levels up,
+            // a falling shimmer when the bloodline forgets its traits, a fast rising arpeggio for the Quickening, a mocking
+            // falling blip where raiders get away with food
+            Ui(SoundCue.Evolution, Patch(SynthWave.Triangle, 1.1f, 262f, attack: 0.08f, decay: 1.6f, harmonics: 0.5f, vibratoHz: 5f, vibratoDepth: 0.15f, notes: 3, noteStep: 4f), 0.5f, 0.5f);
+            Sfx(SoundCue.LevelUp, Patch(SynthWave.Square, 0.16f, 1047f, decay: 2.5f, lowpass: 5000f, notes: 2, noteStep: 7f, crush: 9000f), 0.14f, 0.5f, 1, variants: 1);
+            Ui(SoundCue.Respec, Patch(SynthWave.Sine, 1.2f, 1400f, 300f, attack: 0.02f, decay: 1.4f, harmonics: 0.4f, vibratoHz: 9f, vibratoDepth: 0.4f), 0.45f, 1f);
+            Ui(SoundCue.Quickening, Patch(SynthWave.Pluck, 0.9f, 523f, decay: 2f, harmonics: 0.3f, notes: 6, noteStep: 2f), 0.5f, 0.5f);
+            Sfx(SoundCue.Escaped, Patch(SynthWave.Triangle, 0.35f, 600f, 250f, decay: 2f, lowpass: 3000f, notes: 2, noteStep: -3f), 0.35f, 1f, 1);
+
             void Bed(string biomeId, AmbiencePatch patch)
             {
                 var biome = biomeId == null ? null : AssetDatabase.LoadAssetAtPath<BiomeDef>($"{BiomesFolder}/{biomeId}.asset");
