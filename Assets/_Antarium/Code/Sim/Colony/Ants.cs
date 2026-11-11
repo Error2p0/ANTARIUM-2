@@ -264,6 +264,13 @@ namespace Antarium.Sim
         /// <summary>Multiplier on the hit points ants regain per second.</summary>
         public float RegenFactor;
         public GrowthTick Growth;
+        /// <summary>Queen's Throne (10.6): ants within the radius (squared, cells) of the centre dig and build faster by <see cref="AuraWork"/>.</summary>
+        public float2 AuraCenter;
+        public float AuraRadiusSq, AuraWork;
+
+        /// <summary>Work multiplier of the Queen's Throne aura for an ant on <paramref name="cell"/> (1 outside it).</summary>
+        public static float AuraFactor(in AntTick tick, int2 cell) =>
+            tick.AuraWork > 0f && math.distancesq(new float2(cell), tick.AuraCenter) <= tick.AuraRadiusSq ? 1f + tick.AuraWork : 1f;
 
         public static AntTick Default(float dt) => new()
         {
@@ -779,7 +786,10 @@ namespace Antarium.Sim
             float SkillPreference(in Ant a, JobKind job) => a.HasSkill(job) ? math.max(0.2f, 1f - Tick.Growth.LevelPreference * (Level(a) - 1)) : 1f;
 
             /// <summary>Lazy ants work slower.</summary>
-            float WorkTrait(in Ant a) => a.Trait == AntTrait.Lazy ? Tick.Growth.LazyWork : 1f;
+            float WorkTrait(in Ant a) => (a.Trait == AntTrait.Lazy ? Tick.Growth.LazyWork : 1f) * Aura(a);
+
+            /// <summary>The Queen's Throne: ants near it work faster.</summary>
+            float Aura(in Ant a) => AntTick.AuraFactor(Tick, a.Cell);
 
             /// <summary>Walking-speed multiplier of this ant: lane jitter, Swift / Lazy, and its skill while doing that job.</summary>
             float WalkFactor(in Ant a)

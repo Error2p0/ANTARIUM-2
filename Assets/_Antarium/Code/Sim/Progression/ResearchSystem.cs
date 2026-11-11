@@ -67,6 +67,14 @@ namespace Antarium.Sim
         }
 
         /// <summary>Lore fragments the node asks for (0 = none).</summary>
+        /// <summary>Some research done in this colony unlocks building <paramref name="building"/>.</summary>
+        public bool UnlocksBuilding(int building)
+        {
+            for (int r = 0; r < Done.Length; r++)
+                if (Done[r] && Array.IndexOf(_content.Research[r].UnlockBuildings, building) >= 0) return true;
+            return false;
+        }
+
         public int LoreRequired(int index) => _content.Research[index].Def.loreRequired;
 
         /// <summary>Enough lore fragments are found for the node.</summary>

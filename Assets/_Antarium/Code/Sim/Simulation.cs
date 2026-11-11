@@ -18,7 +18,7 @@ namespace Antarium.Sim
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
             ContainerFilter, Reserve, Recipe, Evolve, Priority,
-            Stage, TriggerDigger,
+            Stage, TriggerDigger, Respec,
         }
 
         readonly struct Command
@@ -386,6 +386,7 @@ namespace Antarium.Sim
             tick.Priority = PriorityWeights();
             tick.RegenFactor = mods.Mult(StatKind.AntRegen);
             tick.Growth = _growth;
+            UpdateThrone(ref tick);
             Ants.Think(World, Fields, Pheromones, tick);
             Ants.Resolve(this);
             ReinforceTrails();
@@ -459,6 +460,7 @@ namespace Antarium.Sim
                 case CommandKind.PossessAct: PossessAct(cmd.CellPos, cmd.Power); break;
                 case CommandKind.PossessInteract: PossessInteract(); break;
                 case CommandKind.Genetic: BuyGenetic(cmd.Def); break;
+                case CommandKind.Respec: Respec(); break;
                 case CommandKind.Evolve: Evolutions.Buy(cmd.Def); break;
                 case CommandKind.Priority: SetPriority((JobKind)cmd.Item, cmd.Def); break;
                 case CommandKind.TriggerEvent:

@@ -102,7 +102,7 @@ namespace Antarium.Sim
                     {
                         Top = top,
                         Bottom = last ? float.MaxValue : top + thickness,
-                        BaseMaterial = content.GetMaterialIndex(b.baseMaterial),
+                        BaseMaterial = tweaks.BaseMaterial(i, content.GetMaterialIndex(b.baseMaterial)),
                         CaveScale = b.caveScale,
                         CaveThreshold = b.caveThreshold + tweaks.CaveThreshold,
                         DepositStart = depositIndex,

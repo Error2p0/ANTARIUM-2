@@ -58,6 +58,8 @@ namespace Antarium.Sim
         NeedsCrystal,
         /// <summary>Removing: the Ancient Engine can't be taken down once it stands.</summary>
         Permanent,
+        /// <summary>The Queen's Throne must be built around the queen (her cell in its bottom row).</summary>
+        NeedsQueen,
     }
 
     /// <summary>An item riding a transport cell. <see cref="T"/> runs 0 → 1 along the cell.</summary>

@@ -201,7 +201,8 @@ namespace Antarium.Sim
             int biome = _sim.BiomeAtDepth(world.Depth(mid.x, mid.y));
             if (biome >= _content.Biomes.Length) return;
             var data = _content.Biomes[biome];
-            if (data.Creatures.Length == 0 || data.Def == null) return;
+            var creatures = _sim.Tweaks.Creatures(biome, data.Creatures); // a biome variant may bring other creatures (10.6)
+            if (creatures.Length == 0 || data.Def == null) return;
 
             float more = math.max(0f, _sim.Colony.Mods.Mult(StatKind.CreatureCount));
             float expected = cells.Length / (float)math.max(1, data.Def.caveCellsPerCreature) * more;
@@ -224,7 +225,7 @@ namespace Antarium.Sim
                     for (int b = 0; b < breaches.Length && far; b++)
                         far = math.distance(new float2(c), new float2(breaches[b])) >= minDist;
                     if (!far) continue;
-                    int def = data.Creatures[Rng.NextInt(data.Creatures.Length)];
+                    int def = creatures[Rng.NextInt(creatures.Length)];
                     Spawn(def, c, EnemyState.Dormant);
                     if (spawned == 0) { firstDef = def; firstCell = c; }
                     spawned++;

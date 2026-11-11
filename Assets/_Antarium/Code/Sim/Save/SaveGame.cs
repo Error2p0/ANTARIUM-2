@@ -51,8 +51,9 @@ namespace Antarium.Sim
         /// bird, night spiders still to come, the queen's honeydew). 10.4 adds ANTS 4 (experience, skill, trait, lane) and QUEN
         /// (queen evolutions by id, job priorities). 10.5 adds BLDG 4 (the Ancient Engine's stage), THRT 2 (rival ants' loot,
         /// diggers, the raid kind, the digger timer) and RUIN (items studied, lore fragments found by id, rival raids beaten).
+        /// Version 6 (10.6): the header holds the bloodline's generation (save slot picker); LGCY 2 adds the colony's respecs.
         /// </summary>
-        public const int Version = 5;
+        public const int Version = 6;
 
         // ---------------------------------------------------------------- save
 
@@ -70,6 +71,7 @@ namespace Antarium.Sim
                     PlayTime = sim.PlayTime,
                     Ants = sim.Ants.Count,
                     MaxDepth = sim.Colony.Stats.MaxDepth,
+                    Generation = sim.Legacy.Flights + 1,
                 },
                 ChunksX = world.ChunksX,
                 ChunksY = world.ChunksY,
@@ -85,7 +87,7 @@ namespace Antarium.Sim
             snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 4)));
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
             snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim), 2)));
-            snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim))));
+            snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim), 2)));
             snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim))));
             snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim))));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
@@ -329,6 +331,7 @@ namespace Antarium.Sim
             }
             w.Write(sim.WorldModifiers.Count);
             foreach (int m in sim.WorldModifiers) w.Write(sim.Content.Modifiers[m].Id);
+            w.Write(sim.Respecs); // v2
         }
 
         static void WriteLongs(BinaryWriter w, long[] values)
@@ -681,7 +684,7 @@ namespace Antarium.Sim
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
                 Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
-                Read(sections, "LGCY", (r, _) => ReadLegacy(r, sim));
+                Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
                 Read(sections, "SURF", (r, _) => ReadSurface(r, sim));
                 PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
@@ -696,7 +699,7 @@ namespace Antarium.Sim
         }
 
         /// <summary>
-        /// Upgrades the sections of an older save in place. 1 → 2 → 3 → 4 → 5 need nothing: every changed section carries
+        /// Upgrades the sections of an older save in place. 1 → 2 → 3 → 4 → 5 → 6 need nothing: every changed section carries
         /// its own version byte and the readers fill in defaults for older data (full health, workers, no fluid, no
         /// pheromones, the soldier share as the only caste share, one item carried, no princesses, an empty legacy).
         /// </summary>
@@ -995,7 +998,7 @@ namespace Antarium.Sim
         }
 
         /// <summary>Traits and world modifiers that no longer exist are dropped; levels above a trait's maximum are cut.</summary>
-        static void ReadLegacy(BinaryReader r, Simulation sim)
+        static void ReadLegacy(BinaryReader r, Simulation sim, byte version)
         {
             var content = sim.Content;
             var legacy = new Legacy(content)
@@ -1019,6 +1022,7 @@ namespace Antarium.Sim
             for (int i = 0; i < count; i++)
                 if (content.TryGetModifierIndex(r.ReadString(), out int m)) modifiers.Add(m);
             sim.RestoreLegacy(legacy, modifiers);
+            if (version >= 2) sim.Respecs = math.max(0, r.ReadInt32());
         }
 
         static void ReadLongs(BinaryReader r, Action<int, long> set)

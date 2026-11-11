@@ -148,6 +148,7 @@ namespace Antarium.Editor
             CreateWaterworks(worldGen, copperBar, ironBar);
             CreateColonyDepth(worldGen);
             CreateRuins(database, worldGen);
+            CreatePrestige(worldGen);
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;

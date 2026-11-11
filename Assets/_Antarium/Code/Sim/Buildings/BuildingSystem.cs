@@ -189,7 +189,7 @@ namespace Antarium.Sim
                         rotate = existing;
                     }
                 }
-                if (!bdef.IsTransport && c.Equals(_colony.QueenCell)) return PlaceResult.Occupied;
+                if (!bdef.IsTransport && bdef.kind != BuildingKind.Throne && c.Equals(_colony.QueenCell)) return PlaceResult.Occupied;
                 if (bdef.kind == BuildingKind.Wall && (_colony.IsRoyalCell(c) || (cell.Flags & CellFlags.Storage) != 0))
                     return PlaceResult.Protected;
                 if (bdef.kind == BuildingKind.Chest && (cell.Flags & CellFlags.Storage) != 0) return PlaceResult.Protected;
@@ -202,6 +202,7 @@ namespace Antarium.Sim
                     if (All[i].Alive && All[i].Def == def) return PlaceResult.Unique;
             }
             if (bdef.kind == BuildingKind.Resonator && !TouchesConductive(origin, size)) return PlaceResult.NeedsCrystal;
+            if (bdef.kind == BuildingKind.Throne && !ThroneFits(origin, size)) return PlaceResult.NeedsQueen;
             if (needsFloor)
             {
                 for (int x = 0; x < size.x; x++)
@@ -297,6 +298,7 @@ namespace Antarium.Sim
             if (id == All.Length) All.Add(b);
             else All[id] = b;
             if (bdef.kind == BuildingKind.Engine) _engine = id;
+            else if (bdef.kind == BuildingKind.Throne) _throne = id;
 
             ForEachCell(origin, size, index =>
             {
@@ -1111,6 +1113,7 @@ namespace Antarium.Sim
                 else if (b.IsActive && b.Kind == BuildingKind.WaterWheel) _wheels.Add(id);
                 else if (b.IsActive && b.Kind == BuildingKind.Resonator) _resonators.Add(id);
                 if (b.Kind == BuildingKind.Engine) _engine = id;
+                else if (b.Kind == BuildingKind.Throne) _throne = id;
             }
             ActiveCount = active;
 

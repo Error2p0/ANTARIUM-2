@@ -368,6 +368,14 @@ namespace Antarium.Sim
 
 namespace Antarium.Sim
 {
+    /// <summary>The genetic traits were unlearned (10.6): <see cref="Refund"/> memory came back, <see cref="Fee"/> was lost.</summary>
+    public readonly struct RespecEvent
+    {
+        public readonly int Refund;
+        public readonly int Fee;
+        public RespecEvent(int refund, int fee) { Refund = refund; Fee = fee; }
+    }
+
     /// <summary>A level of a genetic trait was bought.</summary>
     public readonly struct GeneticBoughtEvent
     {

@@ -259,6 +259,12 @@ namespace Antarium.Content
         [Header("Ancient Engine (10.5)")]
         [Tooltip("A colony whose Ancient Engine runs earns this much more Genetic Memory from its flight (1 = twice as much).")]
         [Min(0f)] public float engineMemoryBonus = 1f;
+
+        [Header("Respec (10.6)")]
+        [Tooltip("Respecs per colony that refund every spent point of Genetic Memory.")]
+        [Min(0)] public int freeRespecs = 1;
+        [Tooltip("Share of the refund lost by every respec after the free ones (rounded up, at least 1).")]
+        [Range(0f, 1f)] public float respecFee = 0.25f;
     }
 
     [Serializable]

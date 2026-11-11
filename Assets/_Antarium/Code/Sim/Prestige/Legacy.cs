@@ -98,6 +98,18 @@ namespace Antarium.Sim
         public int ModifierSlots(PrestigeConfig config) => Math.Max(0, config.modifierSlots + (int)Total(GeneticEffectKind.ModifierSlots));
         public int MaxPrincesses(PrestigeConfig config) => Math.Max(1, config.maxPrincesses + (int)Total(GeneticEffectKind.MaxPrincesses));
 
+        /// <summary>Genetic Memory spent on every level bought (what a respec gives back before its fee).</summary>
+        public int Spent
+        {
+            get
+            {
+                int total = 0;
+                for (int g = 0; g < Levels.Length; g++)
+                    for (int l = 0; l < Levels[g]; l++) total += _content.Genetics[g].Cost(l);
+                return total;
+            }
+        }
+
         /// <summary>Genetic Memory the next level of <paramref name="trait"/> costs.</summary>
         public int Cost(int trait) => _content.Genetics[trait].Cost(Levels[trait]);
 
@@ -114,6 +126,13 @@ namespace Antarium.Sim
             if (Levels[trait] >= _content.Genetics[trait].MaxLevel) return GeneticResult.MaxLevel;
             if (!IsAvailable(trait)) return GeneticResult.NeedsPrerequisites;
             return Memory >= Cost(trait) ? GeneticResult.Ok : GeneticResult.CantAfford;
+        }
+
+        /// <summary>Unlearns every trait: the levels go, <paramref name="refund"/> memory comes back (no effects removed here).</summary>
+        public void Reset(int refund)
+        {
+            Array.Clear(Levels, 0, Levels.Length);
+            Memory += Math.Max(0, refund);
         }
 
         /// <summary>Pays for and adds one level (no effects applied here).</summary>

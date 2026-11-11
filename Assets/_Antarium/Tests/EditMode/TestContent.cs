@@ -59,6 +59,15 @@ namespace Antarium.Tests
         public readonly ResearchDef AncientResearch;
         /// <summary>Thief: a rival ant (carries 2, one every 0.5 s). Mole: digs (power 4) through hardness up to 1.5.</summary>
         public readonly EnemyDef Thief, Mole;
+        /// <summary>
+        /// 10.6. Throne: 4x2, unique, built around the queen, only through GeneThrone; +50% laying, +2 eggs, ants within 6 cells
+        /// work twice as fast. ModVariant turns the Deep biome into VariantRock ("Red Deep") with CaveBeetles in its caves.
+        /// </summary>
+        public readonly BuildingDef Throne;
+        public readonly GeneticDef GeneThrone;
+        public readonly WorldModifierDef ModVariant;
+        public readonly TerrainMaterialDef VariantRock;
+        public readonly EnemyDef CaveBeetle;
         /// <summary>Unlocks every specialist caste but soldiers.</summary>
         public readonly ResearchDef CasteResearch;
         public readonly AbilityDef Burst;
@@ -138,6 +147,7 @@ namespace Antarium.Tests
             CoalRock = Mat("coal_rock", 3f, MaterialFlags.Flammable);
             CoalRock.drop = Coal;
             Magma = Mat("magma", 6f, MaterialFlags.Hot);
+            VariantRock = Mat("variant_rock", 4f);
             Ash = Mat("ash", 0.3f, MaterialFlags.Unstable);
             TabletRock = Mat("tablet_rock", 5f, MaterialFlags.LightEmitting);
             TabletRock.drop = Tablet;
@@ -242,6 +252,14 @@ namespace Antarium.Tests
             Scriptorium.size = new Vector2Int(2, 2);
             Scriptorium.recipes.Add(studyRelic);
             Scriptorium.recipes.Add(studyTablet);
+            Throne = Building("throne", BuildingKind.Throne, 25);
+            Throne.size = new Vector2Int(4, 2);
+            Throne.unique = true;
+            Throne.cost.Add(new ItemAmount(Bar, 1));
+            Throne.stats.Add(new StatAmount(StatKind.LayingSpeed, 0.5f));
+            Throne.stats.Add(new StatAmount(StatKind.MaxEggs, 2f));
+            Throne.auraRadius = 6f;
+            Throne.auraWork = 1f;
 
             // Castes: workers and soldiers as in the game, specialists with clear numbers for the tests.
             WorkerCaste = Caste("worker", AntCaste.Worker, health: 40f, attack: 3f, upkeep: 0.25f, egg: 6f);
@@ -441,6 +459,14 @@ namespace Antarium.Tests
                 GeneticEffect.Of(GeneticEffectKind.ModifierSlots, 1f));
             GeneStrange = Genetic("gene_strange", 1, 1, 1, 0, 1, GeneticEffect.Unlock(ModHard));
             GeneGain = Genetic("gene_gain", 1, 2, 1, 0, 1, GeneticEffect.Add(StatKind.GeneticGain, 1f));
+            GeneThrone = Genetic("gene_throne", 1, 3, 2, 0, 1, GeneticEffect.Unlock(Throne));
+            CaveBeetle = Make<EnemyDef>("cave_beetle");
+            CaveBeetle.behavior = EnemyBehavior.CaveDweller;
+            CaveBeetle.health = 20f;
+            CaveBeetle.speed = 2f;
+            ModVariant = Make<WorldModifierDef>("mod_variant");
+            ModVariant.order = 3;
+            ModVariant.variants.Add(new BiomeVariant { displayName = "Red Deep", baseMaterial = VariantRock, creatures = { CaveBeetle } });
 
             AchDig = Make<AchievementDef>("ach_dig");
             AchDig.apiName = "ACH_DIG";
@@ -465,8 +491,8 @@ namespace Antarium.Tests
                 Enemies = new[] { Spider, Raider, Thief, Mole },
                 Lore = new[] { LorePlan, LoreMarks, LoreStory },
                 Raiders = new[] { Raider },
-                Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain },
-                WorldModifiers = new[] { ModHard, ModRich, ModShallow },
+                Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain, GeneThrone },
+                WorldModifiers = new[] { ModHard, ModRich, ModShallow, ModVariant },
                 PlantForage = new[] { Leaf },
                 RoyalTreat = Honeydew,
                 NightHunters = new[] { WolfSpider },
@@ -503,6 +529,7 @@ namespace Antarium.Tests
             WorldGen.ashMaterial = Ash;
             WorldGen.tabletMaterial = TabletRock;
             Engine.requiredBiome = Deep;
+            ModVariant.variants[0].biome = Deep;
 
             Config = Make<GameConfig>("config");
             Config.progression.firstEventDelay = 1e9f; // events only when a test triggers them
@@ -519,10 +546,11 @@ namespace Antarium.Tests
             Config.growth.speedJitter = 0f;
 
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash, TabletRock },
+            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash, TabletRock,
+                    VariantRock },
                 WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal, Relic, Tablet }, null,
                 new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch,
-                    Pump, Wheel, Forge, Farm, Resonator, Engine, Scriptorium },
+                    Pump, Wheel, Forge, Farm, Resonator, Engine, Scriptorium, Throne },
                 Progression);
         }
 
@@ -550,9 +578,9 @@ namespace Antarium.Tests
 
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
-            ContentDB.Build(new[] { TabletRock, Ash, Magma, CoalRock, Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
+            ContentDB.Build(new[] { VariantRock, TabletRock, Ash, Magma, CoalRock, Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
                 new[] { Tablet, Relic, Coal, Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
-                new[] { Scriptorium, Engine, Resonator, Farm, Forge, Wheel, Pump, Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap,
+                new[] { Throne, Scriptorium, Engine, Resonator, Farm, Forge, Wheel, Pump, Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap,
                     Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
                 Progression);
 

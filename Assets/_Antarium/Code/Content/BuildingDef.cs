@@ -39,6 +39,8 @@ namespace Antarium.Content
         Resonator,
         /// <summary>The Ancient Engine (10.5): one per colony, built in the ruins and restored stage by stage; running, it is the colony's goal.</summary>
         Engine,
+        /// <summary>The Queen's Throne (10.6): one per colony, built around the queen; colony stats and a work aura while it stands.</summary>
+        Throne,
     }
 
     /// <summary>Which generated placeholder sprite a machine uses until real art exists.</summary>
@@ -64,6 +66,8 @@ namespace Antarium.Content
         Resonator,
         /// <summary>Ancient Engine: one frame per restoration stage.</summary>
         Engine,
+        /// <summary>Queen's Throne: a dais between two pillars (the queen is drawn on it).</summary>
+        Throne,
     }
 
     /// <summary>One restoration step of a staged building (the Ancient Engine): paid from the stock, then built by workers.</summary>
@@ -162,6 +166,14 @@ namespace Antarium.Content
         [Tooltip("Engine: restoration steps after placing it, each paid and built in turn. The last one finishes it.")]
         public List<BuildingStage> stages = new();
 
+        [Header("Queen's Throne (10.6)")]
+        [Tooltip("Colony stats while the building stands (built, not a blueprint).")]
+        public List<StatAmount> stats = new();
+        [Tooltip("Throne: ants within this many cells of it work faster. 0 = no aura.")]
+        [Min(0f)] public float auraRadius;
+        [Tooltip("Throne: extra dig and build speed (0.15 = +15%) for ants within the aura.")]
+        [Min(0f)] public float auraWork;
+
         [Header("Presentation")]
         [Tooltip("Colour of the palette swatch.")]
         public Color color = Color.white;
@@ -174,7 +186,7 @@ namespace Antarium.Content
         public bool IsDefense => kind >= BuildingKind.Gate && kind <= BuildingKind.Wall;
         /// <summary>Machines and nurseries: several cells on a flat floor.</summary>
         public bool IsChamber => kind == BuildingKind.Processor || kind == BuildingKind.Nursery || kind == BuildingKind.Resonator
-                                 || kind == BuildingKind.Engine;
+                                 || kind == BuildingKind.Engine || kind == BuildingKind.Throne;
         /// <summary>Several cells: machines, nurseries, resonators, the engine and water wheels (the only ones that use <see cref="size"/>).</summary>
         public bool IsMultiCell => IsChamber || kind == BuildingKind.WaterWheel;
         /// <summary>Pumps and water wheels: fluid can't flow through their cells.</summary>
