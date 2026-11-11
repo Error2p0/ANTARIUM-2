@@ -28,7 +28,7 @@ namespace Antarium.Editor
             // The Queen's Throne: built around the queen; she lays faster, more eggs wait, and ants near her work faster.
             var throne = Building("queens_throne", "Queen's Throne", BuildingKind.Throne, 20, "#f0c850", 25f,
                 size: new Vector2Int(4, 2), cost: new[] { Amt(amber, 8), Amt(copper, 10), Amt(iron, 4) }, art: PlaceholderArt.Throne,
-                description: "Built around the queen (her cell in its bottom row), on the royal chamber floor. While it stands the queen lays " +
+                description: "Built around the queen (her cell in its bottom row); it needs no floor, its dais is one. While it stands the queen lays " +
                              "30% faster, 2 more eggs can wait, and ants within 12 cells dig and build 15% faster. One per colony. Known only " +
                              "to bloodlines with the trait Royal Throne.");
             if (throne.stats.Count == 0)

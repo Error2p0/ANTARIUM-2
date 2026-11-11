@@ -187,6 +187,27 @@ namespace Antarium.Tests
             Assert.AreEqual(layingBefore, (int)math.round(Sim.Colony.Mods.Mult(StatKind.LayingSpeed) * 100f));
         }
 
+        [Test]
+        public void Throne_NeedsNoFloorWhereTheQueensFloorWasDugAway()
+        {
+            Sim.Dispose();
+            C.WorldGen.nestRadius = new UnityEngine.Vector2(7f, 3.5f);
+            Sim = new Simulation(C.DB, C.Config, 11);
+            Sim.Legacy.Memory = 2;
+            Buy(C.GeneThrone);
+            Inv.Add(C.Item(C.Bar), 3, Queen);
+            // Dig out the floor under the queen's row (walls can't go into the royal chamber to put it back).
+            for (int dx = -4; dx <= 4; dx++)
+            {
+                var c = Queen + new int2(dx, -1);
+                Sim.SetCell(c, new Cell(Sim.World[c.x, c.y].Material, 0, CellFlags.Revealed | CellFlags.Explored));
+            }
+            Assert.IsTrue(Sim.World[Queen.x, Queen.y - 1].IsOpen, "the floor is gone");
+            var origin = ThroneSpot();
+            BuildNow(origin);
+            Assert.IsTrue(Sim.Buildings.ThroneStanding, "the throne stands over the hole");
+        }
+
         void BuildNow(int2 origin)
         {
             Sim.EnqueueBuild(Throne, origin, default);

@@ -159,7 +159,9 @@ namespace Antarium.Sim
             var nav = new NavGrid(_world);
 
             bool machine = bdef.IsMultiCell;
-            bool needsFloor = bdef.IsChamber || bdef.kind == BuildingKind.Trap;
+            // The throne brings its own dais: it only has to stand around the queen, even where her floor was dug away (walls
+            // can't go into the royal chamber, so a lost floor could never come back).
+            bool needsFloor = (bdef.IsChamber && bdef.kind != BuildingKind.Throne) || bdef.kind == BuildingKind.Trap;
             for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {

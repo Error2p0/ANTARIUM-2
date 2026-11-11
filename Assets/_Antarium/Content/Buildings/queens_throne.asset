@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Queen's Throne
   kind: 17
   paletteOrder: 20
-  description: Built around the queen (her cell in its bottom row), on the royal chamber floor. While it stands the queen lays 30% faster, 2 more eggs can wait, and ants within 12 cells dig and build 15% faster. One per colony. Known only to bloodlines with the trait Royal Throne.
+  description: Built around the queen (her cell in its bottom row); it needs no floor, its dais is one. While it stands the queen lays 30% faster, 2 more eggs can wait, and ants within 12 cells dig and build 15% faster. One per colony. Known only to bloodlines with the trait Royal Throne.
   size: {x: 4, y: 2}
   cost:
   - item: {fileID: 11400000, guid: 1556088c0f9216946bf4cf46fe978a9c, type: 2}
