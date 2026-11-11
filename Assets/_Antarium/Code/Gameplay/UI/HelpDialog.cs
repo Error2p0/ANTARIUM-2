@@ -13,11 +13,11 @@ namespace Antarium.Gameplay
             ("Right drag", "Erase orders, zones, scents or buildings"),
         };
 
-        static readonly string[] Tips =
+        static string[] Tips() => new[]
         {
             "The contracts on the right always show a next goal.",
-            "Paint Mine orders (2) and Storage (3); workers dig and haul on their own.",
-            "Hover anything in the world for details. O shows how items flow.",
+            $"Paint Mine orders ({Keys.Mine}) and Storage ({Keys.Storage}); workers dig and haul on their own.",
+            $"Hover anything in the world or on the HUD for details. {Keys.Flow} shows how items flow, {Keys.Light} the light, {Keys.Ores} the ores you know of.",
             "The colony keeps working while the game is closed (at half pace, up to 8 hours).",
         };
 
@@ -38,7 +38,8 @@ namespace Antarium.Gameplay
             Root.Add(scroll);
             _list = new VisualElement();
             scroll.Add(_list);
-            Dialogs.Button(Root, "Close (Esc)", () => Closed?.Invoke());
+            var close = Dialogs.Button(Root, "Close", () => Closed?.Invoke());
+            Keys.Bind(() => close.text = Keys.With("Close", Keys.Menu));
         }
 
         /// <summary>Rebuilds the list when the key bindings changed.</summary>
@@ -60,7 +61,7 @@ namespace Antarium.Gameplay
             Dialogs.Text(_list, "Mouse", "help__heading");
             foreach (var (key, text) in Fixed) AddRow(key, text);
             Dialogs.Text(_list, "Tips", "help__heading");
-            foreach (var tip in Tips) Dialogs.Text(_list, tip, "help__text");
+            foreach (var tip in Tips()) Dialogs.Text(_list, tip, "help__text");
             Dialogs.Text(_list, "Change keys in Settings > Controls.", "dialog__note");
         }
 

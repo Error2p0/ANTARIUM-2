@@ -12,7 +12,10 @@
         <ui:VisualElement name="contracts" class="side side--right" picking-mode="Ignore" />
         <ui:VisualElement name="bottom" class="bottom" picking-mode="Ignore">
             <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />
-            <ui:Label name="info" class="info hidden" picking-mode="Ignore" />
+            <ui:VisualElement name="info" class="info hidden" picking-mode="Ignore">
+                <ui:VisualElement name="info-icon" class="info__icon hidden" picking-mode="Ignore" />
+                <ui:Label name="info-text" class="info__text" picking-mode="Ignore" />
+            </ui:VisualElement>
             <ui:VisualElement name="legend" class="palette legend hidden" picking-mode="Ignore" />
             <ui:VisualElement name="build-palette" class="palette hidden" picking-mode="Ignore" />
             <ui:VisualElement name="scent-palette" class="palette hidden" picking-mode="Ignore" />

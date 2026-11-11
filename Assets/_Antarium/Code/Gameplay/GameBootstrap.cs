@@ -152,7 +152,7 @@ namespace Antarium.Gameplay
             WireHud();
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
-            _targetingHints = Array.ConvertAll(_content.Abilities, a => $"Click where to use {a.DisplayName}. Right click or Esc cancels.");
+            _targetingHints = new string[_content.Abilities.Length];
             _possessLight = CreatePossessLight();
             ApplySettings(_settings);
 
@@ -709,11 +709,13 @@ namespace Antarium.Gameplay
             if (_hud.IsShowing(_hud.AchievementsPanel.Root)) _hud.AchievementsPanel.Refresh(_achievements, title ? null : _sim);
             if (Capturing) pointerWorld = _shotPointer;
             _hoverInfo.Update(dt, _sim, WorldGrid.WorldToCell(pointerWorld), _tools, overUi);
+            bool tip = !title && _tools.TargetingAbility < 0 && !_tools.TargetingPossess && (overUi || Capturing) && _hud.HoverTip != null;
             _hud.SetInfo(title ? null
-                : _tools.TargetingAbility >= 0 ? _targetingHints[_tools.TargetingAbility]
-                : _tools.TargetingPossess ? "Click an ant to take control of it. Right click or Esc cancels."
-                : overUi && _hud.HoverTip != null ? _hud.HoverTip
-                : _hoverInfo.Text);
+                : _tools.TargetingAbility >= 0 ? TargetingHint(_tools.TargetingAbility)
+                : _tools.TargetingPossess ? $"Click an ant to take control of it. Right click or {Keys.Menu} cancels."
+                : tip ? _hud.HoverTip
+                : _hoverInfo.Text,
+                tip ? _hud.HoverIcon : _tools.TargetingAbility >= 0 || _tools.TargetingPossess ? null : _hoverInfo.Icon);
             UpdatePossessLight(alpha);
             _debugHud.Update(dt, _sim, pointerWorld, _camera.Zoom, _tools);
             UpdateAudio(dt, title ? MusicMode.Title
@@ -871,6 +873,20 @@ namespace Antarium.Gameplay
             else panel.OpenStock(_sim);
         }
 
+        int _targetingKeys = -1;
+
+        /// <summary>"Click where to use Seismic Sense. Right click or Esc cancels." with the current Menu key (cached per bindings).</summary>
+        string TargetingHint(int ability)
+        {
+            int version = _input != null ? _input.BindingsVersion : 0;
+            if (version != _targetingKeys)
+            {
+                _targetingKeys = version;
+                System.Array.Clear(_targetingHints, 0, _targetingHints.Length);
+            }
+            return _targetingHints[ability] ??= $"Click where to use {_content.Abilities[ability].DisplayName}. Right click or {Keys.Menu} cancels.";
+        }
+
         void ToggleResearch()
         {
             if (_hud.Research == null) return;
@@ -997,7 +1013,7 @@ namespace Antarium.Gameplay
             _lastSaved = null;
             Save(background: false, announce: false); // the flight is final once the new colony exists
             _achievements.Update(0f, _sim, force: true);
-            _hud.ShowToast($"The princesses founded a new colony. +{f.Earned} Genetic Memory: spend it in the genetic tree (G).");
+            _hud.ShowToast($"The princesses founded a new colony. +{f.Earned} Genetic Memory: spend it in the genetic tree ({Keys.Genetics}).");
             _hud.ShowModal(_hud.Genetics?.Root);
         }
 

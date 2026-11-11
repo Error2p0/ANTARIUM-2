@@ -61,8 +61,11 @@ namespace Antarium.Gameplay
         /// <summary>Pay and start the next restoration step of the engine at the cell.</summary>
         public event Action<int2> StageClicked;
 
-        public ConfigurePanel(VisualElement root, ContentDB content, ArtLibrary art = null)
+        readonly Tooltips _tips;
+
+        public ConfigurePanel(VisualElement root, ContentDB content, ArtLibrary art = null, Tooltips tips = null)
         {
+            _tips = tips;
             _art = art;
             _root = root;
             _content = content;
@@ -188,7 +191,7 @@ namespace Antarium.Gameplay
                         AddOption(_content.Items[i].DisplayName, _content.Items[i].color, i, () => ItemPicked?.Invoke(Cell, item), "item_" + _content.Items[i].Id);
                     }
                     _hint.text = unloader
-                        ? "It takes from the storage, chest or royal chamber behind it (opposite its arrow). R turns new ones."
+                        ? $"It takes from the storage, chest or royal chamber behind it (opposite its arrow). {Keys.Rotate} turns new ones."
                         : "The chosen item leaves in the arrow direction; everything else goes to the other sides.";
                     break;
                 }
@@ -350,6 +353,7 @@ namespace Antarium.Gameplay
             button.Add(label);
             _list.Add(button);
             _options.Add((button, value));
+            _tips?.Add(button, text, icon);
         }
 
         void ToggleItem(Simulation sim, ushort item)

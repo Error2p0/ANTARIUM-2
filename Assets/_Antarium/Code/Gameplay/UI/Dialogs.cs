@@ -26,9 +26,15 @@ namespace Antarium.Gameplay
         {
             Root = Dialogs.Box("Antarium");
             _status = Dialogs.Text(Root, "", "dialog__note");
-            Dialogs.Button(Root, "Resume (Esc)", () => Resume?.Invoke());
-            Dialogs.Button(Root, "Save (F5)", () => Save?.Invoke());
-            Dialogs.Button(Root, "Load last save (F9)", () => Load?.Invoke());
+            var resume = Dialogs.Button(Root, "Resume", () => Resume?.Invoke());
+            var save = Dialogs.Button(Root, "Save", () => Save?.Invoke());
+            var load = Dialogs.Button(Root, "Load last save", () => Load?.Invoke());
+            Keys.Bind(() =>
+            {
+                resume.text = Keys.With("Resume", Keys.Menu);
+                save.text = Keys.With("Save", Keys.Save);
+                load.text = Keys.With("Load last save", Keys.Load);
+            });
             _newGame = Dialogs.Button(Root, "New colony", () =>
             {
                 if (_confirm > 0f)
@@ -49,7 +55,8 @@ namespace Antarium.Gameplay
             });
             Dialogs.Button(Root, "Settings", () => Settings?.Invoke());
             Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
-            Dialogs.Button(Root, "Controls and help (F1)", () => Help?.Invoke());
+            var help = Dialogs.Button(Root, "Controls and help", () => Help?.Invoke());
+            Keys.Bind(() => help.text = Keys.With("Controls and help", Keys.Help));
             Dialogs.Button(Root, "Save and return to title", () => MainMenu?.Invoke());
             Dialogs.Button(Root, "Save and quit", () => Quit?.Invoke());
             Dialogs.Text(Root, (autosaveSeconds > 0f ? $"The game saves itself every {HudText.Duration(autosaveSeconds)} and when you quit. "

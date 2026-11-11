@@ -18,7 +18,7 @@ namespace Antarium.Gameplay
 
         public event Action<int> Clicked;
 
-        public AbilityBar(VisualElement container, ContentDB content, ArtLibrary art, InputAction[] actions)
+        public AbilityBar(VisualElement container, ContentDB content, ArtLibrary art, InputAction[] actions, Tooltips tips = null)
         {
             _content = content;
             _actions = actions;
@@ -37,8 +37,26 @@ namespace Antarium.Gameplay
                 HudController.AddButtonIcon(button, art, "ability_" + def.Id);
                 container.Add(button);
                 _buttons[i] = button;
+                tips?.Add(button, () => Tip(index), "ability_" + def.Id);
             }
         }
+
+        string Tip(int index)
+        {
+            var def = _content.Abilities[index];
+            var sb = new System.Text.StringBuilder(def.DisplayName);
+            string key = Keys.Ability(index);
+            if (key != "unbound" && key != "") sb.Append(" (").Append(key).Append(')');
+            if (!string.IsNullOrEmpty(def.description)) sb.Append(": ").Append(def.description);
+            sb.Append("\nRecharges in ").Append(HudText.Duration(def.cooldown));
+            if (def.foodCost > 0f) sb.Append(", costs ").Append(Antarium.Core.NumberFormat.Format(def.foodCost)).Append(" food");
+            sb.Append('.');
+            if (def.kind is AbilityKind.SeismicSense or AbilityKind.PheromoneBurst) sb.Append(" Click it, then click where to use it.");
+            return sb.ToString();
+        }
+
+        /// <summary>The button of ability <paramref name="index"/> (capture shots).</summary>
+        public Button Button(int index) => index >= 0 && index < _buttons.Length ? _buttons[index] : null;
 
         /// <summary>Re-reads the hotkeys after the bindings changed.</summary>
         public void RefreshKeys()

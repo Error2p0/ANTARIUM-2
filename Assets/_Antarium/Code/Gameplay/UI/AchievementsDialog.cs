@@ -47,7 +47,8 @@ namespace Antarium.Gameplay
                 scroll.Add(row);
                 _rows[i] = row;
             }
-            Dialogs.Button(Root, "Close (Esc)", () => Closed?.Invoke());
+            var close = Dialogs.Button(Root, "Close", () => Closed?.Invoke());
+            Keys.Bind(() => close.text = Keys.With("Close", Keys.Menu));
         }
 
         /// <param name="sim">The colony progress is measured in; null on the title screen without a colony.</param>

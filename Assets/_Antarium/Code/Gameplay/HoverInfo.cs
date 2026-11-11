@@ -30,12 +30,17 @@ namespace Antarium.Gameplay
         /// <summary>Current panel text, or null when there is nothing to show.</summary>
         public string Text { get; private set; }
 
+        /// <summary>Icon for <see cref="Text"/> (art name under <c>UI/Icons/</c>: the caste, building, item...), or null (10.7).</summary>
+        public string Icon { get; private set; }
+
         public void Update(float dt, Simulation sim, int2 cell, ToolController tools, bool pointerOverUi)
         {
             _timer -= dt;
             if (_timer > 0f) return;
             _timer = RefreshInterval;
+            Icon = null;
             Text = Build(sim, cell, tools, pointerOverUi);
+            if (Text == null) Icon = null;
         }
 
         string Build(Simulation sim, int2 cell, ToolController tools, bool pointerOverUi)
@@ -69,8 +74,16 @@ namespace Antarium.Gameplay
                 return _sb.ToString();
             }
             int id = pointerOverUi ? BuildingSystem.None : sim.Buildings.At(cell);
-            if (id >= 0) DescribeBuilding(sim, id);
-            else if (tools.Mode == ToolMode.Build && tools.Build.SelectedDef != null) DescribeSelection(sim, cell, tools);
+            if (id >= 0)
+            {
+                DescribeBuilding(sim, id);
+                Icon = "building_" + _content.Buildings[sim.Buildings.Get(id).Def].Def.Id;
+            }
+            else if (tools.Mode == ToolMode.Build && tools.Build.SelectedDef != null)
+            {
+                DescribeSelection(sim, cell, tools);
+                Icon = "building_" + tools.Build.SelectedDef.Id;
+            }
             else if (!pointerOverUi)
             {
                 DescribeStock(sim, cell);
@@ -110,6 +123,7 @@ namespace Antarium.Gameplay
         {
             var a = sim.Ants.Ants[index];
             var def = _content.Caste(a.Caste);
+            Icon = CasteIcon(a.Caste);
             _sb.Append(def.DisplayName).Append("  ").Append(math.max(1, (int)math.ceil(a.Health))).Append('/')
                 .Append((int)sim.Ants.MaxHealth(a.Caste)).Append(" HP  -  ").Append(StateText(a));
             if (a.IsCarrying)
@@ -129,7 +143,7 @@ namespace Antarium.Gameplay
                 _sb.Append(HudText.TraitName(a.Trait)).Append(": ").Append(HudText.TraitText(a.Trait));
             }
             if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
-            _sb.Append("\nF: take control of this ant.");
+            _sb.Append('\n').Append(Keys.Possess).Append(": take control of this ant.");
         }
 
         void DescribePossessed(Simulation sim)
@@ -137,11 +151,13 @@ namespace Antarium.Gameplay
             int i = sim.PossessedAnt;
             if (i < 0) return;
             var a = sim.Ants.Ants[i];
+            Icon = CasteIcon(a.Caste);
             _sb.Append("You control a ").Append(_content.Caste(a.Caste).DisplayName.ToLowerInvariant()).Append("  ")
                 .Append(math.max(1, (int)math.ceil(a.Health))).Append('/').Append((int)sim.Ants.MaxHealth(a.Caste)).Append(" HP");
             if (a.CarryingEgg) _sb.Append("  -  carrying an egg");
             else if (a.IsCarrying) _sb.Append("  -  carrying ").Append(_content.Items[a.Carry].DisplayName);
-            _sb.Append("\nWASD / arrows: move   left mouse: dig or bite (within reach)   right mouse / Space: pick up, deliver, drop   F / Esc: let go");
+            _sb.Append("\nCamera keys: move   left mouse: dig or bite (within reach)   right mouse / ").Append(Keys.Interact)
+                .Append(": pick up, deliver, drop   ").Append(Keys.Possess).Append(" / ").Append(Keys.Menu).Append(": let go");
         }
 
         void DescribeScentTool(Simulation sim, int2 cell, ToolController tools, bool pointerOverUi)
@@ -155,7 +171,8 @@ namespace Antarium.Gameplay
                 PheromoneKind.Defend => "idle soldiers patrol here.",
                 _ => "ants route around it and take no jobs inside.",
             });
-            _sb.Append("\nLeft mouse: paint   right mouse: erase   Q / E: other scent. Scents fade after about 4 minutes unless an Emitter keeps them.");
+            _sb.Append("\nLeft mouse: paint   right mouse: erase   ").Append(Keys.Previous).Append(" / ").Append(Keys.Next)
+                .Append(": other scent. Scents fade after about 4 minutes unless an Emitter keeps them.");
             if (!pointerOverUi) AppendScents(sim, cell);
         }
 
@@ -197,15 +214,27 @@ namespace Antarium.Gameplay
             _sb.Append("\nBites for ").Append(def.damage.ToString("0")).Append(". Soldiers (and workers, weakly) fight back.");
         }
 
-        /// <summary>A tablet in a ruin floor (10.5): what it is good for.</summary>
+        /// <summary>A find in the rock (ore, coal, amber...; 10.7) or a tablet in a ruin floor (10.5): what it gives.</summary>
         void DescribeFind(Simulation sim, int2 cell)
         {
             if (!IsVisible(sim, cell)) return;
             var c = sim.World[cell.x, cell.y];
-            if (c.IsOpen || c.Material != _content.TabletMaterial || _content.TabletMaterial == ContentDB.AirIndex) return;
-            _sb.Append(_content.Materials[c.Material].DisplayName)
-                .Append("  -  a unique find of the lost colony. Dig it out and study it in an Archive: a lot of knowledge and a fragment of their story.");
+            if (c.IsOpen) return;
+            ushort item = OreSurvey.FindItem(_content, c.Material);
+            if (item == ContentDB.NoItem) return;
+            Icon = "item_" + _content.Items[item].Id;
+            if (c.Material == _content.TabletMaterial && _content.TabletMaterial != ContentDB.AirIndex)
+            {
+                _sb.Append(_content.Materials[c.Material].DisplayName)
+                    .Append("  -  a unique find of the lost colony. Dig it out and study it in an Archive: a lot of knowledge and a fragment of their story.");
+                return;
+            }
+            _sb.Append(_content.Materials[c.Material].DisplayName).Append("  -  dig it out for ").Append(_content.Items[item].DisplayName)
+                .Append(". Paint mining orders (").Append(Keys.Mine).Append(") and workers bring it to storage. ")
+                .Append(Keys.Ores).Append(": the ore overlay.");
         }
+
+        static string CasteIcon(AntCaste caste) => "caste_" + caste.ToString().ToLowerInvariant();
 
         void DescribeFluid(Simulation sim, int2 cell)
         {
@@ -311,7 +340,7 @@ namespace Antarium.Gameplay
                         : b.Status == MachineStatus.Working ? "unloading"
                         : b.Status == MachineStatus.OutputBlocked ? "waiting: what it feeds is full or doesn't use the item"
                         : "nothing to take (or only what is kept for building)");
-                    _sb.Append("\n").Append(_hud.ConfigureKey).Append(": pick the item. R turns new ones.");
+                    _sb.Append("\n").Append(_hud.ConfigureKey).Append(": pick the item. ").Append(Keys.Rotate).Append(" turns new ones.");
                     return;
                 }
                 case BuildingKind.Pump:
@@ -328,7 +357,7 @@ namespace Antarium.Gameplay
                     _sb.Append("\nMoves ").Append(Rate(b.Rate / FluidCell.Full)).Append(" cells of fluid/min from behind it to the way its spout points. ")
                         .Append("It reaches ").Append(sim.Config.waterworks.pumpReach).Append(" cells back and pushes up to ")
                         .Append(sim.Config.waterworks.pumpReach).Append(" cells ahead.")
-                        .Append("\nFluid can't pass through it; ants can. R turns new ones; chain pumps to lift water higher.");
+                        .Append("\nFluid can't pass through it; ants can. ").Append(Keys.Rotate).Append(" turns new ones; chain pumps to lift water higher.");
                     return;
                 }
                 case BuildingKind.Resonator:
@@ -425,7 +454,7 @@ namespace Antarium.Gameplay
             });
             if (raises)
                 _sb.Append("\nPrincesses ").Append(sim.Colony.Princesses).Append('/').Append(sim.Colony.PrincessCap)
-                    .Append("   they wait here for the Nuptial Flight (N)");
+                    .Append("   they wait here for the Nuptial Flight (").Append(Keys.Flight).Append(')');
             if (m.Tenders > 0)
                 _sb.Append(", tended by an engineer (+").Append(Mathf.RoundToInt(buildings.EngineerBoost * m.TendPower * 100f)).Append("%)");
             var mdef = m.Data.Def;
@@ -470,13 +499,18 @@ namespace Antarium.Gameplay
             if (!sim.World.InBounds(cell.x, cell.y)) return;
             var inv = sim.Colony.Inventory;
             var container = inv.ContainerAt(sim.World.Index(cell.x, cell.y));
+            Icon = "storage";
             if (container != null) _sb.Append("Storage cell ");
             else if (sim.Colony.IsRoyalCell(cell) && sim.World[cell.x, cell.y].IsOpen)
             {
                 container = inv.Royal;
                 _sb.Append("Royal chamber store ");
             }
-            else return;
+            else
+            {
+                Icon = null;
+                return;
+            }
             AppendContents(container);
             AppendAllowed(container);
             _sb.Append("\nWhole stock ").Append(inv.Stored).Append('/').Append(inv.Capacity).Append(". Workers fetch from here for machines that need it.");
@@ -520,7 +554,8 @@ namespace Antarium.Gameplay
             var result = sim.Buildings.CanPlace(build.Selected, build.OriginFor(cell), build.Dir);
             if (result != PlaceResult.Ok && result != PlaceResult.Rotated && result != PlaceResult.Unchanged)
                 _sb.Append('\n').Append(_hud.PlaceMessage(result, build.Selected, sim));
-            _sb.Append("\nQ / E: other building   R: rotate   right mouse: remove");
+            _sb.Append('\n').Append(Keys.Previous).Append(" / ").Append(Keys.Next).Append(": other building   ").Append(Keys.Rotate)
+                .Append(": rotate   right mouse: remove");
         }
 
         void AppendRecipe(RecipeData recipe)

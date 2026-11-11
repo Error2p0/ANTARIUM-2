@@ -52,7 +52,8 @@ namespace Antarium.Gameplay
             _stock = new Label();
             _stock.AddToClassList("research__knowledge");
             header.Add(_stock);
-            var close = new Button(() => CloseClicked?.Invoke()) { text = "Close (H)", focusable = false };
+            var close = new Button(() => CloseClicked?.Invoke()) { focusable = false };
+            Keys.Bind(() => close.text = Keys.With("Close", Keys.Queen));
             close.AddToClassList("small-button");
             header.Add(close);
             Root.Add(header);

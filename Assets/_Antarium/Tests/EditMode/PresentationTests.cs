@@ -1,6 +1,10 @@
 using Antarium.Content;
+using Antarium.Gameplay;
 using Antarium.Sim;
 using NUnit.Framework;
+using UnityEditor;
+using UnityEngine.InputSystem;
+using Object = UnityEngine.Object;
 
 namespace Antarium.Tests
 {
@@ -51,6 +55,43 @@ namespace Antarium.Tests
             Set(world, 1, 1, ore, 0, CellFlags.Revealed);
             survey.Count(world);
             Assert.AreEqual(3, survey.Known(C.Item(C.Ore)), "counts start over every time");
+        }
+
+        [Test]
+        public void Keys_FollowTheBindingsAndRewriteBoundLabels()
+        {
+            Keys.Use(null);
+            Assert.AreEqual("T", Keys.Research, "defaults without input");
+            Assert.AreEqual("Z", Keys.Ability(0));
+            Assert.AreEqual("Close (T)", Keys.With("Close", Keys.Research));
+            Assert.AreEqual("Close", Keys.With("Close", "unbound"));
+
+            var asset = Object.Instantiate(AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/_Antarium/Input/AntariumInput.inputactions"));
+            try
+            {
+                using var input = new GameInput(asset);
+                Keys.Use(input);
+                string label = null;
+                Keys.Bind(() => label = Keys.With("Research", Keys.Research));
+                Assert.AreEqual($"Research ({GameInput.KeyName(input.Research)})", label, "applied at once");
+                Assert.AreEqual(GameInput.KeyName(input.OreOverlay), Keys.Ores, "the new overlay actions are bound");
+
+                input.Research.ApplyBindingOverride(0, "<Keyboard>/g");
+                input.BindingsChanged();
+                Keys.Refresh();
+                Assert.AreEqual("Research (G)", label, "rebinding rewrites bound labels");
+
+                input.Research.ApplyBindingOverride(0, "");
+                input.BindingsChanged();
+                Keys.Refresh();
+                Assert.AreEqual("unbound", Keys.Research);
+                Assert.AreEqual("Research", label, "an unbound key is left out of labels");
+            }
+            finally
+            {
+                Keys.Use(null);
+                Object.DestroyImmediate(asset);
+            }
         }
     }
 }

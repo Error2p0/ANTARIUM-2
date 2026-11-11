@@ -28,10 +28,21 @@ namespace Antarium.Gameplay
         /// <summary>A - / + button: job and -1 / +1.</summary>
         public event Action<JobKind, int> Step;
 
-        public PrioritiesPanel(VisualElement root, ArtLibrary art)
+        static readonly string[] Tips =
+        {
+            "Dig: workers, miners and fire ants dig out mining orders.",
+            "Haul: workers, haulers and nurses carry loose items and piles to storage.",
+            "Build: workers and builders build blueprints (buildings, walls, repairs).",
+            "Supply: workers, haulers and engineers fetch the inputs machines need.",
+            "Tend: engineers stay by a machine and speed it up.",
+            "Nurse: nurses carry eggs to a Nursery, where they hatch faster.",
+        };
+
+        public PrioritiesPanel(VisualElement root, ArtLibrary art, Tooltips tips = null)
         {
             _root = root;
-            var title = new Label("Job priorities (P)");
+            var title = new Label();
+            Keys.Bind(() => title.text = Keys.With("Job priorities", Keys.Priorities));
             title.AddToClassList("panel__title");
             root.Add(title);
             for (int j = 0; j < Jobs.Count; j++)
@@ -40,7 +51,9 @@ namespace Antarium.Gameplay
                 var row = new VisualElement();
                 row.AddToClassList("caste");
                 row.AddToClassList("priority");
-                row.tooltip = Hints[j];
+                int index = j;
+                tips?.Add(row, () => Tips[index] + "\n- / +: its priority, 1 (last) to 5 (first). At 3 it is weighed as usual.",
+                    "priority_" + job.ToString().ToLowerInvariant());
                 var icon = new VisualElement { pickingMode = PickingMode.Ignore };
                 if (!HudController.SetIcon(icon, art, "priority_" + job.ToString().ToLowerInvariant(), "priority__icon"))
                     icon.AddToClassList("caste__swatch");

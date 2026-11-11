@@ -25,11 +25,12 @@ namespace Antarium.Gameplay
         /// <summary>A share button: caste and -1 / +1 step.</summary>
         public event Action<AntCaste, int> ShareStep;
 
-        public CastesPanel(VisualElement root, ContentDB content, ArtLibrary art = null)
+        public CastesPanel(VisualElement root, ContentDB content, ArtLibrary art = null, Tooltips tips = null)
         {
             _root = root;
             _content = content;
-            var title = new Label("Castes (K)");
+            var title = new Label();
+            Keys.Bind(() => title.text = Keys.With("Castes", Keys.Castes));
             title.AddToClassList("panel__title");
             root.Add(title);
             foreach (var caste in content.CasteOrder)
@@ -38,7 +39,11 @@ namespace Antarium.Gameplay
                 var def = content.Caste(caste);
                 var row = new VisualElement();
                 row.AddToClassList("caste");
-                row.tooltip = def.description;
+                string icon = "caste_" + caste.ToString().ToLowerInvariant();
+                string share = caste == AntCaste.Worker
+                    ? "Workers fill whatever share the other castes leave."
+                    : "- / +: its share of the colony. The queen lays whichever caste is furthest below its share.";
+                tips?.Add(row, () => $"{def.DisplayName}: {def.description}\n{share}", icon);
                 var swatch = new VisualElement { pickingMode = PickingMode.Ignore };
                 if (!HudController.SetIcon(swatch, art, "caste_" + caste.ToString().ToLowerInvariant(), "caste__icon"))
                 {

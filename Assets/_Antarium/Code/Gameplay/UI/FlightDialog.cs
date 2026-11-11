@@ -74,8 +74,13 @@ namespace Antarium.Gameplay
             _modifierHint = Dialogs.Text(Root, "", "dialog__note");
 
             _fly = Dialogs.Button(Root, "Take flight", OnFly);
-            Dialogs.Button(Root, "Genetic tree (G)", () => GeneticsClicked?.Invoke());
-            Dialogs.Button(Root, "Close (N)", () => CloseClicked?.Invoke());
+            var genetics = Dialogs.Button(Root, "Genetic tree", () => GeneticsClicked?.Invoke());
+            var close = Dialogs.Button(Root, "Close", () => CloseClicked?.Invoke());
+            Keys.Bind(() =>
+            {
+                genetics.text = Keys.With("Genetic tree", Keys.Genetics);
+                close.text = Keys.With("Close", Keys.Flight);
+            });
         }
 
         /// <summary>Opening the screen: forget an unfinished confirmation and choices that are no longer allowed.</summary>

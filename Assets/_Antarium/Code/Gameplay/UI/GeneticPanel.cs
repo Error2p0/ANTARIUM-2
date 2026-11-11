@@ -62,7 +62,8 @@ namespace Antarium.Gameplay
             _respec.RegisterCallback<PointerEnterEvent>(_ => _respecHovered = true);
             _respec.RegisterCallback<PointerLeaveEvent>(_ => _respecHovered = false);
             header.Add(_respec);
-            var close = new Button(() => CloseClicked?.Invoke()) { text = "Close (G)", focusable = false };
+            var close = new Button(() => CloseClicked?.Invoke()) { focusable = false };
+            Keys.Bind(() => close.text = Keys.With("Close", Keys.Genetics));
             close.AddToClassList("small-button");
             header.Add(close);
             Root.Add(header);
@@ -177,7 +178,7 @@ namespace Antarium.Gameplay
             if (_hovered < 0)
                 return legacy.Awakened
                     ? "Traits are kept forever, in every colony after a Nuptial Flight. Colony bonuses work right away; starting bonuses from the next colony on."
-                    : "Genetic Memory comes from Nuptial Flights (N): raise princesses in a Princess Chamber and send them off to found a new colony.";
+                    : $"Genetic Memory comes from Nuptial Flights ({Keys.Flight}): raise princesses in a Princess Chamber and send them off to found a new colony.";
             var data = _content.Genetics[_hovered];
             var def = data.Def;
             _sb.Clear().Append(def.DisplayName).Append(": ").Append(def.description);
