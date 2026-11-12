@@ -49,6 +49,10 @@ MonoBehaviour:
     rainLight: 0.7
     starColor: {r: 0.9, g: 0.92, b: 1, a: 1}
     rainColor: {r: 0.65, g: 0.75, b: 0.95, a: 0.7}
+    shootingStarInterval: {x: 6, y: 20}
+    starfallInterval: {x: 0.04, y: 0.18}
+    lightningColor: {r: 0.92, g: 0.95, b: 1, a: 1}
+    lightningFlash: 0.9
     spriteMinLight: 0.85
     miningOrderColor: {r: 1, g: 0.69, b: 0.25, a: 1}
     storageColor: {r: 0.3, g: 0.75, b: 0.85, a: 1}
@@ -148,9 +152,9 @@ MonoBehaviour:
     refundFraction: 1
   progression:
     contractSlots: 3
-    firstEventDelay: 150
-    eventIntervalMin: 180
-    eventIntervalMax: 360
+    firstEventDelay: 225
+    eventIntervalMin: 270
+    eventIntervalMax: 540
     maxActiveEvents: 2
     critterSpeed: 2.2
     catchRadius: 1.5
@@ -247,6 +251,9 @@ MonoBehaviour:
     weatherIntervalMin: 360
     weatherIntervalMax: 600
     rainChance: 0.6
+    thunderstormChance: 0.35
+    stormRainFactor: 1.5
+    lightningInterval: {x: 3, y: 9}
     rainSeconds: {x: 60, y: 100}
     droughtSeconds: {x: 180, y: 300}
     droughtForage: 0.5
@@ -274,6 +281,8 @@ MonoBehaviour:
     spidersMax: 4
     spiderDistance: {x: 12, y: 40}
     spiderSpawnWindow: 60
+    starfallChance: 0.15
+    firstStarfallSeconds: 900
   waterworks:
     pumpReach: 8
     checkSeconds: 0.5

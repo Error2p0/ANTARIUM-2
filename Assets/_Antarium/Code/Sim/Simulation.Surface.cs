@@ -6,9 +6,10 @@ using Unity.Mathematics;
 namespace Antarium.Sim
 {
     /// <summary>
-    /// The surface (Milestone 10.2): day and night, weather (rain floods the tunnels near the surface for a while, droughts
-    /// halve forage), leaves falling from plants, birds that scare ants underground and take those left in the open,
-    /// spiders that come out at night, and the queen eating honeydew.
+    /// The surface (Milestone 10.2): day and night, weather (rain floods the tunnels near the surface for a while, some rains
+    /// are thunderstorms with lightning (11); droughts halve forage), leaves falling from plants, birds that scare ants
+    /// underground and take those left in the open, spiders that come out at night (except on a starfall night, 11), and the
+    /// queen eating honeydew.
     /// </summary>
     public sealed partial class Simulation
     {
@@ -71,6 +72,7 @@ namespace Antarium.Sim
             s.Clock += seconds / math.max(1f, c.dayLengthSeconds);
             UpdateDaylight();
             if (s.Weather != WeatherKind.Clear) EndWeather();
+            if (s.IsDay || seconds >= c.dayLengthSeconds * (1f - c.dayShare)) s.Starfall = false;
             s.WeatherTimer = math.max(60f, s.WeatherTimer - seconds);
             s.Bird = BirdPhase.None;
             s.BirdCooldown = math.max(30f, s.BirdCooldown - seconds);
@@ -89,30 +91,63 @@ namespace Antarium.Sim
             if (s.Weather != WeatherKind.Clear)
             {
                 s.WeatherLeft -= dt;
+                if (s.Thunderstorm) UpdateLightning(dt);
                 if (s.WeatherLeft <= 0f) EndWeather();
                 return;
             }
             s.WeatherTimer -= dt;
-            if (s.WeatherTimer > 0f) return;
+            if (s.WeatherTimer > 0f || s.Starfall) return; // a starfall night stays clear; the weather waits for dawn
             var c = Config.surface;
             s.WeatherTimer = s.Rng.NextFloat(c.weatherIntervalMin, math.max(c.weatherIntervalMin, c.weatherIntervalMax));
             StartWeather(s.Rng.NextFloat() < c.rainChance ? WeatherKind.Rain : WeatherKind.Drought);
         }
 
-        /// <summary>Starts rain or a drought now (also debug and tests).</summary>
-        public void StartWeather(WeatherKind kind)
+        /// <summary>Starts rain (a thunderstorm by <c>thunderstormChance</c>) or a drought now (also debug and tests).</summary>
+        public void StartWeather(WeatherKind kind) =>
+            StartWeather(kind, kind == WeatherKind.Rain && Surface.Rng.NextFloat() < Config.surface.thunderstormChance);
+
+        /// <summary>Starts a thunderstorm now (debug and tests).</summary>
+        public void StartThunderstorm() => StartWeather(WeatherKind.Rain, true);
+
+        void StartWeather(WeatherKind kind, bool storm)
         {
             var s = Surface;
             var c = Config.surface;
-            if (kind == WeatherKind.Clear)
-            {
-                if (s.Weather != WeatherKind.Clear) EndWeather();
-                return;
-            }
+            if (s.Weather != WeatherKind.Clear) EndWeather();
+            if (kind == WeatherKind.Clear) return;
             var range = kind == WeatherKind.Rain ? c.rainSeconds : c.droughtSeconds;
             s.Weather = kind;
+            s.Thunderstorm = storm && kind == WeatherKind.Rain;
+            s.LightningTimer = s.Rng.NextFloat(1f, math.max(1f, c.lightningInterval.x) + 1e-3f);
             s.WeatherLength = s.WeatherLeft = s.Rng.NextFloat(math.max(1f, range.x), math.max(range.x, range.y) + 1e-3f);
             Events.Publish(new SurfaceEvent(kind == WeatherKind.Rain ? SurfaceEventKind.RainStarted : SurfaceEventKind.DroughtStarted, Colony.QueenCell));
+            if (s.Thunderstorm) Events.Publish(new SurfaceEvent(SurfaceEventKind.ThunderstormStarted, Colony.QueenCell));
+        }
+
+        /// <summary>
+        /// Thunderstorms: every few seconds lightning strikes the ground somewhere within the rain's reach (the ground, or the
+        /// bottom of an open shaft). It is a spectacle only: it lights up the sky and rumbles, but harms nothing.
+        /// </summary>
+        void UpdateLightning(float dt)
+        {
+            var s = Surface;
+            var c = Config.surface;
+            s.LightningTimer -= dt;
+            if (s.LightningTimer > 0f) return;
+            float min = math.max(0.5f, c.lightningInterval.x);
+            s.LightningTimer = s.Rng.NextFloat(min, math.max(min, c.lightningInterval.y) + 1e-3f);
+            int range = math.max(1, c.rainRange);
+            for (int attempt = 0; attempt < 4; attempt++)
+            {
+                int x = math.clamp(Colony.QueenCell.x + s.Rng.NextInt(-range, range + 1), 1, World.Width - 2);
+                int y = World.Height - 1;
+                if (!World[x, y].IsOpen) continue; // no sky over this column (the world's edge)
+                while (y > 0 && World[x, y - 1].IsOpen) y--;
+                s.LightningCell = new int2(x, y);
+                s.LightningStrikes++;
+                Events.Publish(new SurfaceEvent(SurfaceEventKind.Lightning, s.LightningCell));
+                return;
+            }
         }
 
         void EndWeather()
@@ -120,6 +155,7 @@ namespace Antarium.Sim
             var s = Surface;
             var kind = s.Weather;
             s.Weather = WeatherKind.Clear;
+            s.Thunderstorm = false;
             s.WeatherLeft = 0f;
             Events.Publish(new SurfaceEvent(kind == WeatherKind.Rain ? SurfaceEventKind.RainEnded : SurfaceEventKind.DroughtEnded, Colony.QueenCell));
         }
@@ -132,7 +168,8 @@ namespace Antarium.Sim
         {
             var c = Config.surface;
             int range = math.max(1, c.rainRange);
-            for (int k = 0; k < c.rainDropsPerStep; k++)
+            int drops = Surface.Thunderstorm ? (int)math.round(c.rainDropsPerStep * c.stormRainFactor) : c.rainDropsPerStep;
+            for (int k = 0; k < drops; k++)
             {
                 int x = math.clamp(Colony.QueenCell.x + Surface.Rng.NextInt(-range, range + 1), 1, World.Width - 2);
                 int y = World.Height - 1;
@@ -143,12 +180,12 @@ namespace Antarium.Sim
 
         // ---------------------------------------------------------------- leaves
 
-        /// <summary>By day, leaves fall from living plants next to them, up to <c>maxSurfaceLeaves</c> on the ground.</summary>
+        /// <summary>By day (and on a starfall night), leaves fall from living plants next to them, up to <c>maxSurfaceLeaves</c> on the ground.</summary>
         void UpdateLeaves(float dt)
         {
             var s = Surface;
             var c = Config.surface;
-            if (Content.PlantForage.Length == 0 || s.Plants.Count == 0 || !s.IsDay) return;
+            if (Content.PlantForage.Length == 0 || s.Plants.Count == 0 || !s.ForageGrows) return;
             float rate = Colony.Mods.Mult(StatKind.ForageRate) * WeatherForage;
             if (rate <= 0f) return;
             s.LeafTimer += dt;
@@ -334,6 +371,12 @@ namespace Antarium.Sim
             var s = Surface;
             var c = Config.surface;
             s.SpidersToSpawn = 0;
+            if (s.Weather != WeatherKind.Rain && PlayTime >= c.firstStarfallSeconds && s.Rng.NextFloat() < c.starfallChance)
+            {
+                s.Starfall = true;
+                Events.Publish(new SurfaceEvent(SurfaceEventKind.StarfallStarted, Colony.QueenCell));
+                return; // no hunters tonight
+            }
             if (Content.NightHunters.Length == 0 || PlayTime < c.firstSpiderSeconds || Ants.Count < c.spiderMinAnts) return;
             float more = math.max(0f, Colony.Mods.Mult(StatKind.CreatureCount));
             int max = (int)math.round(c.spidersMax * more);
@@ -346,7 +389,7 @@ namespace Antarium.Sim
         void UpdateSpiders(float dt)
         {
             var s = Surface;
-            if (s.SpidersToSpawn <= 0 || s.IsDay) return;
+            if (s.SpidersToSpawn <= 0 || s.IsDay || s.Starfall) return;
             s.SpiderTimer -= dt;
             if (s.SpiderTimer > 0f) return;
             var c = Config.surface;
@@ -359,8 +402,28 @@ namespace Antarium.Sim
         void Dawn()
         {
             Surface.SpidersToSpawn = 0;
+            if (Surface.Starfall)
+            {
+                Surface.Starfall = false;
+                Events.Publish(new SurfaceEvent(SurfaceEventKind.StarfallEnded, Colony.QueenCell));
+            }
             int left = Enemies.DismissNightHunters();
             if (left > 0) Events.Publish(new SurfaceEvent(SurfaceEventKind.SpidersLeft, Colony.QueenCell, left));
+        }
+
+        /// <summary>
+        /// Debug / tests: tonight becomes a starfall (clears the weather, sends the night hunters off). False by day.
+        /// </summary>
+        public bool TriggerStarfall()
+        {
+            var s = Surface;
+            if (s.IsDay || s.Starfall) return false;
+            if (s.Weather != WeatherKind.Clear) EndWeather();
+            s.Starfall = true;
+            s.SpidersToSpawn = 0;
+            Enemies.DismissNightHunters();
+            Events.Publish(new SurfaceEvent(SurfaceEventKind.StarfallStarted, Colony.QueenCell));
+            return true;
         }
 
         /// <summary>Debug / tests: night falls now (the clock jumps to just after sunset).</summary>

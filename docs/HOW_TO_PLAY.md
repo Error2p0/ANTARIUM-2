@@ -144,7 +144,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 ## The screen
 
 - **Resource bar (top):** every entry has a small **icon** (a sun or a moon for the time of day, then food, ants, eggs, storage, knowledge, a crown for princesses, a gold helix for Genetic Memory, and one per item). The same item icons are used in the stock view and in the configure panel; buildings have theirs in the build palette, castes in the castes panel, and the toolbar and ability buttons carry an icon next to their key and name.
-  - **Day and time**, e.g. *Day 3  14:20*, with a sun (day) or moon (night) icon; next to it *Rain*, *Drought* or *Night*. Point at it for what day, night and weather do.
+  - **Day and time**, e.g. *Day 3  14:20*, with a sun (day) or moon (night) icon; next to it *Rain*, *Storm* (a thunderstorm), *Drought*, *Night* or *Starfall*. Point at it for what day, night and weather do.
   - **Food** current / capacity, with the **net food rate** per minute (food delivered minus what the colony eats; red when negative). **Ants** (with how many of them are workers once you have other castes), **Eggs**.
   - **Storage** used / total: how many items (of any type) the royal chamber and your storage cells hold. Turns orange when full.
   - **Knowledge** (violet): the research currency, with the knowledge your Archives study per minute.
@@ -155,7 +155,8 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Event cards (left):** random events with the time left to act, a **Go** button that moves the camera there and **x** to dismiss the card. When an event ends, its card says how it went and fades after a few seconds.
   - **Raid** cards are red: first a warning with the time until the raiders arrive, then how many are left. **Go** jumps to the raiders. The card turns green if the raid is repelled.
   - A card also appears when you break into a cave where **creatures** live (which kind and how many).
-  - **Weather** cards: *Rain* or *Drought* with the time left.
+  - **Weather** cards: *Rain*, *Thunderstorm* or *Drought* with the time left.
+  - A **Starfall** card on a starfall night (*Until dawn*).
   - A red **bird** card while a bird circles (*Strikes in 6s*), then whether it took any ants; a red **Night hunters** card while spiders prowl (*Until dawn*). **Go** jumps to the bird or a spider.
   - A red **Fire!** card while anything burns (*12 cells burning*); **Go** jumps to the fire.
   - **Rival ants** get their own red raid card (*Rival ants incoming!*): they come for your stock, not your food. At the end it says how many items they carried off.
@@ -163,7 +164,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 - **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. **Everything on the HUD has such a tip**: resource bar entries, palette buildings and scents, abilities, caste and priority rows, configure options. Hints and messages always name the keys you have bound. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **P Jobs**, **H Queen**, **L Codex** (once you have found a lore fragment), **T Research**, **O Overlay** (click to go through the overlays), **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
 - **Job priority panel** (next to the castes panel, **P**): one row per job (Dig, Haul, Build, Supply, Tend, Nurse) with its priority from **1 lowest** to **5 highest** and **-** / **+**. See *Job priorities*.
-- **Queen panel** (middle of the screen, **H** or click the queen): how often she lays, her eggs, the colony's food upkeep, how many ants are skilled or masters and their traits, a **Caste mix** button that opens the castes panel, and her **evolution tree**. See *The queen's evolutions*.
+- **Queen panel** (middle of the screen, **H** or click the queen): how often she lays, a **Stop laying** / **Resume laying** button, her eggs, the colony's food upkeep, how many ants are skilled or masters and their traits, a **Caste mix** button that opens the castes panel, and her **evolution tree**. See *The queen's evolutions*.
 - **Codex** (middle of the screen, **L**): the lore fragments of the ruins on the left (*???* until found), the one you pick on the right; a fragment not found yet says how many more relics or tablets to study. See *The ruins: lore, the Codex and the Ancient Engine*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
 - **Build palette** (above the toolbar, Build tool only): every building with its cost, in up to three rows. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
@@ -189,7 +190,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **Two grinding stones** under a hopper are a crusher (they turn and throw dust while it works).
   - The **clay kiln** is a smelter (its mouth glows while it works); the **mushroom bed** is a fungus garden; the **wooden shelves** with bones and books are an Archive (its candle burns while it studies). Two **crystal prongs** on an iron base are a Crystal Resonator (light arcs between them while it resonates); the stone **arch** in the ruins is the Ancient Engine: a mossy ruin at first, then with an iron gear, crystals set at its sides, and finally a golden gear with a glowing core once it runs. **Ancient tablets** are gold slabs glowing in ruin floors.
   - **Plants** (ferns, bushes, tall flowers) sway along the surface; leaves fall under them by day. **Roots** are dark winding strands in the soil below them.
-  - The **sky** follows the time of day: blue by day, orange at sunrise and sunset, dark blue with stars at night, grey while it rains (with falling drops). At night the surface is dim.
+  - The **sky** follows the time of day: blue by day, orange at sunrise and sunset, dark blue with stars at night, grey while it rains (with falling drops). At night the surface is dim. Now and then a **shooting star** streaks across a clear night sky; on a **starfall night** they fill the sky, all flying the same way. In a **thunderstorm**, jagged white **lightning bolts** strike the ground and light up the sky and the surface for a moment.
   - A **bird** circles high above while its **dark dithered shadow** follows an ant on the ground; when it strikes it dives onto the shadow.
   - A **fenced leaf pasture** with little green aphids walking about is an Aphid Ranch (yellow honeydew drops on the leaves while it works).
   - A **golden beetle** with a blinking sparkle wanders the tunnels during its event; a **golden aphid** sits in an Aphid Ranch during its event. A blinking **orange dot** marks ants trapped in the rock.
@@ -254,8 +255,8 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 
 ### Food and the queen
 - **Food sources right now:**
-  - **Seeds** appear on the grass near the nest every few seconds **by day** (up to 12 lying around). Workers walk out and bring them in: 2 food each.
-  - **Leaves** fall from the plants on the surface by day, one every 6 seconds or so (up to 10 lying around). They are not food themselves: they feed a Fungus Garden or an Aphid Ranch.
+  - **Seeds** appear on the grass near the nest every few seconds **by day** and on a **starfall night** (up to 12 lying around). Workers walk out and bring them in: 2 food each.
+  - **Leaves** fall from the plants on the surface by day (and on a starfall night), one every 6 seconds or so (up to 10 lying around). They are not food themselves: they feed a Fungus Garden or an Aphid Ranch.
   - **Grub nests** are pale-speckled soil in the topsoil. Dig them out and they drop **grubs**: 5 food each.
   - **Fungus Garden** (Build tool): turns 2 seeds into 3 fungus, or **2 leaves into 4 fungus**, worth 3 food each, so seeds are worth more than twice as much. Workers bring seeds and leaves to a garden before the queen.
   - **Giant fungus** deep down in the fungal depths: every cell dug out drops 2 fungus.
@@ -264,6 +265,7 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 - **Honeydew** (from an **Aphid Ranch**) is kept in the stock like an item. The queen eats one from the stock every **20 seconds** while there is any (leaving what you keep for building): meanwhile she lays **50% faster** and needs no food of her own.
 - **Starving:** if food runs out, the colony is starving. Workers move and dig at half speed and the queen stops laying until food comes in again. Nobody starves to death.
 - While **raiders are in the royal chamber** the queen doesn't lay either.
+- **Stop laying:** the **Stop laying** button in the Queen panel tells her to rest, for instance when the colony has as many ants as your food can carry. She lays nothing (not while the game is closed either) until you click **Resume laying**. Royal Decree still lays its eggs. The panel shows *Not laying: you told her to rest.*
 - The **Queen panel** (**H**, or click her) shows all of this at a glance and holds her evolutions.
 
 ### What workers do on their own
@@ -336,7 +338,7 @@ Paint scents onto the map to steer the colony. Each scent is shown as coloured s
 | **Defend** (red) | Idle soldiers patrol here, like at a guard post. Available once you have soldiers. |
 | **Avoid** (violet) | Ants route around it (crossing it counts as 4 times the distance), take **no jobs inside** and never wander in. Enemies ignore it. |
 
-- You can only paint where you can see. Right mouse erases the selected scent.
+- You can only paint where you can see. **Trail**, **Gather** and **Defend** only go on open cells (tunnels, chambers, the surface), never into walls or rock; **Dig here** and **Avoid** also cover solid ground. Right mouse erases the selected scent.
 - Scents **fade in about 4 minutes**. A **Pheromone Emitter** (unlocked by *Scent Glands*) keeps its scent fresh within 10 cells: paint the area first, then place the emitter in it. Press **R** before placing to choose its scent, or click a placed emitter (with the emitter selected) to change it.
 - Scents don't fade while the game is closed.
 
@@ -474,7 +476,7 @@ Tier 7 is the **ancient tier**: besides knowledge and items each node needs a nu
 - When a contract is done, click **Claim reward** to collect it: knowledge, food and sometimes items (items that don't fit drop next to the queen). A new contract takes its place.
 
 ### Random events
-Every **3 to 6 minutes** (the first after about 2.5 minutes) something happens. At most 2 events wait for you at once.
+Every **4.5 to 9 minutes** (the first after about 3.75 minutes) something happens. At most 2 events wait for you at once. Meteorites are the rarest: about 1 event in 6 early on, 1 in 10 once trapped ants and golden aphids can happen too.
 
 | Event | What happens | What to do |
 |---|---|---|
@@ -486,12 +488,14 @@ Every **3 to 6 minutes** (the first after about 2.5 minutes) something happens. 
 
 ### The surface: day, night and weather
 - A full **day and night** takes **12 minutes** of play: about 7.8 minutes of day (sunrise around 04:12, sunset around 19:48 on the clock) and 4.2 of night. A new colony starts in the morning (07:12).
-- **Seeds and leaves only appear by day.** At night the surface is dim (moonlight) and the stars come out; underground nothing changes.
+- **Seeds and leaves only appear by day** (except on a starfall night). At night the surface is dim (moonlight) and the stars come out, with a shooting star now and then; underground nothing changes.
+- **Starfall nights:** from minute 15 on, each night has a **15%** chance to be a starfall (never while it rains). Shooting stars fill the sky all night, **no wolf spiders come out**, and **seeds and leaves keep appearing** until dawn. The weather waits until morning. A card and a chime announce it.
 - **Weather** starts after the first 10 minutes, every **6 to 10 minutes**: **rain** (60%) or a **drought** (40%), each announced by a card.
   - **Rain** (1 to 1.7 minutes): water falls on the ground within 150 cells of the nest. It runs downhill, fills dips and craters and pours into open shafts and tunnels near the surface; deep water blocks and drowns ants as usual. Water **within 40 cells of the surface soaks into the ground** over a minute or two after the rain, so the flood is temporary. Entrances on high ground stay drier; an **Earth Wall** closes a shaft for the duration.
+  - **Thunderstorm:** about a third of all rains (35%). It rains **50% harder** (more water runs into the tunnels), and every **3 to 9 seconds** lightning strikes the ground somewhere within the rain's reach, with a flash and a rumble of thunder. The lightning itself harms nothing.
   - **Drought** (3 to 5 minutes): seeds and leaves appear **half as often**.
 - **Birds** hunt by day, from minute 8 on, every **2.5 to 5 minutes**, but only while some ant is out in the open (on the surface or less than 2 cells below it). The bird's shadow follows the ant farthest from cover. **Every ant in the open drops what it does and runs for the nearest way underground**; **8 seconds** later the bird strikes and takes the ants still in the open within 3 cells of its shadow (at most 4). Ants nearby make it in time; foragers far from an entrance don't, so **dig entrances near where your ants forage**. The ants come out again 4 seconds after the strike. The ant you control is not told to run: take it under ground yourself.
-- **Wolf spiders** come out at night (from minute 15 on, once you have 15 ants): 1, plus one more for every 50 ants (at most 4), on the surface 12–40 cells from the nest. They lurk until an ant comes within 12 cells, then hunt it, also into your tunnels near the entrance; soldiers go after them. At dawn they slink off.
+- **Wolf spiders** come out at night, except on a starfall night (from minute 15 on, once you have 15 ants): 1, plus one more for every 50 ants (at most 4), on the surface 12–40 cells from the nest. They lurk until an ant comes within 12 cells, then hunt it, also into your tunnels near the entrance; soldiers go after them. At dawn they slink off.
 - Nothing of this happens while the game is closed: the clock simply runs on.
 
 ### The deep layers

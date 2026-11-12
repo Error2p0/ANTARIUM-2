@@ -349,6 +349,8 @@ namespace Antarium.Presentation
                     case SurfaceEventKind.BirdCircling: QueueUi(SoundCue.BirdCry); break;
                     case SurfaceEventKind.BirdStruck: Queue(SoundCue.BirdStrike, e.Cell); break;
                     case SurfaceEventKind.RainStarted: QueueUi(SoundCue.Rain); break;
+                    case SurfaceEventKind.Lightning: QueueUi(SoundCue.Thunder); break;
+                    case SurfaceEventKind.StarfallStarted: QueueUi(SoundCue.Starfall); break;
                     case SurfaceEventKind.Dusk: QueueUi(SoundCue.Dusk); break;
                     case SurfaceEventKind.Dawn: QueueUi(SoundCue.Dawn); break;
                     case SurfaceEventKind.SpidersOut: QueueUi(SoundCue.CreaturesFound); break;

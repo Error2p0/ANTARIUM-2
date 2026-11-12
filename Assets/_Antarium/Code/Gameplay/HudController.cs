@@ -1058,9 +1058,9 @@ namespace Antarium.Gameplay
             }
             string weather = surface.Weather switch
             {
-                WeatherKind.Rain => "Rain",
+                WeatherKind.Rain => surface.Thunderstorm ? "Storm" : "Rain",
                 WeatherKind.Drought => "Drought",
-                _ => surface.IsDay ? "" : "Night",
+                _ => surface.IsDay ? "" : surface.Starfall ? "Starfall" : "Night",
             };
             _weather.EnableInClassList("hidden", weather.Length == 0);
             _weather.text = weather;

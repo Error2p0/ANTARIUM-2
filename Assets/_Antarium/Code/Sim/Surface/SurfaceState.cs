@@ -45,6 +45,19 @@ namespace Antarium.Sim
         public float WeatherLength { get; internal set; }
         /// <summary>Seconds until the next weather (counts while it is clear).</summary>
         internal float WeatherTimer;
+        /// <summary>The current rain is a thunderstorm: heavier rain and lightning.</summary>
+        public bool Thunderstorm { get; internal set; }
+        /// <summary>Seconds until the next lightning strike (thunderstorms).</summary>
+        internal float LightningTimer;
+        /// <summary>Lightning strikes so far (the view starts a bolt whenever it changes); not saved.</summary>
+        public int LightningStrikes { get; internal set; }
+        /// <summary>Where the last lightning struck (the ground, cell space).</summary>
+        public int2 LightningCell { get; internal set; }
+
+        /// <summary>Tonight is a starfall: shooting stars all night, no night hunters, and forage keeps coming.</summary>
+        public bool Starfall { get; internal set; }
+        /// <summary>Seeds and leaves appear: by day, and all through a starfall night.</summary>
+        public bool ForageGrows => IsDay || Starfall;
 
         public BirdPhase Bird { get; internal set; }
         /// <summary>Seconds until the bird strikes (circling) or is gone (leaving).</summary>
@@ -94,6 +107,14 @@ namespace Antarium.Sim
         SpidersLeft,
         /// <summary>The queen ate a honeydew from the stock.</summary>
         QueenFed,
+        /// <summary>A rain that is a thunderstorm started (published after <see cref="RainStarted"/>).</summary>
+        ThunderstormStarted,
+        /// <summary>Lightning struck the ground at <see cref="SurfaceEvent.Cell"/>.</summary>
+        Lightning,
+        /// <summary>Dusk: tonight is a starfall (no night hunters, forage keeps coming).</summary>
+        StarfallStarted,
+        /// <summary>Dawn ended the starfall.</summary>
+        StarfallEnded,
     }
 
     /// <summary>Something happened on the surface (day / night, weather, birds, spiders, honeydew).</summary>

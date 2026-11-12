@@ -52,6 +52,8 @@ namespace Antarium.Sim
         /// (queen evolutions by id, job priorities). 10.5 adds BLDG 4 (the Ancient Engine's stage), THRT 2 (rival ants' loot,
         /// diggers, the raid kind, the digger timer) and RUIN (items studied, lore fragments found by id, rival raids beaten).
         /// Version 6 (10.6): the header holds the bloodline's generation (save slot picker); LGCY 2 adds the colony's respecs.
+        /// Milestone 11 (same format version, older sections still load): SURF 2 adds the thunderstorm, the lightning timer
+        /// and the starfall night; QUEN 2 adds whether the player stopped the queen laying.
         /// </summary>
         public const int Version = 6;
 
@@ -88,8 +90,8 @@ namespace Antarium.Sim
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
             snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim), 2)));
             snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim), 2)));
-            snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim))));
-            snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim))));
+            snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim), 2)));
+            snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
             return snap;
         }
@@ -392,9 +394,10 @@ namespace Antarium.Sim
             var priorities = sim.Colony.JobPriority;
             w.Write((byte)priorities.Length);
             w.Write(priorities);
+            w.Write(sim.Colony.LayingPaused); // v2
         }
 
-        static void ReadQueen(BinaryReader r, Simulation sim)
+        static void ReadQueen(BinaryReader r, Simulation sim, byte version)
         {
             int bought = r.ReadInt32();
             for (int k = 0; k < bought; k++)
@@ -407,6 +410,7 @@ namespace Antarium.Sim
             var priorities = r.ReadBytes(jobs);
             for (int j = 0; j < priorities.Length && j < sim.Colony.JobPriority.Length; j++)
                 sim.Colony.JobPriority[j] = (byte)math.clamp((int)priorities[j], Simulation.MinPriority, Simulation.MaxPriority);
+            if (version >= 2) sim.Colony.LayingPaused = r.ReadBoolean();
         }
 
         static void WriteSlot(BinaryWriter w, in ItemSlot s)
@@ -545,9 +549,13 @@ namespace Antarium.Sim
             w.Write(s.SpiderTimer);
             w.Write(s.LeafTimer);
             w.Write(s.RoyalFeast);
+            // v2
+            w.Write(s.Thunderstorm);
+            w.Write(s.LightningTimer);
+            w.Write(s.Starfall);
         }
 
-        static void ReadSurface(BinaryReader r, Simulation sim)
+        static void ReadSurface(BinaryReader r, Simulation sim, byte version)
         {
             var s = sim.Surface;
             uint state = r.ReadUInt32();
@@ -567,7 +575,14 @@ namespace Antarium.Sim
             s.SpiderTimer = r.ReadSingle();
             s.LeafTimer = r.ReadSingle();
             s.RoyalFeast = math.max(0f, r.ReadSingle());
+            if (version >= 2)
+            {
+                s.Thunderstorm = r.ReadBoolean() && s.Weather == WeatherKind.Rain;
+                s.LightningTimer = r.ReadSingle();
+                s.Starfall = r.ReadBoolean();
+            }
             sim.UpdateDaylight();
+            if (s.IsDay) s.Starfall = false;
         }
 
         static void WriteThreats(BinaryWriter w, Simulation sim)
@@ -678,14 +693,14 @@ namespace Antarium.Sim
                 Read(sections, "PHER", (r, _) => ReadPheromones(r, sim));
                 Read(sections, "SIM", (r, _) => ReadSim(r, sim));
                 Read(sections, "PROG", (r, _) => ReadProgress(r, sim, map)); // research first: it sets capacities and unlocks
-                Read(sections, "QUEN", (r, _) => ReadQueen(r, sim));         // evolutions unlock too (before the caste shares)
+                Read(sections, "QUEN", (r, v) => ReadQueen(r, sim, v));         // evolutions unlock too (before the caste shares)
                 Read(sections, "COLN", (r, v) => ReadColony(r, sim, map, v, nurseryEggs));
                 Read(sections, "ANTS", (r, v) => ReadAnts(r, sim, map, v));
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
                 Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
                 Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
-                Read(sections, "SURF", (r, _) => ReadSurface(r, sim));
+                Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));
                 PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
                 return sim;

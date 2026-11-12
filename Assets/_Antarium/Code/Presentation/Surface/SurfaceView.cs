@@ -13,12 +13,20 @@ namespace Antarium.Presentation
     /// The surface layer (Milestone 10.2): plants swaying along the ground, aphids grazing in Aphid Ranches, the bird's
     /// shadow (behind the colony) and the bird itself and the rain (in front). Its own small atlas, generated in code and
     /// replaced by the PNGs in <c>Art/Surface/</c> where they exist; drawn by two sprite meshes, only what is in view.
+    /// Milestone 11: shooting stars at night (a shower of them on a starfall night) and lightning bolts in thunderstorms,
+    /// drawn unlit pixel by pixel behind the colony; <see cref="Flash"/> tells the sky how bright the last bolt still is.
     /// </summary>
     public sealed class SurfaceView : IDisposable
     {
         const int AtlasWidth = 96, AtlasHeight = 64;
         const float Ppu = WorldConstants.PixelsPerUnit;
         const int RainDrops = 400;
+        const int MaxStreaks = 48;
+        /// <summary>Art pixels per cell.</summary>
+        const float CellPx = WorldConstants.PixelsPerCell;
+        /// <summary>Seconds a lightning bolt is drawn, with a short dark flicker in it.</summary>
+        const float BoltSeconds = 0.32f, BoltGapStart = 0.07f, BoltGapEnd = 0.11f, FlashSeconds = 0.5f;
+        static readonly float2 Unlit = new(0f, -20000f);
 
         // Plants (2 sway frames each): fern, bush, tall stalk with a flower. First row = top. Facing does not matter.
         static readonly string[][][] Plants =
@@ -60,8 +68,30 @@ namespace Antarium.Presentation
         readonly Color32 _rainColor;
         readonly float2[] _drops = new float2[RainDrops];
         readonly ContentDB _content;
+        readonly RenderConfig _render;
         float _rain;
         bool _dropsPlaced;
+
+        struct Streak
+        {
+            public float2 Head;
+            public float2 Dir;
+            public float Speed, Age, Life;
+            public int Length;
+        }
+
+        readonly Streak[] _streaks = new Streak[MaxStreaks];
+        int _streakCount;
+        float _streakTimer = -1f;
+        Unity.Mathematics.Random _rng = new(0x5EED57A2u);
+        /// <summary>Art-pixel positions of the current bolt (the main channel first, <see cref="_boltMain"/> of them).</summary>
+        readonly List<int2> _bolt = new();
+        int _boltMain;
+        float _boltAge = 99f;
+        int _seenStrikes = -1;
+
+        /// <summary>How bright the last lightning flash still is (0..1), for the sky.</summary>
+        public float Flash { get; private set; }
         static readonly Color32 White = new(255, 255, 255, 255);
 
         static readonly string[] PlantNames = { "plant_fern", "plant_bush", "plant_flower" };
@@ -76,6 +106,7 @@ namespace Antarium.Presentation
         public SurfaceView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
         {
             _content = content;
+            _render = render;
             var slots = new List<ArtSlot>();
             var px = new Color32[AtlasWidth * AtlasHeight];
             var rects = new List<float4>();
@@ -170,7 +201,13 @@ namespace Antarium.Presentation
             var dusk = new Color32(shade, shade, (byte)math.min(255, shade + 20), 255);
             var plants = surface.Plants;
             var buildings = sim.Buildings.All;
-            _back.EnsureCapacity(plants.Count + buildings.Length * 4 + 1);
+            // Shooting stars and lightning (drawn unlit, behind the plants).
+            UpdateStreaks(world, surface, min, max, dt);
+            UpdateBolt(world, surface, max, dt);
+            int sky = 0;
+            for (int s = 0; s < _streakCount; s++) sky += _streaks[s].Length;
+            if (_boltAge < BoltSeconds) sky += _bolt.Count + _boltMain;
+            _back.EnsureCapacity(plants.Count + buildings.Length * 4 + 1 + sky);
             var v = _back.Vertices;
             int quad = 0;
             foreach (var p in plants)
@@ -201,6 +238,9 @@ namespace Antarium.Presentation
                     SpriteQuads.WriteQuad(v, quad++, Snap(at), new int2(3, 2), new int2(0, 1), facing, _rects[_aphidRect + frame], White, at);
                 }
             }
+            quad = WriteStreaks(world, v, quad);
+            quad = WriteBolt(v, quad);
+
             bool circling = surface.Bird == BirdPhase.Circling;
             if (circling)
             {
@@ -289,6 +329,150 @@ namespace Antarium.Presentation
                 if (x < 0 || x >= world.Width || d.y <= world.SurfaceY[x] + 1) continue;
                 float2 at = d * WorldConstants.CellSize;
                 SpriteQuads.WriteUpright(v, quad++, Snap(at), new int2(1, 3), _rects[_dropRect], color, at);
+            }
+            return quad;
+        }
+
+        // ---------------------------------------------------------------- shooting stars
+
+        /// <summary>
+        /// At night under a clear sky a shooting star crosses the view every <c>shootingStarInterval</c> seconds; on a starfall
+        /// night every <c>starfallInterval</c>, all streaking the same way (away from the shower's radiant).
+        /// </summary>
+        void UpdateStreaks(WorldGrid world, SurfaceState surface, float2 min, float2 max, float dt)
+        {
+            for (int i = _streakCount - 1; i >= 0; i--)
+            {
+                ref var s = ref _streaks[i];
+                s.Age += dt;
+                s.Head += s.Dir * s.Speed * dt;
+                if (s.Age < s.Life) continue;
+                _streaks[i] = _streaks[--_streakCount];
+            }
+            if (dt <= 0f) return;
+            float night = math.saturate(1f - surface.Daylight * 2f) * (1f - _rain);
+            if (night < 0.3f)
+            {
+                _streakTimer = -1f;
+                return;
+            }
+            var range = surface.Starfall ? _render.starfallInterval : _render.shootingStarInterval;
+            float lo = math.max(0.02f, range.x), hi = math.max(lo, range.y) + 1e-3f;
+            if (_streakTimer < 0f || _streakTimer > hi) _streakTimer = _rng.NextFloat(lo, hi);
+            _streakTimer -= dt;
+            if (_streakTimer > 0f) return;
+            _streakTimer = _rng.NextFloat(lo, hi);
+            if (_streakCount >= MaxStreaks) return;
+
+            // Only in the sky in view: above the highest ground under the view.
+            int x0 = math.clamp((int)min.x, 0, world.Width - 1), x1 = math.clamp((int)max.x, 0, world.Width - 1);
+            int ground = 0;
+            for (int x = x0; x <= x1; x++) ground = math.max(ground, world.SurfaceY[x]);
+            float low = math.max(ground + 6f, min.y + 2f), high = math.min(max.y - 2f, world.Height - 1f);
+            if (high - low < 4f) return;
+
+            bool shower = surface.Starfall;
+            float side = shower ? ((surface.Day & 1) == 0 ? 1f : -1f) : (_rng.NextBool() ? 1f : -1f);
+            float angle = math.radians(shower ? _rng.NextFloat(22f, 34f) : _rng.NextFloat(12f, 42f));
+            _streaks[_streakCount++] = new Streak
+            {
+                Head = new float2(_rng.NextFloat(min.x, max.x), _rng.NextFloat(math.lerp(low, high, 0.3f), high)),
+                Dir = new float2(math.cos(angle) * side, -math.sin(angle)),
+                Speed = _rng.NextFloat(12f, 24f),
+                Life = _rng.NextFloat(0.45f, 1f),
+                Length = _rng.NextInt(10, shower && _rng.NextFloat() < 0.25f ? 40 : 26),
+            };
+        }
+
+        /// <summary>A bright head and a tail that thins out (dithered), fading in and out over the streak's life.</summary>
+        int WriteStreaks(WorldGrid world, NativeArray<SpriteVertex> v, int quad)
+        {
+            Color32 star = TerrainView.ToWorking(_render.starColor);
+            for (int i = 0; i < _streakCount; i++)
+            {
+                var s = _streaks[i];
+                float env = math.saturate(s.Age / 0.08f) * math.saturate((s.Life - s.Age) / (s.Life * 0.45f));
+                for (int k = 0; k < s.Length; k++)
+                {
+                    float f = k / (float)s.Length;
+                    float a = env * (1f - f * f); // solid near the head, thinning (dithered) toward the tail
+                    if (a < 0.06f) break;
+                    float2 p = s.Head - s.Dir * (k / CellPx);
+                    int cx = (int)math.floor(p.x);
+                    if (cx < 0 || cx >= world.Width || p.y <= world.SurfaceY[cx] + 1.5f) continue;
+                    var c = k < 2 ? White : star;
+                    float2 at = math.floor(p * CellPx) / Ppu;
+                    SpriteQuads.WriteUpright(v, quad++, at, new int2(1, 1), _rects[_pixelRect], new Color32(c.r, c.g, c.b, (byte)(255f * math.min(1f, a))), Unlit);
+                }
+            }
+            return quad;
+        }
+
+        // ---------------------------------------------------------------- lightning
+
+        /// <summary>A new strike in the simulation starts a jagged bolt from above the view down to where it hit.</summary>
+        void UpdateBolt(WorldGrid world, SurfaceState surface, float2 max, float dt)
+        {
+            int strikes = surface.LightningStrikes;
+            if (_seenStrikes >= 0 && strikes > _seenStrikes) StartBolt(world, surface.LightningCell, max);
+            _seenStrikes = strikes;
+            _boltAge += dt;
+            bool gap = _boltAge > BoltGapStart && _boltAge < BoltGapEnd;
+            Flash = math.saturate(1f - _boltAge / FlashSeconds) * (gap ? 0.35f : 1f);
+        }
+
+        void StartBolt(WorldGrid world, int2 cell, float2 max)
+        {
+            _bolt.Clear();
+            _boltAge = 0f;
+            int gx = (int)((cell.x + 0.5f) * CellPx), groundPx = (int)(cell.y * CellPx);
+            int topPx = (int)(math.min(world.Height, max.y + 2f) * CellPx);
+            if (topPx - groundPx < 8) return; // the sky is not in view: only the flash
+            topPx = math.min(topPx, groundPx + 70 * (int)CellPx);
+
+            // Main channel: segments of a few pixels, each leaning left, right or straight down, kept near the strike.
+            var forks = new List<int2>(4);
+            int x = gx + _rng.NextInt(-16, 17), dx = 0, run = 0;
+            for (int y = topPx; y >= groundPx; y--)
+            {
+                if (run-- <= 0)
+                {
+                    run = _rng.NextInt(2, 7);
+                    dx = _rng.NextInt(-1, 2);
+                    if (x - gx > 10) dx = -1;
+                    else if (gx - x > 10) dx = 1;
+                    if (forks.Count < 3 && y < topPx - 12 && y > groundPx + 24 && _rng.NextFloat() < 0.12f) forks.Add(new int2(x, y));
+                }
+                x += dx;
+                _bolt.Add(new int2(x, y));
+            }
+            _boltMain = _bolt.Count;
+            // Forks: thinner side channels that peter out in the air.
+            foreach (var f in forks)
+            {
+                int side = _rng.NextBool() ? 1 : -1, fx = f.x, length = _rng.NextInt(12, 36);
+                for (int k = 0, y = f.y; k < length && y > groundPx + 4; k++, y--)
+                {
+                    if (_rng.NextFloat() < 0.7f) fx += side;
+                    _bolt.Add(new int2(fx, y));
+                }
+            }
+        }
+
+        /// <summary>The bolt, two pixels wide along its main channel, one along its forks; dark for a moment in between.</summary>
+        int WriteBolt(NativeArray<SpriteVertex> v, int quad)
+        {
+            if (_boltAge >= BoltSeconds || (_boltAge > BoltGapStart && _boltAge < BoltGapEnd) || _bolt.Count == 0) return quad;
+            Color32 c = TerrainView.ToWorking(_render.lightningColor);
+            var core = new Color32(c.r, c.g, c.b, 255);
+            var fork = new Color32(c.r, c.g, c.b, (byte)(_boltAge < BoltGapStart ? 255 : 170));
+            var rect = _rects[_pixelRect];
+            for (int i = 0; i < _bolt.Count; i++)
+            {
+                bool main = i < _boltMain;
+                float2 at = new float2(_bolt[i]) / Ppu;
+                SpriteQuads.WriteUpright(v, quad++, at, new int2(1, 1), rect, main ? core : fork, Unlit);
+                if (main) SpriteQuads.WriteUpright(v, quad++, at + new float2(1f / Ppu, 0f), new int2(1, 1), rect, fork, Unlit);
             }
             return quad;
         }

@@ -28,6 +28,8 @@ namespace Antarium.Content
         LoreFound, EngineStage, EngineAwakened, Burrow, ItemStolen,
         // presentation pass (Milestone 10.7): queen evolutions, ant levels, the respec, the Quickening, raiders getting away
         Evolution, LevelUp, Respec, Quickening, Escaped,
+        // Milestone 11: thunder after a lightning strike, a sparkling chime when a starfall night begins
+        Thunder, Starfall,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }

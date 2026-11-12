@@ -11,8 +11,8 @@ namespace Antarium.Gameplay
 {
     /// <summary>
     /// Cards on the left: random events (what happened, the time left to act), raids (warning countdown,
-    /// raiders left, outcome), creatures found in a newly opened cave, the surface: weather, a circling bird and
-    /// spiders out at night, and fires (cells burning). A Go button moves the camera there.
+    /// raiders left, outcome), creatures found in a newly opened cave, the surface: weather (thunderstorms too), a circling
+    /// bird, spiders out at night and starfall nights, and fires (cells burning). A Go button moves the camera there.
     /// Finished cards stay a few seconds with their outcome.
     /// </summary>
     public sealed class EventFeed
@@ -20,7 +20,7 @@ namespace Antarium.Gameplay
         const float InstantLinger = 30f;
         const float EndedLinger = 8f;
 
-        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders, Fire, Digger }
+        enum CardKind : byte { RandomEvent, Raid, Creatures, Weather, Bird, Spiders, Fire, Digger, Starfall }
 
         sealed class Card
         {
@@ -74,6 +74,8 @@ namespace Antarium.Gameplay
             var surface = sim.Surface;
             if (surface.Weather == WeatherKind.Rain) OnSurface(new SurfaceEvent(SurfaceEventKind.RainStarted, sim.Colony.QueenCell));
             else if (surface.Weather == WeatherKind.Drought) OnSurface(new SurfaceEvent(SurfaceEventKind.DroughtStarted, sim.Colony.QueenCell));
+            if (surface.Thunderstorm) OnSurface(new SurfaceEvent(SurfaceEventKind.ThunderstormStarted, sim.Colony.QueenCell));
+            if (surface.Starfall) OnSurface(new SurfaceEvent(SurfaceEventKind.StarfallStarted, sim.Colony.QueenCell));
             if (surface.Bird == BirdPhase.Circling) OnSurface(new SurfaceEvent(SurfaceEventKind.BirdCircling, (int2)surface.BirdPos));
             if (sim.Fire.Count > 0)
             {
@@ -189,7 +191,34 @@ namespace Antarium.Gameplay
                 case SurfaceEventKind.Dawn:
                     return $"Day {e.Count} dawns. Seeds and leaves grow again; birds hunt by day.";
                 case SurfaceEventKind.Dusk:
+                    if (_sim != null && _sim.Surface.Starfall) return null; // the starfall card says it
                     return "Night falls. Nothing grows on the surface until dawn, and hunters come out in the dark.";
+                case SurfaceEventKind.ThunderstormStarted:
+                {
+                    var card = Find(CardKind.Weather, 0);
+                    if (card != null)
+                    {
+                        card.Title.text = "Thunderstorm";
+                        card.Body.text = "Heavy rain with lightning: more water runs into open tunnels near the surface and pools in dips. " +
+                                         "It soaks away again after the storm. The lightning is only a show.";
+                    }
+                    return "A thunderstorm! Heavy rain runs into the tunnels near the surface.";
+                }
+                case SurfaceEventKind.StarfallStarted:
+                {
+                    foreach (var c in _cards)
+                        if (c.Kind == CardKind.Spiders && !c.Ended) End(c, "The hunters fled from the falling stars.", "Gone", true);
+                    if (Find(CardKind.Starfall, 0) != null) return null;
+                    NewCard(CardKind.Starfall, 0, -1, e.Cell, "Starfall",
+                        "Shooting stars fill the sky tonight. No hunters come out, and seeds and leaves keep appearing on the surface until dawn.");
+                    return "A starfall night! Shooting stars all night: no hunters, and the surface keeps growing food.";
+                }
+                case SurfaceEventKind.StarfallEnded:
+                {
+                    var card = Find(CardKind.Starfall, 0);
+                    if (card != null) End(card, "Dawn: the starfall is over.", "Over", true);
+                    return null;
+                }
                 case SurfaceEventKind.RainStarted:
                 {
                     var old = Find(CardKind.Weather, 0);
@@ -425,9 +454,18 @@ namespace Antarium.Gameplay
                         }
                         End(card, "The bird is gone.", "Gone", true);
                     }
+                    else if (card.Kind == CardKind.Starfall)
+                    {
+                        if (sim.Surface.Starfall)
+                        {
+                            card.Timer.text = "Until dawn";
+                            continue;
+                        }
+                        End(card, "Dawn: the starfall is over.", "Over", true);
+                    }
                     else if (card.Kind == CardKind.Spiders)
                     {
-                        if (!sim.Surface.IsDay)
+                        if (!sim.Surface.IsDay && !sim.Surface.Starfall)
                         {
                             card.Timer.text = "Until dawn";
                             continue;

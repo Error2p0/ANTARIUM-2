@@ -165,6 +165,12 @@ namespace Antarium.Content
         [Min(1f)] public float weatherIntervalMax = 600f;
         [Tooltip("Chance that the next weather is rain (else a drought).")]
         [Range(0f, 1f)] public float rainChance = 0.6f;
+        [Tooltip("Chance that a rain is a thunderstorm: heavier rain and lightning.")]
+        [Range(0f, 1f)] public float thunderstormChance = 0.35f;
+        [Tooltip("A thunderstorm drops this many times as much rain.")]
+        [Min(1f)] public float stormRainFactor = 1.5f;
+        [Tooltip("Seconds between lightning strikes in a thunderstorm (random in this range).")]
+        public Vector2 lightningInterval = new(3f, 9f);
         public Vector2 rainSeconds = new(60f, 100f);
         public Vector2 droughtSeconds = new(180f, 300f);
         [Tooltip("Forage spawns this much as often during a drought.")]
@@ -219,6 +225,12 @@ namespace Antarium.Content
         public Vector2Int spiderDistance = new(12, 40);
         [Tooltip("Spiders come out over this many seconds after nightfall.")]
         [Min(0f)] public float spiderSpawnWindow = 60f;
+
+        [Header("Starfall nights")]
+        [Tooltip("Chance at dusk that the night is a starfall: shooting stars all night, no night hunters, and seeds and leaves keep coming.")]
+        [Range(0f, 1f)] public float starfallChance = 0.15f;
+        [Tooltip("No starfall before this many seconds into a colony.")]
+        [Min(0f)] public float firstStarfallSeconds = 900f;
     }
 
     [Serializable]
@@ -443,9 +455,9 @@ namespace Antarium.Content
 
         [Header("Random events")]
         [Tooltip("Seconds into a new colony before the first random event.")]
-        [Min(0f)] public float firstEventDelay = 150f;
-        [Min(1f)] public float eventIntervalMin = 180f;
-        [Min(1f)] public float eventIntervalMax = 360f;
+        [Min(0f)] public float firstEventDelay = 225f;
+        [Min(1f)] public float eventIntervalMin = 270f;
+        [Min(1f)] public float eventIntervalMax = 540f;
         [Tooltip("No new event starts while this many are waiting for the player.")]
         [Min(1)] public int maxActiveEvents = 2;
         [Tooltip("Golden beetle walking speed, cells per second.")]
@@ -625,6 +637,14 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float rainLight = 0.7f;
         public Color starColor = new(0.9f, 0.92f, 1f);
         public Color rainColor = new(0.65f, 0.75f, 0.95f, 0.7f);
+        [Tooltip("Seconds between shooting stars on a clear night (random in this range).")]
+        public Vector2 shootingStarInterval = new(6f, 20f);
+        [Tooltip("Seconds between shooting stars on a starfall night.")]
+        public Vector2 starfallInterval = new(0.04f, 0.18f);
+        [Tooltip("Lightning bolts and the flash they light the sky with.")]
+        public Color lightningColor = new(0.92f, 0.95f, 1f);
+        [Tooltip("How much a lightning flash brightens the sky and the sky light (0 = none).")]
+        [Range(0f, 2f)] public float lightningFlash = 0.9f;
         [Tooltip("Ants, queen and items never render darker than this, so the colony stays watchable in dark tunnels.")]
         [Range(0f, 1f)] public float spriteMinLight = 0.85f;
         [Tooltip("Stripes on cells ordered for mining.")]

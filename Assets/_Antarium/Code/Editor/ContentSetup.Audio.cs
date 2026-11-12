@@ -125,6 +125,12 @@ namespace Antarium.Editor
             Ui(SoundCue.Quickening, Patch(SynthWave.Pluck, 0.9f, 523f, decay: 2f, harmonics: 0.3f, notes: 6, noteStep: 2f), 0.5f, 0.5f);
             Sfx(SoundCue.Escaped, Patch(SynthWave.Triangle, 0.35f, 600f, 250f, decay: 2f, lowpass: 3000f, notes: 2, noteStep: -3f), 0.35f, 1f, 1);
 
+            // Milestone 11: a low rolling rumble for lightning (it swells in a moment after the flash), a high sparkling
+            // arpeggio when a starfall night begins
+            Sfx(SoundCue.Thunder, Patch(SynthWave.Noise, 2.6f, 160f, 35f, attack: 0.18f, decay: 1.1f, lowpass: 420f, gain: 1.7f), 0.75f, 1.2f, 2,
+                positional: false, pitchLow: 0.8f, pitchHigh: 1.15f, variants: 3);
+            Note(SoundCue.Starfall, Patch(SynthWave.Sine, 1.6f, 1568f, attack: 0.01f, decay: 1.6f, harmonics: 0.5f, vibratoHz: 7f, vibratoDepth: 0.1f, notes: 5, noteStep: -3f), 0.35f, 2f);
+
             void Bed(string biomeId, AmbiencePatch patch)
             {
                 var biome = biomeId == null ? null : AssetDatabase.LoadAssetAtPath<BiomeDef>($"{BiomesFolder}/{biomeId}.asset");

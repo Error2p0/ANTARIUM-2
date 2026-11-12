@@ -48,6 +48,8 @@ namespace Antarium.Sim
         public bool Starving;
         /// <summary>Raiders are in the royal chamber: the queen does not lay.</summary>
         public bool QueenDisturbed;
+        /// <summary>The player told the queen to stop laying (queen panel). Royal Decree still lays.</summary>
+        public bool LayingPaused;
         /// <summary>The queen is eating honeydew: she lays <see cref="FedLayingBonus"/> faster and needs no food of her own.</summary>
         public bool QueenFed;
         public float FedLayingBonus = 0.5f;
@@ -172,11 +174,16 @@ namespace Antarium.Sim
         }
 
         /// <summary>
-        /// Lays an egg when fed, undisturbed and there is room next to the queen. Its caste is the one furthest below
-        /// its share (see <see cref="NextCaste"/>). Returns true if one was laid.
+        /// Lays an egg when fed, undisturbed, not paused by the player and there is room next to the queen. Its caste is the
+        /// one furthest below its share (see <see cref="NextCaste"/>). Returns true if one was laid.
         /// </summary>
         public bool TryLayEgg(float dt, int2 eggCell, int[] alive)
         {
+            if (LayingPaused)
+            {
+                EggTimer = 0f;
+                return false;
+            }
             EggTimer += dt;
             if (Starving || QueenDisturbed || EggTimer < EggInterval) return false;
             if (LooseEggs >= MaxEggs) return false;

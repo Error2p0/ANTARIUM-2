@@ -1606,6 +1606,58 @@ MonoBehaviour:
     cooldown: 1
     maxVoices: 1
     positional: 1
+  - cue: 61
+    clip: {fileID: 0}
+    synth:
+      wave: 4
+      duration: 2.6
+      frequency: 160
+      frequencyEnd: 35
+      attack: 0.18
+      decayPower: 1.1
+      noise: 0
+      lowpass: 420
+      highpass: 0
+      harmonics: 0
+      vibratoHz: 0
+      vibratoDepth: 0
+      notes: 1
+      noteStep: 0
+      crush: 0
+      gain: 1.7
+    variants: 3
+    bus: 0
+    volume: 0.75
+    pitch: {x: 0.8, y: 1.15}
+    cooldown: 1.2
+    maxVoices: 2
+    positional: 0
+  - cue: 62
+    clip: {fileID: 0}
+    synth:
+      wave: 0
+      duration: 1.6
+      frequency: 1568
+      frequencyEnd: 0
+      attack: 0.01
+      decayPower: 1.6
+      noise: 0
+      lowpass: 0
+      highpass: 0
+      harmonics: 0.5
+      vibratoHz: 7
+      vibratoDepth: 0.1
+      notes: 5
+      noteStep: -3
+      crush: 0
+      gain: 1
+    variants: 1
+    bus: 0
+    volume: 0.35
+    pitch: {x: 0.99, y: 1.01}
+    cooldown: 2
+    maxVoices: 2
+    positional: 0
   ambience:
   - biome: {fileID: 0}
     clip: {fileID: 0}

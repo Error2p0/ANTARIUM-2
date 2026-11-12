@@ -176,9 +176,10 @@ namespace Antarium.Presentation
 
         /// <summary>
         /// Sky colours, sky light and stars for the time of day and the weather (rain greys the sky and dims the light; it
-        /// fades in and out over a few seconds). Also sets the light map's sky scale for particles.
+        /// fades in and out over a few seconds); <paramref name="flash"/> (0..1, a lightning bolt) lights sky and ground up
+        /// for a moment. Also sets the light map's sky scale for particles.
         /// </summary>
-        public void SetSky(SurfaceState surface, Color daySkyLight, float dt)
+        public void SetSky(SurfaceState surface, Color daySkyLight, float dt, float flash = 0f)
         {
             float d = surface.Daylight;
             float target = surface.Weather == WeatherKind.Rain ? 1f : 0f;
@@ -191,15 +192,19 @@ namespace Antarium.Presentation
             float grey = _rain * 0.65f;
             top = Color.Lerp(top, r.rainSky * Mathf.Lerp(0.25f, 1f, d), grey);
             horizon = Color.Lerp(horizon, r.rainSky * Mathf.Lerp(0.3f, 1.1f, d), grey);
+            float bolt = Mathf.Clamp01(flash * r.lightningFlash);
+            top = Color.Lerp(top, r.lightningColor * 0.75f, bolt * 0.55f);
+            horizon = Color.Lerp(horizon, r.lightningColor * 0.9f, bolt * 0.65f);
             Shader.SetGlobalColor(SkyTopId, top);
             Shader.SetGlobalColor(SkyHorizonId, horizon);
 
             var night = r.nightLight * r.nightLightStrength;
             var sky = Color.Lerp(night, daySkyLight, d) * Mathf.Lerp(1f, r.rainLight, _rain);
+            sky = Color.Lerp(sky, r.lightningColor, bolt * 0.7f);
             Shader.SetGlobalVector(SkyLightId, new Vector4(sky.r, sky.g, sky.b, 1f));
             float stars = Mathf.Clamp01(1f - d * 2f) * (1f - _rain);
             Shader.SetGlobalVector(StarsId, new Vector4(r.starColor.r, r.starColor.g, r.starColor.b, stars));
-            _light.SkyScale = Mathf.Lerp(r.nightLightStrength, 1f, d) * Mathf.Lerp(1f, r.rainLight, _rain);
+            _light.SkyScale = Mathf.Lerp(Mathf.Lerp(r.nightLightStrength, 1f, d) * Mathf.Lerp(1f, r.rainLight, _rain), 1f, bolt * 0.7f);
         }
 
         int _rampSize = 1;

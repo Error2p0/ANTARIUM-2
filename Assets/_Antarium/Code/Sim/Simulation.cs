@@ -18,7 +18,7 @@ namespace Antarium.Sim
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
             ContainerFilter, Reserve, Recipe, Evolve, Priority,
-            Stage, TriggerDigger, Respec,
+            Stage, TriggerDigger, Respec, Laying,
         }
 
         readonly struct Command
@@ -463,6 +463,7 @@ namespace Antarium.Sim
                 case CommandKind.Respec: Respec(); break;
                 case CommandKind.Evolve: Evolutions.Buy(cmd.Def); break;
                 case CommandKind.Priority: SetPriority((JobKind)cmd.Item, cmd.Def); break;
+                case CommandKind.Laying: Colony.LayingPaused = !cmd.Set; break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -969,7 +970,7 @@ namespace Antarium.Sim
         void UpdateForage(float dt)
         {
             var cfg = Config.colony;
-            if (Content.SurfaceForage.Length == 0 || !Surface.IsDay) return; // seeds appear by day
+            if (Content.SurfaceForage.Length == 0 || !Surface.ForageGrows) return; // seeds appear by day and on starfall nights
             float forage = Colony.Mods.Mult(StatKind.ForageRate) * WeatherForage;
             if (forage <= 0f) return;
             Colony.ForageTimer += dt;

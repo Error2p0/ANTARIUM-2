@@ -15,6 +15,9 @@ namespace Antarium.Sim
         /// <summary>Buys the next level of queen evolution <paramref name="evolution"/> (index into <see cref="ContentDB.Evolutions"/>).</summary>
         public void EnqueueEvolution(int evolution) => _pending.Add(new Command(CommandKind.Evolve, evolution, default, default, 0));
 
+        /// <summary>Lets the queen lay eggs (<paramref name="on"/>) or stops her (queen panel).</summary>
+        public void EnqueueLaying(bool on) => _pending.Add(new Command(CommandKind.Laying, 0, default, default, 0, set: on));
+
         /// <summary>Sets the priority (1..5) of <paramref name="job"/> for the whole colony.</summary>
         public void EnqueuePriority(JobKind job, int priority) =>
             _pending.Add(new Command(CommandKind.Priority, priority, default, default, (ushort)job));

@@ -9,13 +9,15 @@ using UnityEngine.UIElements;
 namespace Antarium.Gameplay
 {
     /// <summary>
-    /// The Queen panel (H or click the queen, 10.4): how she lays, the brood, the colony's upkeep and skills, a shortcut to
-    /// the caste mix, and her evolution tree. Evolutions belong to this colony and are paid with rare finds from the
+    /// The Queen panel (H or click the queen, 10.4): how she lays (and a button to stop her, 11), the brood, the colony's
+    /// upkeep and skills, a shortcut to the caste mix, and her evolution tree. Evolutions belong to this colony and are paid with rare finds from the
     /// stock; hover a node for its details, click to buy its next level.
     /// </summary>
     public sealed class QueenPanel
     {
         const int MaxPips = 5;
+        /// <summary><see cref="_hovered"/> while the pointer is over the laying button.</summary>
+        const int HoverLaying = -2;
 
         readonly ContentDB _content;
         readonly Button[] _nodes;
@@ -29,10 +31,14 @@ namespace Antarium.Gameplay
         readonly System.Collections.Generic.List<ushort> _costItems = new();
         readonly Sprite _pipEmpty, _pipFull;
         readonly Button _castes;
+        readonly Button _laying;
+        bool _layingShownPaused;
         int _hovered = -1;
 
         public VisualElement Root { get; }
         public event Action<int> EvolveClicked;
+        /// <summary>The player wants the queen to lay (true) or to stop (false).</summary>
+        public event Action<bool> LayingToggled;
         public event Action CastesClicked;
         public event Action CloseClicked;
 
@@ -74,6 +80,12 @@ namespace Antarium.Gameplay
             _stats = new Label();
             _stats.AddToClassList("queen__text");
             left.Add(_stats);
+            _laying = new Button(() => LayingToggled?.Invoke(_layingShownPaused)) { text = "Stop laying", focusable = false };
+            _laying.AddToClassList("small-button");
+            _laying.AddToClassList("queen__castes");
+            _laying.RegisterCallback<PointerEnterEvent>(_ => _hovered = HoverLaying);
+            _laying.RegisterCallback<PointerLeaveEvent>(_ => { if (_hovered == HoverLaying) _hovered = -1; });
+            left.Add(_laying);
             _castes = new Button(() => CastesClicked?.Invoke()) { text = "Caste mix (K)", focusable = false };
             _castes.AddToClassList("small-button");
             _castes.AddToClassList("queen__castes");
@@ -192,6 +204,13 @@ namespace Antarium.Gameplay
                     _pips[i][l].EnableInClassList("evolution__pip--full", l < level);
                 }
             }
+            bool paused = sim.Colony.LayingPaused;
+            if (paused != _layingShownPaused || _laying.text.Length == 0)
+            {
+                _layingShownPaused = paused;
+                _laying.text = paused ? "Resume laying" : "Stop laying";
+                _laying.EnableInClassList("toggle--on", paused);
+            }
             _stats.text = StatsText(sim);
             _detail.text = Detail(sim);
         }
@@ -233,7 +252,8 @@ namespace Antarium.Gameplay
         {
             var colony = sim.Colony;
             _sb.Clear();
-            if (colony.Starving) _sb.Append("Starving: she stopped laying.");
+            if (colony.LayingPaused) _sb.Append("Not laying: you told her to rest.");
+            else if (colony.Starving) _sb.Append("Starving: she stopped laying.");
             else if (colony.QueenDisturbed) _sb.Append("Raiders in her chamber: she stopped laying.");
             else _sb.Append("Lays an egg every ").Append(colony.EggInterval.ToString("0.0")).Append(" s");
             if (colony.QueenFed) _sb.Append("\nEating honeydew: lays ").Append(Mathf.RoundToInt(colony.FedLayingBonus * 100f)).Append("% faster, eats no food");
@@ -265,6 +285,10 @@ namespace Antarium.Gameplay
         string Detail(Simulation sim)
         {
             var evo = sim.Evolutions;
+            if (_hovered == HoverLaying)
+                return sim.Colony.LayingPaused
+                    ? "The queen is resting: she lays no eggs until you let her again. Royal Decree still lays its eggs."
+                    : "Stop the queen laying eggs, for instance when the colony has as many ants as it can feed. Click again to let her lay.";
             if (_hovered < 0)
                 return "Evolutions belong to this colony: pay them with rare finds from the stock (honeydew, amber, fossils, star fragments, relics). " +
                        "Each column needs a level of the one to its left.";

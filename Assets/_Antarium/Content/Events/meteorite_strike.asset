@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Meteorite Strike
   kind: 0
   description: A meteorite crashed near the nest. Dig it out for star fragments (study them in the Archive).
-  weight: 1
+  weight: 0.44
   minDepth: 0
   duration: 0
   radius: 2.5

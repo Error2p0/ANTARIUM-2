@@ -124,7 +124,7 @@ namespace Antarium.Sim
                 inv.AddKnowledge(knowledgeRate * minutes, studied: false);
 
                 // The queen lays at the offline efficiency while fed; eggs hatch within the step.
-                eggs += step / colony.EggInterval * eff;
+                if (!colony.LayingPaused) eggs += step / colony.EggInterval * eff;
                 float reserve = upkeepPerMinute * cfg.offlineFoodReserveMinutes;
                 while (eggs >= 1f)
                 {

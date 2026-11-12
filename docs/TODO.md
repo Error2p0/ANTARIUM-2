@@ -392,6 +392,21 @@ Build what is still on the *Missing / not built yet* list below, while M9 waits 
 - Verified in the editor (capture shot `presentation`, `Captures/stills/presentation_*`): the light overlay by the nest and at a deep outpost, the ore overlay over the topsoil and deep down with its legend and counts, the flow overlay's legend, tooltips on a palette building, an item, an ability and a caste row, the info panel's icon over an iron ore cell and over an ant, the achievements dialog with icons.
 - Known limits: the overlays are exclusive (no flow + ores together); the light overlay shows light only (light has no effect on the simulation) and counts the global ambient light, so nothing is quite band 0; the ore legend counts cells, not items (a cell drops its item with the material's drop chance); the ore survey runs on the main thread (about 1 ms per count on a 1024 × 1536 world, once a second while the ore overlay is on); tooltips only exist on the HUD (dialogs have none) and show in the info panel, not next to the pointer; the new sounds were checked as exported WAVs, never heard.
 
+## Milestone 11 — Tweaks and fixes 🟡
+Smaller adjustments, small additions and fixes, given by the user in batches; each batch is built, verified and committed before the next.
+
+**Batch 1** ✅ (decided while building, no open questions: a starfall is part of the surface's night, not a random event card; lightning is harmless; Gather and Defend stay out of walls like Trail, since they only mean something where ants walk)
+- [x] **Random events less often**: every 4.5–9 minutes instead of 3–6 (first after 3.75 instead of 2.5), i.e. 2/3 as often; the meteorite's weight 1 → 0.44, so meteorites come at about 1/3 of their old rate (overall: 2/3 × its smaller share).
+- [x] **Shooting stars** at night under a clear sky (`SurfaceView`, `RenderConfig.shootingStarInterval` 6–20 s): unlit pixel streaks with a white head and a thinning dithered tail, only in the sky in view.
+- [x] **Starfall nights** (`SurfaceState.Starfall`, `SurfaceConfig.starfallChance` 15%, from minute 15, never when it rains): shooting stars fill the sky all night (`starfallInterval` 0.04–0.18 s, all the same way), no night hunters (an open *Night hunters* card closes), seeds and leaves keep coming (`ForageGrows`), the weather waits for dawn. Card, toast, chime (`SoundCue.Starfall`); `TriggerStarfall()` for debug and tests.
+- [x] **Thunderstorms** (`SurfaceState.Thunderstorm`, `thunderstormChance` 35% of rains): 1.5× the rain, lightning every 3–9 s within the rain's reach (`SurfaceEventKind.Lightning`, `LightningCell`, `LightningStrikes`); jagged bolt with forks and a flicker, the sky and sky light flash (`TerrainView.SetSky(flash)`), thunder (`SoundCue.Thunder`). Card and clock say *Thunderstorm* / *Storm*. `StartThunderstorm()` for debug and tests.
+- [x] **Scents out of walls**: Trail, Gather and Defend are only painted on open cells (`Pheromones.OpenCellsOnly`); Dig and Avoid still cover solid ground.
+- [x] **Stop laying**: *Stop laying* / *Resume laying* in the Queen panel (`Simulation.EnqueueLaying`, `Colony.LayingPaused`), its hover text in the panel's detail line, a toast; offline she lays nothing either; Royal Decree still lays.
+- [x] Saves: `SURF` 2 (thunderstorm, lightning timer, starfall), `QUEN` 2 (laying paused); older sections load without them.
+- [x] 235 EditMode tests (9 new in `Milestone11Tests`: starfall at dusk keeps hunters away and lets leaves fall until dawn; never on a rainy night or too early; a triggered starfall sends hunters off and clears the weather; thunderstorm strikes open ground cells and stops with the rain; storm chance; Trail / Gather / Defend stay out of walls, Dig / Avoid don't; laying stops and resumes; no eggs offline while stopped; saving keeps storm, starfall and the resting queen).
+- Verified in the editor (play mode, the slot-1 colony at night): a thunderstorm with a bolt and its fork over the nest, the next frame with the sky and the surface lit by the flash and the rain falling; a starfall night with streaks all flying the same way, its card (also restored from the autosave) and no hunters; the Queen panel with *Not laying: you told her to rest.* and *Resume laying*.
+- Known limits: the strike is chosen by the simulation but the bolt's shape by the view (not the same between runs); a bolt is only drawn when sky is in view at the moment of the strike (the flash always shows); shooting stars are spawned in the view, so zoomed out the sky has the same number over a larger area; thunder plays everywhere (not panned to the strike); the new sounds were not listened to.
+
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
 
@@ -407,7 +422,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - All 7 planned biomes exist (three with a variant world modifier since 10.6), with crystal resonance (Crystal Resonator), the ruins' story (lore, tablets, the Codex) and the endgame tech (ancient tier, Ancient Engine) since 10.5.
 - Fluids: pumps, water wheels, irrigation and magma heat exist; no fluid pressure (decided), no lava pumping.
 - Material flags: *Conductive* = crystal resonance (10.5), *Flammable* = fire, *Unstable* = sand and ash collapse, *Hot* = magma heat.
-- Weather is rain and drought only (no storms, no seasons).
+- Weather is rain (sometimes a thunderstorm, Milestone 11) and drought; starfall nights. No seasons, no snow or wind.
 
 **Gameplay layers**
 - Auto-designating veins exists as the genetic trait *Vein Instinct*.
@@ -417,7 +432,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Prestige: respec, new bloodline, caste lineages, the Queen's Throne and three biome variants exist (10.6). No prestige layer above the bloodline.
 
 **Presentation**
-- World art is PNG now (colony, buildings, enemies, surface, terrain; 10.7a). Still generated in code: the marker diamond, the bird's shadow, rain, dig debris and number pops.
+- World art is PNG now (colony, buildings, enemies, surface, terrain; 10.7a). Still generated in code: the marker diamond, the bird's shadow, rain, shooting stars and lightning (Milestone 11), dig debris and number pops.
 - Sound effects and ambience are synthesized placeholders (every M10 event has a cue since 10.7); music is recorded (10 tracks); the flight / discovery / lore / engine stinger slots have no clips yet.
 - UI: skin and icons done in 10.7a; the info panel and the achievements dialog show icons (10.7).
 - Tooltips: every HUD element (10.7), in the info panel; dialogs have none.

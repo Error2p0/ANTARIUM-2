@@ -197,6 +197,12 @@ namespace Antarium.Gameplay
             if (_hud.Queen != null)
             {
                 _hud.Queen.EvolveClicked += evolution => _sim?.EnqueueEvolution(evolution);
+                _hud.Queen.LayingToggled += on =>
+                {
+                    if (_sim == null) return;
+                    _sim.EnqueueLaying(on);
+                    _hud.ShowToast(on ? "The queen lays eggs again." : "The queen stopped laying. Resume it in the queen panel.");
+                };
                 _hud.Queen.CloseClicked += _hud.HideModal;
                 _hud.Queen.CastesClicked += () =>
                 {
@@ -687,7 +693,7 @@ namespace Antarium.Gameplay
 
             if (!paused) _sim.Advance(dt * DebugSpeeds[_speed]);
             _sim.UpdateDerived();
-            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt);
+            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt, _surfaceView != null ? _surfaceView.Flash : 0f);
             _terrain.Upload();
             UpdateOverlay(dt);
             float alpha = _sim.Clock.Alpha;
@@ -995,7 +1001,7 @@ namespace Antarium.Gameplay
             float2 target = sum / counted * WorldConstants.CellSize;
             _camera.Position = math.lerp(_camera.Position, target, 1f - math.exp(-3f * dt));
             _camera.Apply(dt, _worldSize);
-            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt);
+            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt, _surfaceView != null ? _surfaceView.Flash : 0f);
             _terrain.Upload();
             _buildingView.Render(_sim, 1f, Time.time, false);
             _colonyView.Render(_sim, 1f, false, Time.time);
