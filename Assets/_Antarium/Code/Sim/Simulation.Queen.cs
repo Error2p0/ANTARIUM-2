@@ -101,6 +101,67 @@ namespace Antarium.Sim
             Ants.HeatByRow = rows;
         }
 
+        // ---------------------------------------------------------------- wall build order (Milestone 11)
+
+        readonly System.Collections.Generic.Dictionary<int2, ushort> _wallCells = new();
+        readonly System.Collections.Generic.Dictionary<int2, int> _wallGroupMax = new();
+        readonly System.Collections.Generic.List<int2> _wallGroup = new();
+        readonly System.Collections.Generic.Queue<int2> _wallQueue = new();
+
+        /// <summary>
+        /// Walls are built from the inside out: of every group of touching wall blueprints only the cells farthest from the
+        /// nest (by the home field, within <c>wallOrderSlack</c>) are construction sites, so a finished wall never shuts the
+        /// ants off from the rest of its group. Each finished wall changes the blueprints, which rebuilds this.
+        /// </summary>
+        void OrderWallSources(NativeList<int2> sources)
+        {
+            _wallCells.Clear();
+            for (int i = 0; i < sources.Length; i++)
+            {
+                int id = Buildings.At(sources[i]);
+                if (id < 0 || Buildings.All[id].Kind != BuildingKind.Wall) continue;
+                _wallCells[sources[i]] = Fields.Get(FieldKind.Home, World, sources[i]);
+            }
+            if (_wallCells.Count < 2) return;
+
+            // Group touching cells (8 ways) and find each group's farthest reachable cell.
+            _wallGroupMax.Clear();
+            foreach (var start in _wallCells.Keys)
+            {
+                if (_wallGroupMax.ContainsKey(start)) continue;
+                _wallGroup.Clear();
+                _wallQueue.Clear();
+                _wallQueue.Enqueue(start);
+                _wallGroupMax[start] = -1;
+                int max = -1;
+                while (_wallQueue.Count > 0)
+                {
+                    var c = _wallQueue.Dequeue();
+                    _wallGroup.Add(c);
+                    ushort d = _wallCells[c];
+                    if (d != FlowFields.Unreachable) max = math.max(max, d);
+                    for (int dy = -1; dy <= 1; dy++)
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        var n = c + new int2(dx, dy);
+                        if ((dx == 0 && dy == 0) || !_wallCells.ContainsKey(n) || _wallGroupMax.ContainsKey(n)) continue;
+                        _wallGroupMax[n] = -1;
+                        _wallQueue.Enqueue(n);
+                    }
+                }
+                foreach (var c in _wallGroup) _wallGroupMax[c] = max;
+            }
+
+            int slack = math.max(0, Config.colony.wallOrderSlack);
+            for (int i = sources.Length - 1; i >= 0; i--)
+            {
+                if (!_wallCells.TryGetValue(sources[i], out ushort d)) continue;
+                int max = _wallGroupMax[sources[i]];
+                if (max < 0 || d == FlowFields.Unreachable) continue; // nothing to order by
+                if (d + slack < max) sources.RemoveAtSwapBack(i);
+            }
+        }
+
         // ---------------------------------------------------------------- Quickening
 
         /// <summary>Every egg hatches now: by the queen, in nurseries and carried by nurses. Returns how many.</summary>

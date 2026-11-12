@@ -203,6 +203,7 @@ namespace Antarium.Gameplay
                     _sim.EnqueueLaying(on);
                     _hud.ShowToast(on ? "The queen lays eggs again." : "The queen stopped laying. Resume it in the queen panel.");
                 };
+            _hud.BrushSizeClicked += size => _tools?.SetBrushSize(size);
                 _hud.Queen.CloseClicked += _hud.HideModal;
                 _hud.Queen.CastesClicked += () =>
                 {
@@ -351,12 +352,15 @@ namespace Antarium.Gameplay
             _surfaceView = new SurfaceView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
             _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };
-            _tools = new ToolController(config, _content, _buildingView.Ghosts);
+            _brushView = new BrushCursorView(spriteMaterial, transform, _worldSize);
+            _tools = new ToolController(config, _content, _buildingView.Ghosts, _brushSizes);
             _tools.ModeChanged += _hud.SetActiveTool;
+            _tools.BrushChanged += size => _hud.SetBrush(_tools.Mode, size);
             _tools.ModeChanged += mode => _terrain?.SetScentCover(mode == ToolMode.Pheromone);
             _tools.Build.SelectionChanged += _hud.SetSelectedBuilding;
             _tools.ScentChanged += _hud.SetSelectedScent;
             _hud.SetActiveTool(_tools.Mode);
+            _hud.SetBrush(_tools.Mode, _tools.BrushSize);
             _hud.SetSelectedBuilding(_tools.Build.Selected);
             _hud.SetSelectedScent(_tools.Scent);
             _hud.ResetSession(sim);
@@ -373,6 +377,7 @@ namespace Antarium.Gameplay
             _colonyView?.Dispose();
             _glow?.Dispose();
             _surfaceView?.Dispose();
+            _brushView?.Dispose();
             _buildingView?.Dispose();
             _terrain?.Dispose();
             _sim?.Dispose();
@@ -381,12 +386,38 @@ namespace Antarium.Gameplay
             _colonyView = null;
             _glow = null;
             _surfaceView = null;
+            _brushView = null;
             _buildingView = null;
             _terrain = null;
             _sim = null;
         }
 
         float AutosaveSeconds => _settings.autosaveMinutes * 60f;
+
+        BrushCursorView _brushView;
+        /// <summary>Brush size per tool, kept across colonies for this run.</summary>
+        readonly int[] _brushSizes = ToolController.NewBrushSizes();
+
+        /// <summary>Outlines the cells the painting tool's brush covers at the cursor, in the tool's colour.</summary>
+        void RenderBrush(float2 pointerWorld, bool hidden)
+        {
+            if (_brushView == null) return;
+            var mode = _tools.Mode;
+            if (hidden || !ToolController.HasBrush(mode) || _tools.TargetingAbility >= 0 || _tools.TargetingPossess)
+            {
+                _brushView.Hide();
+                return;
+            }
+            var r = config.render;
+            Color color = mode switch
+            {
+                ToolMode.Mine => r.miningOrderColor,
+                ToolMode.Storage => r.storageColor,
+                ToolMode.Pheromone => r.pheromoneColors != null && (int)_tools.Scent < r.pheromoneColors.Length ? r.pheromoneColors[(int)_tools.Scent] : Color.white,
+                _ => _tools.Dig.Stamina.CanDig ? Color.white : new Color(0.9f, 0.3f, 0.25f),
+            };
+            _brushView.Render(WorldGrid.WorldToCellSpace(pointerWorld), _tools.BrushRadius(mode), color);
+        }
 
         void Save(bool background, bool announce)
         {
@@ -701,6 +732,8 @@ namespace Antarium.Gameplay
             _colonyView.Render(_sim, alpha, _overlay, Time.time);
             _glow.Update(_sim, alpha, _camera.Position, _camera.HalfViewSize, dt, false);
             _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, paused ? 0f : dt, Time.time);
+            RenderBrush(pointerWorld, title || paused || overUi || possessing || Capturing);
+            _hud.SetDigStamina(_tools.Dig.Stamina.Value, _tools.Dig.Stamina.Exhausted);
 
             var events = _sim.Events;
             _camera.AddTrauma(_feedback.Consume(events) + EventShake(events));

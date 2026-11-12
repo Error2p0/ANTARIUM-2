@@ -37,6 +37,11 @@ namespace Antarium.Gameplay
         int _keysVersion = -1;
         Button _hovered;
         readonly VisualElement _scentPalette;
+        /// <summary>Above the toolbar for the painting tools: brush size 1 / 2 / 3, and the Dig tool's strength (Milestone 11).</summary>
+        readonly VisualElement _toolOptions, _staminaBox, _staminaFill;
+        readonly Button[] _brushButtons = new Button[BrushSizes.Max];
+        int _shownStamina = -1;
+        bool _shownExhausted;
         readonly Button[] _scentButtons = new Button[Pheromones.Count];
         readonly Button _possessButton, _castesButton, _queenButton, _jobsButton, _codexButton;
         float _masterToastCooldown;
@@ -231,6 +236,41 @@ namespace Antarium.Gameplay
                     if (content.Recipes[r].Princesses > 0) _raisesPrincesses[i] = true;
             Abilities = new AbilityBar(abilities, content, art, input.Abilities, Tips);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
+
+            _toolOptions = new VisualElement();
+            _toolOptions.AddToClassList("palette");
+            _toolOptions.AddToClassList("tool-options");
+            var brushLabel = new Label("Brush") { pickingMode = PickingMode.Ignore };
+            brushLabel.AddToClassList("tool-options__label");
+            _toolOptions.Add(brushLabel);
+            for (int size = BrushSizes.Min; size <= BrushSizes.Max; size++)
+            {
+                int s = size;
+                var button = new Button(() => BrushSizeClicked?.Invoke(s)) { text = s.ToString(), focusable = false };
+                button.AddToClassList("small-button");
+                button.AddToClassList("brush-size");
+                _toolOptions.Add(button);
+                _brushButtons[size - 1] = button;
+                string what = s == 1 ? "small: a few cells, for precise work" : s == 2 ? "medium (the usual size)" : "large: covers a wide area";
+                Tip(button, () => $"Brush size {s}, {what}. Each tool (Dig, Mine, Storage, Scent) keeps its own size. {Keys.Brush} goes through the sizes." +
+                                  (s == 3 ? " Digging with a big brush uses up digging strength faster." : ""));
+            }
+            _staminaBox = new VisualElement();
+            _staminaBox.AddToClassList("tool-options__stamina");
+            var staminaLabel = new Label("Strength") { pickingMode = PickingMode.Ignore };
+            staminaLabel.AddToClassList("tool-options__label");
+            _staminaBox.Add(staminaLabel);
+            var bar = new VisualElement { pickingMode = PickingMode.Ignore };
+            bar.AddToClassList("stamina");
+            _staminaFill = new VisualElement { pickingMode = PickingMode.Ignore };
+            _staminaFill.AddToClassList("stamina__fill");
+            bar.Add(_staminaFill);
+            _staminaBox.Add(bar);
+            Tip(_staminaBox, () => "Digging strength: every hit that digs uses some up (more with a bigger brush). " +
+                                   "It slowly comes back while you are not digging. When it runs out, the Dig tool rests until a quarter is back. " +
+                                   "Your ants dig without limit: give them mining orders.");
+            _toolOptions.Add(_staminaBox);
+            toolbar.parent.Insert(toolbar.parent.IndexOf(toolbar), _toolOptions);
             Castes = new CastesPanel(castes, content, art, Tips);
             if (priorities != null) Priorities = new PrioritiesPanel(priorities, art, Tips);
             Queen = new QueenPanel(content, art);
@@ -548,6 +588,32 @@ namespace Antarium.Gameplay
                 _sb.Append(NumberFormat.Format(data.Def.foodCost)).Append(" Food");
             }
             return _sb.Length > 0 ? _sb.ToString() : "Free";
+        }
+
+        /// <summary>A brush size button was clicked (1..3).</summary>
+        public event Action<int> BrushSizeClicked;
+
+        /// <summary>Shows the brush row for painting tools with <paramref name="size"/> lit; the strength bar with the Dig tool.</summary>
+        public void SetBrush(ToolMode mode, int size)
+        {
+            if (_toolOptions == null) return;
+            _toolOptions.EnableInClassList("hidden", !ToolController.HasBrush(mode));
+            _staminaBox.EnableInClassList("hidden", mode != ToolMode.Dig);
+            for (int i = 0; i < _brushButtons.Length; i++)
+                _brushButtons[i].EnableInClassList("brush-size--active", i + 1 == size);
+        }
+
+        /// <summary>The Dig tool's strength bar (0..1; red while it rests after running dry).</summary>
+        public void SetDigStamina(float value, bool exhausted)
+        {
+            if (_staminaFill == null) return;
+            int percent = Mathf.RoundToInt(Mathf.Clamp01(value) * 100f);
+            if (percent == _shownStamina && exhausted == _shownExhausted) return;
+            _shownStamina = percent;
+            _shownExhausted = exhausted;
+            _staminaFill.style.width = Length.Percent(percent);
+            _staminaBox.EnableInClassList("stamina--exhausted", exhausted);
+            _staminaBox.EnableInClassList("stamina--low", !exhausted && percent < 25);
         }
 
         public void SetActiveTool(ToolMode mode)

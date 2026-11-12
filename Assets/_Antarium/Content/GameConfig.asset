@@ -21,6 +21,14 @@ MonoBehaviour:
     brushEdgeFactor: 0.35
     hitsPerSecond: 10
     orderBrushRadius: 1.6
+    brushSizeScales:
+    - 0.5
+    - 1
+    - 1.75
+    staminaPerHit: 0.0085
+    staminaRegen: 0.05
+    staminaRegenDelay: 1
+    staminaResume: 0.25
     comboWindow: 0.45
     comboPerHit: 0.04
     maxCombo: 2.5
@@ -116,6 +124,7 @@ MonoBehaviour:
     maxPops: 48
     machinePuffSeconds: 0.35
   colony:
+    wallOrderSlack: 1
     startingWorkers: 6
     startingFood: 40
     baseItemCapacity: 40

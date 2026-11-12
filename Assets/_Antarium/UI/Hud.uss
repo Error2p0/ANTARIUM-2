@@ -1592,3 +1592,50 @@
     border-width: 0;
     flex-shrink: 0;
 }
+
+/* ---------------------------------------------------------------- Milestone 11: brush size and digging strength */
+.tool-options {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 6px 12px;
+}
+.tool-options__label {
+    color: rgb(230, 215, 190);
+    font-size: 18px;
+    margin: 0 6px 0 0;
+}
+.brush-size {
+    width: 28px;
+    height: 24px;
+    margin: 0 4px 0 0;
+    -unity-text-align: middle-center;
+}
+.brush-size--active {
+    border-color: rgb(255, 210, 90);
+    color: rgb(255, 230, 150);
+    background-color: rgb(96, 70, 40);
+}
+.tool-options__stamina {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 14px;
+}
+.stamina {
+    width: 180px;
+    height: 14px;
+    background-color: rgb(28, 18, 12);
+    border-width: 2px;
+    border-color: rgb(96, 64, 42);
+}
+.stamina__fill {
+    height: 100%;
+    width: 100%;
+    background-color: rgb(236, 176, 72);
+}
+.stamina--low .stamina__fill {
+    background-color: rgb(230, 120, 60);
+}
+.stamina--exhausted .stamina__fill {
+    background-color: rgb(190, 60, 50);
+}

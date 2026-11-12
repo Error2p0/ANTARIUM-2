@@ -36,6 +36,8 @@ namespace Antarium.Gameplay
         readonly DigTool _dig;
         readonly BuildTool _build;
         readonly List<BuildGhost> _ghosts;
+        /// <summary>Brush size 1..3 per <see cref="ToolMode"/> (kept by the caller across colonies).</summary>
+        readonly int[] _brush;
         bool _strokeBlocked;
         bool _hasLast;
         float2 _lastCellPos;
@@ -45,6 +47,8 @@ namespace Antarium.Gameplay
         public DigTool Dig => _dig;
         public BuildTool Build => _build;
         public event Action<ToolMode> ModeChanged;
+        /// <summary>The active tool's brush size changed (1..3).</summary>
+        public event Action<int> BrushChanged;
         /// <summary>Ability waiting for the player to click where to use it, or -1.</summary>
         public int TargetingAbility { get; private set; } = -1;
         /// <summary>The Possess button was clicked: the next click in the world picks the ant.</summary>
@@ -56,8 +60,10 @@ namespace Antarium.Gameplay
         public bool Possessing { get; private set; }
 
         /// <param name="ghosts">Placement previews to draw; filled while the Build tool is active.</param>
-        public ToolController(GameConfig config, ContentDB content, List<BuildGhost> ghosts)
+        /// <param name="brushSizes">Brush size per tool mode, shared so it outlives this controller (null = all 2).</param>
+        public ToolController(GameConfig config, ContentDB content, List<BuildGhost> ghosts, int[] brushSizes = null)
         {
+            _brush = brushSizes != null && brushSizes.Length >= Enum.GetValues(typeof(ToolMode)).Length ? brushSizes : NewBrushSizes();
             _config = config.dig;
             _scent = config.pheromones;
             _possession = config.possession;
@@ -65,6 +71,36 @@ namespace Antarium.Gameplay
             _dig = new DigTool(config.dig);
             _build = new BuildTool(content);
             _ghosts = ghosts;
+        }
+
+        public static int[] NewBrushSizes()
+        {
+            var sizes = new int[Enum.GetValues(typeof(ToolMode)).Length];
+            for (int i = 0; i < sizes.Length; i++) sizes[i] = BrushSizes.Default;
+            return sizes;
+        }
+
+        /// <summary>Tools that paint with a round brush: Dig, Mine, Storage and Scent.</summary>
+        public static bool HasBrush(ToolMode mode) => mode != ToolMode.Build;
+
+        /// <summary>The active tool's brush size (1..3).</summary>
+        public int BrushSize => _brush[(int)Mode];
+
+        /// <summary>Brush radius (cells) of <paramref name="mode"/> at its current size.</summary>
+        public float BrushRadius(ToolMode mode)
+        {
+            float baseRadius = mode == ToolMode.Dig ? _config.brushRadius : mode == ToolMode.Pheromone ? _scent.brushRadius : _config.orderBrushRadius;
+            return BrushSizes.Radius(_config, baseRadius, _brush[(int)mode]);
+        }
+
+        /// <summary>Sets the active tool's brush size (clamped to 1..3).</summary>
+        public void SetBrushSize(int size)
+        {
+            if (!HasBrush(Mode)) return;
+            size = math.clamp(size, BrushSizes.Min, BrushSizes.Max);
+            if (_brush[(int)Mode] == size) return;
+            _brush[(int)Mode] = size;
+            BrushChanged?.Invoke(size);
         }
 
         public void SetMode(ToolMode mode)
@@ -75,6 +111,7 @@ namespace Antarium.Gameplay
             _build.Cancel();
             _ghosts.Clear();
             ModeChanged?.Invoke(mode);
+            BrushChanged?.Invoke(BrushSize);
         }
 
         /// <summary>
@@ -148,6 +185,7 @@ namespace Antarium.Gameplay
         public void Update(Simulation sim, GameInput input, float2 pointerWorld, bool pointerOverUi, float dt, double now)
         {
             Possessing = sim.PossessedAnt >= 0;
+            _dig.Rest(dt);
             if (input.ToolDig.WasPressedThisFrame()) SetMode(ToolMode.Dig);
             if (input.ToolMine.WasPressedThisFrame()) SetMode(ToolMode.Mine);
             if (input.ToolStorage.WasPressedThisFrame()) SetMode(ToolMode.Storage);
@@ -165,6 +203,7 @@ namespace Antarium.Gameplay
                 if (input.PrevBuilding.WasPressedThisFrame()) CycleScent(sim, -1);
             }
             if (!ScentAvailable(sim, Scent)) SelectScent(PheromoneKind.Trail);
+            if (input.BrushSize.WasPressedThisFrame() && HasBrush(Mode)) SetBrushSize(BrushSize % BrushSizes.Max + 1);
 
             float2 cellPos = WorldGrid.WorldToCellSpace(pointerWorld);
             int2 cursorCell = (int2)math.floor(cellPos);
@@ -222,7 +261,7 @@ namespace Antarium.Gameplay
             switch (Mode)
             {
                 case ToolMode.Dig:
-                    _dig.Update(sim, primary, pressed && !_strokeBlocked, pointerWorld, dt, now);
+                    _dig.Update(sim, primary, pressed && !_strokeBlocked, pointerWorld, dt, now, BrushSize);
                     break;
                 case ToolMode.Mine:
                 case ToolMode.Storage:
@@ -267,7 +306,7 @@ namespace Antarium.Gameplay
                 return;
             }
             bool set = primary;
-            float radius = Mode == ToolMode.Pheromone ? _scent.brushRadius : _config.orderBrushRadius;
+            float radius = BrushRadius(Mode);
 
             // Fill the gap since last frame so fast strokes stay continuous.
             float2 from = _hasLast ? _lastCellPos : cellPos;

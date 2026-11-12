@@ -514,6 +514,8 @@ namespace Antarium.Content
     [Serializable]
     public sealed class ColonyConfig
     {
+        [Tooltip("Wall blueprints that touch are built from the one farthest from the nest (home distance) inward, so finished walls never cut the ants off from the rest. Cells at most this many field units (2 = one straight step) closer than the farthest are built at the same time.")]
+        [Min(0)] public int wallOrderSlack = 1;
         [Min(0)] public int startingWorkers = 6;
         [Min(0f)] public float startingFood = 40f;
 
@@ -582,6 +584,18 @@ namespace Antarium.Content
         [Min(0.5f)] public float hitsPerSecond = 10f;
         [Tooltip("Brush radius (cells) for painting mining orders and storage zones.")]
         [Min(0.5f)] public float orderBrushRadius = 1.6f;
+        [Tooltip("Radius multiplier of brush sizes 1, 2 and 3 (dig, mine orders, storage, scents). Size 2 is the base radius.")]
+        public float[] brushSizeScales = { 0.5f, 1f, 1.75f };
+
+        [Header("Digging strength (Milestone 11)")]
+        [Tooltip("Strength (of 1) a productive Dig tool hit costs at brush size 2; other sizes cost by the brush's area.")]
+        [Range(0f, 1f)] public float staminaPerHit = 0.0085f;
+        [Tooltip("Strength regained per second while not digging.")]
+        [Min(0f)] public float staminaRegen = 0.05f;
+        [Tooltip("Seconds after the last productive hit before the strength starts coming back.")]
+        [Min(0f)] public float staminaRegenDelay = 1f;
+        [Tooltip("After running dry, the Dig tool works again once the strength is back to this.")]
+        [Range(0f, 1f)] public float staminaResume = 0.25f;
 
         [Header("Combo")]
         [Min(0.05f)] public float comboWindow = 0.45f;

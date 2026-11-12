@@ -1180,6 +1180,7 @@ namespace Antarium.Sim
                 Buildings.AddBuildSources(sources);
                 for (int i = sources.Length - 1; i >= 0; i--)
                     if (Pheromones.Has(PheromoneKind.Avoid, sources[i])) sources.RemoveAtSwapBack(i);
+                OrderWallSources(sources);
             }
             for (int i = 0; i < Content.Items.Length; i++)
             {

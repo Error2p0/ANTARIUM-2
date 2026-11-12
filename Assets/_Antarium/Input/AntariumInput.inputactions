@@ -304,6 +304,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "BrushSize",
+                    "type": "Button",
+                    "id": "b7e2c1d4-5a3f-4e8b-9c61-2f0d8a4e7b13",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "PrevBuilding",
                     "type": "Button",
                     "id": "2869050a-dac8-4bf6-8232-670333b90632",
@@ -502,6 +511,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "NextBuilding",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4c9d2e7a-1b6f-4a35-8e02-7d5b3f9c6a28",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BrushSize",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

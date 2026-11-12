@@ -31,6 +31,8 @@ namespace Antarium.Gameplay
         public readonly InputAction Rotate;
         public readonly InputAction NextBuilding;
         public readonly InputAction PrevBuilding;
+        /// <summary>Tab: the next brush size (1, 2, 3) of the active painting tool (Milestone 11).</summary>
+        public readonly InputAction BrushSize;
         public readonly InputAction Overlay;
         /// <summary>J: the light overlay (10.7).</summary>
         public readonly InputAction LightOverlay;
@@ -101,6 +103,7 @@ namespace Antarium.Gameplay
             Rotate = asset.FindAction("Tools/Rotate", true);
             NextBuilding = asset.FindAction("Tools/NextBuilding", true);
             PrevBuilding = asset.FindAction("Tools/PrevBuilding", true);
+            BrushSize = asset.FindAction("Tools/BrushSize", true);
             Overlay = asset.FindAction("View/Overlay", true);
             LightOverlay = asset.FindAction("View/LightOverlay", true);
             OreOverlay = asset.FindAction("View/OreOverlay", true);
@@ -164,6 +167,7 @@ namespace Antarium.Gameplay
             Add("Tools", "Configure (storage, unloader, machine)", Configure);
             Add("Tools", "Next building / scent", NextBuilding);
             Add("Tools", "Previous building / scent", PrevBuilding);
+            Add("Tools", "Brush size (1, 2, 3)", BrushSize);
             Add("Tools", "Possess an ant / let go", Possess);
             Add("Tools", "Possessed ant: pick up / drop", Interact);
             for (int i = 0; i < Abilities.Length; i++) Add("Abilities", $"Ability {i + 1}", Abilities[i]);

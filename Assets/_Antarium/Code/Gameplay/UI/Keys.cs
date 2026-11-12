@@ -57,6 +57,7 @@ namespace Antarium.Gameplay
         public static string Rotate => Of(_input?.Rotate, "R");
         public static string Next => Of(_input?.NextBuilding, "E");
         public static string Previous => Of(_input?.PrevBuilding, "Q");
+        public static string Brush => Of(_input?.BrushSize, "Tab");
         public static string Flow => Of(_input?.Overlay, "O");
         public static string Light => Of(_input?.LightOverlay, "J");
         public static string Ores => Of(_input?.OreOverlay, "M");
