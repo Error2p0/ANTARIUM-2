@@ -40,7 +40,7 @@ Clicking a **golden beetle** catches it, whatever tool is active (see *Random ev
 
 **Auto-mark ores:** once the colony knows **Vein Instinct** (research, or the genetic trait), the Mine tool's row above the toolbar has an **Auto-mark ores: On / Off** switch. On (the default), ore and other finds next to every cell your colony digs out are ordered for mining by themselves; off, only what you paint is mined.
 
-**Guiding Light:** after the research *Guiding Light* a soft light follows your pointer over the world (radius 9 cells; a glow ant's is 6) and rock casts shadows from it, so you can see what you are digging in the dark. It goes out while the pointer is over the HUD or while you control an ant.
+**Guiding Light:** after the research *Guiding Light* a soft light follows your pointer over the world (radius 9 cells; a glow ant's is 6) and rock casts shadows from it, so you can see what you are digging in the dark. It only shines from open ground: with the pointer inside rock it sits at the nearest tunnel or cave cell within 3 cells (never lighting the rock from inside), and with no open ground that close it goes out. It also goes out while the pointer is over the HUD or while you control an ant.
 
 ### Abilities
 

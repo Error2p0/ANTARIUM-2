@@ -79,6 +79,28 @@ namespace Antarium.Tests
         }
 
         [Test]
+        public void GuidingLight_ShinesFromOpenGround_NeverFromInsideRock()
+        {
+            var start = CarveTunnel(10); // two cells high: rows start.y and start.y + 1
+            var world = Sim.World;
+            float2 inTunnel = new float2(start + new int2(4, 0)) + 0.5f;
+            Assert.IsTrue(Gameplay.GlowLights.CursorLightSpot(world, inTunnel, 3, out var spot));
+            Assert.AreEqual(inTunnel, spot, "over the tunnel it stays at the pointer");
+
+            // Two cells into the rock below the tunnel: it moves up to the tunnel's floor cell.
+            float2 inRock = new float2(start + new int2(4, -2)) + 0.5f;
+            Assert.IsFalse(world[(int)inRock.x, (int)inRock.y].IsOpen);
+            Assert.IsTrue(Gameplay.GlowLights.CursorLightSpot(world, inRock, 3, out spot));
+            int2 cell = (int2)math.floor(spot);
+            Assert.IsTrue(world[cell.x, cell.y].IsOpen, "the light sits in open ground");
+            Assert.AreEqual(start + new int2(4, 0), cell, "the nearest tunnel cell");
+
+            // Deep inside the rock, nothing open nearby: no light.
+            float2 deep = new float2(start + new int2(4, -12)) + 0.5f;
+            Assert.IsFalse(Gameplay.GlowLights.CursorLightSpot(world, deep, 3, out _));
+        }
+
+        [Test]
         public void VeinInstinct_IsResearched_AndOnlyOrdersOreWhileSwitchedOn()
         {
             ushort stone = C.Index(C.Stone); // drops ore in the test content

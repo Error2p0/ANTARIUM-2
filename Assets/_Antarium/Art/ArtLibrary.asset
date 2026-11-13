@@ -341,6 +341,10 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 970c28e417b3633419bc16c41a1ac6e7, type: 3}
   - name: UI/Achievements/ACH_RIVALS_3_locked
     texture: {fileID: 2800000, guid: 3f88b05b4d96b9142ad3d66d35fbc906, type: 3}
+  - name: UI/Achievements/ACH_SHOOTING_STAR
+    texture: {fileID: 2800000, guid: 774ecf4ac6bfc9e40905b48ef10045f1, type: 3}
+  - name: UI/Achievements/ACH_SHOOTING_STAR_locked
+    texture: {fileID: 2800000, guid: 0062aafd97ea1514198e65346889f5bb, type: 3}
   - name: UI/Achievements/ACH_SOLDIERS_25
     texture: {fileID: 2800000, guid: 81f612dbdf5395549bf1dc6887986f07, type: 3}
   - name: UI/Achievements/ACH_SOLDIERS_25_locked

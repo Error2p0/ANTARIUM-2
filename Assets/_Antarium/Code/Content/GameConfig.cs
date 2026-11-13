@@ -109,6 +109,8 @@ namespace Antarium.Content
         [Range(0f, 2f)] public float cursorIntensity = 1f;
         [Tooltip("The pointer light's rock shadows are rebuilt once it has moved this many cells (or on the usual refresh).")]
         [Min(1)] public int cursorCasterStep = 2;
+        [Tooltip("With the pointer inside rock the light moves to the nearest open cell within this many cells (none: it goes out).")]
+        [Range(0, 8)] public int cursorSnapCells = 3;
     }
 
     [Serializable]

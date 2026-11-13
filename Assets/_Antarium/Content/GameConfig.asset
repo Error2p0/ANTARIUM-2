@@ -383,4 +383,5 @@ MonoBehaviour:
     cursorColor: {r: 0.78, g: 1, b: 0.72, a: 1}
     cursorIntensity: 1
     cursorCasterStep: 2
+    cursorSnapCells: 3
   art: {fileID: 11400000, guid: 69e467dcbcbaa4744a8617661c046247, type: 2}

@@ -12,6 +12,37 @@ namespace Antarium.Gameplay
     /// </summary>
     public sealed partial class GameBootstrap
     {
+        /// <summary>
+        /// A revealed solid cell within <paramref name="search"/> cells of <paramref name="from"/> whose nearest open cell is
+        /// exactly <paramref name="clearance"/> cells away (Chebyshev); nearest first.
+        /// </summary>
+        bool FindRock(int2 from, int clearance, int search, out int2 cell)
+        {
+            var world = _sim.World;
+            for (int r = 0; r <= search; r++)
+            for (int dy = -r; dy <= r; dy++)
+            for (int dx = -r; dx <= r; dx++)
+            {
+                if (math.max(math.abs(dx), math.abs(dy)) != r) continue;
+                var c = from + new int2(dx, dy);
+                if (!world.InBounds(c.x, c.y) || world[c.x, c.y].IsOpen || !world[c.x, c.y].IsRevealed) continue;
+                int nearest = int.MaxValue;
+                for (int y = -clearance; y <= clearance; y++)
+                for (int x = -clearance; x <= clearance; x++)
+                {
+                    var n = c + new int2(x, y);
+                    if (world.InBounds(n.x, n.y) && world[n.x, n.y].IsOpen) nearest = math.min(nearest, math.max(math.abs(x), math.abs(y)));
+                }
+                if (nearest == clearance || (clearance > 3 && nearest == int.MaxValue))
+                {
+                    cell = c;
+                    return true;
+                }
+            }
+            cell = default;
+            return false;
+        }
+
         /// <summary>Captures: draw the Guiding Light at the shot pointer.</summary>
         bool _shotCursorLight;
 
@@ -88,6 +119,20 @@ namespace Antarium.Gameplay
             _shotCursorLight = true;
             yield return Seconds(1f);
             yield return Still("tweaks_light_on");
+            // The pointer just inside the rock next to the cave (the light sits at the wall), then deep in the rock (no light).
+            if (FindRock((int2)math.floor(spot), 2, 3, out int2 nearRock))
+            {
+                Pointer((float2)nearRock + 0.5f, true);
+                yield return Seconds(0.5f);
+                yield return Still("tweaks_light_rock_edge");
+            }
+            if (FindRock((int2)math.floor(spot), 6, 12, out int2 deepRock))
+            {
+                Pointer((float2)deepRock + 0.5f, true);
+                Cam((float2)deepRock + 0.5f, 4);
+                yield return Seconds(0.5f);
+                yield return Still("tweaks_light_rock_deep");
+            }
             _shotCursorLight = false;
             Pointer(spot, false);
 

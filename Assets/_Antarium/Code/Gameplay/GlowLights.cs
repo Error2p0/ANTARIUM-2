@@ -69,10 +69,13 @@ namespace Antarium.Gameplay
             _boxes.Clear();
             int count = _anyGlow && _config.maxLights > 0 ? PlaceGlowLights(sim, alpha, viewCenter, halfView) : 0;
             if (count == 0) SetActiveLights(0);
-            bool cursorMoved = PlaceCursorLight(cursorOn, cursorWorld);
+            // The pointer light shines from open ground: inside rock it moves to the nearest tunnel cell, or goes out.
+            float2 spot = default;
+            bool cursorLit = cursorOn && CursorLightSpot(sim.World, cursorWorld / WorldConstants.CellSize, _config.cursorSnapCells, out spot);
+            bool cursorMoved = PlaceCursorLight(cursorLit, cursorLit ? spot * WorldConstants.CellSize : cursorWorld);
 
             _casterTimer -= dt;
-            if (!_config.shadows || (count == 0 && !cursorOn))
+            if (!_config.shadows || (count == 0 && !cursorLit))
             {
                 SetActiveCasters(0);
                 _cursorCastersBuilt = false;
@@ -82,6 +85,33 @@ namespace Antarium.Gameplay
             _casterTimer = _config.casterRefresh;
             BuildCasters(sim.World);
         }
+
+        /// <summary>
+        /// Where the Guiding Light shines from for a pointer at <paramref name="cellPos"/> (cell space): the pointer itself over
+        /// open, revealed ground; over rock, the nearest point of the nearest open revealed cell within <paramref name="reach"/>
+        /// cells (so the light sits at the tunnel wall and never lights the rock from inside); false if there is none.
+        /// </summary>
+        public static bool CursorLightSpot(WorldGrid world, float2 cellPos, int reach, out float2 spot)
+        {
+            int2 c = (int2)math.floor(cellPos);
+            spot = cellPos;
+            if (Lightable(world, c)) return true;
+            float best = float.MaxValue;
+            for (int dy = -reach; dy <= reach; dy++)
+            for (int dx = -reach; dx <= reach; dx++)
+            {
+                int2 n = c + new int2(dx, dy);
+                if (!Lightable(world, n)) continue;
+                float2 p = math.clamp(cellPos, new float2(n) + 0.05f, new float2(n) + 0.95f);
+                float d = math.distancesq(p, cellPos);
+                if (d >= best) continue;
+                best = d;
+                spot = p;
+            }
+            return best <= (reach + 0.5f) * (reach + 0.5f);
+        }
+
+        static bool Lightable(WorldGrid world, int2 c) => world.InBounds(c.x, c.y) && world[c.x, c.y].IsOpen && world[c.x, c.y].IsRevealed;
 
         /// <summary>The Guiding Light at the pointer. True when its shadows need rebuilding (switched on or moved far enough).</summary>
         bool PlaceCursorLight(bool on, float2 world)
