@@ -36,7 +36,11 @@ You can also click the tool buttons at the bottom of the screen. On a gamepad, t
 
 **Digging strength:** the Dig tool has a **Strength** bar next to the brush sizes. Every hit that digs something uses a little (about 12 seconds of non-stop digging at size 2; size 1 uses a quarter as much per hit, size 3 three times as much). Hits into open air cost nothing. A second after you stop digging it comes back slowly (empty to full in about 20 seconds). When it runs out the bar turns red and the Dig tool rests until a quarter is back. Your ants dig without limit: give them mining orders. Controlling an ant (biting with it) doesn't use the strength.
 
-Clicking a **golden beetle** catches it, whatever tool is active (see *Random events*).
+Clicking a **golden beetle** catches it, whatever tool is active (see *Random events*). Clicking a **shooting star** in the night sky catches it too: it bursts into sparkles with a chime (it gives nothing, but you might like what happens the first time).
+
+**Auto-mark ores:** once the colony knows **Vein Instinct** (research, or the genetic trait), the Mine tool's row above the toolbar has an **Auto-mark ores: On / Off** switch. On (the default), ore and other finds next to every cell your colony digs out are ordered for mining by themselves; off, only what you paint is mined.
+
+**Guiding Light:** after the research *Guiding Light* a soft light follows your pointer over the world (radius 9 cells; a glow ant's is 6) and rock casts shadows from it, so you can see what you are digging in the dark. It goes out while the pointer is over the HUD or while you control an ant.
 
 ### Abilities
 
@@ -98,6 +102,9 @@ Point at something and press **I** (rebindable) to open the **configure panel** 
 | A **pheromone emitter** | Its scent |
 | A **machine with several recipes** (e.g. the Smelter) | **Any recipe it can** (the default) or **one recipe only**: it then only takes in what that recipe needs |
 | The **Ancient Engine** (or click it with the Dig or Mine tool) | Its restoration steps with their costs: click the next one to pay it; workers then build it |
+| Any other **machine**, a **pump** or a **Crystal Resonator** | Only its switch (below) |
+
+**On / Off switch:** machines (Smelter, Crusher, Archive, Fungus Garden, Aphid Ranch, Princess Chamber...), unloaders, pheromone emitters, pumps and Crystal Resonators have an **On / Off** button in the panel's header (green *On*, red *Off*). Switched off, a building does no work and takes nothing in: workers stop bringing it inputs, engineers leave it, an unloader stops unloading, an emitter stops keeping its scent, a pump stops pumping, a resonator stops making knowledge and speeding up machines. A machine keeps what it holds and finishes a started batch once it is switched on again; products already made still leave. Switched-off buildings are drawn dim grey and their hover text says *switched off*. The switch is saved. Belts, lifts, splitters, filters, chests and defence buildings have no switch.
 
 Click any item in the **resource bar** (or *Storage*) to open the **stock view**: how many of each item you have and how many to **keep for building** (**-** / **+** in steps of 5). Machines (workers fetching for them) and unloaders never take the stock below that number, so a busy smelter can't eat the copper ore you are saving. Building costs can still use it.
 
@@ -137,7 +144,7 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 | **F6** | Spawn 50 workers in the royal chamber |
 | **F7** | Finish every blueprint immediately |
 | **F8** | Add up to 20 of every resource (as far as storage has room), 50 food and 50 knowledge |
-| **F10** | Start a random event now |
+| **F10** | Start a random event now. **Ctrl+F10**: the giant earthworm |
 | **F11** | A raid arrives right now (no warning). **Shift+F11**: a raid of rival ants. **Ctrl+F11**: a mole cricket starts digging toward the nest |
 | **F12** | Add 2 princesses (up to the limit) and 10 Genetic Memory |
 
@@ -207,7 +214,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - A **nurse carrying an egg** holds a little white oval. The ant you control has a **blinking gold diamond** over it and a warm light around it.
   - A **clay ledge with three silk cradles** is a nursery; the eggs lie in the cradles. A **pale pod** with a coloured dot is a pheromone emitter (the dot is its scent).
   - An **amber arch** over three silk beds is a princess chamber: royal jelly glows and drips under the arch while a princess is being raised, and **golden winged princesses** rest on the beds (two on the floor, one on a raised ledge).
-  - **Pheromones** are scattered speckles in the scent's colour: yellow **Trail**, orange **Dig here**, green **Gather**, red **Defend**, violet **Avoid**. They thin out as they fade and show more clearly while the Scent tool is active. **Enemies**: pale termites with brown heads (raiders), long red-brown centipedes, purple cave spiders, small pink fungal mites, black fire beetles with glowing stripes, grey stone ruin guardians with a cyan eye, and at night on the surface hairy grey-brown **wolf spiders** with yellow eyes. **Rival ants** look like your workers but steel-blue, with pale jaws (a thief carries a lump of what it stole); the **mole cricket** is a fat brown digger with big pale claws.
+  - **Pheromones** are scattered speckles in the scent's colour: yellow **Trail**, orange **Dig here**, green **Gather**, red **Defend**, violet **Avoid**. They thin out as they fade and show more clearly while the Scent tool is active. **Enemies**: pale termites with brown heads (raiders), long red-brown centipedes, purple cave spiders, small pink fungal mites, black fire beetles with glowing stripes, grey stone ruin guardians with a cyan eye, and at night on the surface hairy grey-brown **wolf spiders** with yellow eyes. **Rival ants** look like your workers but steel-blue, with pale jaws (a thief carries a lump of what it stole); the **mole cricket** is a fat brown digger with big pale claws; the **giant earthworm** is a long pink ringed body with a blunt head, lying in its own tunnel.
   - A short **bar** above an ant (green) or enemy (red) shows its health once it is hurt; a sprite **flashes red** when it is hit.
   - **Number pops** float up where things arrive: *+3* in the item's colour where items are stored (deliveries close together merge into one growing number), green food points where food is delivered, the product over a machine when it finishes, and violet knowledge over a studying Archive. Turn them off in **Settings → Gameplay**.
   - Working machines **puff**: grey smoke (and the odd spark) from smelters, drifting spores from fungus gardens, pale sparkles from Archives and golden ones from princess chambers.
@@ -240,6 +247,7 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 - Paint over solid ground to **order it dug out**. Workers come and mine it for you.
 - Orders can reach into the darkness, so you can plan a tunnel ahead. Workers dig from the edge of what's already open and reveal the rest as they go.
 - Right-click to erase orders.
+- With **Vein Instinct** (research or trait) and *Auto-mark ores* on, ore next to every dug-out cell is ordered automatically (see *Tools*).
 - Workers dig the cells they can reach. A few workers share each spot at the digging front; the rest haul or wait, so a narrow tunnel doesn't jam.
 
 ### Hauling and storage (automatic)
@@ -431,6 +439,8 @@ The **Pump** is locked until you research *Hydraulics*, the **Water Wheel** unti
 | 1 | **Strong Mandibles** | 10 Knowledge, 6 Copper Ore | — | Workers and you dig 25% faster |
 | 1 | **Silk Routing** | 12 Knowledge, 4 Copper | — | Unlocks the Splitter and the Filter |
 | 1 | **Seismic Sense** | 12 Knowledge | — | Unlocks the Seismic Sense ability (X) |
+| 1 | **Guiding Light** | 15 Knowledge | Seismic Sense | A light follows your pointer and lights up the rock around it (radius 9 cells, with rock shadows) |
+| 1 | **Vein Instinct** | 25 Knowledge, 10 Copper Ore | Seismic Sense | Ore and other finds within 2 cells of every dug-out cell are ordered for mining automatically; switch it off and on in the Mine tool's row |
 | 2 | **Royal Jelly** | 20 Knowledge, 20 Food | Fungiculture | The queen lays 25% faster; 2 more eggs can wait at once |
 | 2 | **Quick Legs** | 20 Knowledge | Strong Mandibles | Workers walk 15% faster |
 | 2 | **Silk Weaving** | 20 Knowledge, 6 Copper | Silk Routing | Belts and lifts 35% faster |
@@ -490,6 +500,7 @@ Every **4.5 to 9 minutes** (the first after about 3.75 minutes) something happen
 | **Golden Beetle** | A golden beetle wanders your tunnels for **45 seconds**. | Click it (it sparkles) to catch it: +8 Knowledge, +20 Food, +2 Amber. If you don't, it gets away. |
 | **Trapped Ants** | A cave-in traps **5 ants** in a pocket in the rock near your tunnels (only once you are 10 deep). | Dig a tunnel to them within **2.5 minutes** and they join your colony. Otherwise they are lost. |
 | **Golden Aphid** | A golden aphid grazes in one of your **Aphid Ranches** for **40 seconds** (only once you have one). | Click it to catch it: +10 Knowledge, +10 Food, +3 Honeydew. Scouts catch it too. |
+| **Giant Earthworm** | A giant pink earthworm (a head and 7 body segments, **400 HP**) churns through the soft soil 9–18 cells from your ants for **3 minutes** (only once you are 15 deep). It digs a winding one-cell tunnel through dirt, pebbles, clay, sand and ash (about one cell a second), crosses your tunnels but never natural caves, water, lava, buildings or the royal chamber, never comes within 3 cells of the surface, and stays within about 22 cells of where it started. Its tunnel shows through the dark and joins your tunnels. It doesn't hunt; it thrashes (4 damage every 1.2 s) at ants touching its head. | **Kill it**: every ant next to any part of its body bites it, soldiers hunt it, traps work, a possessed ant can bite it, and **the Dig tool hurts it** (click or hold on its body: each hit does 2.5 × your dig power, with the combo). Killed: **+80 Food and +25 Knowledge**, and its tunnels stay. If time runs out it burrows away into the deep (its tunnels stay anyway). |
 
 ### The surface: day, night and weather
 - A full **day and night** takes **12 minutes** of play: about 7.8 minutes of day (sunrise around 04:12, sunset around 19:48 on the clock) and 4.2 of night. A new colony starts in the morning (07:12).
@@ -571,7 +582,7 @@ Glow crystals that grow together hum, and a **Crystal Resonator** (research *Cry
 - **Raids**: once the colony is **12 minutes** old and has **20 ants**, a rival termite mound raids you every **7 to 10 minutes**. A red card warns you **30 seconds** before they arrive on the surface, 60–100 cells from the nest. Each raid brings 3 termites, +1 for every 12 ants, +2 for every layer you have reached below the topsoil (at most 40).
 - Raiders head for the **royal chamber**. There each one eats **1 food per second** and the queen stops laying; when a raider has eaten 8 food (or the food is gone) it leaves the way it came. Kill every raider before they eat anything and the raid is **repelled**: +10 knowledge.
 - Enemies bite any ant next to them. **Every ant next to an enemy bites back**: workers weakly (3 damage per second), soldiers hard (14).
-- **Rival ants**: from **25 minutes** into a colony, **4 raids in 10** are a rival ant colony instead of termites (same size and warning). Rival ants go for the royal chamber too, but they **steal items**: each grabs the item you have most of (food is safe), one every 1.2 seconds, up to **3**, and carries it home. **Kill a thief and it drops what it carried** for your workers to haul back. A rival raid that gets away with even one item is not repelled.
+- **Rival ants**: from **25 minutes** into a colony, **4 raids in 10** are a rival ant colony instead of termites (same size and warning). Rival ants **steal items** (food is safe): each heads for the **nearest store that holds items**, by the way it has to walk: a storage zone cell, a chest or the royal chamber. There it grabs the item that store holds most of, one every 1.2 seconds, up to **3** of that one kind; when the store runs dry it goes on to the next nearest. Then it carries its loot home. Storage near the surface is robbed first, so keep valuables deep or guarded. The queen only stops laying while thieves are in the royal chamber. **Kill a thief and it drops what it carried** for your workers to haul back. A rival raid that gets away with even one item is not repelled.
 - **Mole crickets**: from **18 minutes** into a colony (with **15 ants**), every **8 to 14 minutes** a mole cricket starts in the ground **26–42 cells** from the queen (at least 8 cells from your tunnels) and **tunnels toward her**. It digs through **soft ground**: dirt, pebbles, clay, sand, ash and **earth walls** (so walls alone don't stop it); it goes around anything harder (stone, roots, ore). Its tunnel **shows through the dark** as it comes. Once it breaks into your tunnels it hunts ants; a mole cricket that can't get any closer for 30 seconds gives up and digs off. Its tunnel stays: ants can use it.
 - **Birds** and **wolf spiders** hunt on the surface by day and by night: see *The surface: day, night and weather*.
 - Killed enemies drop **chitin** (fire beetles also obsidian, ruin guardians a relic) and give a little knowledge.
@@ -581,6 +592,7 @@ Glow crystals that grow together hum, and a **Crystal Resonator** (research *Cry
 | **Termite Raider** | raids from the surface | 22 | 5 every second | eats your food |
 | **Rival Ant** | rival raids from the surface | 28 | 5 every second | steals up to 3 items; drops them when killed |
 | **Mole Cricket** | digs in from the soft ground near the nest | 140 | 12 every 1.2 s | tunnels toward the queen; drops 3 chitin |
+| **Giant Earthworm** | the *Giant Earthworm* event, in soft ground | 400 | 4 every 1.2 s | never hunts; bitten anywhere along its body; the Dig tool hurts it |
 | **Wolf Spider** | the surface, at night | 45 | 7 every 0.9 s | near the nest entrance; gone at dawn |
 | **Centipede** | stone strata | 60 | 8 every second | up to 3 per cave |
 | **Cave Spider** | crystal caverns | 55 | 10 every 0.8 s | fast, notices ants from far away |
@@ -663,7 +675,7 @@ The last three are **biome variants**: the layer looks different, has its own na
 | 2 | **Wanderlust** | 3, +3 | 2 | Ancestral Map | +1 world modifier slot |
 | 3 | **Born Miners** | 5 | 1 | Fertile Queen | Every colony knows *Miner Caste* |
 | 3 | **Born Soldiers** | 5 | 1 | Fertile Queen | Every colony knows *Soldier Caste* |
-| 3 | **Vein Instinct** | 6 | 1 | Inherited Silk | Ore within 2 cells of every dug-out cell is ordered for mining automatically, so ants follow veins on their own |
+| 3 | **Vein Instinct** | 6 | 1 | Inherited Silk | Every colony knows the research *Vein Instinct* from the start: ore within 2 cells of every dug-out cell is ordered for mining automatically (switch: Mine tool row) |
 | 3 | **Royal Lineage** | 4, +2 | 3 | Inherited Gardens | +1 princess counts toward a flight |
 | 3 | **Strange Worlds** | 5 | 1 | Wanderlust | Unlocks Flooded Depths, Volcanic, Famine and Swarming |
 | 4 | **Ancient Knowledge** | 4, +2 | 3 | Born Miners | +25 starting knowledge |
@@ -679,6 +691,7 @@ The last three are **biome variants**: the layer looks different, has its own na
 - Sunlight reaches into shafts and tunnels near the surface and fades deeper down. It follows the time of day: dim bluish moonlight at night, a little darker while it rains.
 - **Glow crystals**, **giant fungi**, **magma rock** and **lava** light their surroundings, and a small warm light goes with the ant you control.
 - **Glow ants** carry a green light. The ones nearest the middle of the screen (up to 24) light the tunnel around them, and rock casts shadows from their light; the others show only their glowing gaster.
+- With the research **Guiding Light**, a pale green light (radius 9 cells, rock shadows too) follows your pointer while it is over the world.
 - Explored but unlit areas stay dim. Unexplored areas are black.
 - Ants, the queen and items always stay visible enough to follow.
 
@@ -691,10 +704,10 @@ The last three are **biome variants**: the layer looks different, has its own na
   - **Display:** window (borderless fullscreen, exclusive fullscreen, windowed), resolution (*Native* or any your display offers), v-sync, frame limit without v-sync (30 to 240 fps or unlimited), interface size (*Auto*: 1× below 1440 lines, 2× from 1440, 3× from 3240; or 1× to 4×). Window and resolution changes only take effect in a built game, not in the editor.
   - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes every save slot and its backups, every Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
   - **Controls:** every keyboard / mouse action with its key. Click a key, then press the new key or mouse button (**Esc** cancels). **Reset to defaults** restores them all. The gamepad keeps its own fixed layout.
-- **Achievements** (title screen or Esc menu): 39 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and *Long Live the Queen* (build the Queen's Throne) and the hidden *Lost Civilization*, *The Engine Wakes* and *Ancestral Memory*. Each row shows the achievement's icon (the same as on Steam; grey until unlocked), how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* and a plain square until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
+- **Achievements** (title screen or Esc menu): 40 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and *Long Live the Queen* (build the Queen's Throne) and the hidden *Lost Civilization*, *The Engine Wakes*, *Ancestral Memory* and one more you'll find by looking up at night. Each row shows the achievement's icon (the same as on Steam; grey until unlocked), how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* and a plain square until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
 
 ### Sound
-- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. A circling bird cries and its strike whooshes; rain starts with a rumble of thunder; dusk and dawn each have a soft chime. A fire starting crackles; water putting one out hisses. An ant reaching a new level gives a tiny blip; raiders getting away with food a mocking falling one. Research, contracts, events, abilities (the Quickening its own fast arpeggio), traits, a respec (a falling shimmer), queen evolutions (a warm swell), lore, the Ancient Engine, princesses, the flight and achievements each have their own chime.
+- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. A circling bird cries and its strike whooshes; rain starts with a rumble of thunder; dusk and dawn each have a soft chime. A fire starting crackles; water putting one out hisses. An ant reaching a new level gives a tiny blip; raiders getting away with food a mocking falling one. A giant earthworm digging gives a soft wet churn; a caught shooting star a quick rising twinkle. Research, contracts, events, abilities (the Quickening its own fast arpeggio), traits, a respec (a falling shimmer), queen evolutions (a warm swell), lore, the Ancient Engine, princesses, the flight and achievements each have their own chime.
 - **Ambience** follows the camera: wind and the odd bird above ground, then drips in the topsoil and clay, a low hum in the stone, ringing crystals in the caverns, bubbling spores in the fungal depths, a rumbling bubbling magma zone and a hollow drone in the ruins. It crossfades as you move between layers.
 - **Music** is generated too: a soft pad and sparse plucked notes that play for a few minutes, then rest for a minute or two. Its key drops the deeper the camera is, and from the crystal caverns down it turns minor. When recorded tracks are added, they replace it: a track for the layer the camera is in, then a rest, then the next; the title screen, raids and the genetic tree get their own music, and the Nuptial Flight, the first dig into each deeper layer, a lore fragment found and the Ancient Engine waking get a short cue.
 

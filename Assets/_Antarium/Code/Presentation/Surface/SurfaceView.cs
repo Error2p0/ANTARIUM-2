@@ -82,6 +82,18 @@ namespace Antarium.Presentation
 
         readonly Streak[] _streaks = new Streak[MaxStreaks];
         int _streakCount;
+
+        /// <summary>A caught shooting star bursting into sparkles (Milestone 11): where (cell space) and how long ago.</summary>
+        struct Burst
+        {
+            public float2 At;
+            public float Age;
+        }
+
+        const int MaxBursts = 8, BurstRays = 8;
+        const float BurstSeconds = 0.6f;
+        readonly Burst[] _bursts = new Burst[MaxBursts];
+        int _burstCount;
         float _streakTimer = -1f;
         Unity.Mathematics.Random _rng = new(0x5EED57A2u);
         /// <summary>Art-pixel positions of the current bolt (the main channel first, <see cref="_boltMain"/> of them).</summary>
@@ -204,7 +216,7 @@ namespace Antarium.Presentation
             // Shooting stars and lightning (drawn unlit, behind the plants).
             UpdateStreaks(world, surface, min, max, dt);
             UpdateBolt(world, surface, max, dt);
-            int sky = 0;
+            int sky = _burstCount * BurstRays * 2;
             for (int s = 0; s < _streakCount; s++) sky += _streaks[s].Length;
             if (_boltAge < BoltSeconds) sky += _bolt.Count + _boltMain;
             _back.EnsureCapacity(plants.Count + buildings.Length * 4 + 1 + sky);
@@ -239,6 +251,7 @@ namespace Antarium.Presentation
                 }
             }
             quad = WriteStreaks(world, v, quad);
+            quad = WriteBursts(v, quad);
             quad = WriteBolt(v, quad);
 
             bool circling = surface.Bird == BirdPhase.Circling;
@@ -349,6 +362,11 @@ namespace Antarium.Presentation
                 if (s.Age < s.Life) continue;
                 _streaks[i] = _streaks[--_streakCount];
             }
+            for (int i = _burstCount - 1; i >= 0; i--)
+            {
+                _bursts[i].Age += dt;
+                if (_bursts[i].Age >= BurstSeconds) _bursts[i] = _bursts[--_burstCount];
+            }
             if (dt <= 0f) return;
             float night = math.saturate(1f - surface.Daylight * 2f) * (1f - _rain);
             if (night < 0.3f)
@@ -382,6 +400,75 @@ namespace Antarium.Presentation
                 Life = _rng.NextFloat(0.45f, 1f),
                 Length = _rng.NextInt(10, shower && _rng.NextFloat() < 0.25f ? 40 : 26),
             };
+        }
+
+        /// <summary>
+        /// The player clicked at <paramref name="cellPos"/> (cell space): a shooting star whose streak passes within
+        /// <paramref name="radius"/> cells is caught. It bursts into sparkles and disappears. True if one was caught.
+        /// </summary>
+        public bool TryCatchStar(float2 cellPos, float radius = 1.6f)
+        {
+            for (int i = 0; i < _streakCount; i++)
+            {
+                var s = _streaks[i];
+                float env = math.saturate(s.Age / 0.08f) * math.saturate((s.Life - s.Age) / (s.Life * 0.45f));
+                if (env < 0.25f) continue; // too faint to see
+                // Distance to the bright part of the streak (its first third, from the head back).
+                float2 tail = s.Head - s.Dir * (s.Length / 3f / CellPx);
+                float2 seg = s.Head - tail;
+                float t = math.saturate(math.dot(cellPos - tail, seg) / math.max(1e-4f, math.lengthsq(seg)));
+                if (math.distance(cellPos, tail + seg * t) > radius) continue;
+                if (_burstCount < MaxBursts) _bursts[_burstCount++] = new Burst { At = s.Head };
+                _streaks[i] = _streaks[--_streakCount];
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Captures / debug: catches the clearly visible shooting star nearest <paramref name="near"/> (cell space). False if none.</summary>
+        public bool CatchAnyStar(float2 near, out float2 cellPos)
+        {
+            int best = -1;
+            float bestDist = float.MaxValue;
+            for (int i = 0; i < _streakCount; i++)
+            {
+                var s = _streaks[i];
+                if (s.Age < 0.1f || s.Age > s.Life * 0.5f) continue;
+                float d = math.distance(s.Head, near);
+                if (d >= bestDist) continue;
+                bestDist = d;
+                best = i;
+            }
+            cellPos = best >= 0 ? _streaks[best].Head : default;
+            return best >= 0 && TryCatchStar(cellPos, 0.5f);
+        }
+
+        /// <summary>Sparkles flying out from a caught star in eight rays, white turning to star colour, fading out.</summary>
+        int WriteBursts(NativeArray<SpriteVertex> v, int quad)
+        {
+            if (_burstCount == 0) return quad;
+            Color32 star = TerrainView.ToWorking(_render.starColor);
+            var rect = _rects[_pixelRect];
+            for (int i = 0; i < _burstCount; i++)
+            {
+                var b = _bursts[i];
+                float k = b.Age / BurstSeconds;
+                float reach = 2f + 14f * math.sqrt(k); // art pixels
+                byte alpha = (byte)(255f * (1f - k * k));
+                var c = k < 0.3f ? White : star;
+                for (int r = 0; r < BurstRays; r++)
+                {
+                    float angle = r * (math.PI * 2f / BurstRays) + (r & 1) * 0.2f;
+                    float2 dir = new float2(math.cos(angle), math.sin(angle));
+                    float len = (r & 1) == 0 ? reach : reach * 0.6f;
+                    for (int p = 0; p < 2; p++)
+                    {
+                        float2 at = math.floor(b.At * CellPx + dir * (len - p * 2f)) / Ppu;
+                        SpriteQuads.WriteUpright(v, quad++, at, new int2(1, 1), rect, new Color32(c.r, c.g, c.b, (byte)(alpha * (p == 0 ? 1f : 0.55f))), Unlit);
+                    }
+                }
+            }
+            return quad;
         }
 
         /// <summary>A bright head and a tail that thins out (dithered), fading in and out over the streak's life.</summary>

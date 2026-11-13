@@ -24,12 +24,15 @@ namespace Antarium.Gameplay
         Stock,
         /// <summary>The Ancient Engine: its restoration steps (10.5).</summary>
         Engine,
+        /// <summary>A building with nothing to set but its On / Off switch (single-recipe machines, pumps, resonators; Milestone 11).</summary>
+        Switch,
     }
 
     /// <summary>
     /// The configure panel (I over a building or storage, or a click on an item in the resource bar): which items a
     /// storage zone or chest takes, the item an unloader or filter handles, an emitter's scent, the recipe a machine
-    /// runs, and how much of each item the colony keeps for building.
+    /// runs, and how much of each item the colony keeps for building. Machines, unloaders, emitters, pumps and resonators
+    /// also get an On / Off switch in the header (Milestone 11).
     /// </summary>
     public sealed class ConfigurePanel
     {
@@ -39,6 +42,7 @@ namespace Antarium.Gameplay
         readonly ArtLibrary _art;
         readonly VisualElement _root;
         readonly Label _title, _hint;
+        readonly Button _switch;
         readonly VisualElement _list;
         readonly List<(Button Button, int Value)> _options = new();
         readonly List<(Label Label, ushort Item)> _stockLabels = new();
@@ -60,6 +64,9 @@ namespace Antarium.Gameplay
         public event Action<ushort, int> ReserveStep;
         /// <summary>Pay and start the next restoration step of the engine at the cell.</summary>
         public event Action<int2> StageClicked;
+        /// <summary>Switch the building at the cell on (true) or off (Milestone 11).</summary>
+        public event Action<int2, bool> SwitchClicked;
+        bool _switchedOn = true;
 
         readonly Tooltips _tips;
 
@@ -78,7 +85,14 @@ namespace Antarium.Gameplay
             _title.AddToClassList("configure__title");
             var close = new Button(Hide) { text = "x", focusable = false };
             close.AddToClassList("small-button");
+            _switch = new Button(() => SwitchClicked?.Invoke(Cell, !_switchedOn)) { text = "On", focusable = false };
+            _switch.AddToClassList("small-button");
+            _switch.AddToClassList("configure__switch");
+            tips?.Add(_switch, () => _switchedOn
+                ? "On: click to switch it off. Switched off, it does no work and takes nothing in (machines keep what they hold)."
+                : "Off: it does no work and takes nothing in. Click to switch it on again.");
             header.Add(_title);
+            header.Add(_switch);
             header.Add(close);
             root.Add(header);
             _list = new VisualElement();
@@ -112,8 +126,12 @@ namespace Antarium.Gameplay
                     case BuildingKind.Filter: return ConfigTarget.Filter;
                     case BuildingKind.Emitter: return ConfigTarget.Emitter;
                     case BuildingKind.Processor:
-                        return b.IsActive && sim.Content.Buildings[b.Def].Recipes.Length > 1 ? ConfigTarget.Machine : ConfigTarget.None;
+                        if (!b.IsActive) return ConfigTarget.None;
+                        return sim.Content.Buildings[b.Def].Recipes.Length > 1 ? ConfigTarget.Machine : ConfigTarget.Switch;
                     case BuildingKind.Engine: return ConfigTarget.Engine;
+                    case BuildingKind.Pump:
+                    case BuildingKind.Resonator:
+                        return b.IsActive ? ConfigTarget.Switch : ConfigTarget.None;
                 }
             }
             building = -1;
@@ -151,6 +169,8 @@ namespace Antarium.Gameplay
             _list.Clear();
             _options.Clear();
             _stockLabels.Clear();
+            bool switchable = _building >= 0 && BuildingSystem.IsSwitchable(sim.Buildings.Get(_building).Kind);
+            _switch.EnableInClassList("hidden", !switchable);
             _list.EnableInClassList("configure__list--grid", Target is ConfigTarget.Storage or ConfigTarget.Chest or ConfigTarget.Unloader or ConfigTarget.Filter);
             switch (Target)
             {
@@ -233,6 +253,14 @@ namespace Antarium.Gameplay
                         HudText.AppendCost(sb, _content, 0f, data.StageCostItems[k], data.StageCostCounts[k], stage.foodCost);
                         AddOption(sb.ToString(), data.Def.color, k, () => StageClicked?.Invoke(Cell));
                     }
+                    break;
+                }
+                case ConfigTarget.Switch:
+                {
+                    var def = sim.Content.Buildings[_defShown].Def;
+                    _title.text = def.DisplayName;
+                    _hint.text = "Switched off, it does no work and takes nothing in until you switch it on again. " +
+                                 (def.kind == BuildingKind.Processor ? "Machines keep what they hold and finish a started batch later." : "");
                     break;
                 }
                 case ConfigTarget.Stock:
@@ -379,6 +407,13 @@ namespace Antarium.Gameplay
                     Hide();
                     return;
                 }
+            }
+            if (_building >= 0 && !_switch.ClassListContains("hidden"))
+            {
+                _switchedOn = !sim.Buildings.Get(_building).Off;
+                string text = _switchedOn ? "On" : "Off";
+                if (_switch.text != text) _switch.text = text;
+                _switch.EnableInClassList("configure__switch--off", !_switchedOn);
             }
             switch (Target)
             {

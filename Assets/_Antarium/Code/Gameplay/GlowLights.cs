@@ -15,6 +15,8 @@ namespace Antarium.Gameplay
     /// sprite (<see cref="Presentation.ColonyView"/>), so the ones without a light still read as lanterns. Rock blocks
     /// the light: around the active lights, solid cells next to open ones are merged into horizontal runs, and each run
     /// becomes a pooled <see cref="ShadowCaster2D"/> rectangle (the caster's default unit square, sized by its transform).
+    /// Milestone 11: the research <i>Guiding Light</i> adds one more light at the pointer (wider than a glow ant's), with
+    /// its own rock shadows.
     /// </summary>
     public sealed class GlowLights : IDisposable
     {
@@ -33,6 +35,9 @@ namespace Antarium.Gameplay
         readonly HashSet<int> _seen = new();
         float _casterTimer;
         int _activeLights, _activeCasters;
+        Light2D _cursorLight;
+        int2 _cursorCasterCell;
+        bool _cursorCastersBuilt;
 
         /// <summary>Glow ants with a real light right now (debug / captures).</summary>
         public int ActiveLights => _activeLights;
@@ -51,15 +56,73 @@ namespace Antarium.Gameplay
             }
         }
 
-        /// <summary>Places the lights on the glow ants nearest the view centre; refreshes the shadow casters now and then.</summary>
-        public void Update(Simulation sim, float alpha, float2 viewCenter, float2 halfView, float dt, bool terrainChanged)
+        /// <summary>The pointer light is shown (Guiding Light).</summary>
+        public bool CursorLightOn => _cursorLight != null && _cursorLight.gameObject.activeSelf;
+
+        /// <summary>
+        /// Places the lights on the glow ants nearest the view centre and the pointer light (<paramref name="cursorOn"/>, at
+        /// <paramref name="cursorWorld"/>); refreshes the shadow casters now and then.
+        /// </summary>
+        public void Update(Simulation sim, float alpha, float2 viewCenter, float2 halfView, float dt, bool terrainChanged,
+            bool cursorOn = false, float2 cursorWorld = default)
         {
-            if (!_anyGlow || _config.maxLights <= 0)
+            _boxes.Clear();
+            int count = _anyGlow && _config.maxLights > 0 ? PlaceGlowLights(sim, alpha, viewCenter, halfView) : 0;
+            if (count == 0) SetActiveLights(0);
+            bool cursorMoved = PlaceCursorLight(cursorOn, cursorWorld);
+
+            _casterTimer -= dt;
+            if (!_config.shadows || (count == 0 && !cursorOn))
             {
-                SetActiveLights(0);
                 SetActiveCasters(0);
+                _cursorCastersBuilt = false;
                 return;
             }
+            if (_casterTimer > 0f && !terrainChanged && !cursorMoved) return;
+            _casterTimer = _config.casterRefresh;
+            BuildCasters(sim.World);
+        }
+
+        /// <summary>The Guiding Light at the pointer. True when its shadows need rebuilding (switched on or moved far enough).</summary>
+        bool PlaceCursorLight(bool on, float2 world)
+        {
+            if (!on)
+            {
+                if (_cursorLight != null && _cursorLight.gameObject.activeSelf) _cursorLight.gameObject.SetActive(false);
+                _cursorCastersBuilt = false;
+                return false;
+            }
+            if (_cursorLight == null) _cursorLight = CreateLight("CursorLight");
+            if (!_cursorLight.gameObject.activeSelf) _cursorLight.gameObject.SetActive(true);
+            float outer = math.max(1f, _config.cursorRadius) * WorldConstants.CellSize;
+            if (!Mathf.Approximately(_cursorLight.pointLightOuterRadius, outer))
+            {
+                _cursorLight.pointLightOuterRadius = outer;
+                _cursorLight.pointLightInnerRadius = outer * _config.innerShare;
+            }
+            _cursorLight.color = _config.cursorColor;
+            _cursorLight.intensity = _config.cursorIntensity;
+            _cursorLight.shadowsEnabled = _config.shadows;
+            _cursorLight.shadowIntensity = _config.shadowIntensity;
+            _cursorLight.transform.position = new Vector3(world.x, world.y, 0f);
+
+            int2 c = (int2)math.floor(world / WorldConstants.CellSize);
+            // A little past the light, plus the distance it may move before the casters are rebuilt.
+            int reach = (int)math.ceil(_config.cursorRadius) + 2 + math.max(1, _config.cursorCasterStep);
+            _boxes.Add(new int4(c - reach, c + reach));
+            int2 moved = math.abs(c - _cursorCasterCell);
+            bool rebuild = !_cursorCastersBuilt || math.max(moved.x, moved.y) >= math.max(1, _config.cursorCasterStep);
+            if (rebuild)
+            {
+                _cursorCasterCell = c;
+                _cursorCastersBuilt = true;
+            }
+            return rebuild;
+        }
+
+        /// <summary>Lights on the glow ants nearest the view centre (with their caster boxes). Returns how many.</summary>
+        int PlaceGlowLights(Simulation sim, float alpha, float2 viewCenter, float2 halfView)
+        {
             var ants = sim.Ants.Ants;
             int n = 0;
             float maxRadius = 0f;
@@ -86,7 +149,6 @@ namespace Antarium.Gameplay
             int count = math.min(n, _config.maxLights);
             SetActiveLights(count);
 
-            _boxes.Clear();
             for (int k = 0; k < count; k++)
             {
                 var a = ants[_candidates[k]];
@@ -108,16 +170,7 @@ namespace Antarium.Gameplay
                 int reach = (int)math.ceil(r) + 2; // a little past the light: the casters stay valid until the next refresh
                 _boxes.Add(new int4(c - reach, c + reach));
             }
-
-            _casterTimer -= dt;
-            if (!_config.shadows || count == 0)
-            {
-                SetActiveCasters(0);
-                return;
-            }
-            if (_casterTimer > 0f && !terrainChanged) return;
-            _casterTimer = _config.casterRefresh;
-            BuildCasters(sim.World);
+            return count;
         }
 
         /// <summary>Solid cells next to open ones inside the light boxes, merged into horizontal runs: one caster per run.</summary>
@@ -178,9 +231,9 @@ namespace Antarium.Gameplay
             return caster;
         }
 
-        Light2D CreateLight()
+        Light2D CreateLight(string name = "GlowLight")
         {
-            var go = new GameObject("GlowLight");
+            var go = new GameObject(name);
             go.transform.SetParent(_root, false);
             var light = go.AddComponent<Light2D>();
             light.lightType = Light2D.LightType.Point;

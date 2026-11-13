@@ -30,6 +30,8 @@ namespace Antarium.Content
         Evolution, LevelUp, Respec, Quickening, Escaped,
         // Milestone 11: thunder after a lightning strike, a sparkling chime when a starfall night begins
         Thunder, Starfall,
+        // Milestone 11 batch 3: a bright twinkle when the player catches a shooting star, a wet churning rumble while the giant worm digs
+        StarCaught, WormBurrow,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }

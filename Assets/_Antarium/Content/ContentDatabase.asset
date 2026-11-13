@@ -127,6 +127,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e673a5bf32858104d99da10a53d8a75b, type: 2}
   - {fileID: 11400000, guid: 4bdbb0c6f379f4944a0e98c9064d8db7, type: 2}
   - {fileID: 11400000, guid: 80cf29f4e89ae45418b045ec3400030e, type: 2}
+  - {fileID: 11400000, guid: a95d616371863ce4bb61d49323c558fa, type: 2}
   - {fileID: 11400000, guid: 0f5ae983bbe13ce45b4a7eaa82f78298, type: 2}
   - {fileID: 11400000, guid: 686ee252db1012341b08ace1be1989ce, type: 2}
   - {fileID: 11400000, guid: 62fea3bcefc52724a8d742b8d2ffbaca, type: 2}
@@ -154,6 +155,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 23c9956292296804f8a540a708a62afd, type: 2}
   - {fileID: 11400000, guid: 24a131e773a4f62409ab1433b34e6f66, type: 2}
   - {fileID: 11400000, guid: b0f84b6080064594cabe79376f3f2197, type: 2}
+  - {fileID: 11400000, guid: 2024b3a70d044cf479ad91d753d01788, type: 2}
   - {fileID: 11400000, guid: f44be510b42565340a776195a5fb72b4, type: 2}
   - {fileID: 11400000, guid: 0f53be89fabeac74d9a563c9d091bb04, type: 2}
   abilities:
@@ -200,6 +202,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7ca2976989ddad04bb0c6dc5c449ce73, type: 2}
   - {fileID: 11400000, guid: b0ebb288cf31591488dd8a2f739110ed, type: 2}
   events:
+  - {fileID: 11400000, guid: 8734d6581b96cde4fab3465fc25c5f8f, type: 2}
   - {fileID: 11400000, guid: 483c0b2715f789f4090b63d8bac65077, type: 2}
   - {fileID: 11400000, guid: a89cf6e3c4a1769469eca5c44cee174b, type: 2}
   - {fileID: 11400000, guid: dfd01e59d78e8b34394b4020598b4fac, type: 2}
@@ -210,6 +213,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 577cf16d6bb94514db422cba1c1f96cd, type: 2}
   - {fileID: 11400000, guid: f6821cc51c3c81f4495c1c52eebfd05f, type: 2}
   - {fileID: 11400000, guid: 174ecbe6ae15e4b46b03b37eeb750060, type: 2}
+  - {fileID: 11400000, guid: aa1d21e5a75b3ca468c02e8d37ba2fb1, type: 2}
   - {fileID: 11400000, guid: 0bcec079f26fdbc4fbcada4df2aea25d, type: 2}
   - {fileID: 11400000, guid: af3c99fa0093d114aa3bec59ab835990, type: 2}
   - {fileID: 11400000, guid: 9c0ef972b3203e240a6b555edffade4d, type: 2}
@@ -303,6 +307,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 247ff5834dbacc1409a741bca3ae0e6f, type: 2}
   - {fileID: 11400000, guid: bcf1a01ba4a844a4ea716dd5719c92c2, type: 2}
   - {fileID: 11400000, guid: c3bd8bda1bcd7654995592c052d551e6, type: 2}
+  - {fileID: 11400000, guid: 87995172a46bcc34d9169b1714da377d, type: 2}
   evolutions:
   - {fileID: 11400000, guid: e7e1d93fd64c7b24b91ce7fe35f930f8, type: 2}
   - {fileID: 11400000, guid: cded298f2e5b950449a0c31effbab639, type: 2}

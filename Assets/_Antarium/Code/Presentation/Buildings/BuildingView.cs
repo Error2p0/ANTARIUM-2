@@ -396,6 +396,8 @@ namespace Antarium.Presentation
                     float progress = b.WorkTotal > 0f ? 1f - b.WorkLeft / b.WorkTotal : 0f;
                     return new Color32(255, 255, 255, (byte)math.round(math.lerp(0.3f, 0.85f, progress) * 255f));
                 }
+                // Switched off by the player (Milestone 11): dim grey, in the flow overlay too.
+                if (b.Off) return new Color32(118, 118, 128, 255);
                 if (b.Kind == BuildingKind.Gate)
                 {
                     // A battered gate darkens toward red.

@@ -41,6 +41,8 @@ namespace Antarium.Content
         EngineRestored,
         /// <summary>Raids of rival ants beaten without losing an item, in one colony.</summary>
         RivalsRepelled,
+        /// <summary>Shooting stars the player clicked in one colony (Milestone 11).</summary>
+        ShootingStars,
     }
 
     /// <summary>

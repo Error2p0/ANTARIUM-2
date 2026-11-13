@@ -42,7 +42,7 @@ namespace Antarium.Presentation
         public const int PixelRect = SoldierRect + WorkerFrames;
         /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
         public const int EnemyRect = PixelRect + 1;
-        public const int EnemyArtCount = 9;
+        public const int EnemyArtCount = 10;
         /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer, glow, fire): 4 walk frames each, in caste order.</summary>
         public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
         const int SpecialistCount = 8;
@@ -61,7 +61,10 @@ namespace Antarium.Presentation
         public const float GasterX = 2f;
         /// <summary>The mole cricket digging: 2 frames, same size as its walk frames (10.5).</summary>
         public const int MoleDigRect = HaloRect + 1;
-        const int RectCount = MoleDigRect + 2;
+        /// <summary>A body segment of the giant worm (Milestone 11): 2 frames (its rings shift as it crawls), drawn along its body.</summary>
+        public const int WormBodyRect = MoleDigRect + 2;
+        public const int WormBodyWidth = 8, WormBodyHeight = 7;
+        const int RectCount = WormBodyRect + 2;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -172,6 +175,19 @@ namespace Antarium.Presentation
             new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbhCC", "bBBBBBBBBBBBbhC.", "bbbbbbbbbbbbbh..", ".dddddddddddd...", "..l..l..l.......", ".l..l..l........" },
             new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbh..", "bbbbbbbbbbbbbhC.", ".dddddddddddd.CC", "..l..l..l.....C.", ".l..l..l........" },
         };
+        // Giant earthworm (Milestone 11): a blunt pink head with a pale snout (facing right), and ringed body segments that
+        // overlap into one long body. Frame 2 stretches the snout and shifts the rings.
+        static readonly string[][] WormHead =
+        {
+            new[] { "...dddd...", ".ddMMHHd..", "dMMHHHHHd.", "MMbMMMMMMs", "MMbMMMMMMs", "dMMMMMMMd.", ".ddddddd.." },
+            new[] { "...ddddd..", ".ddMMMHHd.", "dMMHHHHHHd", "MbMMMMMMMs", "MbMMMMMMMs", "dMMMMMMMMd", ".dddddddd." },
+        };
+        static readonly string[][] WormBody =
+        {
+            new[] { ".dddddd.", "dMHHHHMd", "MMMMMMMM", "MbMMMMbM", "MMMMMMMM", "dMMMMMMd", ".dddddd." },
+            new[] { ".dddddd.", "dMHHHHMd", "MMMMMMMM", "MMMbbMMM", "MMMMMMMM", "dMMMMMMd", ".dddddd." },
+        };
+
         static readonly string[][] FireBeetle =
         {
             new[] { "...KKKKK....", "..KOKOKOKK..", ".KKKKKKKKKHH", ".kkkkkkkkkHH", "..kkkkkkkk..", ".j.j..j.j...", "..j.jj.j...." },
@@ -297,6 +313,12 @@ namespace Antarium.Presentation
             };
             AddEnemy(pixels, EnemyArt.MoleCricket, MoleCricket, 0, 112, mole);
             AddFrames(pixels, MoleCricketDig, 32, 112, MoleDigRect, mole);
+            var worm = new Dictionary<char, Color32>
+            {
+                ['d'] = Hex(0x7a3a3e), ['M'] = Hex(0xc8787a), ['H'] = Hex(0xeaa8a4), ['b'] = Hex(0x9a4a50), ['s'] = Hex(0xf4c8c0),
+            };
+            AddEnemy(pixels, EnemyArt.Worm, WormHead, 0, 88, worm);
+            AddFrames(pixels, WormBody, 22, 88, WormBodyRect, worm);
             AddFrames(pixels, GoldenAphid, 90, 82, AphidRect, new Dictionary<char, Color32>
             {
                 ['Y'] = Hex(0xfff6b0), ['O'] = Hex(0xf0c040), ['o'] = Hex(0xb08020), ['a'] = Hex(0x8a6a20), ['l'] = Hex(0x5a3a10),
@@ -322,7 +344,7 @@ namespace Antarium.Presentation
             Texture.Apply(false, false); // small; kept readable for debugging
         }
 
-        static readonly string[] EnemyNames = { "termite", "centipede", "spider", "mite", "fire_beetle", "guardian", "wolf_spider", "rival_ant", "mole_cricket" };
+        static readonly string[] EnemyNames = { "termite", "centipede", "spider", "mite", "fire_beetle", "guardian", "wolf_spider", "rival_ant", "mole_cricket", "worm" };
 
         /// <summary>
         /// Every sprite a PNG can replace (<c>Art/Colony/</c>, <c>Art/Enemies/</c>): ants are <c>Colony/ant_&lt;caste&gt;</c>,
@@ -352,6 +374,7 @@ namespace Antarium.Presentation
             for (int e = 0; e < EnemyArtCount; e++)
                 slots.Add(ArtSlot.Strip("Enemies/" + EnemyNames[e], EnemyRect + e * 2, 2));
             slots.Add(ArtSlot.Strip("Enemies/mole_cricket_dig", MoleDigRect, 2));
+            slots.Add(ArtSlot.Strip("Enemies/worm_body", WormBodyRect, 2));
             return slots.ToArray();
         }
 

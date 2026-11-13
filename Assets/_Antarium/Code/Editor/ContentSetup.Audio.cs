@@ -130,6 +130,9 @@ namespace Antarium.Editor
             Sfx(SoundCue.Thunder, Patch(SynthWave.Noise, 2.6f, 160f, 35f, attack: 0.18f, decay: 1.1f, lowpass: 420f, gain: 1.7f), 0.75f, 1.2f, 2,
                 positional: false, pitchLow: 0.8f, pitchHigh: 1.15f, variants: 3);
             Note(SoundCue.Starfall, Patch(SynthWave.Sine, 1.6f, 1568f, attack: 0.01f, decay: 1.6f, harmonics: 0.5f, vibratoHz: 7f, vibratoDepth: 0.1f, notes: 5, noteStep: -3f), 0.35f, 2f);
+            // Milestone 11 batch 3: a quick rising twinkle when a shooting star is caught, a soft wet churn when the giant worm digs
+            Ui(SoundCue.StarCaught, Patch(SynthWave.Sine, 0.7f, 1319f, attack: 0.005f, decay: 2.2f, harmonics: 0.6f, vibratoHz: 11f, vibratoDepth: 0.2f, notes: 4, noteStep: 5f), 0.4f, 0.3f);
+            Sfx(SoundCue.WormBurrow, Patch(SynthWave.Noise, 0.45f, 220f, 90f, attack: 0.05f, decay: 1.5f, lowpass: 600f, gain: 1.1f), 0.3f, 0.35f, 2, variants: 3);
 
             void Bed(string biomeId, AmbiencePatch patch)
             {

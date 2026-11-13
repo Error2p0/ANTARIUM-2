@@ -204,6 +204,7 @@ namespace Antarium.Gameplay
                 EnemyState.Hunt => "hunting ants",
                 EnemyState.Raid => def.behavior == EnemyBehavior.Thief ? "raiding the stock" : "raiding the colony",
                 EnemyState.Burrow => "digging toward the nest",
+                EnemyState.Tunnel => "churning through the soil",
                 _ when def.behavior == EnemyBehavior.Thief => e.LootCount > 0 ? "running off with your items" : "leaving",
                 _ => "leaving with stolen food",
             });
@@ -211,6 +212,12 @@ namespace Antarium.Gameplay
                 _sb.Append(" (").Append(e.LootCount).Append(' ').Append(_content.Items[e.Loot].DisplayName).Append(')');
             if (e.Held > 0f) _sb.Append(", stuck in a trap");
             if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
+            if (def.behavior == EnemyBehavior.Worm)
+            {
+                _sb.Append("\nThrashes for ").Append(def.damage.ToString("0")).Append(". Ants bite it anywhere along its body; the Dig tool (")
+                    .Append(Keys.Dig).Append(") hurts it too.");
+                return;
+            }
             _sb.Append("\nBites for ").Append(def.damage.ToString("0")).Append(". Soldiers (and workers, weakly) fight back.");
         }
 
@@ -289,6 +296,11 @@ namespace Antarium.Gameplay
                 if (b.Restoring && b.Stage < data.StageCount)
                     _sb.Append("  -  restoring \"").Append(data.Def.stages[b.Stage].name).Append("\" ").Append((int)(progress * 100f)).Append("%. Workers are building it.");
                 else _sb.Append("  -  under construction ").Append((int)(progress * 100f)).Append("%. Workers will build it.");
+                return;
+            }
+            if (b.Off)
+            {
+                _sb.Append("  -  switched off\nIt does no work and takes nothing in. ").Append(_hud.ConfigureKey).Append(": switch it on again.");
                 return;
             }
 

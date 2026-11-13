@@ -353,7 +353,7 @@ namespace Antarium.Sim
             if (b.Kind == BuildingKind.Engine) FinishStage(ref b, id, notify);
             if (b.Kind == BuildingKind.Processor)
             {
-                var m = new Machine(id, _content.Buildings[b.Def]);
+                var m = new Machine(id, _content.Buildings[b.Def]) { Off = b.Off };
                 int slot = _freeMachines.Count > 0 ? _freeMachines.Pop() : _machines.Count;
                 if (slot == _machines.Count) _machines.Add(m);
                 else _machines[slot] = m;
@@ -523,6 +523,44 @@ namespace Antarium.Sim
             // The current craft keeps going; what the machine takes in changes at once.
             ConsumersChanged |= m.Data.InputMask;
             _networkDirty = true;
+            return true;
+        }
+
+        /// <summary>Kinds the player can switch off in the configure panel (Milestone 11): machines, unloaders, emitters, pumps, resonators.</summary>
+        public static bool IsSwitchable(BuildingKind kind) =>
+            kind is BuildingKind.Processor or BuildingKind.Unloader or BuildingKind.Emitter or BuildingKind.Pump or BuildingKind.Resonator;
+
+        /// <summary>Switches the building covering <paramref name="cell"/> on or off. False if there is none that can be switched.</summary>
+        public bool SetSwitch(int2 cell, bool on)
+        {
+            int id = At(cell);
+            return id >= 0 && SetSwitch(id, on);
+        }
+
+        /// <param name="notify">Publish a <see cref="BuildingSwitchedEvent"/> (not when loading a save).</param>
+        public bool SetSwitch(int id, bool on, bool notify = true)
+        {
+            if (id < 0 || id >= All.Length) return false;
+            ref var b = ref Get(id);
+            if (!b.Alive || !IsSwitchable(b.Kind)) return false;
+            if (b.Off == !on) return true;
+            b.Off = !on;
+            var m = MachineOf(id);
+            if (m != null)
+            {
+                // An idle machine drops out of the consumer and engineer fields; its buffered inputs and its craft stay.
+                m.Off = b.Off;
+                ConsumersChanged |= m.Data.InputMask;
+                MachinesChanged = true;
+            }
+            if (b.Off)
+            {
+                b.Status = MachineStatus.Off;
+                if (b.Kind != BuildingKind.Processor) b.Craft = 0f;
+            }
+            else b.Status = MachineStatus.Idle;
+            _networkDirty = true;
+            if (notify) _events.Publish(new BuildingSwitchedEvent(id, b.Origin, on));
             return true;
         }
 
@@ -724,6 +762,12 @@ namespace Antarium.Sim
             {
                 ref var b = ref Get(id);
                 if (!b.IsActive) continue;
+                if (b.Off)
+                {
+                    b.Status = MachineStatus.Off;
+                    b.Craft = 0f;
+                    continue;
+                }
                 int target = b.Outputs.x;
                 var source = UnloaderSource(id);
                 if (target < 0 || source == null)
@@ -901,19 +945,19 @@ namespace Antarium.Sim
             {
                 if (m == null || m.Tenders >= maxTenders) continue;
                 var b = All[m.Building];
-                if (!b.IsActive) continue;
+                if (!b.IsRunning) continue;
                 for (int y = 0; y < b.Size.y; y++)
                 for (int x = 0; x < b.Size.x; x++)
                     sources.Add(b.Origin + new int2(x, y));
             }
         }
 
-        /// <summary>Ids of finished buildings of <paramref name="kind"/> (nurseries, emitters).</summary>
+        /// <summary>Ids of finished buildings of <paramref name="kind"/> that are not switched off (nurseries, emitters).</summary>
         public void Collect(BuildingKind kind, List<int> ids)
         {
             ids.Clear();
             for (int i = 0; i < All.Length; i++)
-                if (All[i].Kind == kind && All[i].IsActive) ids.Add(i);
+                if (All[i].Kind == kind && All[i].IsRunning) ids.Add(i);
         }
 
         /// <summary>Resets the engineer counts of every machine (the simulation recounts them each tick).</summary>
@@ -939,6 +983,14 @@ namespace Antarium.Sim
 
                 while (m.Pending.Count > 0 && EmitProduct(m, m.Pending[0]))
                     m.Pending.RemoveAt(0);
+                if (b.Off)
+                {
+                    // Switched off: finished products still leave, nothing new starts and the running craft waits.
+                    m.Status = MachineStatus.Off;
+                    b.Status = m.Status;
+                    b.Craft = m.Recipe >= 0 ? m.Progress / _content.Recipes[m.Recipe].Duration : 0f;
+                    continue;
+                }
 
                 if (m.Pending.Count > 0) m.Status = MachineStatus.OutputBlocked;
                 else

@@ -204,6 +204,10 @@ namespace Antarium.Gameplay
                     _hud.ShowToast(on ? "The queen lays eggs again." : "The queen stopped laying. Resume it in the queen panel.");
                 };
             _hud.BrushSizeClicked += size => _tools?.SetBrushSize(size);
+            _hud.VeinToggleClicked += () =>
+            {
+                if (_sim != null) _sim.EnqueueAutoMark(!_sim.Colony.AutoMarkOres);
+            };
                 _hud.Queen.CloseClicked += _hud.HideModal;
                 _hud.Queen.CastesClicked += () =>
                 {
@@ -230,6 +234,7 @@ namespace Antarium.Gameplay
                 _hud.Configure.ItemPicked += (cell, item) => _sim?.EnqueueSetFilter(cell, item);
                 _hud.Configure.RecipePicked += (cell, choice) => _sim?.EnqueueRecipe(cell, choice);
                 _hud.Configure.StageClicked += cell => _sim?.EnqueueStage(cell);
+                _hud.Configure.SwitchClicked += (cell, on) => _sim?.EnqueueSwitch(cell, on);
                 _hud.Configure.ReserveStep += (item, step) =>
                 {
                     if (_sim != null) _sim.EnqueueReserve(item, Math.Max(0, _sim.Colony.Inventory.Reserve[item] + step));
@@ -354,6 +359,7 @@ namespace Antarium.Gameplay
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };
             _brushView = new BrushCursorView(spriteMaterial, transform, _worldSize);
             _tools = new ToolController(config, _content, _buildingView.Ghosts, _brushSizes);
+            _tools.CatchStar = p => _surfaceView != null && _surfaceView.TryCatchStar(p);
             _tools.ModeChanged += _hud.SetActiveTool;
             _tools.BrushChanged += size => _hud.SetBrush(_tools.Mode, size);
             _tools.ModeChanged += mode => _terrain?.SetScentCover(mode == ToolMode.Pheromone);
@@ -730,7 +736,9 @@ namespace Antarium.Gameplay
             float alpha = _sim.Clock.Alpha;
             _buildingView.Render(_sim, alpha, Time.time, _overlay);
             _colonyView.Render(_sim, alpha, _overlay, Time.time);
-            _glow.Update(_sim, alpha, _camera.Position, _camera.HalfViewSize, dt, false);
+            // Guiding Light (research): a light at the pointer while it is over the world.
+            bool cursorLight = _sim.Colony.Has(ResearchFeature.CursorLight) && !title && !possessing && (Capturing ? _shotCursorLight : !overUi);
+            _glow.Update(_sim, alpha, _camera.Position, _camera.HalfViewSize, dt, false, cursorLight, Capturing ? _shotPointer : pointerWorld);
             _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, paused ? 0f : dt, Time.time);
             RenderBrush(pointerWorld, title || paused || overUi || possessing || Capturing);
             _hud.SetDigStamina(_tools.Dig.Stamina.Value, _tools.Dig.Stamina.Exhausted);
@@ -812,7 +820,13 @@ namespace Antarium.Gameplay
                 _sim.GiveResources(20, 50f);
                 _sim.Colony.Inventory.AddKnowledge(50f, studied: false);
             }
-            if (_input.TriggerEvent.WasPressedThisFrame()) _sim.EnqueueTriggerEvent(-1);
+            if (_input.TriggerEvent.WasPressedThisFrame())
+            {
+                // F10: a random event; with Ctrl the giant worm (Milestone 11).
+                var keys = UnityEngine.InputSystem.Keyboard.current;
+                if (keys != null && keys.ctrlKey.isPressed) _sim.EnqueueTriggerWorm();
+                else _sim.EnqueueTriggerEvent(-1);
+            }
             if (_input.TriggerRaid.WasPressedThisFrame())
             {
                 // F11: a raid; with Shift rival ants, with Ctrl a mole cricket (10.5).
@@ -900,7 +914,7 @@ namespace Antarium.Gameplay
             }
             if (panel.Open(_sim, _pointerCell)) return;
             if (panel.Visible) panel.Hide();
-            else _hud.ShowToast("Nothing to set up there. Point at a storage zone, chest, unloader, filter, emitter, a machine with several recipes or the Ancient Engine.");
+            else _hud.ShowToast("Nothing to set up there. Point at a storage zone, chest, unloader, filter, emitter, machine, pump, resonator or the Ancient Engine.");
         }
 
         /// <summary>The stock view (keep items for building), from the resource bar.</summary>

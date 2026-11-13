@@ -36,6 +36,7 @@ namespace Antarium.Gameplay
             yield return ("ruins", ShotRuins);
             yield return ("bloodline", ShotBloodline);
             yield return ("presentation", ShotPresentation);
+            yield return ("tweaks", ShotTweaks);
         }
 
         // ---------------------------------------------------------------- stills

@@ -130,6 +130,8 @@ namespace Antarium.Editor
             AchievementKind.LoreFound => (Mind, Glyph(Scroll, Pal('P', 0xf0d070, 'p', 0xc09a40, 'l', 0x7a5a20, 'r', 0x7fd8ff))),
             AchievementKind.EngineRestored => (Royal, Glyph(Sparkle, Pal('Y', 0x7fd8ff, 'W', 0xe0fbff))),
             AchievementKind.RivalsRepelled => (Combat, Atlas(ColonySprites.EnemyRect + (int)EnemyArt.RivalAnt * 2)),
+            // Milestone 11: a white star on a night-blue plate.
+            AchievementKind.ShootingStars => (Hex(0x1c2448), Glyph(Comet, Pal('Y', 0xfff4c0, 'W', 0xffffff, 't', 0x9ab0e8))),
             _ => (Earth, Atlas(0)),
         };
 
@@ -232,6 +234,12 @@ namespace Antarium.Editor
         {
             ".....Y.....", ".....Y.....", "....YWY....", "....YWY....", "YYYYWWWYYYY", "....YWY....", "....YWY....",
             ".....Y.....", ".....Y.....",
+        };
+
+        // Milestone 11: a shooting star, its head top right and the tail trailing down to the left.
+        static readonly string[] Comet =
+        {
+            "........Y...", ".......YWY..", "......tYWY..", ".....t..Y...", "....t.......", "...t........", "..t.........", ".t..........",
         };
 
         static readonly string[] Dna =

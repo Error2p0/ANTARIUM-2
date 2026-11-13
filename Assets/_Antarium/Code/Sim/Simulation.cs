@@ -18,7 +18,7 @@ namespace Antarium.Sim
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
             ContainerFilter, Reserve, Recipe, Evolve, Priority,
-            Stage, TriggerDigger, Respec, Laying,
+            Stage, TriggerDigger, Respec, Laying, AutoMark, StarCaught, Switch, TriggerWorm,
         }
 
         readonly struct Command
@@ -114,6 +114,8 @@ namespace Antarium.Sim
         bool _designationsChanged;
         bool _storageChanged;
         int _ticksSinceFieldRefresh;
+        /// <summary>No thieves were about at the last field refresh: the loot field is out of date.</summary>
+        bool _lootStale = true;
         int _digSlots;
         int _haulSlots;
 
@@ -464,6 +466,10 @@ namespace Antarium.Sim
                 case CommandKind.Evolve: Evolutions.Buy(cmd.Def); break;
                 case CommandKind.Priority: SetPriority((JobKind)cmd.Item, cmd.Def); break;
                 case CommandKind.Laying: Colony.LayingPaused = !cmd.Set; break;
+                case CommandKind.AutoMark: Colony.AutoMarkOres = cmd.Set; break;
+                case CommandKind.StarCaught: CatchShootingStar(cmd.CellPos); break;
+                case CommandKind.Switch: Buildings.SetSwitch(cmd.Cell, cmd.Set); break;
+                case CommandKind.TriggerWorm: RandomEvents.TriggerKind(RandomEventKind.GiantWorm); break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -484,6 +490,7 @@ namespace Antarium.Sim
             var cmd = command;
             var dig = new DigCommand(cmd.CellPos, cmd.Radius, cmd.Power * Colony.Mods.Mult(StatKind.PlayerDig));
             int damaged = Digging.Apply(World, Content.MaterialSim, dig, Config.dig.brushEdgeFactor, Events, _broken, out bool opened);
+            if (Enemies.HitWorm(dig.CellPos, dig.Radius, dig.Power)) damaged++; // the giant worm (Milestone 11): a productive hit
             if (opened) _terrainChanged = true;
 
             int breachesBefore = _breachStarts.Length;
@@ -631,7 +638,7 @@ namespace Antarium.Sim
             if (Colony.Designated.Remove(index)) _designationsChanged = true;
 
             Reveal.Around(World, c, Config.dig.revealRadius);
-            if (_veinInstinct) FollowVein(c);
+            if (VeinInstinctActive) FollowVein(c);
             Fire.Remove(c);
             Fluids.Wake(c);
             CheckUnstableAbove(c);
@@ -1082,7 +1089,14 @@ namespace Antarium.Sim
             }
             if (Enemies.AnyHunting) Fields.MarkDirty(FieldKind.Ants);
             if (Enemies.AnyLeaving) Fields.MarkDirty(FieldKind.Exit);
+            // Rival ants head for the nearest store holding items: rebuilt when stores fill or empty while thieves are about.
             ulong locations = Colony.Inventory.LocationsChanged;
+            if (Enemies.AnyLooting)
+            {
+                if (_lootStale || locations != 0 || _storageChanged || Buildings.DropoffChanged) Fields.MarkDirty(FieldKind.Loot);
+                _lootStale = false;
+            }
+            else _lootStale = true;
             Colony.Inventory.LocationsChanged = 0;
             for (int i = 0; i < Content.Items.Length && locations != 0; i++)
             {
@@ -1239,10 +1253,27 @@ namespace Antarium.Sim
                 sources.Clear();
                 if (Enemies.AnyLeaving) sources.Add(Enemies.RaidCell);
             }
+            if (Fields.IsDirty(FieldKind.Loot))
+            {
+                var sources = Fields.Sources(FieldKind.Loot);
+                sources.Clear();
+                if (Enemies.AnyLooting) AddLootSources(sources);
+            }
             Fields.Rebuild(World, Pheromones);
         }
 
         static int Bit(PheromoneKind kind) => 1 << (int)kind;
+
+        /// <summary>Every store holding a non-food item: storage cells and chests, and the royal chamber's cells.</summary>
+        void AddLootSources(NativeList<int2> sources)
+        {
+            foreach (var container in Colony.Inventory.Containers)
+            {
+                if (!Enemies.HoldsLoot(container)) continue;
+                if (container.IsRoyal) AddRoyalCells(sources, Config.colony.royalRadius);
+                else sources.Add(container.Cell);
+            }
+        }
 
         void AddRoyalCells(NativeList<int2> sources, int radius)
         {

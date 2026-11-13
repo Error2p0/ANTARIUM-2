@@ -86,13 +86,14 @@ namespace Antarium.Sim
             snap.Sections.Add(new("SIM", Section(w => WriteSim(w, sim))));
             snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 5)));
             snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 4)));
-            snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 4)));
+            snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 5)));
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
-            snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim), 2)));
+            snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim), 3)));
             snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim), 2)));
             snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim), 2)));
             snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
+            snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim))));
             return snap;
         }
 
@@ -455,6 +456,7 @@ namespace Antarium.Sim
                 w.Write(b.Stage);
                 w.Write(b.Restoring);
                 w.Write(b.WorkTotal);
+                w.Write(b.Off); // v5 (Milestone 11): switched off
 
                 var m = buildings.MachineOf(id);
                 w.Write(m != null);
@@ -618,10 +620,27 @@ namespace Antarium.Sim
                 w.Write(e.Timer);
                 w.Write(e.Stuck);
                 w.Write(e.Trail);
+                w.Write(e.Event); // v3 (Milestone 11): the giant worm's event
             }
             w.Write(t.RaidRival);
             w.Write(t.RaidItemsLost);
             w.Write(t.DiggerTimer);
+            // v3: the giant worm's body.
+            w.Write(t.WormBody.Count);
+            foreach (var c in t.WormBody) w.Write(c);
+        }
+
+        /// <summary>TWKS (Milestone 11): the Vein Instinct switch and the shooting stars the player caught.</summary>
+        static void WriteTweaks(BinaryWriter w, Simulation sim)
+        {
+            w.Write(sim.Colony.AutoMarkOres);
+            w.Write(sim.Colony.Stats.StarsCaught);
+        }
+
+        static void ReadTweaks(BinaryReader r, Simulation sim)
+        {
+            sim.Colony.AutoMarkOres = r.ReadBoolean();
+            sim.Colony.Stats.StarsCaught = math.max(0, r.ReadInt32());
         }
 
         /// <summary>RUIN: what the colony studied (by item), the lore fragments it found (by id), rival raids beaten.</summary>
@@ -699,6 +718,7 @@ namespace Antarium.Sim
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
                 Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
+                Read(sections, "TWKS", (r, _) => ReadTweaks(r, sim));
                 Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
                 Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));
                 PlaceNurseryEggs(sim, nurseryEggs);
@@ -1180,6 +1200,8 @@ namespace Antarium.Sim
                 byte stage = version >= 4 ? r.ReadByte() : (byte)0;
                 bool restoring = version >= 4 && r.ReadBoolean();
                 float workTotal = version >= 4 ? r.ReadSingle() : 0f;
+                bool off = version >= 5 && r.ReadBoolean();
+                if (id >= 0 && off) buildings.SetSwitch(id, false, notify: false);
                 if (id >= 0)
                 {
                     ref var b = ref buildings.Get(id);
@@ -1282,6 +1304,7 @@ namespace Antarium.Sim
                     if (e.Loot == ContentDB.NoItem) e.LootCount = 0;
                 }
                 else e.Trail = e.Cell;
+                if (version >= 3) e.Event = r.ReadInt32();
                 if (e.Def < 0 || !world.InBounds(e.Cell.x, e.Cell.y) || !world.InBounds(e.From.x, e.From.y) || e.Health <= 0f) continue;
                 if (!Enum.IsDefined(typeof(EnemyState), e.State)) e.State = EnemyState.Wander;
                 if (e.StepLength <= 0f) e.StepLength = 1f;
@@ -1295,6 +1318,23 @@ namespace Antarium.Sim
                 t.RaidItemsLost = math.max(0, r.ReadInt32());
                 t.DiggerTimer = r.ReadSingle();
             }
+            t.WormBody.Clear();
+            if (version >= 3)
+            {
+                int body = r.ReadInt32();
+                for (int i = 0; i < body; i++)
+                {
+                    var c = r.ReadInt2();
+                    if (world.InBounds(c.x, c.y)) t.WormBody.Add(c);
+                }
+            }
+            // A worm needs its body (and only one worm); without one it is dropped (its event then ends as lost).
+            int worm = t.WormIndex();
+            if (worm >= 0 && t.WormBody.Count == 0)
+            {
+                for (int k = 0; k <= sim.Config.threats.wormSegments; k++) t.WormBody.Add(t.Enemies[worm].Cell);
+            }
+            if (worm < 0) t.WormBody.Clear();
             t.Changed = true;
         }
 

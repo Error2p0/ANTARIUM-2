@@ -372,6 +372,10 @@ namespace Antarium.Presentation
                 if (e.Phase == DiggerPhase.Dug) Queue(SoundCue.Burrow, e.Cell);
                 else if (e.Phase != DiggerPhase.GaveUp) QueueUi(SoundCue.CreaturesFound);
             }
+            // Milestone 11 batch 3: the giant worm churning the soil, a caught shooting star.
+            foreach (var e in events.Read<WormEvent>())
+                if (e.Phase == WormPhase.Dug) Queue(SoundCue.WormBurrow, e.Cell);
+            if (events.Read<ShootingStarCaughtEvent>().Length > 0) QueueUi(SoundCue.StarCaught);
             if (events.Read<LoreFoundEvent>().Length > 0) QueueUi(SoundCue.LoreFound);
             foreach (var e in events.Read<EngineStageEvent>())
             {

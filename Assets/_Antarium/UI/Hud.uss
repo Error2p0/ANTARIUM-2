@@ -1639,3 +1639,28 @@
 .stamina--exhausted .stamina__fill {
     background-color: rgb(190, 60, 50);
 }
+
+/* ---------------------------------------------------------------- Milestone 11 batch 3: on / off switch, Vein Instinct switch */
+.configure__switch {
+    min-width: 40px;
+    -unity-text-align: middle-center;
+    border-color: rgb(120, 200, 120);
+    color: rgb(190, 255, 190);
+    background-color: rgb(40, 70, 44);
+}
+.configure__switch--off {
+    border-color: rgb(200, 110, 100);
+    color: rgb(255, 190, 180);
+    background-color: rgb(80, 36, 32);
+}
+.vein-toggle {
+    margin-left: 14px;
+    min-width: 0;
+    height: 24px;
+    -unity-text-align: middle-center;
+}
+.vein-toggle--on {
+    border-color: rgb(255, 210, 90);
+    color: rgb(255, 230, 150);
+    background-color: rgb(96, 70, 40);
+}

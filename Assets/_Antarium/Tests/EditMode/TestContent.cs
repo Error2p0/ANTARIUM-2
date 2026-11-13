@@ -60,6 +60,13 @@ namespace Antarium.Tests
         /// <summary>Thief: a rival ant (carries 2, one every 0.5 s). Mole: digs (power 4) through hardness up to 1.5.</summary>
         public readonly EnemyDef Thief, Mole;
         /// <summary>
+        /// Milestone 11: Worm (100 HP, digs with power 6 through hardness up to 1.5) and its event WormEvent (weight 0, so it only
+        /// starts when triggered; 60 s; 10 food and 6 knowledge); LightResearch and VeinResearch switch on the two research features.
+        /// </summary>
+        public readonly EnemyDef Worm;
+        public readonly RandomEventDef WormEvent;
+        public readonly ResearchDef LightResearch, VeinResearch;
+        /// <summary>
         /// 10.6. Throne: 4x2, unique, built around the queen, only through GeneThrone; +50% laying, +2 eggs, ants within 6 cells
         /// work twice as fast. ModVariant turns the Deep biome into VariantRock ("Red Deep") with CaveBeetles in its caves.
         /// </summary>
@@ -323,6 +330,15 @@ namespace Antarium.Tests
             Mole.aggroRadius = 10f;
             Mole.digPower = 4f;
             Mole.maxDigHardness = 1.5f;
+            Worm = Make<EnemyDef>("worm");
+            Worm.behavior = EnemyBehavior.Worm;
+            Worm.art = EnemyArt.Worm;
+            Worm.health = 100f;
+            Worm.damage = 2f;
+            Worm.speed = 4f;
+            Worm.digPower = 6f;
+            Worm.maxDigHardness = 1.5f;
+            Worm.swims = true;
 
             LoreMarks = Make<LoreDef>("lore_marks");
             LoreMarks.item = Relic;
@@ -435,6 +451,21 @@ namespace Antarium.Tests
             AphidEvent.duration = 30f;
             AphidEvent.rewardKnowledge = 4f;
             AphidEvent.rewards.Add(new ItemAmount(Honeydew, 3));
+            WormEvent = Make<RandomEventDef>("worm_event");
+            WormEvent.kind = RandomEventKind.GiantWorm;
+            WormEvent.weight = 0f;
+            WormEvent.duration = 60f;
+            WormEvent.rewardFood = 10f;
+            WormEvent.rewardKnowledge = 6f;
+            WormEvent.creature = Worm;
+            LightResearch = Make<ResearchDef>("light_research");
+            LightResearch.treePosition = new Vector2Int(3, 1);
+            LightResearch.knowledgeCost = 1f;
+            LightResearch.effects.Add(ResearchEffect.Enable(ResearchFeature.CursorLight));
+            VeinResearch = Make<ResearchDef>("vein_research");
+            VeinResearch.treePosition = new Vector2Int(3, 2);
+            VeinResearch.knowledgeCost = 1f;
+            VeinResearch.effects.Add(ResearchEffect.Enable(ResearchFeature.VeinInstinct));
 
             // Prestige: world modifiers and genetic traits.
             ModRich = Make<WorldModifierDef>("mod_rich");
@@ -482,13 +513,13 @@ namespace Antarium.Tests
             Progression = new ProgressionContent
             {
                 Achievements = new[] { AchFlight, AchDig },
-                Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch, AncientResearch },
+                Research = new[] { LabResearch, FastBelts, SeismicResearch, SoldierResearch, CasteResearch, AncientResearch, LightResearch, VeinResearch },
                 Abilities = new[] { Decree, Frenzy, Seismic, Burst, Quickening },
                 Castes = new[] { EngineerCaste, WorkerCaste, SoldierCaste, MinerCaste, HaulerCaste, NurseCaste, BuilderCaste, ScoutCaste, GlowCaste, FireCaste },
                 Evolutions = new[] { EvoLineage, EvoQuicken, EvoBrood },
                 Contracts = new[] { DeliverOre, DigIntro },
-                Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent, AphidEvent },
-                Enemies = new[] { Spider, Raider, Thief, Mole },
+                Events = new[] { TrappedEvent, MeteorEvent, VeinEvent, BeetleEvent, AphidEvent, WormEvent },
+                Enemies = new[] { Spider, Raider, Thief, Mole, Worm },
                 Lore = new[] { LorePlan, LoreMarks, LoreStory },
                 Raiders = new[] { Raider },
                 Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain, GeneThrone },

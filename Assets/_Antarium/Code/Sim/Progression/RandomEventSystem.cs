@@ -87,6 +87,18 @@ namespace Antarium.Sim
                     End(i, won: true);
                     continue;
                 }
+                if (e.Kind == RandomEventKind.GiantWorm)
+                {
+                    // The card's Go button follows the worm's head; a worm that is gone (an old save) ends the event.
+                    int w = _sim.Enemies.WormIndex();
+                    if (w < 0 || _sim.Enemies.Enemies[w].Event != e.Id)
+                    {
+                        End(i, won: false);
+                        continue;
+                    }
+                    e.Cell = _sim.Enemies.Enemies[w].Cell;
+                    Active[i] = e;
+                }
                 if (e.TimeLeft <= 0f) continue;
                 e.TimeLeft -= dt;
                 Active[i] = e;
@@ -142,6 +154,7 @@ namespace Antarium.Sim
         {
             var def = _content.Events[index].Def;
             if (def.kind == RandomEventKind.GoldenAphid && !HasRanch()) return false;
+            if (def.kind == RandomEventKind.GiantWorm && _sim.Enemies.WormIndex() >= 0) return false;
             return def.weight > 0f && def.minDepth <= _sim.Colony.Stats.MaxDepth;
         }
 
@@ -167,6 +180,7 @@ namespace Antarium.Sim
                 case RandomEventKind.GoldenBeetle: ok = TryBeetle(index, id, out cell); break;
                 case RandomEventKind.TrappedAnts: ok = TryTrapped(index, id, out cell); break;
                 case RandomEventKind.GoldenAphid: ok = TryGoldenAphid(index, id, out cell); break;
+                case RandomEventKind.GiantWorm: ok = TryWorm(index, id, out cell); break;
                 default: return false;
             }
             if (!ok) return false;
@@ -183,8 +197,46 @@ namespace Antarium.Sim
                 if (Critters[i].EventId == e.Id) Critters.RemoveAt(i);
             if (!won && e.Kind == RandomEventKind.TrappedAnts)
                 _sim.Ants.RemoveInside(e.Min, e.Max);
+            if (!won && e.Kind == RandomEventKind.GiantWorm)
+                _sim.Enemies.RemoveWorm(e.Id);
             if (won) _sim.Colony.Stats.EventsWon++;
             _sim.Events.Publish(new RandomEventEvent(e.Def, e.Id, won ? RandomEventPhase.Won : RandomEventPhase.Lost, e.Cell));
+        }
+
+        /// <summary>Debug: starts the first event of <paramref name="kind"/>. False if there is none or no place for it.</summary>
+        public bool TriggerKind(RandomEventKind kind)
+        {
+            for (int i = 0; i < _content.Events.Length; i++)
+                if (_content.Events[i].Def.kind == kind) return Trigger(i);
+            return false;
+        }
+
+        /// <summary>The creature of event <paramref name="eventId"/> (the giant worm) was killed: the event is won and pays out.</summary>
+        internal void OnCreatureKilled(int eventId, int2 cell)
+        {
+            for (int i = 0; i < Active.Count; i++)
+            {
+                if (Active[i].Id != eventId) continue;
+                var e = Active[i];
+                e.Cell = cell;
+                Active[i] = e;
+                var data = _content.Events[e.Def];
+                _sim.GrantReward(data.RewardItems, data.RewardCounts, 1f, data.Def.rewardFood, data.Def.rewardKnowledge);
+                End(i, won: true);
+                return;
+            }
+        }
+
+        bool TryWorm(int index, int id, out int2 cell)
+        {
+            var data = _content.Events[index];
+            if (!_sim.Enemies.TriggerWorm(data.Creature, id, out cell)) return false;
+            Active.Add(new ActiveEvent
+            {
+                Id = id, Def = index, Kind = RandomEventKind.GiantWorm, Cell = cell,
+                TimeLeft = math.max(5f, data.Def.duration), Count = 1,
+            });
+            return true;
         }
 
         // ---------------------------------------------------------------- critters

@@ -296,6 +296,11 @@ namespace Antarium.Gameplay
                     _sb.Clear().Append("Caught the golden aphid: ");
                     HudText.AppendReward(_sb, _content, data.RewardItems, data.RewardCounts, 1f, def.rewardFood, def.rewardKnowledge);
                     return _sb.ToString();
+                case RandomEventKind.GiantWorm:
+                    if (!won) return $"The {def.DisplayName.ToLowerInvariant()} burrowed away into the deep. Its tunnels stay.";
+                    _sb.Clear().Append("Killed the ").Append(def.DisplayName.ToLowerInvariant()).Append(", a feast: ");
+                    HudText.AppendReward(_sb, _content, data.RewardItems, data.RewardCounts, 1f, def.rewardFood, def.rewardKnowledge);
+                    return _sb.ToString();
                 default:
                     return won ? def.DisplayName + ": done." : def.DisplayName + ": missed.";
             }
@@ -320,7 +325,7 @@ namespace Antarium.Gameplay
                     card ??= AddRaidCard(e);
                     card.Title.text = e.Rival ? "Rival ants!" : "Raid!";
                     card.Body.text = e.Rival
-                        ? $"{RaiderName(e.Size, true)} are heading for the royal chamber to steal from your stock. Kill them and they drop what they carry."
+                        ? $"{RaiderName(e.Size, true)} are heading for your nearest store (storage, chests, the royal chamber) to rob it. Kill them and they drop what they carry."
                         : $"{RaiderName(e.Size)} are heading for the royal chamber. Fight them off before they eat your food.";
                     card.Cell = e.Cell;
                     _stolenToastShown = false;
@@ -365,7 +370,7 @@ namespace Antarium.Gameplay
         {
             var card = NewCard(CardKind.Raid, e.Id, -1, e.Cell, e.Rival ? "Rival ants incoming!" : "Raid incoming!",
                 e.Rival
-                    ? $"{RaiderName(e.Size, true)} from a rival colony are coming from the {Side(e.Cell)}. They steal items from the stock, not food. Gates, traps and soldiers help."
+                    ? $"{RaiderName(e.Size, true)} from a rival colony are coming from the {Side(e.Cell)}. They rob the nearest store they reach (storage, chests, the royal chamber), not food. Gates, traps and soldiers help."
                     : $"{RaiderName(e.Size)} are coming from the {Side(e.Cell)}. Gates, traps and soldiers help.");
             card.Rival = e.Rival;
             card.Root.AddToClassList("event--danger");

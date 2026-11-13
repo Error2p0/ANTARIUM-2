@@ -134,9 +134,10 @@ namespace Antarium.Sim
             {
                 ref var b = ref Get(id);
                 var r = Measure(b, _content.Buildings[b.Def].Def);
+                if (b.Off) r.Power = 0f; // switched off: it sings for no one (no knowledge, no boost)
                 _resonance[id] = r;
                 b.Craft = r.Power;
-                b.Status = r.Power > 0f ? MachineStatus.Working : MachineStatus.Idle;
+                b.Status = b.Off ? MachineStatus.Off : r.Power > 0f ? MachineStatus.Working : MachineStatus.Idle;
             }
         }
 

@@ -39,6 +39,10 @@ namespace Antarium.Gameplay
         readonly VisualElement _scentPalette;
         /// <summary>Above the toolbar for the painting tools: brush size 1 / 2 / 3, and the Dig tool's strength (Milestone 11).</summary>
         readonly VisualElement _toolOptions, _staminaBox, _staminaFill;
+        /// <summary>Mine tool row: Vein Instinct on / off (Milestone 11; shown once it is known).</summary>
+        readonly Button _veinToggle;
+        ToolMode _brushMode;
+        int _veinShown = -1;
         readonly Button[] _brushButtons = new Button[BrushSizes.Max];
         int _shownStamina = -1;
         bool _shownExhausted;
@@ -270,6 +274,13 @@ namespace Antarium.Gameplay
                                    "It slowly comes back while you are not digging. When it runs out, the Dig tool rests until a quarter is back. " +
                                    "Your ants dig without limit: give them mining orders.");
             _toolOptions.Add(_staminaBox);
+            _veinToggle = new Button(() => VeinToggleClicked?.Invoke()) { text = "Auto-mark ores: On", focusable = false };
+            _veinToggle.AddToClassList("small-button");
+            _veinToggle.AddToClassList("vein-toggle");
+            _veinToggle.AddToClassList("hidden");
+            Tip(_veinToggle, () => "Vein Instinct: ore and other finds next to every cell your colony digs out are ordered for mining " +
+                                   "automatically. Switch it off to mine only what you paint.");
+            _toolOptions.Add(_veinToggle);
             toolbar.parent.Insert(toolbar.parent.IndexOf(toolbar), _toolOptions);
             Castes = new CastesPanel(castes, content, art, Tips);
             if (priorities != null) Priorities = new PrioritiesPanel(priorities, art, Tips);
@@ -592,11 +603,27 @@ namespace Antarium.Gameplay
 
         /// <summary>A brush size button was clicked (1..3).</summary>
         public event Action<int> BrushSizeClicked;
+        /// <summary>The Vein Instinct switch in the Mine tool's row was clicked.</summary>
+        public event Action VeinToggleClicked;
+
+        /// <summary>The Vein Instinct switch: shown with the Mine tool once the colony knows it, lit while it is on.</summary>
+        void RefreshVeinToggle(Simulation sim)
+        {
+            if (_veinToggle == null || sim == null) return;
+            int state = _brushMode != ToolMode.Mine || !sim.VeinInstinctKnown ? 0 : sim.Colony.AutoMarkOres ? 2 : 1;
+            if (state == _veinShown) return;
+            _veinShown = state;
+            _veinToggle.EnableInClassList("hidden", state == 0);
+            _veinToggle.EnableInClassList("vein-toggle--on", state == 2);
+            _veinToggle.text = state == 2 ? "Auto-mark ores: On" : "Auto-mark ores: Off";
+        }
 
         /// <summary>Shows the brush row for painting tools with <paramref name="size"/> lit; the strength bar with the Dig tool.</summary>
         public void SetBrush(ToolMode mode, int size)
         {
             if (_toolOptions == null) return;
+            _brushMode = mode;
+            _veinShown = -1;
             _toolOptions.EnableInClassList("hidden", !ToolController.HasBrush(mode));
             _staminaBox.EnableInClassList("hidden", mode != ToolMode.Dig);
             for (int i = 0; i < _brushButtons.Length; i++)
@@ -992,6 +1019,7 @@ namespace Antarium.Gameplay
         public void Update(float dt, Simulation sim, int targeting, string menuStatus, bool possessing = false, bool targetingPossess = false)
         {
             _sim = sim;
+            RefreshVeinToggle(sim);
             RefreshKeyLabels();
             Keys.Refresh();
             Tips.Update(dt);

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Antarium.Content::Antarium.Content.EnemyDef
   id: rival_ant
   displayName: Rival Ant
-  description: 'An ant from a rival colony on the surface. Rival raids go for your stock, not your food: each thief carries off up to 3 items of what you have most of. Kill it and it drops them.'
+  description: 'An ant from a rival colony on the surface. Rival raids go for your stores, not your food: each thief robs the nearest storage cell, chest or royal chamber it can reach and carries off up to 3 items of what that store holds most of. Kill it and it drops them.'
   behavior: 3
   health: 28
   damage: 5

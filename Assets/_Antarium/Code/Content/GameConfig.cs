@@ -101,6 +101,14 @@ namespace Antarium.Content
         [Range(0, 4096)] public int maxCasters = 768;
         [Tooltip("Seconds between rebuilding the shadow casters (also rebuilt when the terrain changes).")]
         [Min(0.02f)] public float casterRefresh = 0.25f;
+
+        [Header("Guiding Light (research, Milestone 11)")]
+        [Tooltip("Radius in cells of the light at the pointer (a glow ant's is 6).")]
+        [Min(1f)] public float cursorRadius = 9f;
+        public Color cursorColor = new(0.78f, 1f, 0.72f);
+        [Range(0f, 2f)] public float cursorIntensity = 1f;
+        [Tooltip("The pointer light's rock shadows are rebuilt once it has moved this many cells (or on the usual refresh).")]
+        [Min(1)] public int cursorCasterStep = 2;
     }
 
     [Serializable]
@@ -445,6 +453,22 @@ namespace Antarium.Content
         [Min(1)] public int moleClearance = 8;
         [Tooltip("A mole cricket that can't get closer for this many seconds gives up and digs away (it is removed).")]
         [Min(1f)] public float moleGiveUpSeconds = 30f;
+
+        [Header("Giant worm (Milestone 11 random event)")]
+        [Tooltip("Body segments behind the head.")]
+        [Range(1, 24)] public int wormSegments = 7;
+        [Tooltip("The worm starts this far (cells) from a random ant underground, in soft ground.")]
+        public Vector2Int wormDistance = new(9, 18);
+        [Tooltip("It starts at least this many cells from the colony's tunnels.")]
+        [Min(1)] public int wormClearance = 3;
+        [Tooltip("It wanders within this many cells of where it started (past that it turns back).")]
+        [Min(4f)] public float wormLeash = 22f;
+        [Tooltip("Chance per cell that it turns when it could go on straight.")]
+        [Range(0f, 1f)] public float wormTurnChance = 0.3f;
+        [Tooltip("It never digs closer to the surface than this many cells below the ground.")]
+        [Min(1)] public int wormMinDepth = 3;
+        [Tooltip("Damage to the worm per Dig tool hit on its body, times the hit's dig power (power x combo x Player Dig).")]
+        [Min(0f)] public float wormDigDamage = 2.5f;
     }
 
     [Serializable]

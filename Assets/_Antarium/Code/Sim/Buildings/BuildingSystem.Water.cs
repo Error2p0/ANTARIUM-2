@@ -143,6 +143,12 @@ namespace Antarium.Sim
         {
             ref var b = ref Get(id);
             if (!b.IsActive) return false;
+            if (b.Off)
+            {
+                b.Status = MachineStatus.Off;
+                b.Craft = 0f;
+                return false;
+            }
             int rate = PerStep(_content.Buildings[b.Def].Def.speed, stepSeconds);
             int2 intake = PumpIntake(b);
             int moved = 0;

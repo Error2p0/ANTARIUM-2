@@ -150,6 +150,7 @@ namespace Antarium.Editor
             CreateRuins(database, worldGen);
             CreatePrestige(worldGen);
             CreatePresentation();
+            CreateTweaks();
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;

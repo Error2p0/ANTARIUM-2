@@ -45,6 +45,8 @@ MonoBehaviour:
     wallBrightness: 0.42
     wallOcclusion: 0.55
     wallContrast: 0.35
+    patchContrast: 0.26
+    patchTint: 0.07
     ambient: 0.025
     skyTop: {r: 0.36, g: 0.62, b: 0.86, a: 1}
     skyHorizon: {r: 0.72, g: 0.86, b: 0.93, a: 1}
@@ -75,6 +77,16 @@ MonoBehaviour:
     overlayStarvedColor: {r: 1, g: 0.85, b: 0.3, a: 1}
     overlayIdleAntColor: {r: 0.45, g: 0.7, b: 1, a: 1}
     stockBrightness: 0.8
+    lightOverlayRamp:
+    - {r: 0.07, g: 0.07, b: 0.2, a: 1}
+    - {r: 0.2, g: 0.13, b: 0.45, a: 1}
+    - {r: 0.47, g: 0.16, b: 0.5, a: 1}
+    - {r: 0.75, g: 0.24, b: 0.24, a: 1}
+    - {r: 0.9, g: 0.55, b: 0.2, a: 1}
+    - {r: 0.98, g: 0.86, b: 0.35, a: 1}
+    - {r: 1, g: 0.98, b: 0.9, a: 1}
+    oreOverlayDim: 0.45
+    oreSurveySeconds: 1
     waterColor: {r: 0.22, g: 0.48, b: 0.9, a: 0.62}
     waterSurfaceColor: {r: 0.62, g: 0.85, b: 1, a: 1}
     lavaColor: {r: 0.95, g: 0.36, b: 0.08, a: 1}
@@ -196,6 +208,7 @@ MonoBehaviour:
     lavaDamage: 40
     gasDamage: 4
     fireDamage: 10
+    heatDamage: 3
     caveInDamage: 25
     swimSpeedFactor: 0.55
     soldierRange: 60
@@ -215,6 +228,22 @@ MonoBehaviour:
     raidMaxSize: 40
     raidDistance: {x: 60, y: 100}
     raidKnowledge: 10
+    rivalFirstSeconds: 1500
+    rivalRaidChance: 0.4
+    moleFirstSeconds: 1080
+    moleIntervalMin: 480
+    moleIntervalMax: 840
+    moleMinAnts: 15
+    moleDistance: {x: 26, y: 42}
+    moleClearance: 8
+    moleGiveUpSeconds: 30
+    wormSegments: 7
+    wormDistance: {x: 9, y: 18}
+    wormClearance: 3
+    wormLeash: 22
+    wormTurnChance: 0.3
+    wormMinDepth: 3
+    wormDigDamage: 2.5
   castes:
     shareStep: 0.05
     maxShare: 0.5
@@ -251,6 +280,9 @@ MonoBehaviour:
     veinRadius: 2
     flightSeconds: 4.5
     flightSpeed: 9
+    engineMemoryBonus: 1
+    freeRespecs: 1
+    respecFee: 0.25
   surface:
     dayLengthSeconds: 720
     dayShare: 0.65
@@ -309,4 +341,46 @@ MonoBehaviour:
     meteoriteIgniteRadius: 3
     light: {r: 1, g: 0.55, b: 0.2, a: 1}
     lightStrength: 0.6
+  growth:
+    priorityWeights:
+    - 4
+    - 2
+    - 1
+    - 0.5
+    - 0.25
+    roleWeight: 0.1
+    levelXp:
+    - 15
+    - 45
+    - 110
+    - 240
+    levelBonus: 0.05
+    levelPreference: 0.05
+    digXp: 1
+    buildXp: 1
+    haulXp: 1
+    supplyXp: 1
+    tendXp: 0.1
+    nurseXp: 2
+    traitChance: 0.3
+    swiftSpeed: 1.2
+    luckyChance: 0.25
+    lazyWork: 0.8
+    speedJitter: 0.07
+    laneOffsetPixels: 3
+    laneUpPixels: 3
+    laneDownPixels: 2
+  glow:
+    maxLights: 24
+    color: {r: 0.62, g: 1, b: 0.55, a: 1}
+    intensity: 0.9
+    innerShare: 0.25
+    shadows: 1
+    shadowIntensity: 0.85
+    maxCasters: 768
+    casterRefresh: 0.25
+    cursorRadius: 9
+    cursorColor: {r: 0.78, g: 1, b: 0.72, a: 1}
+    cursorIntensity: 1
+    cursorCasterStep: 2
   art: {fileID: 11400000, guid: 69e467dcbcbaa4744a8617661c046247, type: 2}

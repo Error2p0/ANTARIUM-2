@@ -97,7 +97,7 @@ namespace Antarium.Presentation
             int antCount = sim.Ants.Count;
             // Halos first (behind every ant), then the ants.
             int quads = antCount + antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count
-                        + enemies.Count * QuadsPerEnemy + colony.Princesses + Flyers.Count;
+                        + enemies.Count * QuadsPerEnemy + sim.Enemies.WormCells.Count + colony.Princesses + Flyers.Count;
             _mesh.EnsureCapacity(quads);
             var vertices = _mesh.Vertices;
 
@@ -197,7 +197,21 @@ namespace Antarium.Presentation
                 int art = math.clamp((int)def.art, 0, ColonySprites.EnemyArtCount - 1);
                 int2 size = _sprites.EnemySize[art];
                 float2 cellPos = math.lerp(e.PrevPos, e.Pos, alpha);
-                var center = Body(nav, cellPos, e.Heading, size.y, out int2 up, out int facing, out float2 world);
+                int2 up;
+                int facing;
+                float2 world;
+                float2 center;
+                if (e.State == EnemyState.Tunnel)
+                {
+                    // The giant worm lies in its tunnel along its heading (no floor to cling to); its body is drawn first, behind the head.
+                    quad = WriteWormBody(sim, vertices, quad, e, cellPos, time);
+                    up = new int2(-e.Heading.y, e.Heading.x);
+                    if (up.Equals(int2.zero)) up = new int2(0, 1);
+                    facing = 1;
+                    world = cellPos * WorldConstants.CellSize;
+                    center = world;
+                }
+                else center = Body(nav, cellPos, e.Heading, size.y, out up, out facing, out world);
                 int frame = e.IsMoving ? (int)(e.WalkPhase * 4f) & 1 : e.Attacking ? (int)(time * 6f) & 1 : 0;
                 var tint = e.SinceHurt < FlashSeconds ? _bars.Flash : White;
                 // A mole cricket digging uses its dig frames.
@@ -249,6 +263,40 @@ namespace Antarium.Presentation
             {
                 int frame = 1 + ((int)(f.Phase * 12f) & 1);
                 SpriteQuads.WriteQuad(vertices, quad++, f.Pos, size, up, f.Facing, rects[ColonySprites.PrincessRect + frame], White, f.Pos);
+            }
+            return quad;
+        }
+
+        /// <summary>
+        /// The giant worm's body (Milestone 11): one segment per body cell, each sliding from the cell behind it toward its own
+        /// as the head moves, turned along the body and tinted red while it is hurt.
+        /// </summary>
+        int WriteWormBody(Simulation sim, NativeArray<SpriteVertex> vertices, int quad, in Enemy e, float2 headPos, float time)
+        {
+            var body = sim.Enemies.WormCells;
+            var rects = _sprites.Rects;
+            var size = new int2(ColonySprites.WormBodyWidth, ColonySprites.WormBodyHeight);
+            var tint = e.SinceHurt < FlashSeconds ? _bars.Flash : White;
+            // How far the head is along its current step, measured from where it is drawn.
+            float step = math.distance(new float2(e.From), new float2(e.Cell));
+            float t = e.IsMoving && step > 0f ? math.saturate(math.distance(headPos - 0.5f, new float2(e.From)) / step) : 1f;
+            int segments = body.Count - 1;
+            for (int k = 0; k < body.Count; k++)
+            {
+                if (k >= segments)
+                {
+                    SpriteQuads.WriteEmpty(vertices, quad++);
+                    continue;
+                }
+                float2 from = new float2(body[k + 1]) + 0.5f, to = new float2(body[k]) + 0.5f;
+                float2 at = math.lerp(from, to, t) * WorldConstants.CellSize;
+                int2 dir = body[k] - body[k + 1];
+                if (dir.Equals(int2.zero)) dir = k > 0 ? body[k - 1] - body[k] : e.Cell - body[k];
+                dir = math.clamp(dir, -1, 1);
+                int2 up = dir.Equals(int2.zero) ? new int2(0, 1) : new int2(-dir.y, dir.x);
+                if (math.abs(up.x) + math.abs(up.y) > 1) up = new int2(0, 1);
+                int frame = ((int)(time * 3f) + k) & 1;
+                SpriteQuads.WriteQuad(vertices, quad++, at, size, up, 1, rects[ColonySprites.WormBodyRect + frame], tint, at);
             }
             return quad;
         }

@@ -20,6 +20,8 @@ namespace Antarium.Sim
         Leave,
         /// <summary>A digger tunnelling through the ground toward the nest (10.5).</summary>
         Burrow,
+        /// <summary>The giant worm meandering through the ground (Milestone 11).</summary>
+        Tunnel,
     }
 
     /// <summary>One hostile creature. Moves like an ant (crawling rules), but cannot pass closed gates.</summary>
@@ -59,6 +61,8 @@ namespace Antarium.Sim
         public float Stuck;
         /// <summary>Diggers: the cell it came from (it never digs straight back).</summary>
         public int2 Trail;
+        /// <summary>The giant worm: id of its random event (0 = none).</summary>
+        public int Event;
 
         public bool IsMoving => !From.Equals(Cell);
         public bool IsDead => Health <= 0f || Escaped;
@@ -103,6 +107,8 @@ namespace Antarium.Sim
         public bool AnyHunting { get; private set; }
         /// <summary>Some raider is leaving (the exit flow field is needed).</summary>
         public bool AnyLeaving { get; private set; }
+        /// <summary>Some rival ant is on its way to the stores (the loot flow field is needed; Milestone 11).</summary>
+        public bool AnyLooting { get; private set; }
         /// <summary>Raiders are in the royal chamber: the queen does not lay.</summary>
         public bool RaidersInChamber { get; private set; }
         /// <summary>Enemies moved or appeared this tick (the enemy flow field must be rebuilt).</summary>
@@ -156,7 +162,7 @@ namespace Antarium.Sim
                 bestDist = d;
                 best = i;
             }
-            return best;
+            return best >= 0 ? best : WormAt(cellPos, radius); // the giant worm can be hit anywhere along its body
         }
 
         public float MaxHealth(int def) => _content.Enemies[def].Def.health;
@@ -390,7 +396,7 @@ namespace Antarium.Sim
         {
             UpdateRaids(dt);
             UpdateDiggers(dt);
-            AnyHunting = AnyLeaving = RaidersInChamber = AnyBurrowing = false;
+            AnyHunting = AnyLeaving = AnyLooting = RaidersInChamber = AnyBurrowing = false;
             if (Enemies.Count == 0) return;
 
             BuildAntLookup();
@@ -453,8 +459,9 @@ namespace Antarium.Sim
             e.Pos = math.lerp(new float2(e.From), new float2(e.Cell), e.Progress) + 0.5f;
 
             if (e.State == EnemyState.Burrow) AnyBurrowing = true;
-            else if (e.State != EnemyState.Dormant) AnyHunting = true;
+            else if (e.State != EnemyState.Dormant && e.State != EnemyState.Tunnel) AnyHunting = true;
             if (e.State == EnemyState.Leave) AnyLeaving = true;
+            if (e.State == EnemyState.Raid && def.behavior == EnemyBehavior.Thief) AnyLooting = true;
             if (e.IsMoving) Changed = true;
         }
 
@@ -484,6 +491,11 @@ namespace Antarium.Sim
         void Decide(ref Enemy e, EnemyDef def, float dt, NavGrid nav)
         {
             int2 c = e.Cell;
+            if (e.State == EnemyState.Tunnel)
+            {
+                Wriggle(ref e, def, dt);
+                return;
+            }
             if (e.State == EnemyState.Burrow)
             {
                 Burrow(ref e, def, dt);
@@ -565,11 +577,9 @@ namespace Antarium.Sim
 
                 case EnemyState.Raid:
                 {
-                    if (_sim.Colony.IsRoyalCell(c) && def.behavior == EnemyBehavior.Thief)
+                    if (def.behavior == EnemyBehavior.Thief)
                     {
-                        RaidersInChamber = true;
-                        Steal(ref e, def, dt);
-                        if (e.State == EnemyState.Raid && Rng.NextFloat() < 0.05f) WanderStep(ref e, nav);
+                        Loot(ref e, def, dt, nav);
                         return;
                     }
                     if (_sim.Colony.IsRoyalCell(c))
@@ -763,6 +773,14 @@ namespace Antarium.Sim
             {
                 var e = Enemies[i];
                 if (e.IsDead) continue;
+                if (e.State == EnemyState.Tunnel)
+                {
+                    float bites = WormBites(e, mult);
+                    if (bites <= 0f) continue;
+                    Hurt(ref e, bites);
+                    Enemies[i] = e;
+                    continue;
+                }
                 float damage = 0f;
                 for (int dy = -1; dy <= 1; dy++)
                 for (int dx = -1; dx <= 1; dx++)
@@ -792,6 +810,8 @@ namespace Antarium.Sim
                 if (!e.IsDead) continue;
                 Enemies.RemoveAt(i);
                 Changed = true;
+                if (e.State == EnemyState.Tunnel) WormBody.Clear();
+                if (e.Escaped && e.Event != 0) continue; // the worm burrowed away: its event says so
                 if (e.Escaped)
                 {
                     if (e.Raid != 0 && e.Raid == RaidActive) RaidItemsLost += e.LootCount;
@@ -814,6 +834,7 @@ namespace Antarium.Sim
                 if (data.Def.knowledge > 0f) colony.Inventory.AddKnowledge(data.Def.knowledge, studied: false);
                 colony.Stats.EnemiesKilled++;
                 _sim.Events.Publish(new EnemyKilledEvent(e.Def, e.Cell));
+                if (e.Event != 0) _sim.RandomEvents.OnCreatureKilled(e.Event, e.Cell);
             }
 
             if (RaidActive == 0) return;
@@ -855,6 +876,7 @@ namespace Antarium.Sim
         public void AddEnemySources(NativeList<int2> sources)
         {
             foreach (var e in Enemies) sources.Add(e.Cell);
+            for (int k = 0; k < WormSegments && k < WormBody.Count; k++) sources.Add(WormBody[k]);
         }
 
         public void Dispose()

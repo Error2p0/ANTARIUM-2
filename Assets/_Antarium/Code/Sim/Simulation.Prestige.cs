@@ -39,7 +39,14 @@ namespace Antarium.Sim
         /// <summary>How this colony's world modifiers changed world generation.</summary>
         public WorldTweaks Tweaks { get; private set; }
         int[] _worldModifiers = Array.Empty<int>();
-        bool _veinInstinct;
+        /// <summary>The bloodline has the Vein Instinct trait: every colony knows it as if researched (Milestone 11).</summary>
+        bool _veinTrait;
+
+        /// <summary>Vein Instinct is known (research, or the genetic trait) in this colony.</summary>
+        public bool VeinInstinctKnown => _veinTrait || Colony.Has(ResearchFeature.VeinInstinct);
+
+        /// <summary>Vein Instinct is known and the player lets it order ore (Mine tool row).</summary>
+        public bool VeinInstinctActive => VeinInstinctKnown && Colony.AutoMarkOres;
 
         /// <summary>Respecs done in this colony (the first <see cref="PrestigeConfig.freeRespecs"/> are free; saved).</summary>
         public int Respecs { get; internal set; }
@@ -150,7 +157,7 @@ namespace Antarium.Sim
 
         void RefreshLegacyFlags()
         {
-            _veinInstinct = Legacy.Has(GeneticEffectKind.VeinInstinct);
+            _veinTrait = Legacy.Has(GeneticEffectKind.VeinInstinct);
             Colony.PrincessCap = Legacy.MaxPrincesses(Config.prestige);
         }
 

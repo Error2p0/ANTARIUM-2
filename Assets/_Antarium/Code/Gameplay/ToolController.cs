@@ -58,6 +58,11 @@ namespace Antarium.Gameplay
         public event Action<PheromoneKind> ScentChanged;
         /// <summary>The player controls an ant (refreshed every frame).</summary>
         public bool Possessing { get; private set; }
+        /// <summary>
+        /// Tries to catch a shooting star at a cell-space position (the view draws them; Milestone 11). Null = there are none.
+        /// A click that catches one is not a tool stroke.
+        /// </summary>
+        public Func<float2, bool> CatchStar;
 
         /// <param name="ghosts">Placement previews to draw; filled while the Build tool is active.</param>
         /// <param name="brushSizes">Brush size per tool mode, shared so it outlives this controller (null = all 2).</param>
@@ -244,6 +249,11 @@ namespace Antarium.Gameplay
                 else if (input.Primary.WasPressedThisFrame() && sim.RandomEvents.CritterAt(cellPos) >= 0)
                 {
                     sim.EnqueueCatch(cellPos);
+                    _strokeBlocked = true;
+                }
+                else if (input.Primary.WasPressedThisFrame() && !Possessing && CatchStar != null && CatchStar(cellPos))
+                {
+                    sim.EnqueueShootingStar(cellPos);
                     _strokeBlocked = true;
                 }
             }

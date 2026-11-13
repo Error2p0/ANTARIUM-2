@@ -160,8 +160,7 @@ namespace Antarium.Editor
 
             // Threats: rival ants raid the stock; mole crickets dig toward the nest.
             Enemy("rival_ant", "Rival Ant", EnemyBehavior.Thief, EnemyArt.RivalAnt, 28f, 5f, 1f, 3.2f, 6f,
-                "An ant from a rival colony on the surface. Rival raids go for your stock, not your food: each thief carries off up to 3 items " +
-                "of what you have most of. Kill it and it drops them.",
+                RivalAntText,
                 drops: chitin != null ? new[] { Amt(chitin, 1) } : null, knowledge: 2f);
             var rival = AssetDatabase.LoadAssetAtPath<EnemyDef>($"{EnemiesFolder}/rival_ant.asset");
             if (rival != null && rival.stealSeconds == 1f && rival.carryItems == 3)

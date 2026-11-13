@@ -220,7 +220,7 @@ namespace Antarium.Gameplay
                 case GeneticEffectKind.UnlockModifier: _sb.Append("Unlocks world modifier: ").Append(_content.Modifiers[target].DisplayName); break;
                 case GeneticEffectKind.MaxPrincesses: _sb.Append('+').Append(e.value).Append(" princess counted per level"); break;
                 case GeneticEffectKind.RevealRadius: _sb.Append("New colonies see ").Append(e.value).Append(" cells around the nest per level"); break;
-                case GeneticEffectKind.VeinInstinct: _sb.Append("Ore next to dug-out cells is ordered for mining automatically"); break;
+                case GeneticEffectKind.VeinInstinct: _sb.Append("Every colony knows Vein Instinct from the start: ore next to dug-out cells is ordered for mining"); break;
                 case GeneticEffectKind.UnlockBuilding: _sb.Append("Unlocks the ").Append(_content.Buildings[target].Def.DisplayName).Append(" in every colony"); break;
             }
         }

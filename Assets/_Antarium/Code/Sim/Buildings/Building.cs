@@ -18,6 +18,8 @@ namespace Antarium.Sim
         Working,
         /// <summary>Finished products have nowhere to go (output belt full or pile at the limit).</summary>
         OutputBlocked,
+        /// <summary>The player switched it off (configure panel, Milestone 11).</summary>
+        Off,
     }
 
     /// <summary>Where the front item of a belt or lift goes when there is no next transport cell.</summary>
@@ -131,7 +133,12 @@ namespace Antarium.Sim
         /// <summary>A restoration step is paid and waits for workers (the building is a blueprint meanwhile).</summary>
         public bool Restoring;
 
+        /// <summary>Switched off by the player (Milestone 11): it does no work and takes nothing in until switched on again.</summary>
+        public bool Off;
+
         public bool IsActive => Alive && State == BuildingState.Active;
+        /// <summary>Finished and not switched off.</summary>
+        public bool IsRunning => IsActive && !Off;
         /// <summary>Belts, lifts, splitters and filters.</summary>
         public bool IsTransport => Kind <= BuildingKind.Filter;
         /// <summary>Splitters and filters: hand items to several neighbours.</summary>
@@ -179,6 +186,8 @@ namespace Antarium.Sim
         public float ResonanceBoost;
         /// <summary>Irrigation bonus not paid out yet (a whole extra batch comes every 1 / bonus crafts).</summary>
         public float IrrigationCarry;
+        /// <summary>Switched off (mirrors <see cref="Building.Off"/>): it takes nothing in and does not craft.</summary>
+        public bool Off;
         ulong _choiceMask;
         ulong _fuelMask;
 
@@ -226,13 +235,13 @@ namespace Antarium.Sim
         public int Room(ushort item)
         {
             int i = InputIndex(item);
-            return i < 0 || !Takes(item) ? 0 : math.max(0, Data.InputCaps[i] - Inputs[i]);
+            return i < 0 || Off || !Takes(item) ? 0 : math.max(0, Data.InputCaps[i] - Inputs[i]);
         }
 
         public bool TryInsert(ushort item)
         {
             int i = InputIndex(item);
-            if (i < 0 || !Takes(item) || Inputs[i] >= Data.InputCaps[i]) return false;
+            if (i < 0 || Off || !Takes(item) || Inputs[i] >= Data.InputCaps[i]) return false;
             Inputs[i]++;
             return true;
         }

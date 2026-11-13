@@ -4,9 +4,10 @@ using Unity.Mathematics;
 namespace Antarium.Sim
 {
     /// <summary>
-    /// Threats of the deep endgame (10.5). <b>Rival ants</b> come in raids like termites, but in the royal chamber they steal
-    /// items from the stock (the kind the colony has most of, up to what one can carry) and carry them home; a thief that dies
-    /// drops its loot. <b>Mole crickets</b> start in soft ground some way from the nest and tunnel toward the queen, around rock
+    /// Threats of the deep endgame (10.5). <b>Rival ants</b> come in raids like termites, but they steal items instead of food:
+    /// each heads for the nearest store holding items (Milestone 11: a storage cell, a chest or the royal chamber, by path),
+    /// takes the kind that store holds most of (one kind, up to what it can carry), goes on to the next store when this one
+    /// runs dry, and carries its loot home; a thief that dies drops its loot. <b>Mole crickets</b> start in soft ground some way from the nest and tunnel toward the queen, around rock
     /// too hard for them and through soft walls; their tunnel shows through the fog as they dig. Once they break into the
     /// colony's tunnels they hunt ants like cave creatures.
     /// </summary>
@@ -16,45 +17,92 @@ namespace Antarium.Sim
 
         // ---------------------------------------------------------------- thieves
 
-        /// <summary>A thief in the royal chamber grabs one item every <see cref="EnemyDef.stealSeconds"/>; full (or nothing left), it leaves.</summary>
-        void Steal(ref Enemy e, EnemyDef def, float dt)
+        /// <summary>
+        /// A thief on a raid: at a store with something to take it steals from it; otherwise it walks down the loot field to
+        /// the nearest store holding items. With no store left to rob it leaves with what it has.
+        /// </summary>
+        void Loot(ref Enemy e, EnemyDef def, float dt, NavGrid nav)
         {
-            var inv = _sim.Colony.Inventory;
             if (e.LootCount >= def.carryItems)
             {
                 e.State = EnemyState.Leave;
                 return;
             }
-            ushort item = e.LootCount > 0 ? e.Loot : MostStocked(inv);
-            if (item == ContentDB.NoItem || inv.Items[item] <= 0)
+            int2 c = e.Cell;
+            if (_sim.Colony.IsRoyalCell(c)) RaidersInChamber = true;
+            var store = StoreAt(c);
+            if (store != null && Steal(ref e, def, dt, store)) return;
+            e.Timer = 0f;
+            var world = _sim.World;
+            ushort d = _sim.Fields.Get(FieldKind.Loot, world, c);
+            if (d == FlowFields.Unreachable)
             {
-                // Nothing (more) to take: off it goes, with whatever it has.
-                if (e.LootCount > 0 || item == ContentDB.NoItem) e.State = EnemyState.Leave;
-                else e.Loot = ContentDB.NoItem;
+                // No store left to rob (or none it can reach): off it goes, with whatever it has.
+                if (e.LootCount > 0 || !AnyLoot()) e.State = EnemyState.Leave;
+                else WanderStep(ref e, nav);
                 return;
             }
+            if (d == 0)
+            {
+                // At a store the field still lists, but it holds nothing this thief takes: wait for the field to catch up.
+                if (e.LootCount > 0) e.State = EnemyState.Leave;
+                else if (Rng.NextFloat() < 0.1f) WanderStep(ref e, nav);
+                return;
+            }
+            MoveAlong(ref e, def, FieldKind.Loot, d, nav);
+        }
+
+        /// <summary>The store a thief standing at <paramref name="c"/> can rob: the storage cell or chest there, or the royal chamber.</summary>
+        StockContainer StoreAt(int2 c)
+        {
+            var world = _sim.World;
+            var inv = _sim.Colony.Inventory;
+            var container = world.InBounds(c.x, c.y) ? inv.ContainerAt(world.Index(c.x, c.y)) : null;
+            if (container == null && _sim.Colony.IsRoyalCell(c)) container = inv.Royal;
+            return container;
+        }
+
+        /// <summary>
+        /// Grabs one item from <paramref name="store"/> every <see cref="EnemyDef.stealSeconds"/>: the kind it already carries,
+        /// else the kind the store holds most of. False if the store has nothing for it.
+        /// </summary>
+        bool Steal(ref Enemy e, EnemyDef def, float dt, StockContainer store)
+        {
+            ushort item = e.LootCount > 0 ? e.Loot : MostStocked(store);
+            if (item == ContentDB.NoItem || store.Counts[item] <= 0) return false;
             e.Timer += dt;
-            if (e.Timer < def.stealSeconds) return;
+            if (e.Timer < def.stealSeconds) return true;
             e.Timer = 0f;
-            if (!inv.Take(item, 1)) return;
+            if (!_sim.Colony.Inventory.Take(store, item)) return false;
             e.Loot = item;
             e.LootCount++;
             _sim.Events.Publish(new ItemStolenEvent(e.Cell, item));
             if (e.LootCount >= def.carryItems) e.State = EnemyState.Leave;
+            return true;
         }
 
-        /// <summary>The non-food item the stock holds most of, or <see cref="ContentDB.NoItem"/>.</summary>
-        ushort MostStocked(Inventory inv)
+        /// <summary>The non-food item <paramref name="store"/> holds most of, or <see cref="ContentDB.NoItem"/>.</summary>
+        ushort MostStocked(StockContainer store)
         {
             ushort best = ContentDB.NoItem;
             int most = 0;
-            for (int i = 0; i < inv.Items.Length; i++)
+            for (int i = 0; i < store.Counts.Length; i++)
             {
-                if (_content.Items[i].IsFood || inv.Items[i] <= most) continue;
-                most = inv.Items[i];
+                if (_content.Items[i].IsFood || store.Counts[i] <= most) continue;
+                most = store.Counts[i];
                 best = (ushort)i;
             }
             return best;
+        }
+
+        /// <summary>The store holds a non-food item a thief could take.</summary>
+        public bool HoldsLoot(StockContainer store) => MostStocked(store) != ContentDB.NoItem;
+
+        bool AnyLoot()
+        {
+            foreach (var store in _sim.Colony.Inventory.Containers)
+                if (HoldsLoot(store)) return true;
+            return false;
         }
 
         // ---------------------------------------------------------------- diggers

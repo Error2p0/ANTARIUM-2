@@ -190,6 +190,8 @@ namespace Antarium.Content
         public int[] UnlockBuildings;
         public int[] UnlockAbilities;
         public AntCaste[] UnlockCastes;
+        /// <summary>Colony features it switches on (Milestone 11).</summary>
+        public ResearchFeature[] Features;
     }
 
     public sealed class ContractData
@@ -221,6 +223,8 @@ namespace Antarium.Content
         public ushort[] Materials;
         public ushort[] RewardItems;
         public int[] RewardCounts;
+        /// <summary>Giant worm: index into <see cref="ContentDB.Enemies"/>, else -1.</summary>
+        public int Creature = -1;
     }
 
     /// <summary>
@@ -514,6 +518,7 @@ namespace Antarium.Content
                 var buildings = new List<int>();
                 var abilities = new List<int>();
                 var castes = new List<AntCaste>();
+                var features = new List<ResearchFeature>();
                 foreach (var e in def.effects)
                 {
                     switch (e.kind)
@@ -538,12 +543,16 @@ namespace Antarium.Content
                             if (!castes.Contains(e.caste)) castes.Add(e.caste);
                             if (e.caste != AntCaste.Worker) CasteStartsLocked[(int)e.caste] = true;
                             break;
+                        case ResearchEffectKind.Feature:
+                            if ((int)e.feature < ResearchFeatures.Count && !features.Contains(e.feature)) features.Add(e.feature);
+                            break;
                     }
                 }
                 data.Stats = stats.ToArray();
                 data.UnlockBuildings = buildings.ToArray();
                 data.UnlockAbilities = abilities.ToArray();
                 data.UnlockCastes = castes.ToArray();
+                data.Features = features.ToArray();
                 result[i] = data;
             }
             return result;
@@ -833,6 +842,12 @@ namespace Antarium.Content
                 if ((def.kind == RandomEventKind.Meteorite || def.kind == RandomEventKind.RichVein) && data.Materials.Length == 0)
                     throw new ArgumentException($"Event '{def.Id}' needs at least one material.");
                 Amounts(def.rewards, $"event '{def.Id}' rewards", out data.RewardItems, out data.RewardCounts);
+                if (def.kind == RandomEventKind.GiantWorm)
+                {
+                    if (def.creature == null || def.creature.behavior != EnemyBehavior.Worm)
+                        throw new ArgumentException($"Event '{def.Id}' needs a creature with the Worm behaviour.");
+                    data.Creature = GetEnemyIndex(def.creature);
+                }
                 result[i] = data;
             }
             return result;

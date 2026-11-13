@@ -131,6 +131,14 @@ namespace Antarium.Gameplay
             _detail.text = Detail(sim);
         }
 
+        /// <summary>What a research feature (Milestone 11) does, in one line.</summary>
+        public static string FeatureText(ResearchFeature feature) => feature switch
+        {
+            ResearchFeature.CursorLight => "Your pointer lights up the rock around it",
+            ResearchFeature.VeinInstinct => $"Ore next to dug-out cells is ordered for mining (switch it off with the Mine tool, {Keys.Mine})",
+            _ => feature.ToString(),
+        };
+
         string Detail(Simulation sim)
         {
             if (_hovered < 0) return "Hover over a node to see what it does. Knowledge comes from the Archive (studying finds), contracts and events.";
@@ -146,6 +154,7 @@ namespace Antarium.Gameplay
             }
             foreach (int b in data.UnlockBuildings) _sb.Append("\n  Unlocks building: ").Append(_content.Buildings[b].Def.DisplayName);
             foreach (int a in data.UnlockAbilities) _sb.Append("\n  Unlocks ability: ").Append(_content.Abilities[a].DisplayName);
+            foreach (var f in data.Features) _sb.Append("\n  ").Append(FeatureText(f));
 
             var research = sim.Research;
             if (research.Done[_hovered]) return _sb.Append("\nAlready researched.").ToString();

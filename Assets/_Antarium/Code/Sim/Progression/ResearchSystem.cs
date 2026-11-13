@@ -121,6 +121,7 @@ namespace Antarium.Sim
             foreach (int b in data.UnlockBuildings) _colony.BuildingUnlocked[b] = true;
             foreach (int a in data.UnlockAbilities) _colony.AbilityUnlocked[a] = true;
             foreach (var caste in data.UnlockCastes) _colony.UnlockCaste(caste);
+            foreach (var feature in data.Features) _colony.Features[(int)feature] = true;
             _colony.Inventory.RefreshCapacity();
         }
     }

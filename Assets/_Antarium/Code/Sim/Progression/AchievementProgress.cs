@@ -37,6 +37,7 @@ namespace Antarium.Sim
                 case AchievementKind.LoreFound: return sim.Lore.FoundCount;
                 case AchievementKind.EngineRestored: return sim.Buildings.EngineRunning ? 1 : 0;
                 case AchievementKind.RivalsRepelled: return stats.RivalsRepelled;
+                case AchievementKind.ShootingStars: return stats.StarsCaught;
                 default: return 0;
             }
         }

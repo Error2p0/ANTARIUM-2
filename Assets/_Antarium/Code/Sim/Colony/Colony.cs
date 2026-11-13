@@ -50,6 +50,10 @@ namespace Antarium.Sim
         public bool QueenDisturbed;
         /// <summary>The player told the queen to stop laying (queen panel). Royal Decree still lays.</summary>
         public bool LayingPaused;
+        /// <summary>Per <see cref="ResearchFeature"/>: switched on by research (Milestone 11).</summary>
+        public readonly bool[] Features = new bool[ResearchFeatures.Count];
+        /// <summary>The player lets Vein Instinct order ore for mining (Mine tool row; on by default).</summary>
+        public bool AutoMarkOres = true;
         /// <summary>The queen is eating honeydew: she lays <see cref="FedLayingBonus"/> faster and needs no food of her own.</summary>
         public bool QueenFed;
         public float FedLayingBonus = 0.5f;
@@ -61,6 +65,8 @@ namespace Antarium.Sim
         /// <summary>World indices of cells designated for mining / painted as storage.</summary>
         public readonly HashSet<int> Designated = new();
         public readonly HashSet<int> StorageCells = new();
+
+        public bool Has(ResearchFeature feature) => Features[(int)feature];
 
         public Colony(ContentDB content, ColonyConfig config, CasteConfig castes = null)
         {

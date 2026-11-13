@@ -425,3 +425,41 @@ namespace Antarium.Sim
         public PrincessRaisedEvent(int2 cell, int total) { Cell = cell; Total = total; }
     }
 }
+
+namespace Antarium.Sim
+{
+    // ---------------------------------------------------------------- Milestone 11 batch 3
+
+    /// <summary>The player switched a building on or off (configure panel).</summary>
+    public readonly struct BuildingSwitchedEvent
+    {
+        public readonly int Building;
+        public readonly int2 Origin;
+        public readonly bool On;
+        public BuildingSwitchedEvent(int building, int2 origin, bool on) { Building = building; Origin = origin; On = on; }
+    }
+
+    /// <summary>The player clicked a shooting star (Pos in cell space).</summary>
+    public readonly struct ShootingStarCaughtEvent
+    {
+        public readonly float2 Pos;
+        public readonly int Total;
+        public ShootingStarCaughtEvent(float2 pos, int total) { Pos = pos; Total = total; }
+    }
+
+    public enum WormPhase : byte
+    {
+        /// <summary>It dug out a cell (Cell).</summary>
+        Dug,
+        /// <summary>Its time was up and it burrowed away (the event is lost).</summary>
+        Left,
+    }
+
+    /// <summary>The giant earthworm of the random event (Milestone 11).</summary>
+    public readonly struct WormEvent
+    {
+        public readonly WormPhase Phase;
+        public readonly int2 Cell;
+        public WormEvent(WormPhase phase, int2 cell) { Phase = phase; Cell = cell; }
+    }
+}

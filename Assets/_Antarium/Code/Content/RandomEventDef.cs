@@ -15,6 +15,11 @@ namespace Antarium.Content
         TrappedAnts,
         /// <summary>A golden aphid sits in an Aphid Ranch for <see cref="RandomEventDef.duration"/>; click it for the reward. Needs a ranch.</summary>
         GoldenAphid,
+        /// <summary>
+        /// A giant worm (<see cref="RandomEventDef.creature"/>) burrows through soft ground near the tunnels for
+        /// <see cref="RandomEventDef.duration"/>; killing it wins the reward (Milestone 11).
+        /// </summary>
+        GiantWorm,
     }
 
     /// <summary>A random event that rewards attention. The event system picks one every few minutes by weight.</summary>
@@ -37,7 +42,10 @@ namespace Antarium.Content
         [Tooltip("Meteorite: the lump. Rich vein: ore per layer, top to bottom (the last repeats deeper down).")]
         public List<TerrainMaterialDef> materials = new();
 
-        [Header("Rewards (beetle, golden aphid)")]
+        [Tooltip("Giant worm: the creature that burrows (an enemy with the Worm behaviour).")]
+        public EnemyDef creature;
+
+        [Header("Rewards (beetle, golden aphid, giant worm)")]
         [Min(0f)] public float rewardKnowledge;
         [Min(0f)] public float rewardFood;
         public List<ItemAmount> rewards = new();

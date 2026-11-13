@@ -30,6 +30,8 @@ namespace Antarium.Sim
         public long PrincessesRaised;
         /// <summary>Raids of rival ants beaten without losing an item (10.5).</summary>
         public int RivalsRepelled;
+        /// <summary>Shooting stars the player clicked (Milestone 11; a hidden achievement).</summary>
+        public int StarsCaught;
 
         public ColonyStats(int items, int buildings)
         {
