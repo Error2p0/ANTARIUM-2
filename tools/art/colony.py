@@ -302,3 +302,15 @@ def berries():
     """A bunch of berries with a leaf."""
     key = keys("4=red:4 3=red:3 2=red:2 g=grass:4 G=grass:3")
     return sprite(["..gG.", ".4343", "43232", "32.2."], key)
+
+
+def apple():
+    """An apple lying on the ground (batch 6): red, lit top left, a stem and a leaf."""
+    key = keys("4=red:4 3=red:3 2=red:2 1=red:1 W=#f8a080 s=wood:2 g=grass:3")
+    return sprite(["..sg.", ".3322", "3W332", "33321", ".211."], key)
+
+
+def golden_apple():
+    """The Elder Tree's golden apple (batch 6): drawn unlit, it glows."""
+    key = keys("4=gold:4 3=gold:3 2=gold:2 W=gold:5 s=wood:3 g=grass:4")
+    return sprite(["..sg.", ".4433", "4W443", "44432", ".322."], key)

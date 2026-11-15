@@ -10,6 +10,10 @@ namespace Antarium.Content
         GlowMushroom,
         Toadstool,
         Berries,
+        /// <summary>An apple (batch 6).</summary>
+        Apple,
+        /// <summary>The Elder Tree's golden apple: drawn at full brightness (batch 6).</summary>
+        GoldenApple,
     }
 
     /// <summary>A haulable resource: ore chunks, food, collectibles.</summary>

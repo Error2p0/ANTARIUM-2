@@ -253,12 +253,15 @@ namespace Antarium.Gameplay
                 if (item.pileArt == PileArt.Heap || sim.Colony.Piles.CountAt(cell, (ushort)i) == 0) continue;
                 Icon = "item_" + item.Id;
                 _sb.Append(item.DisplayName).Append("  -  ").Append(item.foodValue.ToString("0.#")).Append(" food. ");
-                if (spot >= 0)
+                if (spot >= 0 && i == sim.Content.ElderFruit)
+                    _sb.Append("It grows on the Elder Tree: workers climb up to pick it, and it grows back a few minutes later. It glows while it hangs there.");
+                else if (spot >= 0)
                 {
                     _sb.Append("Workers pick it up once your tunnels reach this cave; it grows back a few minutes later.");
                     if (math.cmax(sim.Content.GrowthLight[i]) > 0f) _sb.Append(" It lights up the cave while it stands.");
                 }
                 else if (item.pileArt == PileArt.Berries) _sb.Append("Berries fall under berry bushes by day; workers bring them home.");
+                else if (item.pileArt == PileArt.Apple) _sb.Append("Apples fall under apple trees by day; workers bring them home.");
                 else if (item.pileArt == PileArt.Toadstool) _sb.Append("Toadstools pop up on the surface near the nest, most often during and after rain.");
                 else _sb.Append("Workers bring it home.");
                 return;

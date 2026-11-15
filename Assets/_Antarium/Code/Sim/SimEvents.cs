@@ -47,6 +47,13 @@ namespace Antarium.Sim
         public ItemDroppedEvent(int2 cell, ushort item) { Cell = cell; Item = item; }
     }
 
+    /// <summary>The colony broke into the Elder Tree's cavern for the first time (Milestone 11 batch 6).</summary>
+    public readonly struct ElderTreeFoundEvent
+    {
+        public readonly int2 Cell;
+        public ElderTreeFoundEvent(int2 cell) { Cell = cell; }
+    }
+
     /// <summary>A worker delivered an item to the royal chamber or a storage zone.</summary>
     public readonly struct ItemDeliveredEvent
     {

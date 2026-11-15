@@ -1,5 +1,6 @@
 using System;
 using Antarium.Content;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Antarium.Sim
@@ -22,17 +23,22 @@ namespace Antarium.Sim
         internal void PlaceCaveGrowths()
         {
             Wild.Placed = true;
+            PlaceElderFruit();
             var rules = Content.CaveGrowths;
             var gen = Content.WorldGen;
             if (rules.Length == 0 || gen.maxCaveGrowths <= 0) return;
             float scale = math.max(0.001f, gen.growthPatchScale);
             var offset = new float2(math.hash(new uint2(Seed, 0x6A0Bu)) % 10000u, math.hash(new uint2(Seed, 0x6A0Cu)) % 10000u);
             int edge = gen.bedrockThickness + 1;
+            ushort wood = gen.elderWood != null ? Content.GetMaterialIndex(gen.elderWood) : ContentDB.AirIndex;
+            ushort leaves = gen.elderLeaves != null ? Content.GetMaterialIndex(gen.elderLeaves) : ContentDB.AirIndex;
             for (int x = edge; x < World.Width - edge; x++)
             for (int y = World.SurfaceY[x] - gen.caveMinDepth; y > edge; y--)
             {
                 var cell = World[x, y];
                 if (!cell.IsOpen || (cell.Flags & CellFlags.Explored) != 0 || World[x, y - 1].IsOpen) continue;
+                ushort floor = World[x, y - 1].Material;
+                if (floor != ContentDB.AirIndex && (floor == wood || floor == leaves) || Wild.IndexAt(new int2(x, y)) >= 0) continue; // the Elder Tree's own
                 if (World.Fluid[World.Index(x, y)].Level > 0) continue;
                 if (noise.snoise(new float2(x, y) * scale + offset) <= 0f) continue; // outside a patch
                 int biome = BiomeAtDepth(World.SurfaceY[x] - y);
@@ -48,6 +54,52 @@ namespace Antarium.Sim
                     if (Wild.Growths.Count >= gen.maxCaveGrowths) return;
                     break;
                 }
+            }
+        }
+
+        /// <summary>The Elder Tree's fruit (batch 6): growth spots on top of its canopy and branches, grown from the start.</summary>
+        void PlaceElderFruit()
+        {
+            if (!Surface.HasElderTree || Content.ElderFruit == ContentDB.NoItem) return;
+            foreach (var c in ElderTree.FruitSpots(World, Content, Surface.ElderTree, Seed))
+            {
+                if (Wild.IndexAt(c) >= 0) continue;
+                Wild.Add(new Growth { Cell = c, Item = Content.ElderFruit, Grown = true });
+                Colony.Piles.Add(c, Content.ElderFruit, 1);
+                Glow(c, Content.ElderFruit, true);
+            }
+        }
+
+        /// <summary>The first time a breach reveals part of the Elder Tree's cavern, the colony has found it (announced once, saved).</summary>
+        void CheckElderFound(NativeList<int2> discovered)
+        {
+            if (Wild.ElderFound || !Surface.HasElderTree) return;
+            var site = Surface.ElderTree;
+            for (int i = 0; i < discovered.Length; i++)
+            {
+                if (!site.Contains(discovered[i])) continue;
+                Wild.ElderFound = true;
+                RevealElderCavern(site);
+                Events.Publish(new ElderTreeFoundEvent(discovered[i]));
+                return;
+            }
+        }
+
+        /// <summary>The canopy can wall off parts of the cavern: finding the tree reveals all of it at once.</summary>
+        void RevealElderCavern(in ElderSite site)
+        {
+            var starts = new NativeList<int2>(1024, Allocator.TempJob);
+            try
+            {
+                for (int x = site.Center.x - site.Half.x; x <= site.Center.x + site.Half.x; x++)
+                for (int y = site.Center.y - site.Half.y; y <= site.Center.y + site.Half.y; y++)
+                    if (Reveal.IsUnexploredOpen(World, x, y)) starts.Add(new int2(x, y));
+                if (starts.Length > 0) Reveal.Flood(World, starts.AsArray(), Config.dig.revealRadius, Config.dig.caveRevealLimit);
+                ElderTree.RevealTree(World, Content, site);
+            }
+            finally
+            {
+                starts.Dispose();
             }
         }
 
@@ -71,6 +123,7 @@ namespace Antarium.Sim
             var c = Config.wild;
             w.SinceRain = Surface.Weather == WeatherKind.Rain ? 0f : math.min(1e6f, w.SinceRain + dt);
             UpdateBerries(dt);
+            UpdateApples(dt);
             UpdateToadstools(dt);
 
             w.CheckTimer += dt;
@@ -167,6 +220,32 @@ namespace Antarium.Sim
                 int2 top = new int2(x, math.min(World.Height - 1, World.SurfaceY[x] + 3));
                 if (!World[top.x, top.y].IsOpen || !ReachableFromNest(World.FloorBelow(top))) continue;
                 DropItem(top, Content.BushForage[s.Rng.NextInt(Content.BushForage.Length)], 1);
+                return;
+            }
+        }
+
+        /// <summary>By day (and on a starfall night) apples fall under the apple trees near the nest (batch 6), up to <c>maxSurfaceApples</c>.</summary>
+        void UpdateApples(float dt)
+        {
+            var s = Surface;
+            var c = Config.wild;
+            if (Content.TreeForage.Length == 0 || s.Plants.Count == 0 || !s.ForageGrows) return;
+            float rate = Colony.Mods.Mult(StatKind.ForageRate) * WeatherForage;
+            if (rate <= 0f) return;
+            Wild.AppleTimer += dt;
+            if (Wild.AppleTimer < c.appleInterval / rate) return;
+            Wild.AppleTimer = 0f;
+            if (ForageOnSurface(Content.TreeForage) >= c.maxSurfaceApples) return;
+
+            int range = Config.colony.forageRange;
+            for (int attempt = 0; attempt < 12; attempt++)
+            {
+                var plant = s.Plants[s.Rng.NextInt(s.Plants.Count)];
+                if (plant.Kind != SurfacePlants.AppleTree || math.abs(plant.X - Colony.QueenCell.x) > range || !SurfacePlants.IsAlive(World, plant)) continue;
+                int x = math.clamp(plant.X + s.Rng.NextInt(-c.appleSpread, c.appleSpread + 1), 1, World.Width - 2);
+                int2 top = new int2(x, math.min(World.Height - 1, World.SurfaceY[x] + 3));
+                if (!World[top.x, top.y].IsOpen || !ReachableFromNest(World.FloorBelow(top))) continue;
+                DropItem(top, Content.TreeForage[s.Rng.NextInt(Content.TreeForage.Length)], 1);
                 return;
             }
         }

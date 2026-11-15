@@ -94,7 +94,7 @@ namespace Antarium.Sim
             snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
             snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim))));
-            if (sim.Wild.Placed) snap.Sections.Add(new("WILD", Section(w => WriteWild(w, sim)))); // else the next load places them
+            if (sim.Wild.Placed) snap.Sections.Add(new("WILD", Section(w => WriteWild(w, sim), 2))); // else the next load places them
             return snap;
         }
 
@@ -644,7 +644,10 @@ namespace Antarium.Sim
             sim.Colony.Stats.StarsCaught = math.max(0, r.ReadInt32());
         }
 
-        /// <summary>WILD (Milestone 11): the berry and toadstool timers and every cave growth spot (cell, item, grown, regrow time).</summary>
+        /// <summary>
+        /// WILD (Milestone 11): the berry and toadstool timers and every cave growth spot (cell, item, grown, regrow time);
+        /// v2 (batch 6): the apple timer and whether the Elder Tree was found.
+        /// </summary>
         static void WriteWild(BinaryWriter w, Simulation sim)
         {
             var wild = sim.Wild;
@@ -660,9 +663,11 @@ namespace Antarium.Sim
                 w.Write(g.Grown);
                 w.Write(g.Timer);
             }
+            w.Write(wild.AppleTimer);
+            w.Write(wild.ElderFound);
         }
 
-        static void ReadWild(BinaryReader r, Simulation sim, Remap map)
+        static void ReadWild(BinaryReader r, Simulation sim, Remap map, byte version)
         {
             var wild = sim.Wild;
             wild.Clear();
@@ -681,6 +686,9 @@ namespace Antarium.Sim
                 if (item == ContentDB.NoItem || !sim.World.InBounds(cell.x, cell.y)) continue; // an item this build doesn't have
                 wild.Add(new Growth { Cell = cell, Item = item, Grown = grown, Timer = timer });
             }
+            if (version < 2) return;
+            wild.AppleTimer = r.ReadSingle();
+            wild.ElderFound = r.ReadBoolean();
         }
 
         /// <summary>RUIN: what the colony studied (by item), the lore fragments it found (by id), rival raids beaten.</summary>
@@ -759,7 +767,7 @@ namespace Antarium.Sim
                 Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
                 Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
                 Read(sections, "TWKS", (r, _) => ReadTweaks(r, sim));
-                Read(sections, "WILD", (r, _) => ReadWild(r, sim, map));
+                Read(sections, "WILD", (r, v) => ReadWild(r, sim, map, v));
                 Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
                 Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));
                 PlaceNurseryEggs(sim, nurseryEggs);

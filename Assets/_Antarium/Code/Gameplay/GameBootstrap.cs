@@ -813,6 +813,7 @@ namespace Antarium.Gameplay
                     return;
                 }
             if (events.Read<LoreFoundEvent>().Length > 0) _audio.PlayMusicCue(sounds.music.loreCue);
+            else if (events.Read<ElderTreeFoundEvent>().Length > 0) _audio.PlayMusicCue(sounds.music.discoveryCue); // the Elder Tree (batch 6)
         }
 
         void DebugKeys()

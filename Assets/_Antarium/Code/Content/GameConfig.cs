@@ -167,6 +167,14 @@ namespace Antarium.Content
         [Tooltip("No more berries fall while this many lie on the surface.")]
         [Min(0)] public int maxSurfaceBerries = 8;
 
+        [Header("Apples (batch 6)")]
+        [Tooltip("Seconds between apples falling from an apple tree near the nest (by day and on starfall nights; forage rate and weather apply).")]
+        [Min(0.1f)] public float appleInterval = 20f;
+        [Tooltip("No more apples fall while this many lie on the surface.")]
+        [Min(0)] public int maxSurfaceApples = 6;
+        [Tooltip("Apples land up to this many columns either side of the trunk (under the crown).")]
+        [Min(0)] public int appleSpread = 3;
+
         [Header("Toadstools (surface mushrooms)")]
         [Tooltip("Seconds between toadstools popping up on the surface near the nest (day and night; forage rate applies).")]
         [Min(1f)] public float toadstoolInterval = 45f;

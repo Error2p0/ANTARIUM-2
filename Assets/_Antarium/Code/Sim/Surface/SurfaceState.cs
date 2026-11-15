@@ -79,6 +79,11 @@ namespace Antarium.Sim
         public readonly List<SurfacePlant> Plants = new();
         /// <summary>Lakes and rivers (from the seed; see <see cref="SurfaceWater"/>; Milestone 11). Worlds made before have none, though the list is filled.</summary>
         public readonly List<WaterBody> Water = new();
+        /// <summary>Rare structures on the ground (from the seed; see <see cref="SurfaceFeatures"/>; Milestone 11). Only those the world has.</summary>
+        public readonly List<SurfaceFeature> Features = new();
+        /// <summary>The Elder Tree's cavern (Milestone 11), if this world has one (<see cref="HasElderTree"/>).</summary>
+        public ElderSite ElderTree;
+        public bool HasElderTree;
 
         /// <summary>Daylight at time of day <paramref name="t"/>: 1 from sunrise to sunset, 0 at night, smooth in between.</summary>
         public static float DaylightAt(float t, SurfaceConfig config)

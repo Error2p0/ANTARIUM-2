@@ -71,7 +71,10 @@ namespace Antarium.Presentation
         public const int MushroomRect = WormBodyRect + 2, GlowMushroomRect = MushroomRect + 1, ToadstoolRect = MushroomRect + 2,
             BerriesRect = MushroomRect + 3;
         public const int MushroomSize = 7, BerriesWidth = 5, BerriesHeight = 4;
-        const int RectCount = BerriesRect + 1;
+        /// <summary>An apple and the Elder Tree's golden apple (batch 6), <see cref="AppleSize"/> square, lying on the bottom row.</summary>
+        public const int AppleRect = BerriesRect + 1, GoldenAppleRect = AppleRect + 1;
+        public const int AppleSize = 5;
+        const int RectCount = GoldenAppleRect + 1;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -145,6 +148,7 @@ namespace Antarium.Presentation
         static readonly string[] GlowMushroom = { "...w...", "..cCc..", ".cCwCc.", "cCCCCCc", ".ddsdd.", "...s.cc", "..sss.s" };
         static readonly string[] Toadstool = { "..RRR..", ".RwRRR.", "RRRRwRR", "rrRRRrr", ".ddddd.", "..sSs..", "..sSs.." };
         static readonly string[] Berries = { ".gg..", "bBkbB", "bkbBk", ".kbk." };
+        static readonly string[] Apple = { "..sg.", ".RRrr", "RWRRr", "RRRrk", ".rkk." };
         static readonly string[] BeetleBody = { "...YYYY...", "..YOOOOOB.", ".OOOOOOOBB", ".oOOOOOOBB", "..oooooo.." };
         static readonly string[] BeetleLegs = { ".l.l..l.l.", "..l.ll.l.." };
 
@@ -350,6 +354,14 @@ namespace Antarium.Presentation
             {
                 ['b'] = Hex(0xdc4430), ['B'] = Hex(0xf8785a), ['k'] = Hex(0xa82420), ['g'] = Hex(0x56a038),
             });
+            AddFrames(pixels, new[] { Apple }, 30, 120, AppleRect, new Dictionary<char, Color32>
+            {
+                ['R'] = Hex(0xdc4430), ['W'] = Hex(0xf8a080), ['r'] = Hex(0xa82420), ['k'] = Hex(0x6e1618), ['s'] = Hex(0x563820), ['g'] = Hex(0x56a038),
+            });
+            AddFrames(pixels, new[] { Apple }, 36, 120, GoldenAppleRect, new Dictionary<char, Color32>
+            {
+                ['R'] = Hex(0xffd45a), ['W'] = Hex(0xfff6c8), ['r'] = Hex(0xeaa82e), ['k'] = Hex(0xc07a1c), ['s'] = Hex(0x76502e), ['g'] = Hex(0x84c84c),
+            });
             PaintCastes(pixels);
             PaintHalo(pixels, 112, 98);
             Rects[HaloRect] = Rect(112, 98, HaloSize, HaloSize);
@@ -406,6 +418,8 @@ namespace Antarium.Presentation
             slots.Add(ArtSlot.Strip("Colony/glow_mushroom", GlowMushroomRect));
             slots.Add(ArtSlot.Strip("Colony/toadstool", ToadstoolRect));
             slots.Add(ArtSlot.Strip("Colony/berries", BerriesRect));
+            slots.Add(ArtSlot.Strip("Colony/apple", AppleRect));
+            slots.Add(ArtSlot.Strip("Colony/golden_apple", GoldenAppleRect));
             return slots.ToArray();
         }
 

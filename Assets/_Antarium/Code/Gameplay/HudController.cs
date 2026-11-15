@@ -884,6 +884,8 @@ namespace Antarium.Gameplay
                 ShowToast(e.Total >= sim.Colony.PrincessCap
                     ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen ({Keys.Flight})."
                     : $"A princess is ready ({e.Total}/{sim.Colony.PrincessCap}). Each one raises the Genetic Memory of a Nuptial Flight ({Keys.Flight}).");
+            if (events.Read<ElderTreeFoundEvent>().Length > 0)
+                ShowToast("Your diggers broke into a vast cavern: an ancient tree grows down here. Its golden apples glow in the dark and grow back once picked.");
             foreach (var e in events.Read<LoreFoundEvent>())
             {
                 Codex.Select(e.Lore);

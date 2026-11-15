@@ -18,7 +18,7 @@ namespace Antarium.Presentation
     /// </summary>
     public sealed class SurfaceView : IDisposable
     {
-        const int AtlasWidth = 96, AtlasHeight = 64;
+        const int AtlasWidth = 256, AtlasHeight = 256;
         const float Ppu = WorldConstants.PixelsPerUnit;
         const int RainDrops = 400;
         const int MaxStreaks = 48;
@@ -68,6 +68,8 @@ namespace Antarium.Presentation
         readonly NativeArray<float4> _rects;
         readonly int[] _plantRect = new int[4];
         readonly int2[] _plantSize = new int2[4];
+        /// <summary>Trees (batch 6): apple tree, oak, pine; two frames each.</summary>
+        readonly int[] _treeRect = new int[3];
         readonly int _birdRect, _diveRect, _aphidRect, _shadowRect, _dropRect, _pixelRect;
         readonly int2 _birdSize, _diveSize;
         readonly Color32 _rainColor;
@@ -118,6 +120,7 @@ namespace Antarium.Presentation
         {
             ("Surface/plant_fern", 2), ("Surface/plant_bush", 2), ("Surface/plant_flower", 2), ("Surface/plant_berry_bush", 2), ("Surface/bird", 2),
             ("Surface/bird_dive", 1), ("Surface/aphid", 2), ("Surface/bird_shadow", 1),
+            ("Surface/tree_apple", 2), ("Surface/tree_oak", 2), ("Surface/tree_pine", 2),
         };
 
         public SurfaceView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
@@ -188,6 +191,17 @@ namespace Antarium.Presentation
             px[(AtlasHeight - 1) * AtlasWidth + AtlasWidth - 1] = White;
             rects.Add(Rect(AtlasWidth - 1, AtlasHeight - 1, 1, 1));
 
+            // Trees (batch 6): the apple tree and the oak side by side above the small sprites, the pine above them.
+            int2[] treeAt = { new(0, 64), new(98, 64), new(0, 130) };
+            for (int k = 0; k < 3; k++)
+            {
+                _treeRect[k] = rects.Count;
+                slots.Add(ArtSlot.Strip("Surface/" + TreeArt.Names[k], rects.Count, 2));
+                var size = TreeArt.Sizes[k];
+                TreeArt.Paint(px, AtlasWidth, treeAt[k].x, treeAt[k].y, k);
+                for (int f = 0; f < 2; f++) rects.Add(Rect(treeAt[k].x + f * (size.x + 1), treeAt[k].y, size.x, size.y));
+            }
+
             _rects = new NativeArray<float4>(rects.ToArray(), Allocator.Persistent);
             ArtOverrides.Apply(art, slots.ToArray(), px, AtlasWidth, AtlasHeight, _rects);
             _texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
@@ -227,9 +241,23 @@ namespace Antarium.Presentation
             _back.EnsureCapacity(plants.Count + buildings.Length * 4 + 1 + sky);
             var v = _back.Vertices;
             int quad = 0;
+            // Trees first (behind the plants), mirrored by column; the foot sinks a pixel into the ground.
             foreach (var p in plants)
             {
-                if (p.X < min.x || p.X > max.x || !SurfacePlants.IsAlive(world, p)) continue;
+                if (!p.IsTree) continue;
+                int kind = math.min(p.Kind - SurfacePlants.AppleTree, 2);
+                var size = TreeArt.Sizes[kind];
+                if (p.X + size.x / 16f < min.x || p.X - size.x / 16f > max.x || !SurfacePlants.IsAlive(world, p)) continue;
+                int ground = world.SurfaceY[p.X] + 1;
+                if (ground > max.y + 2 || ground + size.y / 8 < min.y) continue;
+                int frame = math.sin(time * 0.9f + p.Variant * 0.37f + p.X * 0.13f) > 0.55f ? 1 : 0;
+                float2 at = new float2(p.X + 0.5f, ground) * WorldConstants.CellSize;
+                float2 centre = Snap(at + new float2(0f, (size.y * 0.5f - 1f) / Ppu));
+                SpriteQuads.WriteQuad(v, quad++, centre, size, new int2(0, 1), (p.Variant & 1) == 0 ? 1 : -1, _rects[_treeRect[kind] + frame], dusk, at);
+            }
+            foreach (var p in plants)
+            {
+                if (p.IsTree || p.X < min.x || p.X > max.x || !SurfacePlants.IsAlive(world, p)) continue;
                 int ground = world.SurfaceY[p.X] + 1;
                 if (ground < min.y || ground > max.y + 4) continue;
                 int kind = math.min(p.Kind, Plants.Length - 1);

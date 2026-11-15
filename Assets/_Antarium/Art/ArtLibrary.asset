@@ -95,6 +95,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 25dc33cf78f11b646bb4144d3627e300, type: 3}
   - name: Colony/ant_worker
     texture: {fileID: 2800000, guid: 77c0423eaa263a74faf99b90043274e2, type: 3}
+  - name: Colony/apple
+    texture: {fileID: 2800000, guid: 5ceb35f3901e0024d80a935f8672afb0, type: 3}
   - name: Colony/berries
     texture: {fileID: 2800000, guid: dfa6436f560c3a740bf4c4eaac2b0348, type: 3}
   - name: Colony/carry
@@ -105,6 +107,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 6234a6fdbefa15f4ca00661d1bcaff6b, type: 3}
   - name: Colony/golden_aphid
     texture: {fileID: 2800000, guid: e3bd71b680843ec4dbb06a93465f1219, type: 3}
+  - name: Colony/golden_apple
+    texture: {fileID: 2800000, guid: c9170be79fb7eec428aeb2a5c026e3e2, type: 3}
   - name: Colony/golden_beetle
     texture: {fileID: 2800000, guid: 130817aaf16c561478d54ce564d335af, type: 3}
   - name: Colony/mushroom
@@ -151,6 +155,12 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: da1a641a1c201fd4fb4e2ee2dd0f3ccc, type: 3}
   - name: Surface/plant_flower
     texture: {fileID: 2800000, guid: de2f648b571644a4d80036235d1ec5e5, type: 3}
+  - name: Surface/tree_apple
+    texture: {fileID: 2800000, guid: 208fb83c98fa1d349a248f22ed822635, type: 3}
+  - name: Surface/tree_oak
+    texture: {fileID: 2800000, guid: 16f47b5acfcbe814e85155c73f85dedc, type: 3}
+  - name: Surface/tree_pine
+    texture: {fileID: 2800000, guid: eb0211f9f119b984cbf887e1301d307e, type: 3}
   - name: Terrain/amber
     texture: {fileID: 2800000, guid: fc4be21531c25c545b5f650a1a49e261, type: 3}
   - name: Terrain/amethyst
@@ -167,8 +177,14 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 6773ff54015f0764a86e346f14898b40, type: 3}
   - name: Terrain/copper_ore
     texture: {fileID: 2800000, guid: 8ff30c567c8e7644e925c38dddfd7820, type: 3}
+  - name: Terrain/deadwood
+    texture: {fileID: 2800000, guid: 16ee334aeb404594e8857abac185918d, type: 3}
   - name: Terrain/dirt
     texture: {fileID: 2800000, guid: 2ca0b8133b696be439453a1e7b32c49a, type: 3}
+  - name: Terrain/elder_leaves
+    texture: {fileID: 2800000, guid: ba6c002f297f9744f859ffb04347e4ce, type: 3}
+  - name: Terrain/elderwood
+    texture: {fileID: 2800000, guid: c21c835bf8a47ca459925cd78e0ac802, type: 3}
   - name: Terrain/ember_stone
     texture: {fileID: 2800000, guid: c956bd60c0037ce48bef109063b67cd3, type: 3}
   - name: Terrain/fossil
@@ -211,6 +227,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 8ac42b04d3326204b8873a388dcefe5e, type: 3}
   - name: Terrain/tablet
     texture: {fileID: 2800000, guid: c7f227d9a1d6b8b468f60627693cb85a, type: 3}
+  - name: Terrain/tree_root
+    texture: {fileID: 2800000, guid: 242372ada0c8cd54badc7e953100168f, type: 3}
   - name: UI/Achievements/ACH_ANCIENT_ENGINE
     texture: {fileID: 2800000, guid: dd7457472e0ee404391945a8a667f8b7, type: 3}
   - name: UI/Achievements/ACH_ANCIENT_ENGINE_locked
@@ -473,6 +491,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 3365556d0b0ca3647ad274fe29c2dad9, type: 3}
   - name: UI/Icons/item_amber
     texture: {fileID: 2800000, guid: 3c56e15d9ac78f14cafe267a8c3adf52, type: 3}
+  - name: UI/Icons/item_apple
+    texture: {fileID: 2800000, guid: aa06506fbe69ab54995a83ac57103c4e, type: 3}
   - name: UI/Icons/item_berry
     texture: {fileID: 2800000, guid: 5038059363089764b9801e1c391d328b, type: 3}
   - name: UI/Icons/item_chitin
@@ -495,6 +515,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 49893d147ecfd954f8fd1689ad0661da, type: 3}
   - name: UI/Icons/item_glow_mushroom
     texture: {fileID: 2800000, guid: 161d7b26b3241e54fa9d2e5731dd0f24, type: 3}
+  - name: UI/Icons/item_golden_apple
+    texture: {fileID: 2800000, guid: 78a5e0ef6f74eaa4ab02e0b7e67e4188, type: 3}
   - name: UI/Icons/item_grub
     texture: {fileID: 2800000, guid: 6025fae83ea58794e93143e1adb61a8b, type: 3}
   - name: UI/Icons/item_honeydew

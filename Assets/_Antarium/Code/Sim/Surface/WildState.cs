@@ -17,7 +17,7 @@ namespace Antarium.Sim
         public float Timer;
     }
 
-    /// <summary>Wild food (Milestone 11): the cave growth spots and the timers of berries and toadstools. Saved (<c>WILD</c>).</summary>
+    /// <summary>Wild food (Milestone 11): the cave growth spots (mushrooms, the Elder Tree's fruit) and the timers of berries, toadstools and apples. Saved (<c>WILD</c>).</summary>
     public sealed class WildState
     {
         public readonly List<Growth> Growths = new();
@@ -27,6 +27,10 @@ namespace Antarium.Sim
         public bool Placed;
         public float BerryTimer;
         public float ToadstoolTimer;
+        /// <summary>Seconds toward the next apple falling from an apple tree (batch 6).</summary>
+        public float AppleTimer;
+        /// <summary>The colony has broken into the Elder Tree's cavern (batch 6; announced once).</summary>
+        public bool ElderFound;
         /// <summary>Seconds since the last rain ended (toadstools come faster for a while after).</summary>
         public float SinceRain = 1e6f;
         public float CheckTimer;

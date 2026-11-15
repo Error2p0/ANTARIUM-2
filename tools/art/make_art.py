@@ -43,6 +43,8 @@ PIECES = {
     "glow_mushroom": ("Colony/glow_mushroom.png", colony.glow_mushroom),
     "toadstool": ("Colony/toadstool.png", colony.toadstool),
     "berries": ("Colony/berries.png", colony.berries),
+    "apple": ("Colony/apple.png", colony.apple),
+    "golden_apple": ("Colony/golden_apple.png", colony.golden_apple),
     "skin_frame": ("UI/Skin/frame.png", ui.frame),
     "skin_button": ("UI/Skin/button.png", ui.button),
     "skin_button_down": ("UI/Skin/button_down.png", ui.button_down),

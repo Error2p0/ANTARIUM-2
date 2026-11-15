@@ -756,6 +756,90 @@ def ash():
     return img
 
 
+# ---------------------------------------------------------------- trees (Milestone 11 batch 6)
+
+def grain_tone(rng, strands, vertical=True, seam_share=0.5, wobble=7):
+    """Wood grain as tones 0..4: strands running down (or across), dark seams between them, drifting a little."""
+    tone = np.zeros((SIZE, SIZE), int)
+    edges = sorted(scatter_1d(rng, strands, 3))
+    drift = (value_noise(rng, 4)[:, 0] - 0.5) * wobble
+    for a in range(SIZE):
+        shift = int(round(drift[a]))
+        for i, e in enumerate(edges):
+            nxt = edges[(i + 1) % len(edges)]
+            width = (nxt - e) % SIZE or SIZE
+            base = 2 if i % 3 else 1
+            for d in range(width):
+                b = (e + d + shift) % SIZE
+                t = 0 if d == 0 and rng.random() < seam_share else base + (1 if d == 1 else 0) - (1 if d == width - 1 and width > 2 else 0)
+                if vertical:
+                    tone[a, b] = t
+                else:
+                    tone[b, a] = t
+    return tone
+
+
+def tree_root():
+    """Big tree root: thick dark strands with deep seams, bark scales and round knots."""
+    rng = rng_for("tree_root")
+    tone = grain_tone(rng, 6, seam_share=0.8, wobble=9)
+    tone = speckle(rng, tone, 0.03, 0.04)
+    W = RAMPS["wood"]
+    img = np.array([W[0], mix(W[1], W[2], 0.3), mix(W[2], W[3], 0.3), mix(W[3], W[4], 0.4), W[4]], np.uint8)[np.clip(tone, 0, 4)]
+    key = {"h": W[5], "m": W[3], "d": W[1], "k": W[0]}
+    knots = [["..hh..", ".hmmd.", "hmkkmd", "hmkkmd", ".dmmd.", "..dd.."], [".hh.", "hkkd", "hkkd", ".dd."], ["hd", "dk"]]
+    for (x, y), rows in zip(scatter(rng, 3, 16), knots):
+        stamp(img, int(x), int(y), rows, key)
+    return img
+
+
+def elderwood():
+    """Elderwood: ancient pale bark in deep twisting furrows, silvery ridges, a few hollows."""
+    rng = rng_for("elderwood")
+    tone = grain_tone(rng, 7, seam_share=0.7, wobble=11)
+    tone = np.where((value_noise(rng, 6) > 0.66) & (tone >= 2), tone + 1, tone)
+    tone = speckle(rng, tone, 0.03, 0.03)
+    W, S = RAMPS["wood"], RAMPS["stone"]
+    img = np.array([mix(W[0], S[0], 0.3), mix(W[2], S[2], 0.45), mix(W[3], S[3], 0.45), mix(W[4], S[5], 0.45), mix(W[5], S[6], 0.5)], np.uint8)[np.clip(tone, 0, 4)]
+    key = {"h": mix(W[5], S[6], 0.5), "m": mix(W[3], S[3], 0.5), "d": W[1], "k": W[0]}
+    holes = [[".hhh.", "hkkkd", "hkkkd", ".ddd."], ["hh", "kd"], [".hh.", "hkkd", ".dd."]]
+    for (x, y), rows in zip(scatter(rng, 3, 15), holes):
+        stamp(img, int(x), int(y), rows, key)
+    return img
+
+
+def elder_leaves():
+    """Elder leaves: dense clumps of broad leaves with pale veins, sprinkled with glowing motes."""
+    rng = rng_for("elder_leaves")
+    owner, gap = voronoi(rng, 22, min_gap=4.0)
+    shade = rng.integers(1, 4, owner.max() + 1)
+    tone = shade[owner]
+    tone = np.where(gap < 0.8, 0, tone)
+    tone = np.where((gap > 0.8) & (gap < 1.6), np.maximum(tone - 1, 1), tone)
+    height = value_noise(rng, 8)
+    tone = np.where((relief(height, 6) > 0.05) & (tone >= 1), np.minimum(tone + 1, 4), tone)
+    G = RAMPS["grass"]
+    img = np.array([G[0], G[1], G[2], G[3], G[4]], np.uint8)[np.clip(tone, 0, 4)]
+    glow = {"w": (0xf4, 0xff, 0xc0, 255), "y": (0xd8, 0xf0, 0x80, 255), "g": G[5]}
+    for x, y in scatter(rng, 6, 7):
+        stamp(img, int(x), int(y), [[".y.", "ywy", ".y."], ["w"], ["gy"], ["y", "g"]][int(rng.integers(0, 4))], glow)
+    return img
+
+
+def deadwood():
+    """Deadwood: a weathered grey-brown log lying on its side, grain running across, cracks and moss."""
+    rng = rng_for("deadwood")
+    tone = grain_tone(rng, 7, vertical=False, seam_share=0.55, wobble=5)
+    tone = speckle(rng, tone, 0.02, 0.04)
+    W, S, M = RAMPS["wood"], RAMPS["stone"], RAMPS["moss"]
+    img = np.array([mix(W[0], S[1], 0.3), mix(W[2], S[2], 0.35), mix(W[3], S[3], 0.4), mix(W[4], S[4], 0.4), mix(W[5], S[5], 0.4)], np.uint8)[np.clip(tone, 0, 4)]
+    moss = value_noise(rng, 4) > 0.7
+    mask = moss & (rng.random((SIZE, SIZE)) < 0.55)
+    img[mask] = np.array(M[2], np.uint8)
+    img[moss & (rng.random((SIZE, SIZE)) < 0.12)] = np.array(M[3], np.uint8)
+    return img
+
+
 # Every material with a tile, by material id (dirt and stone above).
 TILES = {
     "dirt": dirt, "grass": grass, "pebbles": pebbles, "grub_nest": grub_nest, "sand": sand, "root": root,
@@ -764,6 +848,8 @@ TILES = {
     "glow_crystal": glow_crystal, "obsidian": obsidian, "magma_rock": magma_rock, "meteorite": meteorite,
     "mycelium": mycelium, "giant_fungus": giant_fungus, "ruin_brick": ruin_brick, "relic": relic, "ash": ash,
     "tablet": tablet,
+    # Trees (Milestone 11 batch 6).
+    "tree_root": tree_root, "elderwood": elderwood, "elder_leaves": elder_leaves, "deadwood": deadwood,
     # Biome variants (10.6): a world modifier swaps a biome's base rock for one of these.
     "ember_stone": lambda: stone("ember"),
     "gley_clay": lambda: clay("gley"),

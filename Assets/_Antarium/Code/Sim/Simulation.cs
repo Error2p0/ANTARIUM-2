@@ -689,6 +689,7 @@ namespace Antarium.Sim
             {
                 _terrainChanged = true;
                 Enemies.OnCaveDiscovered(_discovered, _breachStarts.AsArray());
+                CheckElderFound(_discovered);
             }
             _breachStarts.Clear();
             return discovered;

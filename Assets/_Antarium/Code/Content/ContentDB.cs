@@ -139,6 +139,8 @@ namespace Antarium.Content
         public IReadOnlyList<ItemDef> PlantForage;
         /// <summary>Items that fall from berry bushes by day (berries, Milestone 11).</summary>
         public IReadOnlyList<ItemDef> BushForage;
+        /// <summary>Items that fall from apple trees by day (apples, Milestone 11 batch 6).</summary>
+        public IReadOnlyList<ItemDef> TreeForage;
         /// <summary>Mushrooms that pop up on the surface (toadstools, Milestone 11).</summary>
         public IReadOnlyList<ItemDef> SurfaceMushrooms;
         /// <summary>Item the queen eats from the stock to lay faster (honeydew).</summary>
@@ -290,6 +292,10 @@ namespace Antarium.Content
         public readonly ushort[] PlantForage;
         /// <summary>Items that fall from berry bushes by day (berries, Milestone 11).</summary>
         public readonly ushort[] BushForage;
+        /// <summary>Items that fall from apple trees by day (apples, Milestone 11 batch 6).</summary>
+        public readonly ushort[] TreeForage;
+        /// <summary>The Elder Tree's fruit (Milestone 11 batch 6), or <see cref="NoItem"/>.</summary>
+        public readonly ushort ElderFruit = NoItem;
         /// <summary>Mushrooms that pop up on the surface (toadstools, Milestone 11).</summary>
         public readonly ushort[] SurfaceMushrooms;
         /// <summary>Per item: light it gives off while growing in the world (fraction of the max level per channel; 0 = none).</summary>
@@ -381,6 +387,8 @@ namespace Antarium.Content
             PlantForage = new ushort[progression.PlantForage?.Count ?? 0];
             for (int i = 0; i < PlantForage.Length; i++) PlantForage[i] = GetItemIndex(progression.PlantForage[i]);
             BushForage = ItemIndices(progression.BushForage);
+            TreeForage = ItemIndices(progression.TreeForage);
+            if (worldGen.elderFruit != null && _itemIndex.TryGetValue(worldGen.elderFruit.Id, out ushort fruit)) ElderFruit = fruit;
             SurfaceMushrooms = ItemIndices(progression.SurfaceMushrooms);
             GrowthLight = new float3[items.Length];
             for (int i = 0; i < items.Length; i++)
@@ -1008,6 +1016,7 @@ namespace Antarium.Content
                     Evolutions = database.evolutions,
                     PlantForage = database.plantForage,
                     BushForage = database.bushForage,
+                    TreeForage = database.treeForage,
                     SurfaceMushrooms = database.surfaceMushrooms,
                     RoyalTreat = database.royalTreat,
                     NightHunters = database.nightHunters,

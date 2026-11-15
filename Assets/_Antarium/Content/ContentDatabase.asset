@@ -22,7 +22,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e527fe19dbf5a104f9cadb314d3c9421, type: 2}
   - {fileID: 11400000, guid: e12ff2a46eae3f34db7af9d29bb1f675, type: 2}
   - {fileID: 11400000, guid: 3aa5218b3da2b9140bcdaea56effc376, type: 2}
+  - {fileID: 11400000, guid: bf2e2747a8f204342b6f68b8260f0d36, type: 2}
   - {fileID: 11400000, guid: b4cf27d6cc681dc4db51be0fcae1848e, type: 2}
+  - {fileID: 11400000, guid: 2551bb5f991a198468cae67e284505e5, type: 2}
+  - {fileID: 11400000, guid: 2431a087a30842a4494f9a0c210cccc5, type: 2}
   - {fileID: 11400000, guid: 52486e0b60682ce44b9d54d283606e96, type: 2}
   - {fileID: 11400000, guid: 82062fe8fc8ce4340acebec1ad5d1a4a, type: 2}
   - {fileID: 11400000, guid: 892af230d67e18b4592901faccd4e5f3, type: 2}
@@ -44,8 +47,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 66f14a2537721424ca1b11819648d02d, type: 2}
   - {fileID: 11400000, guid: 8b7e86cb7dce5c942a47b6799374ebf6, type: 2}
   - {fileID: 11400000, guid: 05761e1042302b4479dead0f149a8487, type: 2}
+  - {fileID: 11400000, guid: 54fc341cf8e398c4c9a4e3f43f8692ea, type: 2}
   items:
   - {fileID: 11400000, guid: 1556088c0f9216946bf4cf46fe978a9c, type: 2}
+  - {fileID: 11400000, guid: eed9ad6591332624f96d277248cd9833, type: 2}
   - {fileID: 11400000, guid: b9f90a92d81d6384dadb03de2c19f5c6, type: 2}
   - {fileID: 11400000, guid: 46e585dd1cd0c7f488b78039ca242271, type: 2}
   - {fileID: 11400000, guid: f24c38572f3c4124e84a9f71196cbcf4, type: 2}
@@ -57,6 +62,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1214da5b82e5ae54095e70eb5c1d0b63, type: 2}
   - {fileID: 11400000, guid: 93580a647449c1f48ac3fc2667523c60, type: 2}
   - {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+  - {fileID: 11400000, guid: a67fa61cf106a674191836fa30cc6b96, type: 2}
   - {fileID: 11400000, guid: a69dfc8b68d100646aef866438294865, type: 2}
   - {fileID: 11400000, guid: ea5eb58177b731a4080ab9caec803f62, type: 2}
   - {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
@@ -341,6 +347,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 790e045f7413c8b47b707b30d59d06b1, type: 2}
   bushForage:
   - {fileID: 11400000, guid: b9f90a92d81d6384dadb03de2c19f5c6, type: 2}
+  treeForage:
+  - {fileID: 11400000, guid: eed9ad6591332624f96d277248cd9833, type: 2}
   surfaceMushrooms:
   - {fileID: 11400000, guid: 61c45b665dca55540808edc2252cd6c0, type: 2}
   royalTreat: {fileID: 11400000, guid: ea5eb58177b731a4080ab9caec803f62, type: 2}

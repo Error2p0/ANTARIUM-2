@@ -152,6 +152,7 @@ namespace Antarium.Editor
             CreatePresentation();
             CreateTweaks();
             CreateWild(database, worldGen);
+            CreateTrees(database, worldGen);
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;

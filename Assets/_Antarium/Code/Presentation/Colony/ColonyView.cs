@@ -185,6 +185,18 @@ namespace Antarium.Presentation
                     case PileArt.Berries:
                         WriteOnFloor(vertices, pile.Cell, ColonySprites.BerriesWidth, ColonySprites.BerriesHeight, rects[ColonySprites.BerriesRect], White, quad++);
                         break;
+                    case PileArt.Apple:
+                        WriteOnFloor(vertices, pile.Cell, ColonySprites.AppleSize, ColonySprites.AppleSize, rects[ColonySprites.AppleRect], White, quad++);
+                        break;
+                    case PileArt.GoldenApple:
+                    {
+                        // Shines at full brightness, like a glowing mushroom (it lights its cavern through the light map).
+                        float2 c = WorldGrid.CellCenterToWorld(pile.Cell);
+                        int a = ColonySprites.AppleSize;
+                        SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(c, new int2(0, 1), a), new int2(a, a), new int2(0, 1), 1,
+                            rects[ColonySprites.GoldenAppleRect], White, new float2(0f, -20000f));
+                        break;
+                    }
                     default:
                         WriteOnFloor(vertices, pile.Cell, ColonySprites.PileWidth, ColonySprites.PileHeight, rects[ColonySprites.PileRect], _itemColors[pile.Item], quad++);
                         break;

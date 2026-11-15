@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e5d762bd988e474491e587556e4c018, type: 3}
+  m_Name: elder_leaves
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TerrainMaterialDef
+  id: elder_leaves
+  displayName: Elder Leaves
+  hardness: 1.2
+  value: 0
+  flags: 12
+  drop: {fileID: 11400000, guid: 790e045f7413c8b47b707b30d59d06b1, type: 2}
+  dropAmount: 1
+  dropChance: 0.5
+  resonance: 0
+  emissionColor: {r: 0.78431374, g: 0.8784314, b: 0.4392157, a: 1}
+  emissionStrength: 0.75
+  selfGlow: 0.45
+  pattern: 7
+  baseColor: {r: 0.23529412, g: 0.43529412, b: 0.16862746, a: 1}
+  shadowColor: {r: 0.09411765, g: 0.19607843, b: 0.101960786, a: 1}
+  highlightColor: {r: 0.43529412, g: 0.7058824, b: 0.26666668, a: 1}
+  accentColor: {r: 0.9098039, g: 0.9411765, b: 0.627451, a: 1}
+  accentAmount: 0.35
+  topRimColor: {r: 0, g: 0, b: 0, a: 0}
+  textureOverride: {fileID: 2800000, guid: ba6c002f297f9744f859ffb04347e4ce, type: 3}

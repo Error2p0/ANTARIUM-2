@@ -71,14 +71,14 @@ namespace Antarium.Sim
 
             float2 surfaceOffset = NextOffset();
             int baseSurface = world.Height - 1 - gen.skyHeight;
-            for (int x = 0; x < world.Width; x++)
-            {
-                float n = noise.snoise(new float2(x * gen.surfaceFrequency, 0f) + surfaceOffset) * 0.75f
-                          + noise.snoise(new float2(x * gen.surfaceFrequency * 3.1f, 7f) + surfaceOffset) * 0.25f;
-                world.SurfaceY[x] = baseSurface + (int)math.round(n * gen.surfaceAmplitude);
-            }
+            ShapeSurface(world, gen, seed, surfaceOffset, baseSurface);
             // Lakes and rivers (Milestone 11): their basins are dug into the surface line before the terrain is filled in.
             var water = SurfaceWater.Place(world.Width, gen, seed);
+            var features = SurfaceFeatures.Place(world.Width, gen, seed, water);
+            // The ground is levelled under structures (not boulders) and lakes, blending back into the hills beside them.
+            foreach (var f in features)
+                if (f.Kind != SurfaceFeatureKind.Boulder) Level(world, f.X0 - 1, f.X1 + 1, math.max(4, gen.waterFlatBlend / 2));
+            foreach (var b in water) Level(world, b.X0 - 2, b.X1 + 2, gen.waterFlatBlend);
             var rims = new int[water.Count];
             for (int k = 0; k < water.Count; k++)
             {
@@ -191,10 +191,265 @@ namespace Antarium.Sim
             }
 
             FillWater(world, content, water, rims);
+            if (ElderTree.Locate(world.Width, world.Height, gen, seed, scale, out var elder))
+                ElderTree.Build(world, content, elder, seed);
             GrowRoots(world, content, seed);
+            BuildFeatures(world, content, features, seed);
             PlaceTablets(world, content, seed, scale);
             CarveNest(world, gen);
             world.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightRecompute);
+        }
+
+        /// <summary>
+        /// The surface line: small waves (<c>surfaceAmplitude</c>), and since Milestone 11 big rolling hills, small bumps and
+        /// terraces (flat steps with cliffs) where a slow noise mask allows; flat around the nest shaft, blending into the
+        /// hills. New noise offsets come from the seed by hash, so the rest of world generation keeps its random stream.
+        /// </summary>
+        static void ShapeSurface(WorldGrid world, WorldGenSettings gen, uint seed, float2 offset, int baseSurface)
+        {
+            float2 Off(uint k) => new float2(math.hash(new uint2(seed, k)) % 20000u, math.hash(new uint2(seed, k + 1)) % 20000u) * 0.25f;
+            float2 hillOff = Off(0x4111u), bumpOff = Off(0xB0B0u), terraceOff = Off(0x7E77u);
+            int nest = world.Width / 2;
+            var h = new float[world.Width];
+            for (int x = 0; x < world.Width; x++)
+            {
+                float n = noise.snoise(new float2(x * gen.surfaceFrequency, 0f) + offset) * 0.75f
+                          + noise.snoise(new float2(x * gen.surfaceFrequency * 3.1f, 7f) + offset) * 0.25f;
+                float v = n * gen.surfaceAmplitude;
+                if (gen.hillAmplitude > 0f)
+                {
+                    // Hills: a slow wave with a sharper second octave, so some summits are rounded and some are pointed.
+                    float hill = noise.snoise(new float2(x * gen.hillFrequency, 0f) + hillOff);
+                    float ridge = 1f - math.abs(noise.snoise(new float2(x * gen.hillFrequency * 2.3f, 3f) + hillOff));
+                    v += (hill * 0.75f + (ridge - 0.5f) * 0.5f) * gen.hillAmplitude;
+                }
+                if (gen.bumpAmplitude > 0f) v += noise.snoise(new float2(x * gen.bumpFrequency, 1f) + bumpOff) * gen.bumpAmplitude;
+                if (gen.terraceThreshold < 1f)
+                {
+                    float mask = noise.snoise(new float2(x * gen.terraceFrequency, 5f) + terraceOff);
+                    float k = math.saturate((mask - gen.terraceThreshold) / 0.06f);
+                    float step = math.max(1, gen.terraceStep);
+                    v = math.lerp(v, math.floor(v / step) * step, k);
+                }
+                h[x] = v;
+            }
+            if (gen.nestFlatRadius > 0)
+            {
+                float flat = h[nest];
+                for (int x = 0; x < world.Width; x++)
+                {
+                    float t = math.saturate((math.abs(x - nest) - gen.nestFlatRadius) / (float)math.max(1, gen.nestFlatBlend));
+                    h[x] = math.lerp(flat, h[x], t * t * (3f - 2f * t));
+                }
+            }
+            for (int x = 0; x < world.Width; x++) world.SurfaceY[x] = baseSurface + (int)math.round(h[x]);
+        }
+
+        /// <summary>Levels the surface line over columns <paramref name="x0"/>..<paramref name="x1"/> to their average height, blending back over <paramref name="blend"/> columns either side.</summary>
+        static void Level(WorldGrid world, int x0, int x1, int blend)
+        {
+            x0 = math.max(0, x0);
+            x1 = math.min(world.Width - 1, x1);
+            if (x1 < x0) return;
+            float sum = 0f;
+            for (int x = x0; x <= x1; x++) sum += world.SurfaceY[x];
+            int level = (int)math.round(sum / (x1 - x0 + 1));
+            for (int x = math.max(0, x0 - blend); x <= math.min(world.Width - 1, x1 + blend); x++)
+            {
+                int d = math.max(x0 - x, x - x1);
+                float t = d <= 0 || blend <= 0 ? 0f : math.saturate(d / (float)(blend + 1));
+                t = t * t * (3f - 2f * t);
+                world.SurfaceY[x] = (int)math.round(math.lerp(level, world.SurfaceY[x], t));
+            }
+        }
+
+        /// <summary>
+        /// Rare surface structures (Milestone 11), built on the finished ground: boulders, a rock overhang, a hollow log, an
+        /// abandoned anthill, standing stones. Afterwards each column's surface line is its topmost solid cell, so ants under
+        /// the overhang or inside a log count as under cover.
+        /// </summary>
+        static void BuildFeatures(WorldGrid world, ContentDB content, System.Collections.Generic.List<SurfaceFeature> features, uint seed)
+        {
+            var gen = content.WorldGen;
+            ushort bedrock = content.GetMaterialIndex(gen.bedrock);
+            foreach (var f in features)
+            {
+                var rule = gen.surfaceFeatures[f.Rule];
+                ushort material = content.GetMaterialIndex(rule.material);
+                ushort find = rule.find != null ? content.GetMaterialIndex(rule.find) : ContentDB.AirIndex;
+                var rng = new Random(math.hash(new uint2(seed, f.Variant)) | 1u);
+                int ground = int.MaxValue, groundTop = int.MinValue;
+                for (int x = f.X0; x <= f.X1; x++)
+                {
+                    ground = math.min(ground, world.SurfaceY[x]);
+                    groundTop = math.max(groundTop, world.SurfaceY[x]);
+                }
+                var finds = new System.Collections.Generic.List<int2>();
+
+                // Solid cell of the structure; below the ground only plain ground is replaced (never finds or bedrock).
+                void Solid(int x, int y, ushort m)
+                {
+                    if (!world.InBounds(x, y)) return;
+                    int i = world.Index(x, y);
+                    var cell = world.Cells[i];
+                    if (cell.Material == bedrock) return;
+                    if (y <= world.SurfaceY[x] && !cell.IsOpen && content.MaterialSim[cell.Material].DropItem != ContentDB.NoItem) return;
+                    world.Cells[i] = new Cell(m, Cell.Full, cell.Flags);
+                    world.Fluid[i] = FluidCell.Empty;
+                }
+
+                // Open cell inside the structure (a hollow, a tunnel): it keeps the structure's material as its back wall.
+                void Hollow(int x, int y, ushort m)
+                {
+                    if (!world.InBounds(x, y)) return;
+                    int i = world.Index(x, y);
+                    if (world.Cells[i].Material == bedrock) return;
+                    world.Cells[i] = new Cell(m, 0, world.Cells[i].Flags);
+                    world.Fluid[i] = FluidCell.Empty;
+                }
+
+                int w = f.X1 - f.X0 + 1, mid = f.Mid;
+                float half = (w - 1) * 0.5f, cx = f.X0 + half;
+                switch (f.Kind)
+                {
+                    case SurfaceFeatureKind.Boulder:
+                    {
+                        // A lumpy rock, about half of it sunk into the ground.
+                        float rx = half + 0.5f, ry = math.max(2f, w * 0.42f);
+                        float2 o = rng.NextFloat2(-100f, 100f);
+                        int cy = ground + 1;
+                        for (int y = cy - (int)ry - 1; y <= cy + (int)ry + 1; y++)
+                        for (int x = f.X0 - 1; x <= f.X1 + 1; x++)
+                        {
+                            float2 d = (new float2(x, y) - new float2(cx, cy)) / new float2(rx, ry);
+                            if (math.lengthsq(d) + noise.snoise(new float2(x, y) * 0.4f + o) * 0.25f <= 1f) Solid(x, y, material);
+                        }
+                        break;
+                    }
+                    case SurfaceFeatureKind.Overhang:
+                    {
+                        // A crag on one side and a ledge reaching out from its top over open ground, thinning to a lip.
+                        // (An arch would enclose a sealed bubble of air in a side view; a ledge leaves the space under it open.)
+                        int height = rng.NextInt(6, 9);
+                        int top = groundTop + height;
+                        int dir = (f.Variant & 1) == 0 ? 1 : -1;
+                        int crag = math.max(4, w * 2 / 5);
+                        for (int i = 0; i < w; i++)
+                        {
+                            int x = dir > 0 ? f.X0 + i : f.X1 - i;
+                            // A rough top over the crag; the ledge is smooth so its thin lip stays joined to it.
+                            int crown = i < crag ? top - (noise.snoise(new float2(x * 0.45f, f.Variant % 977)) < -0.3f ? 1 : 0) - (i == 0 ? 1 : 0)
+                                : top - (i == w - 1 ? 1 : 0);
+                            int bottom;
+                            if (i < crag) bottom = world.SurfaceY[x] + 1;
+                            else if (i < crag + 2) bottom = world.SurfaceY[x] + 1 + (i - crag + 1) * 2; // its foot slopes back under the ledge
+                            else
+                            {
+                                float k = (i - crag) / (float)math.max(1, w - crag);
+                                int thick = (int)math.round(math.lerp(3.4f, 2f, k));
+                                bottom = crown - thick + 1;
+                            }
+                            for (int y = bottom; y <= crown; y++) Solid(x, y, material);
+                        }
+                        break;
+                    }
+                    case SurfaceFeatureKind.HollowLog:
+                    {
+                        // A fallen trunk resting on the high ground: a bark shell around a hollow, open at both ends.
+                        int d = rng.NextInt(4, 6);
+                        int bottom = groundTop + 1, topRow = bottom + d - 1;
+                        for (int x = f.X0; x <= f.X1; x++)
+                        for (int y = bottom; y <= topRow; y++)
+                        {
+                            bool end = x == f.X0 || x == f.X1;
+                            bool shell = y == bottom || y == topRow;
+                            if (end && shell) continue; // rounded ends
+                            if (shell) Solid(x, y, material);
+                            else Hollow(x, y, material);
+                        }
+                        // Fill under the log where the ground dips, so it rests on something.
+                        for (int x = f.X0 + 1; x < f.X1; x++)
+                        for (int y = world.SurfaceY[x] + 1; y < bottom; y++)
+                            Solid(x, y, material);
+                        for (int n = 0; n < rule.finds; n++)
+                            finds.Add(new int2(rng.NextInt(f.X0 + 2, f.X1 - 1), rng.NextBool() ? bottom : topRow));
+                        break;
+                    }
+                    case SurfaceFeatureKind.Anthill:
+                    {
+                        // A mound of tamped earth over an old nest: a winding entrance from the top down to a chamber under the ground.
+                        int height = math.max(4, (int)math.round(w * 0.33f));
+                        float2 o = rng.NextFloat2(-100f, 100f);
+                        var tops = new int[w];
+                        for (int x = f.X0; x <= f.X1; x++)
+                        {
+                            float t = (x - cx) / math.max(1f, half);
+                            int top = ground + (int)math.round(height * math.pow(math.max(0f, 1f - t * t), 0.8f) + noise.snoise(new float2(x * 0.3f, 0f) + o) * 0.8f);
+                            tops[x - f.X0] = top;
+                            for (int y = world.SurfaceY[x] - 3; y <= top; y++) Solid(x, y, material);
+                        }
+                        int2 chamber = new int2(mid, ground - 6);
+                        for (int y = chamber.y - 2; y <= chamber.y + 2; y++)
+                        for (int x = chamber.x - 6; x <= chamber.x + 6; x++)
+                            if (math.lengthsq((new float2(x, y) - chamber) / new float2(5.5f, 2.2f)) <= 1f) Hollow(x, y, material);
+                        // The entrance: a 1-cell tunnel winding down from beside the summit.
+                        int ex = mid + (rng.NextBool() ? 2 : -2);
+                        int ey = tops[ex - f.X0];
+                        int px = ex;
+                        for (int y = ey; y >= chamber.y; y--)
+                        {
+                            Hollow(px, y, material);
+                            if (rng.NextFloat() < 0.35f)
+                            {
+                                px += px < mid ? 1 : px > mid ? -1 : (rng.NextBool() ? 1 : -1);
+                                Hollow(px, y, material);
+                            }
+                        }
+                        // A side gallery off the chamber.
+                        int dir = ex < mid ? 1 : -1;
+                        for (int k = 0; k < 7; k++) Hollow(chamber.x + dir * (6 + k), chamber.y - 1 - k / 3, material);
+                        // Finds in the chamber walls.
+                        for (int n = 0, tries = 0; n < rule.finds && tries < 200; tries++)
+                        {
+                            int2 p = chamber + new int2(rng.NextInt(-7, 8), rng.NextInt(-4, 4));
+                            if (!world.InBounds(p.x, p.y) || world[p.x, p.y].IsOpen) continue;
+                            bool wall = world[p.x + 1, p.y].IsOpen || world[p.x - 1, p.y].IsOpen || world[p.x, p.y + 1].IsOpen || world[p.x, p.y - 1].IsOpen;
+                            if (!wall || finds.Contains(p)) continue;
+                            finds.Add(p);
+                            n++;
+                        }
+                        break;
+                    }
+                    case SurfaceFeatureKind.StandingStones:
+                    {
+                        // Three or four slabs two cells wide, sunk two cells deep, the middle ones tallest; a find under the middle one.
+                        int stones = w >= 13 ? 4 : 3;
+                        float gap = (w - 2) / (float)(stones - 1);
+                        for (int s = 0; s < stones; s++)
+                        {
+                            int x0 = f.X0 + (int)math.round(s * gap);
+                            float centre = 1f - math.abs(s - (stones - 1) * 0.5f) / stones;
+                            int height = (int)math.round(3 + centre * 4) + rng.NextInt(0, 2);
+                            for (int x = x0; x <= x0 + 1; x++)
+                            for (int y = world.SurfaceY[x] - 2; y <= groundTop + height - (x == x0 + 1 && rng.NextBool() ? 1 : 0); y++)
+                                Solid(x, y, material);
+                        }
+                        int m0 = f.X0 + (int)math.round((stones / 2) * gap);
+                        for (int n = 0; n < rule.finds; n++) finds.Add(new int2(m0 + (n & 1), world.SurfaceY[m0] - 3 - n / 2));
+                        break;
+                    }
+                }
+
+                if (find != ContentDB.AirIndex)
+                    foreach (var p in finds)
+                        if (world.InBounds(p.x, p.y) && !world[p.x, p.y].IsOpen && world[p.x, p.y].Material != bedrock)
+                            world.Cells[world.Index(p.x, p.y)] = new Cell(find, Cell.Full, world[p.x, p.y].Flags);
+
+                // The surface line is now the topmost solid cell of each column the structure touches.
+                for (int x = math.max(0, f.X0 - 1); x <= math.min(world.Width - 1, f.X1 + 1); x++)
+                    for (int y = world.Height - 1; y > world.SurfaceY[x]; y--)
+                        if (!world[x, y].IsOpen) { world.SurfaceY[x] = y; break; }
+            }
         }
 
         /// <summary>
@@ -302,8 +557,15 @@ namespace Antarium.Sim
             ushort bedrock = content.GetMaterialIndex(gen.bedrock);
             var rng = new Random(math.hash(new uint2(seed, 0x2007u)) | 1u);
             var tips = new System.Collections.Generic.List<int4>(); // x, y, cells left, sideways drift
+            ushort bigRoot = gen.treeRootMaterial != null ? content.GetMaterialIndex(gen.treeRootMaterial) : ContentDB.AirIndex;
+            var treeRng = new Random(math.hash(new uint2(seed, 0x7EE7u)) | 1u);
             foreach (var plant in SurfacePlants.Place(world.Width, gen, seed))
             {
+                if (plant.IsTree && bigRoot != ContentDB.AirIndex)
+                {
+                    GrowTreeRoots(world, content, plant.X, bigRoot, root, ref treeRng);
+                    continue;
+                }
                 int lo = math.max(1, gen.rootLength.x), hi = math.max(lo, gen.rootLength.y);
                 tips.Clear();
                 tips.Add(new int4(plant.X, world.SurfaceY[plant.X] - gen.grassDepth, rng.NextInt(lo, hi + 1), 0));
@@ -331,6 +593,64 @@ namespace Antarium.Sim
                         else y--;
                         if (tip.w != 0 && rng.NextFloat() < 0.5f) y--;
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Big roots of a tree (Milestone 11): a taproot straight down and a few thick roots spreading out and curving down,
+        /// two cells wide for most of their length, with thin plain roots off them. They replace plain ground only and stop
+        /// at caves and at <c>treeRootMaxDepth</c>.
+        /// </summary>
+        static void GrowTreeRoots(WorldGrid world, ContentDB content, int treeX, ushort bigRoot, ushort plainRoot, ref Random rng)
+        {
+            var gen = content.WorldGen;
+            ushort bedrock = content.GetMaterialIndex(gen.bedrock);
+            int count = rng.NextInt(math.max(1, gen.treeRoots.x), math.max(gen.treeRoots.x, gen.treeRoots.y) + 1);
+            int lo = math.max(4, gen.treeRootLength.x), hi = math.max(lo, gen.treeRootLength.y);
+
+            bool Grow(int x, int y, ushort material)
+            {
+                if (!world.InBounds(x, y)) return false;
+                int depth = world.SurfaceY[x] - y;
+                if (depth > gen.treeRootMaxDepth) return false;
+                int i = world.Index(x, y);
+                var cell = world.Cells[i];
+                if (cell.IsOpen) return false; // a cave
+                if (depth >= gen.grassDepth && cell.Material != bedrock && cell.Material != bigRoot
+                    && content.MaterialSim[cell.Material].DropItem == ContentDB.NoItem || cell.Material == plainRoot && material == bigRoot)
+                    world.Cells[i] = new Cell(material, Cell.Full, cell.Flags);
+                return true;
+            }
+
+            for (int r = 0; r < count; r++)
+            {
+                // Root 0 is the taproot; the others leave the trunk to alternate sides, flatter at first, then diving.
+                int side = r == 0 ? 0 : (r & 1) == 1 ? -1 : 1;
+                float spread = r == 0 ? 0.1f : rng.NextFloat(0.55f, 0.8f);
+                int length = r == 0 ? hi : rng.NextInt(lo, hi + 1);
+                int x = treeX + side, y = world.SurfaceY[treeX] - gen.grassDepth;
+                for (int n = 0; n < length; n++)
+                {
+                    bool thick = n < length * 0.65f;
+                    if (!Grow(x, y, bigRoot)) break;
+                    if (thick && !Grow(side >= 0 ? x + 1 : x - 1, y, bigRoot)) break;
+                    // A thin plain root off to the side now and then.
+                    if (n > 4 && rng.NextFloat() < 0.08f)
+                    {
+                        int bx = x, by = y, bs = rng.NextBool() ? 1 : -1;
+                        for (int m = 0, len = rng.NextInt(4, 12); m < len; m++)
+                        {
+                            if (!Grow(bx, by, plainRoot)) break;
+                            if (rng.NextFloat() < 0.5f) bx += bs;
+                            else by--;
+                        }
+                    }
+                    float out_ = spread * (1f - n / (float)length * 0.8f);
+                    float roll = rng.NextFloat();
+                    if (side != 0 && roll < out_) x += side;
+                    else if (side == 0 && roll < 0.12f) x += rng.NextBool() ? 1 : -1;
+                    else y--;
                 }
             }
         }

@@ -24,10 +24,13 @@ namespace Antarium.Sim
         void InitSurface()
         {
             var c = Config.surface;
-            Surface.Plants.Clear();
-            Surface.Plants.AddRange(SurfacePlants.Place(World.Width, Content.WorldGen, Seed));
             Surface.Water.Clear();
             Surface.Water.AddRange(SurfaceWater.Place(World.Width, Content.WorldGen, Seed));
+            Surface.Features.Clear();
+            Surface.Features.AddRange(SurfaceFeatures.Place(World.Width, Content.WorldGen, Seed, Surface.Water));
+            Surface.Plants.Clear();
+            Surface.Plants.AddRange(SurfacePlants.Place(World.Width, Content.WorldGen, Seed, Surface.Water, Surface.Features));
+            Surface.HasElderTree = ElderTree.Locate(World.Width, World.Height, Content.WorldGen, Seed, Tweaks.BiomeScale, out Surface.ElderTree);
             Surface.Rng = new Unity.Mathematics.Random(math.hash(new uint2(Seed, 0x5CEA7u)) | 1u);
             Surface.Clock = c.startTime;
             Surface.WeatherTimer = c.firstWeatherSeconds;
@@ -39,7 +42,9 @@ namespace Antarium.Sim
 
         /// <summary>
         /// After a load: lakes and rivers the saved world doesn't have (it was made before Milestone 11) are dropped from the
-        /// list, and the plants are placed again without leaving room for them.
+        /// list, and so are surface structures it doesn't have (made before batch 6: no cell of the structure's material near
+        /// the top of its middle columns) and an Elder Tree it doesn't have; the plants are placed again without leaving room
+        /// for what was dropped.
         /// </summary>
         void CheckSurfaceWater()
         {
@@ -54,9 +59,25 @@ namespace Antarium.Sim
                     found = (World[x, y].Flags & CellFlags.Lake) != 0;
                 if (!found) water.RemoveAt(i);
             }
-            if (water.Count == before) return;
+            var features = Surface.Features;
+            int featuresBefore = features.Count;
+            for (int i = features.Count - 1; i >= 0; i--)
+                if (!FeatureBuilt(features[i])) features.RemoveAt(i);
+            if (Surface.HasElderTree && !ElderTree.IsBuilt(World, Content, Surface.ElderTree)) Surface.HasElderTree = false;
+            if (water.Count == before && features.Count == featuresBefore) return;
             Surface.Plants.Clear();
-            Surface.Plants.AddRange(SurfacePlants.Place(World.Width, Content.WorldGen, Seed, water));
+            Surface.Plants.AddRange(SurfacePlants.Place(World.Width, Content.WorldGen, Seed, water, features));
+        }
+
+        bool FeatureBuilt(in SurfaceFeature f)
+        {
+            var rule = Content.WorldGen.surfaceFeatures[f.Rule];
+            if (rule?.material == null) return false;
+            ushort material = Content.GetMaterialIndex(rule.material);
+            for (int x = f.X0; x <= f.X1; x++)
+            for (int y = math.max(0, World.SurfaceY[x] - 3); y <= World.SurfaceY[x]; y++)
+                if (World[x, y].Material == material) return true;
+            return false;
         }
 
         internal void UpdateDaylight()
