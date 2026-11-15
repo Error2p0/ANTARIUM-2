@@ -13,6 +13,26 @@ namespace Antarium.Gameplay
     /// </summary>
     public sealed partial class GameBootstrap
     {
+        /// <summary>
+        /// The star layer's parallax (<c>CaptureMenu.Run("stars", false)</c>): the same night sky, then the camera 20 cells to the right.
+        /// The stars move least, then the clouds, mountains, hills and treeline, each more than the one behind it.
+        /// </summary>
+        IEnumerator ShotStars()
+        {
+            FreshColony(1337u);
+            Hud(false);
+            yield return Frames(10);
+            int nest = _sim.Colony.QueenCell.x;
+            float ground = _sim.World.SurfaceY[nest];
+            _sim.Surface.Clock = Math.Floor(_sim.Surface.Clock) + 1.0;
+            Cam(new float2(nest + 0.5f, ground + 14f), 3);
+            yield return Seconds(0.5f);
+            yield return Still("stars_a");
+            Cam(new float2(nest + 20.5f, ground + 14f), 3);
+            yield return Frames(4);
+            yield return Still("stars_b");
+        }
+
         IEnumerator ShotScenery()
         {
             FreshColony(1337u);

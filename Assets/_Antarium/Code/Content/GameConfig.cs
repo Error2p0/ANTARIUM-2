@@ -608,6 +608,10 @@ namespace Antarium.Content
         [Min(0)] public int maxSurfaceFood = 12;
         [Tooltip("Max horizontal distance from the nest (cells) where forage spawns.")]
         [Min(4)] public int forageRange = 120;
+        [Tooltip("Workers fetch piles underground (dug ore, finds) first: a pile on the surface (forage) is only fetched first when it is this many cells closer. Not while the colony starves (food on the surface then comes first) or while Gather scent is painted.")]
+        [Min(0)] public int forageHaulDelay = 30;
+        [Tooltip("At most this many of each plant forage item (leaves) are kept in the stock, so leaves nobody uses yet don't fill it up; machines that use them still get theirs. 0 = no limit.")]
+        [Min(0)] public int plantForageStockLimit = 10;
 
         [Header("Navigation")]
         [Tooltip("Flow fields are rebuilt at most once every N ticks when something changed.")]
@@ -750,6 +754,8 @@ namespace Antarium.Content
         [Tooltip("How fast the clouds drift (art pixels per second).")]
         public float cloudDrift = 2f;
         [Range(0f, 1f)] public float cloudParallax = 0.05f;
+        [Tooltip("How much the stars (and shooting stars) move with the world: the farthest layer, behind the clouds and mountains (0 = fixed to the sky).")]
+        [Range(0f, 1f)] public float starParallax = 0.01f;
         [Tooltip("How much the clouds fade into the horizon colour.")]
         [Range(0f, 1f)] public float cloudHaze = 0.15f;
         public Color cloudColor = new(0.97f, 0.97f, 1f);

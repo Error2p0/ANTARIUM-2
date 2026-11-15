@@ -104,6 +104,7 @@ MonoBehaviour:
     cloudSize: 4
     cloudDrift: 2
     cloudParallax: 0.05
+    starParallax: 0.01
     cloudHaze: 0.15
     cloudColor: {r: 0.97, g: 0.97, b: 1, a: 1}
     cloudShadeColor: {r: 0.78, g: 0.82, b: 0.9, a: 1}
@@ -201,6 +202,8 @@ MonoBehaviour:
     forageInterval: 5
     maxSurfaceFood: 12
     forageRange: 120
+    forageHaulDelay: 30
+    plantForageStockLimit: 10
     fieldRefreshTicks: 4
   worker:
     moveSpeed: 3
@@ -436,6 +439,9 @@ MonoBehaviour:
   wild:
     berryInterval: 10
     maxSurfaceBerries: 8
+    appleInterval: 20
+    maxSurfaceApples: 6
+    appleSpread: 3
     toadstoolInterval: 45
     rainToadstoolFactor: 4
     afterRainSeconds: 90

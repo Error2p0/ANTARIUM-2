@@ -213,7 +213,7 @@ namespace Antarium.Presentation
             // The seed picks where the peaks and trees stand (kept small: it offsets integer hash lattices).
             Shader.SetGlobalVector(SceneryInfoId, new Vector4(count, _seed % 65521u, 0f, render.sceneryVertical));
             Shader.SetGlobalColor(SnowId, ToWorking(render.snowColor));
-            Shader.SetGlobalVector(CloudBandId, new Vector4(render.cloudBand.x, render.cloudBand.y, render.cloudSize, 0f));
+            Shader.SetGlobalVector(CloudBandId, new Vector4(render.cloudBand.x, render.cloudBand.y, render.cloudSize, render.starParallax));
             Shader.SetGlobalColor(CloudColorId, ToWorking(render.cloudColor));
             Shader.SetGlobalColor(CloudShadeId, ToWorking(render.cloudShadeColor));
             SetCloudCover();

@@ -407,11 +407,16 @@ namespace Antarium.Tests
                 if (!_sim.World[x, y].IsOpen)
                     _sim.SetCell(new int2(x, y), new Cell(_sim.World[x, y].Material, 0, CellFlags.Revealed | CellFlags.Explored));
             var spot = _sim.World.FloorBelow(new int2(q.x + 11, q.y + 1));
+            // Reaching the cave explores it (breaking in does; this tunnel is carved by hand): piles in unfound caves are no jobs.
+            for (int y = spot.y; y <= q.y; y++)
+                if (_sim.World[spot.x, y].IsOpen)
+                    _sim.SetCell(new int2(spot.x, y), new Cell(_sim.World[spot.x, y].Material, 0, _sim.World[spot.x, y].Flags | CellFlags.Revealed | CellFlags.Explored));
             _sim.Wild.Add(new Growth { Cell = spot, Item = plain, Grown = true });
             _sim.Colony.Piles.Add(spot, plain, 1);
             float food = _sim.Colony.Inventory.Food;
             Run(40f);
-            Assert.AreEqual(0, _sim.Colony.Piles.CountAt(spot, plain), "picked up");
+            // Delivered (the test world regrows mushrooms after 3 s, so the spot may hold a new one by now).
+            Assert.Greater(_sim.Colony.Stats.Delivered[plain], 0, "picked up and brought home");
             Assert.Greater(_sim.Colony.Inventory.Food, food, "eaten as food");
         }
 

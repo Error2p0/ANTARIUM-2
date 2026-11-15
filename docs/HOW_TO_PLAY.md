@@ -264,6 +264,9 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
   - A **chest** (Build tool) holds **16 items** in one cell (no food).
   - Food is kept as food points, not as items.
   - Workers only pick up what still fits in the stock or in a machine that needs it. When storage is full, piles stay where they are until you add storage (or a machine wants them).
+  - **Leaves** fill at most **10** places in the stock, so leaves nobody uses yet don't crowd out ore. Fungus Gardens and Aphid Ranches still get all the leaves they want.
+- **What workers fetch first:** piles **underground** (ore and finds from digging) come before **forage on the surface** (seeds, leaves, berries, apples, toadstools). A surface pile is only fetched first when it is **30 cells closer**. While the colony is **starving**, food on the surface comes first. If you paint **Gather** scent, scented piles come first instead, as before.
+- Piles in caves your colony hasn't found yet (mushrooms, golden apples) are left alone until your tunnels break in.
 - **Storage filters** (**I** on a zone or chest): a zone or chest with a filter only takes those items; everything else goes to the next place with room. If nothing takes an item any more, workers leave its piles alone.
 - A worker standing on a **chest** puts its load into that chest if the chest takes it.
 - **Erasing** a storage cell (or removing a chest) moves its items to other storage with room; whatever doesn't fit drops to the floor as piles. Chests can't be built on a storage zone.

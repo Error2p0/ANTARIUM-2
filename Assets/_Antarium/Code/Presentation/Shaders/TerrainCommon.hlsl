@@ -602,7 +602,7 @@ float4 _AntSceneryMore[4];   // x = parallax (0 far .. 1 with the world), y = sn
 float4 _AntSceneryInfo;      // x = layer count, y = seed, w = how much the layers follow the camera up and down
 float4 _AntSnow;
 float4 _AntCloud;            // x = cover (0..1), y = haze, z = drift (art pixels per second), w = parallax
-float4 _AntCloudBand;        // x, y = lowest and highest cloud (cells above the horizon), z = cloud size (cells)
+float4 _AntCloudBand;        // x, y = lowest and highest cloud (cells above the horizon), z = cloud size (cells), w = star parallax
 float4 _AntCloudColor;
 float4 _AntCloudShade;
 
@@ -873,11 +873,13 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
             float t = saturate((positionWS.y - _AntSkyRange.x) / max(_AntSkyRange.y - _AntSkyRange.x, 1e-3));
             t = floor(t * 8.0 + Bayer4(p.px)) / 8.0;
             s.albedo = lerp(_AntSkyHorizon.rgb, _AntSkyTop.rgb, t);
-            // Stars at night: sparse fixed pixels, a few twinkling, fading toward the horizon.
+            // Stars at night: sparse pixels fixed to the sky, the farthest layer (they barely move with the world, less
+            // than the clouds and mountains), a few twinkling, fading toward the horizon.
             if (_AntStars.a > 0.0)
             {
-                float star = Hash21(p.px + int2(9173, 3511));
-                float twinkle = Hash21(p.px + int2((int)(_AntTime * 1.5), 77)) > 0.15 ? 1.0 : 0.4;
+                int2 sp = p.px - (int2)SceneryShift(_AntCloudBand.w);
+                float star = Hash21(sp + int2(9173, 3511));
+                float twinkle = Hash21(sp + int2((int)(_AntTime * 1.5), 77)) > 0.15 ? 1.0 : 0.4;
                 if (star > 0.9965) s.albedo = lerp(s.albedo, _AntStars.rgb, saturate(_AntStars.a * t * 1.6) * twinkle);
             }
             // Mountains, hills and trees in front of the clouds.

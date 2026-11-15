@@ -93,6 +93,9 @@ namespace Antarium.Sim
         public ulong LocationsChanged = ulong.MaxValue;
 
         /// <summary>A stand-alone stock without research or stats (tests, tools).</summary>
+        /// <summary>Per item: most kept in the stock (plant forage, i.e. leaves; 0 = no limit).</summary>
+        readonly int[] _stockLimit;
+
         public Inventory(ContentDB content, ColonyConfig config)
             : this(content, config, new Modifiers(), new ColonyStats(content.Items.Length, content.Buildings.Length), new ProductionMeter(content.Items.Length)) { }
 
@@ -112,6 +115,9 @@ namespace Antarium.Sim
             _roomFor = new int[n];
             _delivered = new int[n];
             Food = config.startingFood;
+            _stockLimit = new int[n];
+            if (config.plantForageStockLimit > 0 && content.PlantForage != null)
+                foreach (ushort item in content.PlantForage) _stockLimit[item] = config.plantForageStockLimit;
             Containers.Add(new StockContainer(default, -1, 0, n));
             RefreshCapacity();
         }
@@ -392,8 +398,10 @@ namespace Antarium.Sim
             var def = _content.Items[item];
             if (def.IsFood)
                 return FoodInTransit() + def.foodValue <= Math.Max(0f, FoodCapacity - Food) + ConsumerRoom[item] * def.foodValue + 1e-3f;
-            // Free space overall, and in the containers that take this item, beyond what is already on its way.
-            bool stock = Capacity - Stored - NonFoodInTransit() > 0 && RoomFor(item) > InTransit[item];
+            // Free space overall, and in the containers that take this item, beyond what is already on its way. Plant forage
+            // (leaves) only up to its limit, so it doesn't crowd out ore while nothing uses it.
+            bool stock = Capacity - Stored - NonFoodInTransit() > 0 && RoomFor(item) > InTransit[item]
+                         && (_stockLimit[item] <= 0 || Items[item] + InTransit[item] < _stockLimit[item]);
             return stock || InTransit[item] < ConsumerRoom[item];
         }
 

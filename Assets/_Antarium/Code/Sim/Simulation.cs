@@ -680,6 +680,9 @@ namespace Antarium.Sim
                 _breachStarts.Add(c);
         }
 
+        /// <summary>Whether the colony was starving when the Items field was last marked (it ranks surface food differently then).</summary>
+        bool _haulStarving;
+
         int FlushBreaches()
         {
             if (_breachStarts.Length == 0) return 0;
@@ -1083,7 +1086,8 @@ namespace Antarium.Sim
             if (_terrainChanged) Fields.MarkAllDirty();
             if (_designationsChanged) Fields.MarkDirty(FieldKind.Dig);
             if (_storageChanged || Buildings.DropoffChanged) Fields.MarkDirty(FieldKind.Dropoff);
-            if (Colony.Piles.Changed || Colony.Inventory.AcceptanceChanged) Fields.MarkDirty(FieldKind.Items);
+            if (Colony.Piles.Changed || Colony.Inventory.AcceptanceChanged || Colony.Starving != _haulStarving) Fields.MarkDirty(FieldKind.Items);
+            _haulStarving = Colony.Starving; // surface food is fetched first while the colony starves
             if (Buildings.BlueprintsChanged) Fields.MarkDirty(FieldKind.Build);
             if (Buildings.GuardsChanged) Fields.MarkDirty(FieldKind.Guard);
             // Moving targets: rebuilt at the refresh rate while anyone needs them.
@@ -1174,11 +1178,20 @@ namespace Antarium.Sim
                 late.Clear();
                 _haulSlots = 0;
                 bool anyScent = Pheromones.Cells[(int)PheromoneKind.Gather] > 0;
+                // Without Gather scent, piles underground (dug ore, finds) come first and forage on the surface comes
+                // forageHaulDelay cells later, so the forage refilling next to the nest doesn't keep the haulers from the
+                // mines; while the colony starves, food on the surface comes first again.
+                if (!anyScent) late = Fields.LateSources(FieldKind.Items, Config.colony.forageHaulDelay * FlowFields.StraightCost);
                 for (int i = 0; i < Colony.Piles.Count; i++)
                 {
                     var p = Colony.Piles[i];
                     if (!Colony.Inventory.CanAccept(p.Item) || Pheromones.Has(PheromoneKind.Avoid, p.Cell)) continue;
-                    bool first = !anyScent || Pheromones.Has(PheromoneKind.Gather, p.Cell);
+                    // Piles in caves nobody has found yet (wild mushrooms, golden apples) are no jobs: counted as haul slots
+                    // they drew every worker away from digging, off to whatever pile it could reach.
+                    if ((World.Cells[World.Index(p.Cell.x, p.Cell.y)].Flags & CellFlags.Explored) == 0) continue;
+                    bool first = anyScent
+                        ? Pheromones.Has(PheromoneKind.Gather, p.Cell)
+                        : World.Depth(p.Cell.x, p.Cell.y) >= ShelterDepth || Colony.Starving && Content.Items[p.Item].IsFood;
                     (first ? sources : late).Add(p.Cell);
                     _haulSlots += p.Count;
                 }

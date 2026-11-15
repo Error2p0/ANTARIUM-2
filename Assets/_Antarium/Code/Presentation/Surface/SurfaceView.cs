@@ -88,11 +88,17 @@ namespace Antarium.Presentation
         }
 
         readonly Streak[] _streaks = new Streak[MaxStreaks];
+        /// <summary>
+        /// Where the star layer is drawn relative to the world (cells): shooting stars live in sky space (world minus this) so
+        /// they travel with the stars when the camera moves, like the shader's star field (<c>starParallax</c>).
+        /// </summary>
+        float2 _skyShift;
         int _streakCount;
 
         /// <summary>A caught shooting star bursting into sparkles (Milestone 11): where (cell space) and how long ago.</summary>
         struct Burst
         {
+            /// <summary>Sky space (cells; add <see cref="_skyShift"/> to draw), like a shooting star's head.</summary>
             public float2 At;
             public float Age;
         }
@@ -223,6 +229,12 @@ namespace Antarium.Presentation
         {
             var world = sim.World;
             var surface = sim.Surface;
+            {
+                // The same shift as the shader's SceneryShift for the star layer (art pixels, then cells).
+                float2 cam = viewCenter * Ppu;
+                float horizon = (world.Height - _content.WorldGen.skyHeight) * WorldConstants.CellSize * Ppu;
+                _skyShift = math.round(new float2(cam.x, (cam.y - horizon) * _render.sceneryVertical) * (1f - _render.starParallax)) / CellPx;
+            }
             float2 min = (viewCenter - viewHalf) / WorldConstants.CellSize - 2f;
             float2 max = (viewCenter + viewHalf) / WorldConstants.CellSize + 2f;
 
@@ -427,7 +439,7 @@ namespace Antarium.Presentation
             float angle = math.radians(shower ? _rng.NextFloat(22f, 34f) : _rng.NextFloat(12f, 42f));
             _streaks[_streakCount++] = new Streak
             {
-                Head = new float2(_rng.NextFloat(min.x, max.x), _rng.NextFloat(math.lerp(low, high, 0.3f), high)),
+                Head = new float2(_rng.NextFloat(min.x, max.x), _rng.NextFloat(math.lerp(low, high, 0.3f), high)) - _skyShift, // sky space
                 Dir = new float2(math.cos(angle) * side, -math.sin(angle)),
                 Speed = _rng.NextFloat(12f, 24f),
                 Life = _rng.NextFloat(0.45f, 1f),
@@ -446,9 +458,10 @@ namespace Antarium.Presentation
                 var s = _streaks[i];
                 float env = math.saturate(s.Age / 0.08f) * math.saturate((s.Life - s.Age) / (s.Life * 0.45f));
                 if (env < 0.25f) continue; // too faint to see
-                // Distance to the bright part of the streak (its first third, from the head back).
-                float2 tail = s.Head - s.Dir * (s.Length / 3f / CellPx);
-                float2 seg = s.Head - tail;
+                // Distance to the bright part of the streak (its first third, from the head back), where it is drawn.
+                float2 head = s.Head + _skyShift;
+                float2 tail = head - s.Dir * (s.Length / 3f / CellPx);
+                float2 seg = head - tail;
                 float t = math.saturate(math.dot(cellPos - tail, seg) / math.max(1e-4f, math.lengthsq(seg)));
                 if (math.distance(cellPos, tail + seg * t) > radius) continue;
                 if (_burstCount < MaxBursts) _bursts[_burstCount++] = new Burst { At = s.Head };
@@ -467,12 +480,12 @@ namespace Antarium.Presentation
             {
                 var s = _streaks[i];
                 if (s.Age < 0.1f || s.Age > s.Life * 0.5f) continue;
-                float d = math.distance(s.Head, near);
+                float d = math.distance(s.Head + _skyShift, near);
                 if (d >= bestDist) continue;
                 bestDist = d;
                 best = i;
             }
-            cellPos = best >= 0 ? _streaks[best].Head : default;
+            cellPos = best >= 0 ? _streaks[best].Head + _skyShift : default;
             return best >= 0 && TryCatchStar(cellPos, 0.5f);
         }
 
@@ -496,7 +509,7 @@ namespace Antarium.Presentation
                     float len = (r & 1) == 0 ? reach : reach * 0.6f;
                     for (int p = 0; p < 2; p++)
                     {
-                        float2 at = math.floor(b.At * CellPx + dir * (len - p * 2f)) / Ppu;
+                        float2 at = math.floor((b.At + _skyShift) * CellPx + dir * (len - p * 2f)) / Ppu;
                         SpriteQuads.WriteUpright(v, quad++, at, new int2(1, 1), rect, new Color32(c.r, c.g, c.b, (byte)(alpha * (p == 0 ? 1f : 0.55f))), Unlit);
                     }
                 }
@@ -517,7 +530,7 @@ namespace Antarium.Presentation
                     float f = k / (float)s.Length;
                     float a = env * (1f - f * f); // solid near the head, thinning (dithered) toward the tail
                     if (a < 0.06f) break;
-                    float2 p = s.Head - s.Dir * (k / CellPx);
+                    float2 p = s.Head + _skyShift - s.Dir * (k / CellPx);
                     int cx = (int)math.floor(p.x);
                     if (cx < 0 || cx >= world.Width || p.y <= world.SurfaceY[cx] + 1.5f) continue;
                     var c = k < 2 ? White : star;
