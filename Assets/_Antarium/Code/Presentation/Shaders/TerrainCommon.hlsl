@@ -643,8 +643,17 @@ float TreeCrowns(int lx, float spacing, int seed)
     return best;
 }
 
-// Mountains: one straight-sided peak per feature width (random height, place and steepness), the highest one wins. `face` is
-// -1 on the sunlit side of its ridgeline and 1 on the shaded side; the ridgeline runs down from the summit at a slant, so
+// Rough 1D fractal noise in 0..1: broad swells with finer and finer jags on top.
+float Fbm1(float x, int seed)
+{
+    return LineNoise(x, seed, true) * 0.5 + LineNoise(x * 2.13, seed + 1, true) * 0.25
+         + LineNoise(x * 4.37, seed + 2, false) * 0.15 + LineNoise(x * 9.1, seed + 3, false) * 0.1;
+}
+
+// Mountains: one peak per feature width (random height, place, and a steepness of its own on each side), the highest one
+// wins. Real mountains rather than pyramids: the flanks are concave (steep under the summit, spreading into a broad foot),
+// the summit is blunt, and the ridgeline is rough rock, more jagged the higher it is. `face` is -1 on the sunlit side of
+// the peak's ridge and 1 on the shaded side; the ridge runs down from the summit at a slant and wanders like an arête, so
 // for a pixel `yh` high (in the same units as the peak heights) it is offset from the summit by the slant times the drop.
 float Peaks(float x, float yh, int seed, out float face)
 {
@@ -656,12 +665,27 @@ float Peaks(float x, float yh, int seed, out float face)
         int i = (int)i0 + k;
         float h = 0.35 + 0.65 * Hash21(int2(i, seed));
         float cx = i + 0.5 + (Hash21(int2(i, seed + 1)) - 0.5) * 0.6;
-        float slope = 1.1 + 0.9 * Hash21(int2(i, seed + 2));
+        float left = 1.0 + 0.9 * Hash21(int2(i, seed + 2));
+        float right = 1.0 + 0.9 * Hash21(int2(i, seed + 4));
         float slant = (Hash21(int2(i, seed + 3)) - 0.5) * 0.5;
-        float v = h - abs(x - cx) * slope;
-        if (v > best) { best = v; face = x - cx < (h - yh) * slant ? -1.0 : 1.0; }
+        float dx = x - cx;
+        // A blunt top: distance from the summit eased over a small radius.
+        float r = 0.075;
+        float d = (sqrt(dx * dx + r * r) - r) * (dx < 0.0 ? left : right) / h;
+        float v = h * pow(saturate(1.0 - d * 0.62), 1.75);
+        if (v > best)
+        {
+            best = v;
+            float drop = max(h - yh, 0.0);
+            float arete = (LineNoise(yh * 7.0, seed + i * 31, true) - 0.5) * 0.26 + (LineNoise(yh * 31.0, seed + i * 17, false) - 0.5) * 0.06;
+            face = dx < drop * (slant + arete) ? -1.0 : 1.0;
+        }
     }
-    return max(best, 0.0) + LineNoise(x * 5.0, seed + 17, false) * 0.05;
+    best = max(best, 0.0);
+    // Shoulders and lesser summits along the ridges, then rock along the ridgeline: notches and crags, stronger toward
+    // the summits than on the low foothills.
+    best += (LineNoise(x * 2.6, seed + 29, true) - 0.5) * 0.16 * best;
+    return best + (Fbm1(x * 7.0, seed + 17) - 0.5) * (0.03 + 0.11 * best);
 }
 
 // Top of layer k at layer column lx, in art pixels above the horizon; `ly` is the pixel's height (for the peaks' faces).
@@ -716,9 +740,12 @@ bool ApplyScenery(inout float3 albedo, int2 px)
 
         float4 sh = _AntScenery[k];
         float3 c = _AntSceneryColor[k].rgb;
-        bool snow = sh.x < 1.5 && more.y > 0.0 && ly > more.y * cell + (Hash21(int2(lx >> 1, 5)) - 0.5) * 4.0;
+        // The snow line dips down the gullies and rises over the ribs, a little lower on the shaded side.
+        float snowLine = more.y * cell + (LineNoise(lx / (3.0 * cell), 5, true) - 0.5) * 3.0 * cell + (Hash21(int2(lx >> 1, 5)) - 0.5) * 3.0
+                       + (face > 0.0 ? -0.6 * cell : 0.0);
+        bool snow = sh.x < 1.5 && more.y > 0.0 && ly > snowLine;
         if (snow) c = _AntSnow.rgb;
-        if (sh.x < 1.5) c *= face < 0.0 ? 1.1 : 0.88;      // sunlit left slopes, shaded right ones
+        if (sh.x < 1.5) c *= face < 0.0 ? 1.12 : 0.8;      // sunlit left slopes, shaded right ones
         else if (ly > ridge - 1.0) c *= 1.18;            // a lit rim along the top of hills and trees
         // Mist rises from the foot, up to half the layer's height (in eighths, ordered dither between them; flat above).
         float mist = saturate(1.0 - ly / max((sh.y + sh.z * 0.5) * cell, 1.0));
