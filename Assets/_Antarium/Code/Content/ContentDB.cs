@@ -137,6 +137,10 @@ namespace Antarium.Content
         public IReadOnlyList<EvolutionDef> Evolutions;
         /// <summary>Items that fall from surface plants by day (leaves).</summary>
         public IReadOnlyList<ItemDef> PlantForage;
+        /// <summary>Items that fall from berry bushes by day (berries, Milestone 11).</summary>
+        public IReadOnlyList<ItemDef> BushForage;
+        /// <summary>Mushrooms that pop up on the surface (toadstools, Milestone 11).</summary>
+        public IReadOnlyList<ItemDef> SurfaceMushrooms;
         /// <summary>Item the queen eats from the stock to lay faster (honeydew).</summary>
         public ItemDef RoyalTreat;
         /// <summary>Creatures that hunt on the surface at night.</summary>
@@ -284,6 +288,14 @@ namespace Antarium.Content
         public readonly ushort TabletMaterial;
         /// <summary>Items that fall from surface plants by day (leaves).</summary>
         public readonly ushort[] PlantForage;
+        /// <summary>Items that fall from berry bushes by day (berries, Milestone 11).</summary>
+        public readonly ushort[] BushForage;
+        /// <summary>Mushrooms that pop up on the surface (toadstools, Milestone 11).</summary>
+        public readonly ushort[] SurfaceMushrooms;
+        /// <summary>Per item: light it gives off while growing in the world (fraction of the max level per channel; 0 = none).</summary>
+        public readonly float3[] GrowthLight;
+        /// <summary>Cave growth rules baked (Milestone 11): item, biome index (-1 = any) and chance per floor cell.</summary>
+        public readonly (ushort Item, int Biome, float Chance)[] CaveGrowths;
         /// <summary>Item the queen eats from the stock to lay faster (honeydew), or <see cref="NoItem"/>.</summary>
         public readonly ushort RoyalTreat = NoItem;
         /// <summary>Biomes top to bottom (same order as <c>WorldGen.biomes</c>).</summary>
@@ -368,6 +380,24 @@ namespace Antarium.Content
             progression ??= new ProgressionContent();
             PlantForage = new ushort[progression.PlantForage?.Count ?? 0];
             for (int i = 0; i < PlantForage.Length; i++) PlantForage[i] = GetItemIndex(progression.PlantForage[i]);
+            BushForage = ItemIndices(progression.BushForage);
+            SurfaceMushrooms = ItemIndices(progression.SurfaceMushrooms);
+            GrowthLight = new float3[items.Length];
+            for (int i = 0; i < items.Length; i++)
+            {
+                var g = items[i].growthLight;
+                GrowthLight[i] = new float3(g.r, g.g, g.b) * g.a;
+            }
+            var growths = new List<(ushort, int, float)>();
+            if (worldGen.caveGrowths != null)
+                foreach (var rule in worldGen.caveGrowths)
+                {
+                    if (rule?.item == null || rule.chance <= 0f || !_itemIndex.TryGetValue(rule.item.Id, out ushort item)) continue;
+                    int biome = rule.biome != null ? worldGen.biomes.IndexOf(rule.biome) : -1;
+                    if (rule.biome != null && biome < 0) continue; // a biome this world doesn't have
+                    growths.Add((item, biome, rule.chance));
+                }
+            CaveGrowths = growths.ToArray();
             if (progression.RoyalTreat != null) RoyalTreat = GetItemIndex(progression.RoyalTreat);
             Enemies = BakeEnemies(progression.Enemies, progression.Raiders, progression.NightHunters, worldGen, progression.WorldModifiers,
                 out Raiders, out NightHunters);
@@ -977,6 +1007,8 @@ namespace Antarium.Content
                     Achievements = database.achievements,
                     Evolutions = database.evolutions,
                     PlantForage = database.plantForage,
+                    BushForage = database.bushForage,
+                    SurfaceMushrooms = database.surfaceMushrooms,
                     RoyalTreat = database.royalTreat,
                     NightHunters = database.nightHunters,
                     Lore = database.lore,
@@ -1072,6 +1104,13 @@ namespace Antarium.Content
             if (!_materialIndex.TryGetValue(def.Id, out var index))
                 throw new KeyNotFoundException($"Material '{def.Id}' is not registered in the ContentDatabase.");
             return index;
+        }
+
+        ushort[] ItemIndices(IReadOnlyList<ItemDef> list)
+        {
+            var result = new ushort[list?.Count ?? 0];
+            for (int i = 0; i < result.Length; i++) result[i] = GetItemIndex(list[i]);
+            return result;
         }
 
         public ushort GetItemIndex(ItemDef def)

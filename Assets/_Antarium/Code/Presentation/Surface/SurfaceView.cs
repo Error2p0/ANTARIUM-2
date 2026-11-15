@@ -28,7 +28,7 @@ namespace Antarium.Presentation
         const float BoltSeconds = 0.32f, BoltGapStart = 0.07f, BoltGapEnd = 0.11f, FlashSeconds = 0.5f;
         static readonly float2 Unlit = new(0f, -20000f);
 
-        // Plants (2 sway frames each): fern, bush, tall stalk with a flower. First row = top. Facing does not matter.
+        // Plants (2 sway frames each): fern, bush, tall stalk with a flower, berry bush (Milestone 11). First row = top. Facing does not matter.
         static readonly string[][][] Plants =
         {
             new[]
@@ -46,6 +46,11 @@ namespace Antarium.Presentation
                 new[] { "..fff..", ".fFyFf.", "..fff..", "...s...", "..ls...", ".lLs...", "...sl..", "...sLl.", "...s...", "..ls...", ".lLs...", "...s...", "...sl..", "...sLl.", "...s...", "...s..." },
                 new[] { "...fff.", "..fFyFf", "...fff.", "...s...", "..ls...", ".lLs...", "...sl..", "...sLl.", "...s...", "..ls...", ".lLs...", "...s...", "...sl..", "...sLl.", "...s...", "...s..." },
             },
+            new[]
+            {
+                new[] { "....lll......", "..llLLLll.l..", ".lLRLlLLLlLl.", "lLLqLLRLlLRLl", "LRLLLLqLLLqLL", ".qLlLRLLLlLL.", "..LLsLLLsRL..", "....s...s....", "....s...s...." },
+                new[] { ".....lll.....", "..llLLLll.l..", ".lLRLlLLLlLl.", "lLLqLLRLlLRLl", "LRLLLLqLLLqLL", ".qLlLRLLLlLL.", "..LLsLLLsRL..", "....s...s....", "....s...s...." },
+            },
         };
 
         static readonly string[][] Bird =
@@ -61,8 +66,8 @@ namespace Antarium.Presentation
         readonly SpriteMesh _front;
         readonly Texture2D _texture;
         readonly NativeArray<float4> _rects;
-        readonly int[] _plantRect = new int[3];
-        readonly int2[] _plantSize = new int2[3];
+        readonly int[] _plantRect = new int[4];
+        readonly int2[] _plantSize = new int2[4];
         readonly int _birdRect, _diveRect, _aphidRect, _shadowRect, _dropRect, _pixelRect;
         readonly int2 _birdSize, _diveSize;
         readonly Color32 _rainColor;
@@ -106,12 +111,12 @@ namespace Antarium.Presentation
         public float Flash { get; private set; }
         static readonly Color32 White = new(255, 255, 255, 255);
 
-        static readonly string[] PlantNames = { "plant_fern", "plant_bush", "plant_flower" };
+        static readonly string[] PlantNames = { "plant_fern", "plant_bush", "plant_flower", "plant_berry_bush" };
 
         /// <summary>The PNG names this view looks up, with their frame counts (for the art list and tests).</summary>
         public static readonly (string Name, int Frames)[] SlotNames =
         {
-            ("Surface/plant_fern", 2), ("Surface/plant_bush", 2), ("Surface/plant_flower", 2), ("Surface/bird", 2),
+            ("Surface/plant_fern", 2), ("Surface/plant_bush", 2), ("Surface/plant_flower", 2), ("Surface/plant_berry_bush", 2), ("Surface/bird", 2),
             ("Surface/bird_dive", 1), ("Surface/aphid", 2), ("Surface/bird_shadow", 1),
         };
 
@@ -126,7 +131,7 @@ namespace Antarium.Presentation
             {
                 ['l'] = Hex(0x9ad65a), ['L'] = Hex(0x5a9a34), ['s'] = Hex(0x4a6a24), ['f'] = Hex(0xf2a0c8), ['F'] = Hex(0xe060a0), ['y'] = Hex(0xffe060),
                 ['k'] = Hex(0x2a2430), ['b'] = Hex(0x4a3e48), ['o'] = Hex(0xf0b040),
-                ['g'] = Hex(0x8ad04a), ['G'] = Hex(0x3a6a20),
+                ['g'] = Hex(0x8ad04a), ['G'] = Hex(0x3a6a20), ['R'] = Hex(0xdc4430), ['q'] = Hex(0xa82420),
             };
 
             int x = 0;

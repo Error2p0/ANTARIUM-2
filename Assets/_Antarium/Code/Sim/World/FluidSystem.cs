@@ -475,7 +475,8 @@ namespace Antarium.Sim
                     level--;
 
                 // 4. Water near the surface (rain) soaks into the ground, so floods there drain again.
-                if (f.Kind == FluidKind.Water && level > 0 && SurfaceY[x] - y <= SoakDepth
+                // Lakes and rivers (Milestone 11) keep their water.
+                if (f.Kind == FluidKind.Water && level > 0 && SurfaceY[x] - y <= SoakDepth && (Cells[i].Flags & CellFlags.Lake) == 0
                     && (math.hash(new uint3((uint)i, Step, 0x50A6u)) & 0xFFFF) < SoakChance)
                     level--;
 

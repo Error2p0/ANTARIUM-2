@@ -41,6 +41,41 @@ MonoBehaviour:
   rootMaterial: {fileID: 11400000, guid: a286ed699116a39419d1c76776f52d9d, type: 2}
   rootLength: {x: 10, y: 32}
   rootMaxDepth: 60
+  berryBushShare: 0.25
+  lakeCount: {x: 2, y: 3}
+  riverCount: {x: 1, y: 2}
+  lakeWidth: {x: 14, y: 28}
+  lakeDepth: {x: 4, y: 7}
+  riverWidth: {x: 10, y: 18}
+  riverDepth: {x: 2, y: 3}
+  waterClearance: 110
+  waterSpacing: 24
+  waterBedMaterial: {fileID: 11400000, guid: 66f14a2537721424ca1b11819648d02d, type: 2}
+  waterBedDepth: 2
+  caveGrowths:
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: 45945662f98807044ba0a950bc89ce4a, type: 2}
+    chance: 0.05
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: 6dd87aa3e609aa848bd80e10513cee77, type: 2}
+    chance: 0.06
+  - item: {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+    biome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+    chance: 0.012
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+    chance: 0.04
+  - item: {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+    biome: {fileID: 11400000, guid: e34003af733857549a27adcfc89a230d, type: 2}
+    chance: 0.03
+  - item: {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+    biome: {fileID: 11400000, guid: bbdd45a9d3d3da6439706d3305f9878d, type: 2}
+    chance: 0.12
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: b3eeca26cf81ea4499940dbcea578f82, type: 2}
+    chance: 0.025
+  growthPatchScale: 0.07
+  maxCaveGrowths: 2500
   tabletMaterial: {fileID: 11400000, guid: 05761e1042302b4479dead0f149a8487, type: 2}
   tabletCount: 4
   tabletSpacing: 60

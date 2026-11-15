@@ -77,6 +77,17 @@ namespace Antarium.Sim
                           + noise.snoise(new float2(x * gen.surfaceFrequency * 3.1f, 7f) + surfaceOffset) * 0.25f;
                 world.SurfaceY[x] = baseSurface + (int)math.round(n * gen.surfaceAmplitude);
             }
+            // Lakes and rivers (Milestone 11): their basins are dug into the surface line before the terrain is filled in.
+            var water = SurfaceWater.Place(world.Width, gen, seed);
+            var rims = new int[water.Count];
+            for (int k = 0; k < water.Count; k++)
+            {
+                var b = water[k];
+                int rim = math.min(world.SurfaceY[b.X0 - 1], world.SurfaceY[b.X1 + 1]);
+                rims[k] = rim;
+                for (int x = b.X0; x <= b.X1; x++)
+                    world.SurfaceY[x] = math.min(world.SurfaceY[x], rim) - SurfaceWater.BedDepth(b, x);
+            }
 
             int depositTotal = 0, pocketTotal = 0;
             foreach (var b in gen.biomes)
@@ -179,6 +190,7 @@ namespace Antarium.Sim
                 surface.Dispose();
             }
 
+            FillWater(world, content, water, rims);
             GrowRoots(world, content, seed);
             PlaceTablets(world, content, seed, scale);
             CarveNest(world, gen);
@@ -228,6 +240,46 @@ namespace Antarium.Sim
                 int index = world.Index(floor.x, floor.y);
                 world.Cells[index] = new Cell(tablet, Cell.Full);
                 placed.Add(floor);
+            }
+        }
+
+        /// <summary>
+        /// Lakes and rivers (Milestone 11): each basin is filled with water up to its lower bank, its open cells are flagged
+        /// <see cref="CellFlags.Lake"/> (that water never soaks away), and the ground under it and on its banks becomes the
+        /// water bed material (sand). Only plain ground is replaced, never finds or bedrock.
+        /// </summary>
+        static void FillWater(WorldGrid world, ContentDB content, System.Collections.Generic.List<WaterBody> water, int[] rims)
+        {
+            var gen = content.WorldGen;
+            ushort bed = gen.waterBedMaterial != null ? content.GetMaterialIndex(gen.waterBedMaterial) : ContentDB.AirIndex;
+            ushort bedrock = content.GetMaterialIndex(gen.bedrock);
+            for (int k = 0; k < water.Count; k++)
+            {
+                var b = water[k];
+                for (int x = b.X0; x <= b.X1; x++)
+                for (int y = world.SurfaceY[x] + 1; y <= rims[k] && y < world.Height; y++)
+                {
+                    int i = world.Index(x, y);
+                    var cell = world.Cells[i];
+                    if (!cell.IsOpen) continue;
+                    cell.Flags |= CellFlags.Lake;
+                    world.Cells[i] = cell;
+                    world.Fluid[i] = new FluidCell(FluidKind.Water, FluidCell.Full);
+                }
+                if (bed == ContentDB.AirIndex) continue;
+                for (int x = b.X0 - 2; x <= b.X1 + 2; x++)
+                {
+                    if (x < 0 || x >= world.Width) continue;
+                    if (!b.Contains(x) && world.SurfaceY[x] > rims[k] + 1) continue; // a bank on a hill keeps its grass
+                    int rows = b.Contains(x) ? math.max(1, gen.waterBedDepth) : math.max(1, gen.grassDepth);
+                    for (int y = world.SurfaceY[x]; y > world.SurfaceY[x] - rows && y > 0; y--)
+                    {
+                        int i = world.Index(x, y);
+                        var cell = world.Cells[i];
+                        if (cell.IsOpen || cell.Material == bedrock || content.MaterialSim[cell.Material].DropItem != ContentDB.NoItem) continue;
+                        world.Cells[i] = new Cell(bed, cell.Density, cell.Flags);
+                    }
+                }
             }
         }
 

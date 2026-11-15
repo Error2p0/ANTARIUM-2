@@ -28,10 +28,50 @@ namespace Antarium.Sim
         /// <summary>Light emitted by a burning cell (fraction of the max level per channel).</summary>
         public float3 FireEmission;
 
+        /// <summary>
+        /// Light given off by things in open cells that are not terrain (glowing mushrooms, Milestone 11): cell index to its
+        /// cell and RGB (a fraction of the max level). Kept by whoever owns those things; not saved. Mirrored into two native
+        /// lists for the job whenever it changes.
+        /// </summary>
+        readonly System.Collections.Generic.Dictionary<int, (int2 Cell, float3 Rgb)> _extra = new();
+        NativeList<int2> _extraCells;
+        NativeList<float3> _extraRgb;
+        bool _extraDirty;
+
         public LightSystem(WorldGrid world, LightConfig config)
         {
             _config = config;
             Light = new NativeArray<uint>(world.Width * world.Height, Allocator.Persistent);
+            _extraCells = new NativeList<int2>(64, Allocator.Persistent);
+            _extraRgb = new NativeList<float3>(64, Allocator.Persistent);
+        }
+
+        /// <summary>Number of extra emitters (glowing mushrooms).</summary>
+        public int EmitterCount => _extra.Count;
+
+        /// <summary>
+        /// Sets (or with a black <paramref name="rgb"/>, clears) the extra light emitted at <paramref name="cell"/>; the light
+        /// around it is recomputed with the next <see cref="UpdateDirty"/>.
+        /// </summary>
+        public void SetEmitter(WorldGrid world, int2 cell, float3 rgb)
+        {
+            if (!world.InBounds(cell.x, cell.y)) return;
+            int index = world.Index(cell.x, cell.y);
+            if (math.cmax(rgb) > 0f)
+            {
+                if (_extra.TryGetValue(index, out var old) && old.Rgb.Equals(rgb)) return;
+                _extra[index] = (cell, rgb);
+            }
+            else if (!_extra.Remove(index)) return;
+            _extraDirty = true;
+            world.MarkChanged(cell.x, cell.y, ChunkFlags.LightRecompute);
+        }
+
+        /// <summary>Removes every extra emitter (without relighting; a new colony or a load follows).</summary>
+        public void ClearEmitters()
+        {
+            _extra.Clear();
+            _extraDirty = true;
         }
 
         public int Reach => (_config.maxLevel + _config.openCost - 1) / _config.openCost;
@@ -44,34 +84,80 @@ namespace Antarium.Sim
                 world.Chunks[i] = (world.Chunks[i] & ~ChunkFlags.LightRecompute) | ChunkFlags.LightUpload;
         }
 
-        /// <summary>Recomputes light around chunks flagged <see cref="ChunkFlags.LightRecompute"/>. Returns true if anything ran.</summary>
+        readonly System.Collections.Generic.List<int4> _clusters = new();
+
+        /// <summary>
+        /// Recomputes light around chunks flagged <see cref="ChunkFlags.LightRecompute"/>. Returns true if anything ran.
+        /// Dirty chunks are grouped into clusters (chunks within two chunks of each other's box) and each cluster is
+        /// relit on its own, so changes far apart (a mushroom regrowing in another cave while you dig) don't relight
+        /// everything between them. Each region is computed from scratch, so the result is exact whatever the grouping.
+        /// </summary>
         public bool UpdateDirty(WorldGrid world, NativeArray<MaterialSim> materials)
         {
-            int2 min = int.MaxValue, max = int.MinValue;
+            _clusters.Clear();
             for (int i = 0; i < world.Chunks.Length; i++)
             {
                 if ((world.Chunks[i] & ChunkFlags.LightRecompute) == 0) continue;
                 world.Chunks[i] &= ~ChunkFlags.LightRecompute;
                 var c = new int2(i % world.ChunksX, i / world.ChunksX);
-                min = math.min(min, c);
-                max = math.max(max, c);
+                _clusters.Add(new int4(c, c));
             }
-            if (min.x == int.MaxValue) return false;
+            if (_clusters.Count == 0) return false;
+
+            // Merge clusters whose boxes come within MergeGap chunks of each other until none do.
+            const int MergeGap = 2;
+            for (bool merged = true; merged;)
+            {
+                merged = false;
+                for (int a = 0; a < _clusters.Count; a++)
+                for (int b = _clusters.Count - 1; b > a; b--)
+                {
+                    int4 p = _clusters[a], q = _clusters[b];
+                    if (q.x > p.z + MergeGap || p.x > q.z + MergeGap || q.y > p.w + MergeGap || p.y > q.w + MergeGap) continue;
+                    _clusters[a] = new int4(math.min(p.xy, q.xy), math.max(p.zw, q.zw));
+                    _clusters.RemoveAt(b);
+                    merged = true;
+                }
+            }
 
             int reach = Reach;
             int2 worldMax = new int2(world.Width, world.Height);
-            int2 dstMin = math.max(min * WorldConstants.ChunkSize - reach, 0);
-            int2 dstMax = math.min((max + 1) * WorldConstants.ChunkSize + reach, worldMax);
-            int2 srcMin = math.max(dstMin - reach, 0);
-            int2 srcMax = math.min(dstMax + reach, worldMax);
-            Compute(world, materials, new int4(srcMin, srcMax), new int4(dstMin, dstMax));
+            // Many scattered clusters (all the mushrooms of a new world): one box over them all is cheaper.
+            int4 all = _clusters[0];
+            long separate = 0;
+            foreach (var box in _clusters)
+            {
+                all = new int4(math.min(all.xy, box.xy), math.max(all.zw, box.zw));
+                separate += SourceArea(box, reach, worldMax);
+            }
+            if (_clusters.Count > 1 && separate >= SourceArea(all, reach, worldMax))
+            {
+                _clusters.Clear();
+                _clusters.Add(all);
+            }
+            foreach (var box in _clusters)
+            {
+                int2 dstMin = math.max(box.xy * WorldConstants.ChunkSize - reach, 0);
+                int2 dstMax = math.min((box.zw + 1) * WorldConstants.ChunkSize + reach, worldMax);
+                int2 srcMin = math.max(dstMin - reach, 0);
+                int2 srcMax = math.min(dstMax + reach, worldMax);
+                Compute(world, materials, new int4(srcMin, srcMax), new int4(dstMin, dstMax));
 
-            int2 cMin = dstMin >> WorldConstants.ChunkShift;
-            int2 cMax = (dstMax - 1) >> WorldConstants.ChunkShift;
-            for (int cy = cMin.y; cy <= cMax.y; cy++)
-            for (int cx = cMin.x; cx <= cMax.x; cx++)
-                world.Chunks[cy * world.ChunksX + cx] |= ChunkFlags.LightUpload;
+                int2 cMin = dstMin >> WorldConstants.ChunkShift;
+                int2 cMax = (dstMax - 1) >> WorldConstants.ChunkShift;
+                for (int cy = cMin.y; cy <= cMax.y; cy++)
+                for (int cx = cMin.x; cx <= cMax.x; cx++)
+                    world.Chunks[cy * world.ChunksX + cx] |= ChunkFlags.LightUpload;
+            }
             return true;
+        }
+
+        /// <summary>Cells the flood fill reads to relight a box of chunks (the box plus twice the light's reach around it).</summary>
+        static long SourceArea(int4 box, int reach, int2 worldMax)
+        {
+            int2 lo = math.max(box.xy * WorldConstants.ChunkSize - 2 * reach, 0);
+            int2 hi = math.min((box.zw + 1) * WorldConstants.ChunkSize + 2 * reach, worldMax);
+            return (long)(hi.x - lo.x) * (hi.y - lo.y);
         }
 
         /// <summary>Sky light scale used by <see cref="Sample(WorldGrid, int, int)"/> (the presentation sets it from the time of day).</summary>
@@ -96,6 +182,17 @@ namespace Antarium.Sim
 
         void Compute(WorldGrid world, NativeArray<MaterialSim> materials, int4 src, int4 dst)
         {
+            if (_extraDirty)
+            {
+                _extraDirty = false;
+                _extraCells.Clear();
+                _extraRgb.Clear();
+                foreach (var e in _extra.Values)
+                {
+                    _extraCells.Add(e.Cell);
+                    _extraRgb.Add(e.Rgb);
+                }
+            }
             int count = (src.z - src.x) * (src.w - src.y);
             var level = new NativeArray<byte>(count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             var cost = new NativeArray<byte>(count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -109,6 +206,8 @@ namespace Antarium.Sim
                     Fluid = world.Fluid,
                     Lava = LavaEmission,
                     Fire = FireEmission,
+                    ExtraCells = _extraCells.AsArray(),
+                    ExtraRgb = _extraRgb.AsArray(),
                     Materials = materials,
                     Light = Light,
                     ChunksX = world.ChunksX,
@@ -135,6 +234,8 @@ namespace Antarium.Sim
         public void Dispose()
         {
             if (Light.IsCreated) Light.Dispose();
+            if (_extraCells.IsCreated) _extraCells.Dispose();
+            if (_extraRgb.IsCreated) _extraRgb.Dispose();
         }
 
         /// <summary>
@@ -150,6 +251,9 @@ namespace Antarium.Sim
             public NativeArray<uint> Light;
             public float3 Lava;
             public float3 Fire;
+            /// <summary>Extra emitters in open cells (glowing mushrooms) and their light.</summary>
+            [ReadOnly] public NativeArray<int2> ExtraCells;
+            [ReadOnly] public NativeArray<float3> ExtraRgb;
 
             public int ChunksX;
             public int4 Src; // xMin, yMin, xMax (exclusive), yMax (exclusive)
@@ -188,6 +292,18 @@ namespace Antarium.Sim
                         Level[local] = e;
                         if (e > 0) Push(e, local);
                     }
+                    if (channel < 3)
+                        for (int k = 0; k < ExtraCells.Length; k++)
+                        {
+                            int2 c = ExtraCells[k];
+                            if (c.x < Src.x || c.y < Src.y || c.x >= Src.z || c.y >= Src.w) continue;
+                            if (!Cells[GridIndex.Of(c.x, c.y, ChunksX)].IsOpen) continue;
+                            byte e = (byte)math.clamp((int)math.round(ExtraRgb[k][channel] * MaxLevel), 0, MaxLevel);
+                            int local = (c.y - Src.y) * w + (c.x - Src.x);
+                            if (e <= Level[local]) continue;
+                            Level[local] = e;
+                            Push(e, local);
+                        }
 
                     for (int l = MaxLevel; l > 0; l--)
                     {

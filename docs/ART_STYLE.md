@@ -103,6 +103,8 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
 | Princess | 14 × 10 | 3 (resting, wings up, wings back) | flight: frames 1–2 at 12 per second | `Colony/princess` |
 | Egg | 4 × 5 | 1 | | `Colony/egg` |
 | Pile / carried lump | 6 × 4 / 3 × 3 | 1 | greyscale, tinted with the item colour | `Colony/pile`, `Colony/carry` |
+| Mushroom / glowing mushroom / toadstool (Milestone 11) | 7 × 7 | 1 | their own colours, standing on the bottom row; the glowing one is drawn unlit (it lights its cave through the light map); mirrored by column | `Colony/mushroom`, `glow_mushroom`, `toadstool` |
+| Berries (Milestone 11) | 5 × 4 | 1 | their own colours | `Colony/berries` |
 | Golden beetle | 10 × 6 | 2 walk | | `Colony/golden_beetle` |
 | Golden aphid | 6 × 5 | 2 | 2.5 per second | `Colony/golden_aphid` |
 | Marker | 3 × 3 | 1 | white, tinted | `Colony/marker` (generated) |
@@ -110,7 +112,7 @@ lean warm / yellow. A sprite uses **one main ramp** (3–5 tones) plus small acc
 | Cave spider / wolf spider | 11 × 7 / 12 × 7 | 2 walk | | `Enemies/spider`, `Enemies/wolf_spider` |
 | Fungal mite / fire beetle | 6 × 5 / 12 × 7 | 2 walk | | `Enemies/mite`, `Enemies/fire_beetle` |
 | Ruin guardian | 14 × 12 | 2 walk | | `Enemies/guardian` |
-| Fern / bush / flower | 11 × 12 / 13 × 9 / 7 × 16 | 2 sway (the top leans 1 px) | slow, per plant | `Surface/plant_fern`, `plant_bush`, `plant_flower` |
+| Fern / bush / flower / berry bush | 11 × 12 / 13 × 9 / 7 × 16 / 13 × 9 | 2 sway (the top leans 1 px) | slow, per plant | `Surface/plant_fern`, `plant_bush`, `plant_flower`, `plant_berry_bush` (Milestone 11) |
 | Bird / dive | 14 × 6 / 8 × 6 | 2 flap / 1 | 6–8 per second | `Surface/bird`, `Surface/bird_dive` |
 | Ranch aphid | 3 × 2 | 2 | | `Surface/aphid` |
 | Bird shadow | 16 × 4 | 1 | dithered | `Surface/bird_shadow` (generated) |
@@ -198,8 +200,9 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 
 ## 9. What exists
 
-202 PNGs, all in use since 10.6. Drawn in the new style: **the whole colony** (10 castes with the glow ant's halo, queen, princess, egg,
-item lumps, golden beetle and aphid), **every building** (30 PNGs, with the Crystal Resonator, the Ancient Engine and the Queen's Throne), **the 9 enemies**
+211 PNGs, all in use (Milestone 11 batch 4 added 9: the mushroom, glowing mushroom, toadstool and berry sprites, the berry bush and their
+four item icons). Drawn in the new style: **the whole colony** (10 castes with the glow ant's halo, queen, princess, egg,
+item lumps, wild food, golden beetle and aphid), **every building** (30 PNGs, with the Crystal Resonator, the Ancient Engine and the Queen's Throne), **the 9 enemies**
 (with the rival ant and the mole cricket's walk and dig frames), **the surface** (plants, bird, aphid), **all 30
 terrain tiles** (with the ancient tablet and the three 10.6 biome variant rocks `ember_stone`, `gley_clay`, `amethyst`: the stone, clay and
 quartzite painters with the ramps `ember`, `gley` and `AMETHYST`), the UI skin (frame, button bevels, inset; `frame_queen`, `frame_codex`, `frame_slot`), **the icons** (items, buildings, castes, tools,

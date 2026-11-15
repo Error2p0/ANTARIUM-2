@@ -140,6 +140,21 @@ def plant_flower():
     ], 7, keys(PLANT + "f=petal:3 F=petal:2 y=gold:4 Y=gold:5"))
 
 
+def plant_berry_bush():
+    """Berry bush (Milestone 11): a bush hung with red berries; berries fall under it by day."""
+    return sway([
+        "....45554....",
+        "..455545554..",
+        ".45R44554554.",
+        "4554r54455R54",
+        "4R44554r54544",
+        ".34454R45443.",
+        "..33w444w33..",
+        "....w...w....",
+        "....w...w....",
+    ], 3, keys(PLANT + "R=red:3 r=red:2 w=wood:3"))
+
+
 BIRD = keys("4=stone:2 3=stone:1 b=stone:0 B=stone:3 e=#ffffff o=gold:3")
 
 
@@ -160,4 +175,4 @@ def aphid():
     return two([[".55", "543"], ["55.", "543"]], key)
 
 
-SURFACE = {"plant_fern": plant_fern, "plant_bush": plant_bush, "plant_flower": plant_flower, "bird": bird, "bird_dive": bird_dive, "aphid": aphid}
+SURFACE = {"plant_fern": plant_fern, "plant_bush": plant_bush, "plant_flower": plant_flower, "plant_berry_bush": plant_berry_bush, "bird": bird, "bird_dive": bird_dive, "aphid": aphid}

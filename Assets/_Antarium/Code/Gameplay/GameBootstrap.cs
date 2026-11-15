@@ -34,6 +34,9 @@ namespace Antarium.Gameplay
         [Header("Scene")]
         [SerializeField] Camera worldCamera;
         [SerializeField] Light2D globalLight;
+        /// <summary>Capture shots light the whole view with this instead (negative = the normal ambient, Milestone 11).</summary>
+        float _ambientOverride = -1f;
+        float _ambient = -1f;
         [SerializeField] UIDocument hudDocument;
 
         [Header("Rendering")]
@@ -705,6 +708,7 @@ namespace Antarium.Gameplay
                 if (possessing) FollowPossessed(dt);
             }
             _camera.Apply(dt, _worldSize);
+            UpdateAmbient(dt);
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
             _pointerCell = WorldGrid.WorldToCell(pointerWorld);
 
@@ -962,6 +966,27 @@ namespace Antarium.Gameplay
         }
 
         /// <summary>The pointer is on the queen's sprite (24 x 12 art pixels standing on her cell's floor).</summary>
+        /// <summary>
+        /// Milestone 11: the global light rises by <c>undergroundAmbient</c> while the camera is underground (faded in over
+        /// <c>undergroundFade</c> cells below the ground under it), so revealed tunnels and rock read better down there.
+        /// </summary>
+        void UpdateAmbient(float dt)
+        {
+            if (globalLight == null || _sim == null) return;
+            var r = config.render;
+            float target;
+            if (_ambientOverride >= 0f) target = _ambient = _ambientOverride;
+            else
+            {
+                int2 cell = WorldGrid.WorldToCell(_camera.Position);
+                float depth = _sim.World.Depth(cell.x, cell.y);
+                float under = math.smoothstep(r.undergroundFade.x, math.max(r.undergroundFade.x + 0.01f, r.undergroundFade.y), depth);
+                target = r.ambient + r.undergroundAmbient * under;
+                _ambient = _ambient < 0f ? target : math.lerp(_ambient, target, 1f - math.exp(-4f * dt));
+            }
+            globalLight.intensity = _ambient;
+        }
+
         bool PointerOnQueen(float2 pointerWorld)
         {
             float2 floor = WorldGrid.CellCenterToWorld(_sim.Colony.QueenCell) - new float2(0f, WorldConstants.CellSize * 0.5f);

@@ -106,12 +106,12 @@ namespace Antarium.Gameplay
                 while (depth < _sim.World.Height && _sim.BiomeAtDepth(depth) < biome) depth++;
                 var cell = new int2(x, _sim.World.SurfaceY[x] - depth - 40);
                 Reveal.Around(_sim.World, cell, 34);
-                if (globalLight != null) globalLight.intensity = 0.8f;
+                _ambientOverride = 0.8f;
                 Cam(cell, 3);
                 yield return Seconds(0.5f);
                 yield return Still("bloodline_variant_" + name);
             }
-            if (globalLight != null) globalLight.intensity = config.render.ambient;
+            _ambientOverride = -1f;
         }
     }
 }

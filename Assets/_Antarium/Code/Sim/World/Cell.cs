@@ -21,6 +21,8 @@ namespace Antarium.Sim
         Scanned = 1 << 5,
         /// <summary>Open cell taken by a pump or water wheel: fluid can't flow into it (ants still walk through).</summary>
         FluidBlock = 1 << 6,
+        /// <summary>Open cell of a lake or river basin on the surface (Milestone 11): water here never soaks into the ground.</summary>
+        Lake = 1 << 7,
     }
 
     /// <summary>

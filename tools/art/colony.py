@@ -275,3 +275,30 @@ def golden_aphid():
     key = keys("2=gold:1 3=gold:2 4=gold:3 5=gold:4 6=gold:5 a=gold:1 l=wood:1")
     body = [".4554.", "456543", "344432"]
     return strip([sprite(["..a.a."] + body + [".l.l.."], key), sprite(["...aa."] + body + ["..l.l."], key)])
+
+
+# ---------------------------------------------------------------- wild food on the ground (Milestone 11)
+# Their own colours (not tinted): 7 x 7 mushrooms standing on the bottom row, a 5 x 4 bunch of berries.
+
+def mushroom():
+    """Cave mushroom: a tan cap lit from the top left, dark gills, a pale stem."""
+    key = keys("6=earth:6 5=earth:5 4=earth:4 2=earth:2 3=earth:3 s=silk:4 S=silk:3 t=silk:2")
+    return sprite(["..665..", ".66654.", "6665544", ".23332.", "...sS..", "...sS..", "..ssSt."], key)
+
+
+def glow_mushroom():
+    """Glowing mushroom: a bright spore-green cap (drawn unlit, it lights its cave), a violet stem and a small sprout beside it."""
+    key = keys("5=spore:5 4=spore:4 3=spore:3 2=spore:2 s=fungus:5 S=fungus:4")
+    return sprite(["...5...", "..454..", ".45554.", "4445443", ".22s22.", "...s.45", "..ssS.S"], key)
+
+
+def toadstool():
+    """Toadstool (surface mushroom): a red cap with white spots, a cream stem."""
+    key = keys("4=red:4 3=red:3 2=red:2 w=silk:5 t=silk:2 s=silk:5 S=silk:3")
+    return sprite(["..434..", ".4w433.", "44333w2", "2w33322", ".ttttt.", "..sSS..", "..sSS.."], key)
+
+
+def berries():
+    """A bunch of berries with a leaf."""
+    key = keys("4=red:4 3=red:3 2=red:2 g=grass:4 G=grass:3")
+    return sprite(["..gG.", ".4343", "43232", "32.2."], key)

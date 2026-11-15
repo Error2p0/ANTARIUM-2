@@ -87,6 +87,7 @@ namespace Antarium.Gameplay
             else if (!pointerOverUi)
             {
                 DescribeStock(sim, cell);
+                if (_sb.Length == 0) DescribeWild(sim, cell);
                 if (_sb.Length == 0) DescribeFind(sim, cell);
                 if (_sb.Length == 0) DescribeFluid(sim, cell);
                 if (_sb.Length == 0) DescribeFire(sim, cell);
@@ -241,6 +242,36 @@ namespace Antarium.Gameplay
                 .Append(Keys.Ores).Append(": the ore overlay.");
         }
 
+        /// <summary>Wild food on the ground (Milestone 11): mushrooms, toadstools, berries, and cave spots where a picked mushroom grows back.</summary>
+        void DescribeWild(Simulation sim, int2 cell)
+        {
+            if (!IsVisible(sim, cell)) return;
+            int spot = sim.Wild.IndexAt(cell);
+            for (int i = 0; i < _content.Items.Length; i++)
+            {
+                var item = _content.Items[i];
+                if (item.pileArt == PileArt.Heap || sim.Colony.Piles.CountAt(cell, (ushort)i) == 0) continue;
+                Icon = "item_" + item.Id;
+                _sb.Append(item.DisplayName).Append("  -  ").Append(item.foodValue.ToString("0.#")).Append(" food. ");
+                if (spot >= 0)
+                {
+                    _sb.Append("Workers pick it up once your tunnels reach this cave; it grows back a few minutes later.");
+                    if (math.cmax(sim.Content.GrowthLight[i]) > 0f) _sb.Append(" It lights up the cave while it stands.");
+                }
+                else if (item.pileArt == PileArt.Berries) _sb.Append("Berries fall under berry bushes by day; workers bring them home.");
+                else if (item.pileArt == PileArt.Toadstool) _sb.Append("Toadstools pop up on the surface near the nest, most often during and after rain.");
+                else _sb.Append("Workers bring it home.");
+                return;
+            }
+            if (spot < 0) return;
+            var g = sim.Wild.Growths[spot];
+            if (g.Grown) return;
+            Icon = "item_" + _content.Items[g.Item].Id;
+            _sb.Append("Picked ").Append(_content.Items[g.Item].DisplayName.ToLowerInvariant()).Append("  -  ");
+            if (g.Timer > 0f) _sb.Append("grows back in about ").Append(HudText.Duration(g.Timer)).Append('.');
+            else _sb.Append("grows back once the floor is clear (no building, storage or deep water).");
+        }
+
         static string CasteIcon(AntCaste caste) => "caste_" + caste.ToString().ToLowerInvariant();
 
         void DescribeFluid(Simulation sim, int2 cell)
@@ -252,6 +283,12 @@ namespace Antarium.Gameplay
             bool deep = f.Level >= sim.World.DeepFluid;
             switch (f.Kind)
             {
+                case FluidKind.Water when (sim.World[cell.x, cell.y].Flags & CellFlags.Lake) != 0:
+                    int body = SurfaceWater.At(sim.Surface.Water, cell.x);
+                    _sb.Append(body >= 0 && sim.Surface.Water[body].River ? "River" : "Lake")
+                        .Append("  -  too deep to walk: ants go around it, underground. It never dries up and rain tops it up.")
+                        .Append("\nDig under it and it pours into your tunnels: leave a few cells of rock, or wall the tunnel off.");
+                    break;
                 case FluidKind.Water:
                     _sb.Append("Water ").Append(percent).Append('%');
                     _sb.Append(deep ? "  -  too deep to walk: ants avoid it and drown if caught inside." : "  -  shallow; it slowly dries up in your tunnels.");

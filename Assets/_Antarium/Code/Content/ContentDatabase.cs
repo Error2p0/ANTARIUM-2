@@ -32,6 +32,10 @@ namespace Antarium.Content
         public List<ItemDef> surfaceForage = new();
         [Tooltip("Items that fall from surface plants by day (leaves).")]
         public List<ItemDef> plantForage = new();
+        [Tooltip("Items that fall from berry bushes by day (berries, Milestone 11).")]
+        public List<ItemDef> bushForage = new();
+        [Tooltip("Mushrooms that pop up on the surface, more after rain (toadstools, Milestone 11).")]
+        public List<ItemDef> surfaceMushrooms = new();
         [Tooltip("Item the queen eats from the stock to lay faster (honeydew).")]
         public ItemDef royalTreat;
         [Tooltip("Creatures that hunt on the surface at night.")]

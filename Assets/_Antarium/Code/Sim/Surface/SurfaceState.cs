@@ -77,6 +77,8 @@ namespace Antarium.Sim
 
         /// <summary>Plants along the ground surface (from the seed; see <see cref="SurfacePlants"/>).</summary>
         public readonly List<SurfacePlant> Plants = new();
+        /// <summary>Lakes and rivers (from the seed; see <see cref="SurfaceWater"/>; Milestone 11). Worlds made before have none, though the list is filled.</summary>
+        public readonly List<WaterBody> Water = new();
 
         /// <summary>Daylight at time of day <paramref name="t"/>: 1 from sunrise to sunset, 0 at night, smooth in between.</summary>
         public static float DaylightAt(float t, SurfaceConfig config)

@@ -27,6 +27,11 @@ namespace Antarium.Tests
         public readonly ItemDef Ore, Seed, Bar, Chitin;
         /// <summary>Surface (10.2): leaves fall from plants, honeydew is the queen's treat, roots drop fibre.</summary>
         public readonly ItemDef Leaf, Honeydew, Fibre;
+        /// <summary>
+        /// Milestone 11 wild food: Berry (3 food, falls from berry bushes), Toadstool (4, pops up on the surface), Mushroom (4) and
+        /// GlowMushroom (6, gives off light while it grows) for cave growth rules. Berries and toadstools stay off unless a test asks.
+        /// </summary>
+        public readonly ItemDef Berry, Toadstool, Mushroom, GlowMushroom;
         /// <summary>Ranch: 2 leaves -> 1 honeydew (art Ranch, so the golden aphid can appear in it).</summary>
         public readonly BuildingDef Ranch;
         public readonly EnemyDef WolfSpider;
@@ -104,6 +109,19 @@ namespace Antarium.Tests
             Bar = Make<ItemDef>("bar");
             Chitin = Make<ItemDef>("chitin");
             Leaf = Make<ItemDef>("leaf");
+            Berry = Make<ItemDef>("berry");
+            Berry.foodValue = 3f;
+            Berry.pileArt = PileArt.Berries;
+            Toadstool = Make<ItemDef>("toadstool");
+            Toadstool.foodValue = 4f;
+            Toadstool.pileArt = PileArt.Toadstool;
+            Mushroom = Make<ItemDef>("mushroom");
+            Mushroom.foodValue = 4f;
+            Mushroom.pileArt = PileArt.Mushroom;
+            GlowMushroom = Make<ItemDef>("glow_mushroom");
+            GlowMushroom.foodValue = 6f;
+            GlowMushroom.pileArt = PileArt.GlowMushroom;
+            GlowMushroom.growthLight = new Color(0.3f, 0.95f, 0.8f, 0.5f);
             Honeydew = Make<ItemDef>("honeydew");
             Fibre = Make<ItemDef>("fibre");
             Coal = Make<ItemDef>("coal");
@@ -525,6 +543,8 @@ namespace Antarium.Tests
                 Genetics = new[] { GeneJaws, GeneBrood, GeneStart, GeneInherit, GeneVein, GeneRoyal, GeneStrange, GeneGain, GeneThrone },
                 WorldModifiers = new[] { ModHard, ModRich, ModShallow, ModVariant },
                 PlantForage = new[] { Leaf },
+                BushForage = new[] { Berry },
+                SurfaceMushrooms = new[] { Toadstool },
                 RoyalTreat = Honeydew,
                 NightHunters = new[] { WolfSpider },
             };
@@ -572,14 +592,22 @@ namespace Antarium.Tests
             Config.surface.firstWeatherSeconds = 1e9f;
             Config.surface.firstBirdSeconds = 1e9f;
             Config.surface.firstSpiderSeconds = 1e9f;
+            Config.wild.berryInterval = 1e9f;      // no berries or toadstools either (Milestone 11)
+            Config.wild.toadstoolInterval = 1e9f;
             // Ants hatch without traits and walk at one speed unless a test asks (10.4).
             Config.growth.traitChance = 0f;
             Config.growth.speedJitter = 0f;
 
+            DB = Rebuild();
+        }
+
+        /// <summary>Bakes the content again (after a test changed <see cref="WorldGen"/>, e.g. its cave growth rules). The caller disposes it.</summary>
+        public ContentDB Rebuild()
+        {
             // Deliberately not air-first, to exercise ContentDB ordering.
-            DB = ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash, TabletRock,
+            return ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash, TabletRock,
                     VariantRock },
-                WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal, Relic, Tablet }, null,
+                WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal, Relic, Tablet, Berry, Toadstool, Mushroom, GlowMushroom }, null,
                 new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch,
                     Pump, Wheel, Forge, Farm, Resonator, Engine, Scriptorium, Throne },
                 Progression);
@@ -610,7 +638,7 @@ namespace Antarium.Tests
         /// <summary>The same content registered in a different order (indices change, ids don't). Dispose it yourself.</summary>
         public ContentDB BuildReordered() =>
             ContentDB.Build(new[] { VariantRock, TabletRock, Ash, Magma, CoalRock, Root, OreRock, Packed, Obsidian, Sand, Meteor, Bedrock, Crystal, Stone, Grass, Air, Dirt }, WorldGen,
-                new[] { Tablet, Relic, Coal, Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
+                new[] { GlowMushroom, Mushroom, Toadstool, Berry, Tablet, Relic, Coal, Fibre, Honeydew, Leaf, Chitin, Bar, Seed, Ore }, null,
                 new[] { Throne, Scriptorium, Engine, Resonator, Farm, Forge, Wheel, Pump, Ranch, Mixer, IronBelt, Unloader, Chest, Chamber, Emitter, Nursery, Wall, Post, Trap,
                     Gate, Lab, Filter, Splitter, Lift, Belt, Smelter },
                 Progression);

@@ -64,7 +64,14 @@ namespace Antarium.Presentation
         /// <summary>A body segment of the giant worm (Milestone 11): 2 frames (its rings shift as it crawls), drawn along its body.</summary>
         public const int WormBodyRect = MoleDigRect + 2;
         public const int WormBodyWidth = 8, WormBodyHeight = 7;
-        const int RectCount = WormBodyRect + 2;
+        /// <summary>
+        /// Wild food lying on the ground (Milestone 11, <see cref="PileArt"/>): a cave mushroom, a glowing mushroom and a toadstool
+        /// (<see cref="MushroomSize"/> square, standing on the bottom row) and berries.
+        /// </summary>
+        public const int MushroomRect = WormBodyRect + 2, GlowMushroomRect = MushroomRect + 1, ToadstoolRect = MushroomRect + 2,
+            BerriesRect = MushroomRect + 3;
+        public const int MushroomSize = 7, BerriesWidth = 5, BerriesHeight = 4;
+        const int RectCount = BerriesRect + 1;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -134,6 +141,10 @@ namespace Antarium.Presentation
         static readonly string[] Pile = { ".wwg..", "wwggg.", "ggggkk", ".kkkk." };
         static readonly string[] Carry = { "wg.", "ggk", ".k." };
         static readonly string[] Marker = { ".w.", "www", ".w." };
+        static readonly string[] Mushroom = { "..cCc..", ".cCCCc.", "cCCCCCc", ".ddddd.", "...sS..", "...sS..", "..ssSS." };
+        static readonly string[] GlowMushroom = { "...w...", "..cCc..", ".cCwCc.", "cCCCCCc", ".ddsdd.", "...s.cc", "..sss.s" };
+        static readonly string[] Toadstool = { "..RRR..", ".RwRRR.", "RRRRwRR", "rrRRRrr", ".ddddd.", "..sSs..", "..sSs.." };
+        static readonly string[] Berries = { ".gg..", "bBkbB", "bkbBk", ".kbk." };
         static readonly string[] BeetleBody = { "...YYYY...", "..YOOOOOB.", ".OOOOOOOBB", ".oOOOOOOBB", "..oooooo.." };
         static readonly string[] BeetleLegs = { ".l.l..l.l.", "..l.ll.l.." };
 
@@ -323,6 +334,22 @@ namespace Antarium.Presentation
             {
                 ['Y'] = Hex(0xfff6b0), ['O'] = Hex(0xf0c040), ['o'] = Hex(0xb08020), ['a'] = Hex(0x8a6a20), ['l'] = Hex(0x5a3a10),
             });
+            AddFrames(pixels, new[] { Mushroom }, 0, 120, MushroomRect, new Dictionary<char, Color32>
+            {
+                ['C'] = Hex(0xc59a62), ['c'] = Hex(0xa67848), ['d'] = Hex(0x6b432b), ['s'] = Hex(0xf2e6c4), ['S'] = Hex(0xb8a27a),
+            });
+            AddFrames(pixels, new[] { GlowMushroom }, 8, 120, GlowMushroomRect, new Dictionary<char, Color32>
+            {
+                ['w'] = Hex(0xd4fff0), ['C'] = Hex(0x8ef0d0), ['c'] = Hex(0x4cc8a4), ['d'] = Hex(0x248a78), ['s'] = Hex(0xcca4d4),
+            });
+            AddFrames(pixels, new[] { Toadstool }, 16, 120, ToadstoolRect, new Dictionary<char, Color32>
+            {
+                ['R'] = Hex(0xdc4430), ['r'] = Hex(0xa82420), ['w'] = Hex(0xfffaea), ['d'] = Hex(0xb8a27a), ['s'] = Hex(0xf2e6c4), ['S'] = Hex(0xdcc9a0),
+            });
+            AddFrames(pixels, new[] { Berries }, 24, 120, BerriesRect, new Dictionary<char, Color32>
+            {
+                ['b'] = Hex(0xdc4430), ['B'] = Hex(0xf8785a), ['k'] = Hex(0xa82420), ['g'] = Hex(0x56a038),
+            });
             PaintCastes(pixels);
             PaintHalo(pixels, 112, 98);
             Rects[HaloRect] = Rect(112, 98, HaloSize, HaloSize);
@@ -375,6 +402,10 @@ namespace Antarium.Presentation
                 slots.Add(ArtSlot.Strip("Enemies/" + EnemyNames[e], EnemyRect + e * 2, 2));
             slots.Add(ArtSlot.Strip("Enemies/mole_cricket_dig", MoleDigRect, 2));
             slots.Add(ArtSlot.Strip("Enemies/worm_body", WormBodyRect, 2));
+            slots.Add(ArtSlot.Strip("Colony/mushroom", MushroomRect));
+            slots.Add(ArtSlot.Strip("Colony/glow_mushroom", GlowMushroomRect));
+            slots.Add(ArtSlot.Strip("Colony/toadstool", ToadstoolRect));
+            slots.Add(ArtSlot.Strip("Colony/berries", BerriesRect));
             return slots.ToArray();
         }
 

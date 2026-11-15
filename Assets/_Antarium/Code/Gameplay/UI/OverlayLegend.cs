@@ -87,7 +87,7 @@ namespace Antarium.Gameplay
                     int bands = ramp != null ? Mathf.Min(ramp.Length, 8) : 0;
                     for (int i = 0; i < bands; i++)
                         Swatch(ramp[i], i == 0 ? "dark" : i == bands - 1 ? "bright" : null);
-                    _note.text = "Light comes from the sky, glowing rock and crystals, lava, fire and glow ants.";
+                    _note.text = "Light comes from the sky, glowing rock and crystals, glowing mushrooms, lava, fire and glow ants.";
                     break;
                 case OverlayMode.Ores:
                     _title.text = Title("Ore overlay", _input?.OreOverlay);

@@ -94,6 +94,7 @@ namespace Antarium.Sim
             snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
             snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim))));
+            if (sim.Wild.Placed) snap.Sections.Add(new("WILD", Section(w => WriteWild(w, sim)))); // else the next load places them
             return snap;
         }
 
@@ -643,6 +644,45 @@ namespace Antarium.Sim
             sim.Colony.Stats.StarsCaught = math.max(0, r.ReadInt32());
         }
 
+        /// <summary>WILD (Milestone 11): the berry and toadstool timers and every cave growth spot (cell, item, grown, regrow time).</summary>
+        static void WriteWild(BinaryWriter w, Simulation sim)
+        {
+            var wild = sim.Wild;
+            w.Write(wild.BerryTimer);
+            w.Write(wild.ToadstoolTimer);
+            w.Write(wild.SinceRain);
+            w.Write(wild.Growths.Count);
+            foreach (var g in wild.Growths)
+            {
+                w.Write(g.Cell.x);
+                w.Write(g.Cell.y);
+                w.Write(g.Item);
+                w.Write(g.Grown);
+                w.Write(g.Timer);
+            }
+        }
+
+        static void ReadWild(BinaryReader r, Simulation sim, Remap map)
+        {
+            var wild = sim.Wild;
+            wild.Clear();
+            wild.Placed = true;
+            wild.BerryTimer = r.ReadSingle();
+            wild.ToadstoolTimer = r.ReadSingle();
+            wild.SinceRain = r.ReadSingle();
+            int n = r.ReadInt32();
+            if (n < 0 || n > 1_000_000) throw new InvalidDataException("Corrupt save: bad growth count.");
+            for (int i = 0; i < n; i++)
+            {
+                var cell = new int2(r.ReadInt32(), r.ReadInt32());
+                ushort item = map.ItemOf(r.ReadUInt16());
+                bool grown = r.ReadBoolean();
+                float timer = r.ReadSingle();
+                if (item == ContentDB.NoItem || !sim.World.InBounds(cell.x, cell.y)) continue; // an item this build doesn't have
+                wild.Add(new Growth { Cell = cell, Item = item, Grown = grown, Timer = timer });
+            }
+        }
+
         /// <summary>RUIN: what the colony studied (by item), the lore fragments it found (by id), rival raids beaten.</summary>
         static void WriteRuins(BinaryWriter w, Simulation sim)
         {
@@ -719,6 +759,7 @@ namespace Antarium.Sim
                 Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
                 Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
                 Read(sections, "TWKS", (r, _) => ReadTweaks(r, sim));
+                Read(sections, "WILD", (r, _) => ReadWild(r, sim, map));
                 Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
                 Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));
                 PlaceNurseryEggs(sim, nurseryEggs);

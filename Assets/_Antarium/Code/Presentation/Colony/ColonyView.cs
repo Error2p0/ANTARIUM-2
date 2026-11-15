@@ -36,6 +36,8 @@ namespace Antarium.Presentation
         readonly ColonySprites _sprites;
         readonly SpriteMesh _mesh;
         readonly NativeArray<Color32> _itemColors;
+        /// <summary>Per item: how it lies on the ground (Milestone 11: mushrooms and berries have their own sprites).</summary>
+        readonly PileArt[] _pileArt;
         readonly Color32 _idleTint;
         readonly Color32 _possessedTint;
         readonly BarColors _bars;
@@ -68,6 +70,8 @@ namespace Antarium.Presentation
             _sprites = new ColonySprites(art);
             _mesh = new SpriteMesh("Colony", spriteMaterial, _sprites.Texture, parent, worldSize, 10);
             _itemColors = ItemColors(content);
+            _pileArt = new PileArt[content.Items.Length];
+            for (int i = 0; i < _pileArt.Length; i++) _pileArt[i] = content.Items[i].pileArt;
             _idleTint = TerrainView.ToWorking(render.overlayIdleAntColor);
             _possessedTint = TerrainView.ToWorking(render.possessedColor);
             _bars = new BarColors
@@ -153,10 +157,38 @@ namespace Antarium.Presentation
                 }
                 WriteOnFloor(vertices, egg.Cell, ColonySprites.EggWidth, ColonySprites.EggHeight, rects[ColonySprites.EggRect], White, quad++);
             }
+            var grid = sim.World;
             for (int i = 0; i < colony.Piles.Count; i++)
             {
                 var pile = colony.Piles[i];
-                WriteOnFloor(vertices, pile.Cell, ColonySprites.PileWidth, ColonySprites.PileHeight, rects[ColonySprites.PileRect], _itemColors[pile.Item], quad++);
+                // Mushrooms grow in caves nobody has found yet: nothing is drawn in the fog.
+                if (!grid.InBounds(pile.Cell.x, pile.Cell.y) || !grid[pile.Cell.x, pile.Cell.y].IsRevealed)
+                {
+                    SpriteQuads.WriteEmpty(vertices, quad++);
+                    continue;
+                }
+                var art = pile.Item < _pileArt.Length ? _pileArt[pile.Item] : PileArt.Heap;
+                switch (art)
+                {
+                    case PileArt.Mushroom:
+                    case PileArt.Toadstool:
+                    case PileArt.GlowMushroom:
+                        int rect = art == PileArt.Mushroom ? ColonySprites.MushroomRect
+                            : art == PileArt.Toadstool ? ColonySprites.ToadstoolRect : ColonySprites.GlowMushroomRect;
+                        int s = ColonySprites.MushroomSize;
+                        float2 center = WorldGrid.CellCenterToWorld(pile.Cell);
+                        // A glowing mushroom shines at full brightness (it also lights the cave through the light map).
+                        float2 light = art == PileArt.GlowMushroom ? new float2(0f, -20000f) : center;
+                        SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(center, new int2(0, 1), s), new int2(s, s), new int2(0, 1),
+                            (pile.Cell.x & 1) == 0 ? 1 : -1, rects[rect], White, light);
+                        break;
+                    case PileArt.Berries:
+                        WriteOnFloor(vertices, pile.Cell, ColonySprites.BerriesWidth, ColonySprites.BerriesHeight, rects[ColonySprites.BerriesRect], White, quad++);
+                        break;
+                    default:
+                        WriteOnFloor(vertices, pile.Cell, ColonySprites.PileWidth, ColonySprites.PileHeight, rects[ColonySprites.PileRect], _itemColors[pile.Item], quad++);
+                        break;
+                }
             }
 
             // Random events: the golden beetle (with a blinking sparkle so it can be spotted) and a marker over trapped ants.

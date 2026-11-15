@@ -2,6 +2,16 @@ using UnityEngine;
 
 namespace Antarium.Content
 {
+    /// <summary>How a loose item lies on the ground (Milestone 11): a heap tinted by its colour, or its own sprite.</summary>
+    public enum PileArt : byte
+    {
+        Heap,
+        Mushroom,
+        GlowMushroom,
+        Toadstool,
+        Berries,
+    }
+
     /// <summary>A haulable resource: ore chunks, food, collectibles.</summary>
     [CreateAssetMenu(menuName = "Antarium/Item", fileName = "Item")]
     public sealed class ItemDef : ContentDef
@@ -14,6 +24,10 @@ namespace Antarium.Content
         public bool fuel;
         [Tooltip("Colour of this find on the ore overlay (10.7), bright so it stands out on the dimmed map. Alpha 0 = its colour, brightened.")]
         public Color mapColor = new(0f, 0f, 0f, 0f);
+        [Tooltip("How it lies on the ground (Milestone 11): a heap in its colour, or its own sprite (mushrooms, berries).")]
+        public PileArt pileArt = PileArt.Heap;
+        [Tooltip("Light given off while it grows in the world (glowing mushrooms, Milestone 11): rgb = colour, alpha = strength. Alpha 0 = none.")]
+        public Color growthLight = new(0f, 0f, 0f, 0f);
 
         public bool IsFood => foodValue > 0f;
 

@@ -26,6 +26,8 @@ namespace Antarium.Sim
             var c = Config.surface;
             Surface.Plants.Clear();
             Surface.Plants.AddRange(SurfacePlants.Place(World.Width, Content.WorldGen, Seed));
+            Surface.Water.Clear();
+            Surface.Water.AddRange(SurfaceWater.Place(World.Width, Content.WorldGen, Seed));
             Surface.Rng = new Unity.Mathematics.Random(math.hash(new uint2(Seed, 0x5CEA7u)) | 1u);
             Surface.Clock = c.startTime;
             Surface.WeatherTimer = c.firstWeatherSeconds;
@@ -33,6 +35,28 @@ namespace Antarium.Sim
             Fluids.SoakDepth = c.soakDepth;
             Fluids.SoakChance = c.soakChance;
             UpdateDaylight();
+        }
+
+        /// <summary>
+        /// After a load: lakes and rivers the saved world doesn't have (it was made before Milestone 11) are dropped from the
+        /// list, and the plants are placed again without leaving room for them.
+        /// </summary>
+        void CheckSurfaceWater()
+        {
+            var water = Surface.Water;
+            int before = water.Count;
+            for (int i = water.Count - 1; i >= 0; i--)
+            {
+                var b = water[i];
+                int x = (b.X0 + b.X1) / 2;
+                bool found = false;
+                for (int y = math.max(0, World.SurfaceY[x]); y < World.Height && y <= World.SurfaceY[x] + b.Depth + 2 && !found; y++)
+                    found = (World[x, y].Flags & CellFlags.Lake) != 0;
+                if (!found) water.RemoveAt(i);
+            }
+            if (water.Count == before) return;
+            Surface.Plants.Clear();
+            Surface.Plants.AddRange(SurfacePlants.Place(World.Width, Content.WorldGen, Seed, water));
         }
 
         internal void UpdateDaylight()
@@ -61,6 +85,7 @@ namespace Antarium.Sim
             UpdateSpiders(dt);
             UpdateHoneydew(dt);
             UpdateLeaves(dt);
+            UpdateWild(dt);
             if (_anySheltering && s.Bird == BirdPhase.None) ReleaseShelter();
         }
 
@@ -79,6 +104,15 @@ namespace Antarium.Sim
             s.SpidersToSpawn = 0;
             if (s.IsDay) Enemies.DismissNightHunters();
             s.RoyalFeast = 0f;
+            // Picked cave mushrooms grow on while the game is closed (they come back at the next check).
+            var growths = Wild.Growths;
+            for (int i = 0; i < growths.Count; i++)
+            {
+                var g = growths[i];
+                if (g.Grown) continue;
+                g.Timer -= seconds;
+                growths[i] = g;
+            }
             _shelterDirty = true;
             ReleaseShelter();
         }
@@ -205,7 +239,7 @@ namespace Antarium.Sim
                 if (!SurfacePlants.IsAlive(World, plant)) continue;
                 int x = math.clamp(plant.X + s.Rng.NextInt(-1, 2), 1, World.Width - 2);
                 int2 top = new int2(x, math.min(World.Height - 1, World.SurfaceY[x] + 4));
-                if (!World[top.x, top.y].IsOpen) continue;
+                if (!World[top.x, top.y].IsOpen || !ReachableFromNest(World.FloorBelow(top))) continue; // not across a lake
                 DropItem(top, Content.PlantForage[s.Rng.NextInt(Content.PlantForage.Length)], 1);
                 return;
             }

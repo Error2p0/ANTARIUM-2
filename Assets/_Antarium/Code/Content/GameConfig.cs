@@ -32,6 +32,8 @@ namespace Antarium.Content
         public AntGrowthConfig growth = new();
         /// <summary>10.4: the lights glow ants carry and the shadows near them.</summary>
         public GlowConfig glow = new();
+        /// <summary>Milestone 11: berries, mushrooms and their regrowth.</summary>
+        public WildConfig wild = new();
         [Tooltip("PNG art that replaces the sprites generated in code (Antarium > Art > Import Overrides fills it).")]
         public ArtLibrary art;
     }
@@ -153,6 +155,35 @@ namespace Antarium.Content
         [ColorUsage(false)] public Color light = new(1f, 0.55f, 0.2f);
         [Tooltip("Light emitted by a burning cell, as a fraction of the maximum light level.")]
         [Range(0f, 1f)] public float lightStrength = 0.6f;
+    }
+
+    /// <summary>Wild food (Milestone 11): berries from berry bushes, toadstools on the surface, mushrooms growing back in caves.</summary>
+    [Serializable]
+    public sealed class WildConfig
+    {
+        [Header("Berries")]
+        [Tooltip("Seconds between berries falling from a berry bush (by day and on starfall nights; forage rate and weather apply).")]
+        [Min(0.1f)] public float berryInterval = 10f;
+        [Tooltip("No more berries fall while this many lie on the surface.")]
+        [Min(0)] public int maxSurfaceBerries = 8;
+
+        [Header("Toadstools (surface mushrooms)")]
+        [Tooltip("Seconds between toadstools popping up on the surface near the nest (day and night; forage rate applies).")]
+        [Min(1f)] public float toadstoolInterval = 45f;
+        [Tooltip("They come this many times as often while it rains and for a while after.")]
+        [Min(1f)] public float rainToadstoolFactor = 4f;
+        [Tooltip("Seconds after a rain that toadstools still come faster.")]
+        [Min(0f)] public float afterRainSeconds = 90f;
+        [Tooltip("No more pop up while this many stand on the surface.")]
+        [Min(0)] public int maxSurfaceToadstools = 4;
+
+        [Header("Cave mushrooms")]
+        [Tooltip("Seconds a picked cave mushroom takes to grow back (random in this range).")]
+        public Vector2 regrowSeconds = new(240f, 480f);
+        [Tooltip("Seconds between checks of the growth spots (picked, ready to grow).")]
+        [Min(0.1f)] public float checkInterval = 1f;
+        [Tooltip("A spot under water at least this deep (of 255) waits to grow.")]
+        [Range(1, 255)] public int maxWater = 64;
     }
 
     [Serializable]
@@ -661,6 +692,10 @@ namespace Antarium.Content
         [Range(0f, 0.3f)] public float patchTint = 0.07f;
         [Tooltip("Intensity of the global Light2D: the minimum brightness of revealed, unlit areas.")]
         [Range(0f, 1f)] public float ambient = 0.025f;
+        [Tooltip("Milestone 11: added to the global light while the camera is underground, so revealed tunnels and rock read better there.")]
+        [Range(0f, 1f)] public float undergroundAmbient = 0.06f;
+        [Tooltip("Camera depth in cells (below the ground under it) where the underground light starts and where it is full.")]
+        public Vector2 undergroundFade = new(3f, 16f);
         public Color skyTop = new(0.36f, 0.62f, 0.86f);
         public Color skyHorizon = new(0.72f, 0.86f, 0.93f);
         [Header("Day, night and weather")]

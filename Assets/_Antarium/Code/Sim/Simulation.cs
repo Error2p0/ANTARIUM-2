@@ -200,6 +200,7 @@ namespace Antarium.Sim
             if (!fresh) return;
 
             ApplyStartBonuses();
+            PlaceCaveGrowths();
             int workers = config.colony.startingWorkers + (int)Legacy.Total(GeneticEffectKind.StartWorkers);
             for (int i = 0; i < workers; i++)
                 Ants.Spawn(RandomRoyalFloorCell(), seed, AntCaste.Worker, TraitChance);
@@ -244,6 +245,9 @@ namespace Antarium.Sim
             World.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload);
             Fluids.WakeAllWithFluid();
             Fire.Rebuild();
+            CheckSurfaceWater(); // a save from before Milestone 11 has no lakes
+            if (!Wild.Placed) PlaceCaveGrowths(); // ... and gets mushrooms in the caves it hasn't found yet
+            else RestoreWildLights();
             Ants.CountCastes(_alive, _aliveWithEggs);
             ValidateNurseryEggs();
             _anySheltering = true; // released on the first tick unless a bird circles
@@ -998,7 +1002,7 @@ namespace Antarium.Sim
             int y = World.Height - 1;
             while (y > 0 && World.Cells[World.Index(x, y - 1)].IsOpen) y--;
             var nav = new NavGrid(World);
-            if (!nav.IsWalkable(new int2(x, y)) || y <= World.SurfaceY[x] - 2) return;
+            if (!nav.IsWalkable(new int2(x, y)) || y <= World.SurfaceY[x] - 2 || !ReachableFromNest(new int2(x, y))) return;
 
             ushort item = Content.SurfaceForage[_rng.NextInt(Content.SurfaceForage.Length)];
             DropItem(new int2(x, y), item, 1);

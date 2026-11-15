@@ -37,6 +37,7 @@ namespace Antarium.Gameplay
             yield return ("bloodline", ShotBloodline);
             yield return ("presentation", ShotPresentation);
             yield return ("tweaks", ShotTweaks);
+            yield return ("wild", ShotWild);
         }
 
         // ---------------------------------------------------------------- stills
@@ -380,12 +381,12 @@ namespace Antarium.Gameplay
             yield return Frames(30);
             foreach (var (name, cell, zoom, lit) in views)
             {
-                if (globalLight != null) globalLight.intensity = lit ? 0.8f : config.render.ambient;
+                _ambientOverride = lit ? 0.8f : config.render.ambient;
                 Cam(cell, zoom);
                 yield return Frames(6);
                 yield return Still("art_" + name);
             }
-            if (globalLight != null) globalLight.intensity = config.render.ambient;
+            _ambientOverride = -1f;
 
             // The UI: build palette with the castes panel, the stock view, dialogs, the title screen.
             Cam(q + new float2(14f, -4f), 3);
