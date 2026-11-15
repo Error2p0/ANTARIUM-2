@@ -153,6 +153,7 @@ namespace Antarium.Editor
             CreateTweaks();
             CreateWild(database, worldGen);
             CreateTrees(database, worldGen);
+            CreateMilestone11Achievements();
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;

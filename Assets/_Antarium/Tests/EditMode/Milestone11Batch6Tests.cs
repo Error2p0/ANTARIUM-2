@@ -413,6 +413,54 @@ namespace Antarium.Tests
             noTree.Dispose();
         }
 
+        // ---------------------------------------------------------------- achievements
+
+        static AchievementData Data(AchievementKind kind, long amount, ushort item = ContentDB.NoItem)
+        {
+            var def = ScriptableObject.CreateInstance<AchievementDef>();
+            def.kind = kind;
+            def.amount = amount;
+            return new AchievementData { Def = def, Item = item, Building = -1 };
+        }
+
+        [Test]
+        public void Achievements_WildFood_ElderTree_Starfall_Measured_AndSaved()
+        {
+            _c = new TestContent(8, 4, caves: false);
+            _db = _c.DB;
+            _sim = new Simulation(_db, _c.Config, 5);
+            var stats = _sim.Colony.Stats;
+
+            // Wild food: every food with its own look on the ground counts (berries, apples...), plain forage (seeds) doesn't.
+            var wild = Data(AchievementKind.WildFood, 5);
+            stats.Delivered[_c.Item(_c.Berry)] += 2;
+            stats.Delivered[_c.Item(_c.Seed)] += 10;
+            Assert.AreEqual(2, AchievementProgress.Measure(_sim, wild));
+            stats.Delivered[_c.Item(_c.Apple)] += 2;
+            stats.Delivered[_c.Item(_c.GoldenApple)] += 1;
+            Assert.IsTrue(AchievementProgress.IsReached(_sim, wild));
+            Assert.AreEqual(2, AchievementProgress.Measure(_sim, Data(AchievementKind.Deliver, 2, _c.Item(_c.Apple))), "apples on their own");
+
+            var elder = Data(AchievementKind.ElderTreeFound, 1);
+            Assert.IsFalse(AchievementProgress.IsReached(_sim, elder));
+            _sim.Wild.ElderFound = true;
+            Assert.IsTrue(AchievementProgress.IsReached(_sim, elder));
+
+            var starfall = Data(AchievementKind.StarfallNights, 1);
+            Assert.IsFalse(AchievementProgress.IsReached(_sim, starfall));
+            _sim.SkipToNight();
+            _sim.Tick();
+            Assert.IsTrue(_sim.TriggerStarfall());
+            Assert.IsTrue(AchievementProgress.IsReached(_sim, starfall), "a starfall night counts");
+            stats.WormsSlain = 2;
+
+            using var loaded = Reload(_sim);
+            Assert.AreEqual(1, loaded.Colony.Stats.StarfallNights);
+            Assert.AreEqual(2, loaded.Colony.Stats.WormsSlain);
+            Assert.AreEqual(2, AchievementProgress.Measure(loaded, Data(AchievementKind.WormsSlain, 1)));
+            Assert.IsTrue(AchievementProgress.IsReached(loaded, elder), "the Elder Tree stays found");
+        }
+
         // ---------------------------------------------------------------- content
 
         [Test]
@@ -438,6 +486,15 @@ namespace Antarium.Tests
             // The cavern fits inside the world, clear of the bedrock, and the world makes a tree.
             Assert.IsTrue(ElderTree.Locate(g.widthInChunks * 32, g.heightInChunks * 32, g, 1337, 1f, out var site));
             Assert.Greater(site.Center.y - site.Half.y, g.bedrockThickness + 4);
+            // The Milestone 11 achievements: each bakes (items found), the Elder Tree ones are hidden.
+            foreach (var id in new[] { "berry_season", "an_apple_a_day", "mushroom_hunter", "glow_in_the_dark", "living_off_the_land", "starfall",
+                         "worm_hunter", "the_elder_tree", "golden_harvest" })
+            {
+                var a = db.achievements.Find(x => x != null && x.Id == id);
+                Assert.IsNotNull(a, id);
+                Assert.IsTrue(a.kind != AchievementKind.Deliver || a.item != null, id + " has its item");
+                Assert.AreEqual(id == "the_elder_tree" || id == "golden_harvest", a.hidden, id);
+            }
 #endif
         }
     }

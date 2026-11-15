@@ -115,6 +115,8 @@ namespace Antarium.Editor
             AchievementKind.Build when def.building != null && def.building.kind == BuildingKind.Chest =>
                 (Industry, Glyph(Chest, Pal('o', 0x2a1a10, 'W', 0x6b4a2c, 'P', 0x93693f, 'h', 0xe0c070, 'n', 0xd47a3c, 'N', 0xaeb8c6))),
             AchievementKind.Build => (Industry, Glyph(Belt, Pal('o', 0x1c2228, 'H', 0xa8b4c0, 'M', 0x6a7684, 'D', 0x3a4450, 'n', ItemHex(def), 'N', Lighter(ItemHex(def))))),
+            // Milestone 11: wild food shows its own sprite (apple, berries, mushroom...) on the colony plate.
+            AchievementKind.Deliver when def.item != null && def.item.pileArt != PileArt.Heap => (Colony, Atlas(PileRect(def.item.pileArt))),
             AchievementKind.Deliver or AchievementKind.Craft => (def.kind == AchievementKind.Craft ? Industry : Earth, Nugget(def.item)),
             AchievementKind.KillEnemies => (Combat, Atlas(ColonySprites.SoldierRect)),
             AchievementKind.RepelRaids => (Combat, Atlas(ColonySprites.EnemyRect + (int)EnemyArt.Termite * 2)),
@@ -132,6 +134,10 @@ namespace Antarium.Editor
             AchievementKind.RivalsRepelled => (Combat, Atlas(ColonySprites.EnemyRect + (int)EnemyArt.RivalAnt * 2)),
             // Milestone 11: a white star on a night-blue plate.
             AchievementKind.ShootingStars => (Hex(0x1c2448), Glyph(Comet, Pal('Y', 0xfff4c0, 'W', 0xffffff, 't', 0x9ab0e8))),
+            AchievementKind.StarfallNights => (Hex(0x1c2448), Glyph(Shower, Pal('Y', 0xfff4c0, 'W', 0xffffff, 't', 0x9ab0e8))),
+            AchievementKind.ElderTreeFound => (Hex(0x1e2a1e), Glyph(Tree, Pal('L', 0x7cc04a, 'H', 0xd8f080, 'D', 0x3a742a, 'w', 0x8c6c50, 'd', 0x5a4030, 'g', 0xffd45a))),
+            AchievementKind.WormsSlain => (Combat, Glyph(Worm, Pal('P', 0xd88a8a, 'H', 0xf4b8ac, 'p', 0x9a4a50, 'k', 0x1a0a0a))),
+            AchievementKind.WildFood => (Colony, Glyph(Basket, Pal('o', 0x5a3a1c, 'B', 0xb08040, 'b', 0x8a6030, 'R', 0xdc4430, 'r', 0xa82420, 'P', 0xb02848, 'C', 0xc59a62, 'g', 0x56a038))),
             _ => (Earth, Atlas(0)),
         };
 
@@ -234,6 +240,44 @@ namespace Antarium.Editor
         {
             ".....Y.....", ".....Y.....", "....YWY....", "....YWY....", "YYYYWWWYYYY", "....YWY....", "....YWY....",
             ".....Y.....", ".....Y.....",
+        };
+
+        static int PileRect(PileArt art) => art switch
+        {
+            PileArt.Mushroom => ColonySprites.MushroomRect,
+            PileArt.GlowMushroom => ColonySprites.GlowMushroomRect,
+            PileArt.Toadstool => ColonySprites.ToadstoolRect,
+            PileArt.Berries => ColonySprites.BerriesRect,
+            PileArt.Apple => ColonySprites.AppleRect,
+            PileArt.GoldenApple => ColonySprites.GoldenAppleRect,
+            _ => ColonySprites.PileRect,
+        };
+
+        /// <summary>A shower of shooting stars, all flying the same way (starfall nights).</summary>
+        static readonly string[] Shower =
+        {
+            "...........WY.", "...........YY.", "......WY..Y...", "......YY.Y....", ".....Y..t.....", "....Y..t......", "...t..t.....WY",
+            "..t..t......YY", ".t..t......Y..", "..........Y...", ".........t....", "........t.....",
+        };
+
+        /// <summary>A giant earthworm in an S, its rings darker, the head (with an eye) at the top right.</summary>
+        static readonly string[] Worm =
+        {
+            "...........HpHH.", "..........HPpkP.", ".H.......pPPpPP.", ".HH.....HpPPpPP.", ".PHp...HPpPP....", ".PPpHHpPPpP.....",
+            ".PPpPPpPPp......", "..PpPPpPP.......", "...pPPpP........",
+        };
+
+        /// <summary>The Elder Tree: a broad glowing crown with golden apples on a stout trunk.</summary>
+        static readonly string[] Tree =
+        {
+            "...HLLgL...", ".HLLLLLLLg.", "HLLLLLLLLLL", "LLgLLLLLLDL", ".DLLLwLLDD.", "...DdwwD...", ".....wd....", ".....wd....",
+            "....wwdd...", "..dd.wd.dd.",
+        };
+
+        /// <summary>A woven basket heaped with wild food: an apple, berries and a mushroom.</summary>
+        static readonly string[] Basket =
+        {
+            "..g.....CC..", "..RR.PP.CCC.", ".RRrPPPP.b..", "oooooooooooo", "oBbBbBbBbBbo", ".bBbBbBbBbB.", ".oBbBbBbBbo.", "..oooooooo..",
         };
 
         // Milestone 11: a shooting star, its head top right and the tail trailing down to the left.

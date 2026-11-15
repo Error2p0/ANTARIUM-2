@@ -429,6 +429,7 @@ namespace Antarium.Sim
             if (s.Weather != WeatherKind.Rain && PlayTime >= c.firstStarfallSeconds && s.Rng.NextFloat() < c.starfallChance)
             {
                 s.Starfall = true;
+                Colony.Stats.StarfallNights++;
                 Events.Publish(new SurfaceEvent(SurfaceEventKind.StarfallStarted, Colony.QueenCell));
                 return; // no hunters tonight
             }
@@ -475,6 +476,7 @@ namespace Antarium.Sim
             if (s.IsDay || s.Starfall) return false;
             if (s.Weather != WeatherKind.Clear) EndWeather();
             s.Starfall = true;
+            Colony.Stats.StarfallNights++;
             s.SpidersToSpawn = 0;
             Enemies.DismissNightHunters();
             Events.Publish(new SurfaceEvent(SurfaceEventKind.StarfallStarted, Colony.QueenCell));

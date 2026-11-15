@@ -32,6 +32,10 @@ namespace Antarium.Sim
         public int RivalsRepelled;
         /// <summary>Shooting stars the player clicked (Milestone 11; a hidden achievement).</summary>
         public int StarsCaught;
+        /// <summary>Giant earthworms slain (Milestone 11; an achievement).</summary>
+        public int WormsSlain;
+        /// <summary>Starfall nights (Milestone 11; an achievement).</summary>
+        public int StarfallNights;
 
         public ColonyStats(int items, int buildings)
         {

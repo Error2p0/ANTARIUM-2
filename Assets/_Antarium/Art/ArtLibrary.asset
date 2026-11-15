@@ -245,10 +245,18 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: b9c7a0e71090baa478921235a7ee9b54, type: 3}
   - name: UI/Achievements/ACH_ANTS_50_locked
     texture: {fileID: 2800000, guid: 340faa90742f0444087b118cfbba795a, type: 3}
+  - name: UI/Achievements/ACH_APPLES_25
+    texture: {fileID: 2800000, guid: 9eecbda54f2d25a4792b5a1c4a859822, type: 3}
+  - name: UI/Achievements/ACH_APPLES_25_locked
+    texture: {fileID: 2800000, guid: 6d5be0471ba7ebb428e7d2338a075124, type: 3}
   - name: UI/Achievements/ACH_BELTS_200
     texture: {fileID: 2800000, guid: e598580b2d668c048a6f591e4f7919f0, type: 3}
   - name: UI/Achievements/ACH_BELTS_200_locked
     texture: {fileID: 2800000, guid: 2b5918b2ee248164c88c13038fa093d5, type: 3}
+  - name: UI/Achievements/ACH_BERRIES_50
+    texture: {fileID: 2800000, guid: 32c48e99c1f8a374e9c9b333ef5ad43e, type: 3}
+  - name: UI/Achievements/ACH_BERRIES_50_locked
+    texture: {fileID: 2800000, guid: bc3374e9cf2e14342a4733a72dbd3263, type: 3}
   - name: UI/Achievements/ACH_BREAKING_GROUND
     texture: {fileID: 2800000, guid: 6c084e82123a29c4fa46c56565b85d31, type: 3}
   - name: UI/Achievements/ACH_BREAKING_GROUND_locked
@@ -285,6 +293,10 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: b8c99fcf2495c0d4caebb8e8e6cf3d98, type: 3}
   - name: UI/Achievements/ACH_DEPTH_700_locked
     texture: {fileID: 2800000, guid: ab1bbf65334861d499913c88736cba84, type: 3}
+  - name: UI/Achievements/ACH_ELDER_TREE
+    texture: {fileID: 2800000, guid: 04513029545747a4eb454c9a07390e03, type: 3}
+  - name: UI/Achievements/ACH_ELDER_TREE_locked
+    texture: {fileID: 2800000, guid: a07348161fbe4f1479b4c650b844aa23, type: 3}
   - name: UI/Achievements/ACH_EVENTS_5
     texture: {fileID: 2800000, guid: 41f8c0e4546cf9c4dbcec49f46099a7a, type: 3}
   - name: UI/Achievements/ACH_EVENTS_5_locked
@@ -321,6 +333,18 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 8227dc1bc86310648a667fa50edbe291, type: 3}
   - name: UI/Achievements/ACH_FUNGUS_200_locked
     texture: {fileID: 2800000, guid: 20610b6a3bc31b0449876f4feb8d7617, type: 3}
+  - name: UI/Achievements/ACH_GIANT_WORM
+    texture: {fileID: 2800000, guid: f12ac81b50fbb45479c3f7d7ce2da3f9, type: 3}
+  - name: UI/Achievements/ACH_GIANT_WORM_locked
+    texture: {fileID: 2800000, guid: d2214906ff710464da94d4f6e97da2a1, type: 3}
+  - name: UI/Achievements/ACH_GLOW_MUSHROOMS_20
+    texture: {fileID: 2800000, guid: 2a87a331c31a9314ca7ea59ebc797ac8, type: 3}
+  - name: UI/Achievements/ACH_GLOW_MUSHROOMS_20_locked
+    texture: {fileID: 2800000, guid: 92f98ce33a4abcc47aaaebe74ec50657, type: 3}
+  - name: UI/Achievements/ACH_GOLDEN_APPLES_10
+    texture: {fileID: 2800000, guid: 32917608537a0e24193038736719493e, type: 3}
+  - name: UI/Achievements/ACH_GOLDEN_APPLES_10_locked
+    texture: {fileID: 2800000, guid: 4d14d2719d2a3f74c8ba11243a8b4ba8, type: 3}
   - name: UI/Achievements/ACH_IRON_50
     texture: {fileID: 2800000, guid: 7dd06b2441525c646be9ee6cc8821df5, type: 3}
   - name: UI/Achievements/ACH_IRON_50_locked
@@ -341,6 +365,10 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 15200cd4492fe4540aad2aef220b3798, type: 3}
   - name: UI/Achievements/ACH_MEMORY_500_locked
     texture: {fileID: 2800000, guid: 2f194c668e7b26f458c84911a9af649b, type: 3}
+  - name: UI/Achievements/ACH_MUSHROOMS_50
+    texture: {fileID: 2800000, guid: 341b8523c8fcf5346abeb197ddd33235, type: 3}
+  - name: UI/Achievements/ACH_MUSHROOMS_50_locked
+    texture: {fileID: 2800000, guid: 18130c49b941b324691a5d763fa7c50e, type: 3}
   - name: UI/Achievements/ACH_RAIDS_10
     texture: {fileID: 2800000, guid: c6a53019227e0b1469e623f40d3aa274, type: 3}
   - name: UI/Achievements/ACH_RAIDS_10_locked
@@ -377,6 +405,10 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 81f612dbdf5395549bf1dc6887986f07, type: 3}
   - name: UI/Achievements/ACH_SOLDIERS_25_locked
     texture: {fileID: 2800000, guid: feb478110ba5c5848ba2bd4f12008b3e, type: 3}
+  - name: UI/Achievements/ACH_STARFALL
+    texture: {fileID: 2800000, guid: d79daa0041f7ea549977c03c6fa91057, type: 3}
+  - name: UI/Achievements/ACH_STARFALL_locked
+    texture: {fileID: 2800000, guid: ce4424b4775dd6841a6abecefde3ec36, type: 3}
   - name: UI/Achievements/ACH_STAR_FRAGMENT
     texture: {fileID: 2800000, guid: ee6d840ee2c219d4183d5f79ebbbc41d, type: 3}
   - name: UI/Achievements/ACH_STAR_FRAGMENT_locked
@@ -389,6 +421,10 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: 6377d4171679a2c4eb0f358d51741a1e, type: 3}
   - name: UI/Achievements/ACH_TRAITS_10_locked
     texture: {fileID: 2800000, guid: 81a9d571421e3364d83dc8cf7d702581, type: 3}
+  - name: UI/Achievements/ACH_WILD_FOOD_300
+    texture: {fileID: 2800000, guid: b99ce70685316db4983629d38ddd5fc3, type: 3}
+  - name: UI/Achievements/ACH_WILD_FOOD_300_locked
+    texture: {fileID: 2800000, guid: c64a2e402b66eda4186ec2c7f1e3eaae, type: 3}
   - name: UI/Icons/ability_frenzy
     texture: {fileID: 2800000, guid: 8dbe73bd50fd5214c9a7b3c1f3b3b793, type: 3}
   - name: UI/Icons/ability_pheromone_burst

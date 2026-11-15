@@ -11,7 +11,7 @@ Enter these on partner.steamgames.com → your app → **Edit Steamworks Setting
 | `STAT_MAX_ANTS` | INT | Client | yes | 0 | Most ants alive |
 | `STAT_FLIGHTS` | INT | Client | yes | 0 | Nuptial Flights |
 
-## Achievements (40)
+## Achievements (49)
 
 Icons: `steam/achievement_icons/<API name>.png` (achieved) and `<API name>_locked.png` (unachieved), 64×64.
 *Progress stat*: pick the stat and enter 0 as the minimum and the amount as the maximum (Steam then shows a progress bar).
@@ -58,3 +58,12 @@ Icons: `steam/achievement_icons/<API name>.png` (achieved) and `<API name>_locke
 | 38 | `ACH_RIVALS_3` | Not One Crumb | Beat 3 raids of rival ants without losing an item. |  |  |
 | 39 | `ACH_THRONE` | Long Live the Queen | Build the Queen's Throne. |  |  |
 | 40 | `ACH_SHOOTING_STAR` | Wish Upon a Star | Catch a shooting star. | yes |  |
+| 41 | `ACH_BERRIES_50` | Berry Season | Bring 50 berries home in one colony. |  |  |
+| 42 | `ACH_APPLES_25` | An Apple a Day | Bring 25 apples home in one colony. |  |  |
+| 43 | `ACH_MUSHROOMS_50` | Mushroom Hunter | Bring 50 cave mushrooms home in one colony. |  |  |
+| 44 | `ACH_GLOW_MUSHROOMS_20` | Glow in the Dark | Bring 20 glowing mushrooms home in one colony. |  |  |
+| 45 | `ACH_WILD_FOOD_300` | Living off the Land | Bring 300 wild foods home in one colony: berries, apples, toadstools and mushrooms. |  |  |
+| 46 | `ACH_STARFALL` | Starfall | See a starfall night. |  |  |
+| 47 | `ACH_GIANT_WORM` | Worm Hunter | Slay a giant earthworm. |  |  |
+| 48 | `ACH_ELDER_TREE` | The Elder Tree | Find the ancient tree that grows deep in the stone. | yes |  |
+| 49 | `ACH_GOLDEN_APPLES_10` | Golden Harvest | Bring 10 golden apples home in one colony. | yes |  |

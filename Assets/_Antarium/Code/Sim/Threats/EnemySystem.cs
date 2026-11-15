@@ -833,6 +833,7 @@ namespace Antarium.Sim
                 }
                 if (data.Def.knowledge > 0f) colony.Inventory.AddKnowledge(data.Def.knowledge, studied: false);
                 colony.Stats.EnemiesKilled++;
+                if (data.Def.behavior == EnemyBehavior.Worm) colony.Stats.WormsSlain++;
                 _sim.Events.Publish(new EnemyKilledEvent(e.Def, e.Cell));
                 if (e.Event != 0) _sim.RandomEvents.OnCreatureKilled(e.Event, e.Cell);
             }

@@ -94,6 +94,21 @@ namespace Antarium.Gameplay
             _hud.HideModal();
         }
 
+        /// <summary>The achievements dialog scrolled to its end, where the Milestone 11 achievements are (<c>CaptureMenu.Run("achievements11", false)</c>).</summary>
+        IEnumerator ShotAchievements11()
+        {
+            FreshColony(1337u);
+            Hud(true);
+            yield return Frames(10);
+            _hud.ShowModal(_hud.AchievementsPanel.Root);
+            yield return Seconds(0.3f);
+            var scroll = _hud.AchievementsPanel.Root.Q<UnityEngine.UIElements.ScrollView>();
+            if (scroll != null) scroll.scrollOffset = new UnityEngine.Vector2(0f, 1e6f);
+            yield return Seconds(0.3f);
+            yield return Still("achievements11");
+            _hud.HideModal();
+        }
+
         ushort ItemIndex(string id)
         {
             for (ushort i = 0; i < _content.Items.Length; i++)

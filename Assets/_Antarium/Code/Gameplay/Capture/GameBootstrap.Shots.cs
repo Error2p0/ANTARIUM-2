@@ -40,6 +40,7 @@ namespace Antarium.Gameplay
             yield return ("wild", ShotWild);
             yield return ("scenery", ShotScenery);
             yield return ("trees", ShotTrees);
+            yield return ("achievements11", ShotAchievements11);
         }
 
         // ---------------------------------------------------------------- stills

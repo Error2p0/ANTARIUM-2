@@ -93,7 +93,7 @@ namespace Antarium.Sim
             snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim), 2)));
             snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
-            snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim))));
+            snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim), 2)));
             if (sim.Wild.Placed) snap.Sections.Add(new("WILD", Section(w => WriteWild(w, sim), 2))); // else the next load places them
             return snap;
         }
@@ -631,17 +631,22 @@ namespace Antarium.Sim
             foreach (var c in t.WormBody) w.Write(c);
         }
 
-        /// <summary>TWKS (Milestone 11): the Vein Instinct switch and the shooting stars the player caught.</summary>
+        /// <summary>TWKS (Milestone 11): the Vein Instinct switch and the shooting stars the player caught; v2: giant worms slain and starfall nights (achievements).</summary>
         static void WriteTweaks(BinaryWriter w, Simulation sim)
         {
             w.Write(sim.Colony.AutoMarkOres);
             w.Write(sim.Colony.Stats.StarsCaught);
+            w.Write(sim.Colony.Stats.WormsSlain);
+            w.Write(sim.Colony.Stats.StarfallNights);
         }
 
-        static void ReadTweaks(BinaryReader r, Simulation sim)
+        static void ReadTweaks(BinaryReader r, Simulation sim, byte version)
         {
             sim.Colony.AutoMarkOres = r.ReadBoolean();
             sim.Colony.Stats.StarsCaught = math.max(0, r.ReadInt32());
+            if (version < 2) return;
+            sim.Colony.Stats.WormsSlain = math.max(0, r.ReadInt32());
+            sim.Colony.Stats.StarfallNights = math.max(0, r.ReadInt32());
         }
 
         /// <summary>
@@ -766,7 +771,7 @@ namespace Antarium.Sim
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
                 Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
                 Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
-                Read(sections, "TWKS", (r, _) => ReadTweaks(r, sim));
+                Read(sections, "TWKS", (r, v) => ReadTweaks(r, sim, v));
                 Read(sections, "WILD", (r, v) => ReadWild(r, sim, map, v));
                 Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
                 Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));

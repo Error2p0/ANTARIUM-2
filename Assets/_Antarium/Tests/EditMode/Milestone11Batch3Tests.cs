@@ -274,6 +274,7 @@ namespace Antarium.Tests
             Sim.Tick();
             Assert.AreEqual(-1, Sim.Enemies.WormIndex(), "dead");
             Assert.AreEqual(0, Sim.Enemies.WormCells.Count);
+            Assert.AreEqual(1, Sim.Colony.Stats.WormsSlain, "counted for the Worm Hunter achievement");
             Assert.IsFalse(Sim.RandomEvents.Active.Exists(e => e.Kind == RandomEventKind.GiantWorm));
             Assert.AreEqual(won + 1, Sim.Colony.Stats.EventsWon);
             Assert.AreEqual(food + 10f, Inv.Food, 1e-3f, "a feast");
