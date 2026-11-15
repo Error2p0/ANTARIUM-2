@@ -439,6 +439,14 @@ Smaller adjustments, small additions and fixes, given by the user in batches; ea
 - Verified in the editor (capture shot `wild`, `Captures/stills/wild_*`, a fresh colony on seed 1337): a lake with its sandy bowl and a river (shallow, flat bed), berry bushes with berries under one and a toadstool beside it, a revealed cave with a glowing mushroom lighting it teal next to a plain mushroom, the glowing mushroom's hover text, a plain mushroom cave with the underground light off and on (mean brightness 9 → 22 of 255). Workers hauling mushrooms home was only checked by the test (no cave was reached in the stills).
 - Known limits: rivers don't flow (a side view can't show it); lakes are placed by seed only (they can land on a hill side, then one bank is higher); lake water spilled by rain soaks in like any surface water; a mushroom spot that was built over stays in the list (it just never grows); berries hang on the bush sprite whether or not any are left; the underground light follows the camera, not the pointer; toadstools and berries are not part of offline progress beyond the recent pace (like seeds).
 
+**Batch 5** ✅ (decided while building: the background is procedural in the terrain shader's sky pixels (no sprites, no draw calls, coloured by the sky for free) and purely visual; the water fixes are rendering only, the fluid simulation is unchanged)
+- [x] **Water flowing down** (`TerrainCommon.hlsl`, `ApplyFluid`): falling water and lava are a centred **stream** (`RenderConfig.fallWidth` 1.4 cells per full cell, ≥ 2 px) with light streaks running down (`fallSpeed` 30 px/s, `fallStreakLength` 9, `fallStreakShare` 0.3), tapering toward the stream above, continuing through the empty part of the cell below and landing in **foam** (`waterFoamColor`); a stream into a pool no longer stacks a block on it. **Running** water and lava get a **sloped surface** between neighbouring cells (also through the empty cell over a lower step), so a sloping tunnel shows one ramp instead of stair-stepped stripes. Rim pixels never copy a stream.
+- [x] **Surface background**: `RenderConfig.sceneryLayers` (`SceneryLayer`, `SceneryShape` Peaks / Hills / Trees, at most `TerrainView.MaxSceneryLayers` 4): snowy mountains with lit and shaded faces, rolling hills and a treeline of spruces and broadleaves; parallax sideways and (by `sceneryVertical`) up and down; lit by the sky light and hazed into the horizon colour, with mist at their feet, so they follow dawn, dusk, night, rain and lightning. **Clouds** (`cloudCover` 35%, 90% in rain, `cloudBand` 17–40 cells, `cloudSize`, `cloudDrift`, `cloudParallax`, `cloudHaze`, colours) behind the mountains. Shapes come from the world seed (`TerrainView` takes `sim.Seed`).
+- [x] `GameConfig.asset` re-serialised with the new render fields.
+- [x] 271 EditMode tests (2 new in `Milestone11Batch5Tests`: the shipped layers fit the shader, are ordered farthest first and their snow shows below a typical summit; cloud band, cover and stream settings are sane). The rest is shader work, checked in captures.
+- Verified in the editor (capture shot `scenery`, `Captures/stills/scenery_*` and `water_*`, a fresh colony on seed 1337): the background by day, at sunset, at night (silhouettes, stars between the clouds) and in the rain (overcast); zoomed out, and looking up (the mountains rise above the hills); water poured into a shaft (a streaked stream with foam into a pool, no block on the pool) and down a sloping tunnel (one sloped sheet instead of the stair-stepped stripes it was before, kept for comparison during the work).
+- Known limits: the background is the same everywhere along the world (no biome or lake below it); no sun or moon; the clouds are blobs of noise (a few single-pixel specks); a waterfall's foam and streaks are drawn but make no sound; lava streams use the same shapes as water; liquid levels from the simulation still jitter a pixel or two along a running surface.
+
 ## Missing / not built yet
 Things the current build is still missing, grouped by area. Many are planned for a specific milestone (in brackets).
 
@@ -455,7 +463,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Fluids: pumps, water wheels, irrigation and magma heat exist; no fluid pressure (decided), no lava pumping.
 - Material flags: *Conductive* = crystal resonance (10.5), *Flammable* = fire, *Unstable* = sand and ash collapse, *Hot* = magma heat.
 - Weather is rain (sometimes a thunderstorm, Milestone 11) and drought; starfall nights. No seasons, no snow or wind.
-- Lakes and rivers on the surface (Milestone 11) are still water; rivers don't flow.
+- Lakes and rivers on the surface (Milestone 11) are still water; rivers don't flow. Falling water is drawn as a stream and running water as a slope (Milestone 11), but the simulation is still per-cell levels.
 
 **Gameplay layers**
 - Auto-designating veins: the research *Vein Instinct* with an on / off switch (Milestone 11); the genetic trait of the same name gives it from the start.
@@ -465,7 +473,7 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Prestige: respec, new bloodline, caste lineages, the Queen's Throne and three biome variants exist (10.6). No prestige layer above the bloodline.
 
 **Presentation**
-- World art is PNG now (colony, buildings, enemies, surface, terrain; 10.7a). Still generated in code: the marker diamond, the bird's shadow, rain, shooting stars and lightning (Milestone 11), the giant earthworm (Milestone 11, PNG slots `Enemies/worm` and `Enemies/worm_body` ready), dig debris and number pops.
+- World art is PNG now (colony, buildings, enemies, surface, terrain; 10.7a). Still generated in code: the marker diamond, the bird's shadow, rain, shooting stars and lightning (Milestone 11), the surface background of mountains, hills, trees and clouds (procedural in the terrain shader, Milestone 11; no sun or moon), the giant earthworm (Milestone 11, PNG slots `Enemies/worm` and `Enemies/worm_body` ready), dig debris and number pops.
 - Sound effects and ambience are synthesized placeholders (every M10 event has a cue since 10.7); music is recorded (10 tracks); the flight / discovery / lore / engine stinger slots have no clips yet.
 - UI: skin and icons done in 10.7a; the info panel and the achievements dialog show icons (10.7).
 - Tooltips: every HUD element (10.7), in the info panel; dialogs have none.

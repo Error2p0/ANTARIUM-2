@@ -38,6 +38,7 @@ namespace Antarium.Gameplay
             yield return ("presentation", ShotPresentation);
             yield return ("tweaks", ShotTweaks);
             yield return ("wild", ShotWild);
+            yield return ("scenery", ShotScenery);
         }
 
         // ---------------------------------------------------------------- stills

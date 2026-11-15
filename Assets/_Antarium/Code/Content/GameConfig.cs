@@ -720,6 +720,33 @@ namespace Antarium.Content
         public Color lightningColor = new(0.92f, 0.95f, 1f);
         [Tooltip("How much a lightning flash brightens the sky and the sky light (0 = none).")]
         [Range(0f, 2f)] public float lightningFlash = 0.9f;
+
+        [Header("Surface background (Milestone 11)")]
+        [Tooltip("Layers drawn behind the sky above the surface, farthest first (at most 4). Lit by the sky light and hazed into the horizon colour, so they follow the time of day and the weather.")]
+        public SceneryLayer[] sceneryLayers =
+        {
+            new() { shape = SceneryShape.Peaks, color = new Color(0.5f, 0.55f, 0.72f), haze = 0.25f, mist = 0.35f, parallax = 0.1f, foot = 5f, height = 30f, width = 30f, snowLine = 17f },
+            new() { shape = SceneryShape.Hills, color = new Color(0.36f, 0.53f, 0.5f), haze = 0.2f, mist = 0.3f, parallax = 0.25f, foot = 1f, height = 12f, width = 20f },
+            new() { shape = SceneryShape.Trees, color = new Color(0.19f, 0.36f, 0.26f), haze = 0.1f, mist = 0f, parallax = 0.45f, foot = 0f, height = 4f, width = 26f, treeSpacing = 6f },
+        };
+        [Tooltip("How much the background follows the camera up and down (0 = it stays on the horizon, 1 = as much as it does sideways).")]
+        [Range(0f, 1f)] public float sceneryVertical = 0.5f;
+        public Color snowColor = new(0.9f, 0.93f, 1f);
+        [Tooltip("Clouds: share of the sky band they cover in clear weather and while it rains.")]
+        [Range(0f, 1f)] public float cloudCover = 0.35f;
+        [Range(0f, 1f)] public float rainCloudCover = 0.9f;
+        [Tooltip("Lowest and highest cloud, in cells above the horizon (the average surface).")]
+        public Vector2 cloudBand = new(17f, 40f);
+        [Tooltip("Size of a cloud's puffs (cells).")]
+        [Min(0.5f)] public float cloudSize = 4f;
+        [Tooltip("How fast the clouds drift (art pixels per second).")]
+        public float cloudDrift = 2f;
+        [Range(0f, 1f)] public float cloudParallax = 0.05f;
+        [Tooltip("How much the clouds fade into the horizon colour.")]
+        [Range(0f, 1f)] public float cloudHaze = 0.15f;
+        public Color cloudColor = new(0.97f, 0.97f, 1f);
+        public Color cloudShadeColor = new(0.78f, 0.82f, 0.9f);
+
         [Tooltip("Ants, queen and items never render darker than this, so the colony stays watchable in dark tunnels.")]
         [Range(0f, 1f)] public float spriteMinLight = 0.85f;
         [Tooltip("Stripes on cells ordered for mining.")]
@@ -760,6 +787,14 @@ namespace Antarium.Content
         [Tooltip("Water tint; alpha = how strongly it covers the wall behind it.")]
         public Color waterColor = new(0.22f, 0.48f, 0.9f, 0.62f);
         public Color waterSurfaceColor = new(0.62f, 0.85f, 1f, 1f);
+        [Tooltip("Foam where falling water lands (Milestone 11).")]
+        public Color waterFoamColor = new(0.88f, 0.96f, 1f, 1f);
+        [Tooltip("Falling water and lava are drawn as a stream: its width in cells per full cell of liquid (at least 2 art pixels, at most a cell).")]
+        [Min(0.1f)] public float fallWidth = 1.4f;
+        [Tooltip("Light streaks running down a stream: speed (art pixels per second), length (art pixels) and the share of it that is light.")]
+        public float fallSpeed = 30f;
+        [Min(1f)] public float fallStreakLength = 9f;
+        [Range(0f, 1f)] public float fallStreakShare = 0.3f;
         public Color lavaColor = new(0.95f, 0.36f, 0.08f, 1f);
         public Color lavaHotColor = new(1f, 0.85f, 0.35f, 1f);
         [Tooltip("Gas tint; alpha = cover at full density.")]
@@ -788,6 +823,42 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float pheromoneToolCover = 0.35f;
         [Tooltip("Marker over the ant you control.")]
         public Color possessedColor = new(1f, 0.85f, 0.3f);
+    }
+
+    /// <summary>Outline of a <see cref="SceneryLayer"/>.</summary>
+    public enum SceneryShape
+    {
+        Off = 0,
+        /// <summary>Jagged mountains with straight slopes, snow above <see cref="SceneryLayer.snowLine"/>.</summary>
+        Peaks = 1,
+        /// <summary>Rolling hills.</summary>
+        Hills = 2,
+        /// <summary>A treeline of spruces and round broadleaves on low hills.</summary>
+        Trees = 3,
+    }
+
+    /// <summary>One layer of the surface background (Milestone 11), drawn by the terrain shader in the sky pixels.</summary>
+    [Serializable]
+    public sealed class SceneryLayer
+    {
+        public SceneryShape shape = SceneryShape.Hills;
+        [ColorUsage(false)] public Color color = Color.grey;
+        [Tooltip("How much it fades into the horizon colour (distance).")]
+        [Range(0f, 1f)] public float haze = 0.3f;
+        [Tooltip("Extra haze toward its foot (mist in the valleys).")]
+        [Range(0f, 1f)] public float mist = 0.2f;
+        [Tooltip("How much it moves with the world when the camera pans (0 = fixed like the sky, 1 = like the ground).")]
+        [Range(0f, 1f)] public float parallax = 0.3f;
+        [Tooltip("Its lowest outline, in cells above the horizon (the average surface).")]
+        public float foot;
+        [Tooltip("How far its outline rises above the foot (cells).")]
+        [Min(0f)] public float height = 8f;
+        [Tooltip("Width of its peaks or hills (cells).")]
+        [Min(1f)] public float width = 20f;
+        [Tooltip("Peaks: snow above this many cells over the horizon (0 = none).")]
+        [Min(0f)] public float snowLine;
+        [Tooltip("Trees: art pixels between trees.")]
+        [Min(3f)] public float treeSpacing = 6f;
     }
 
     [Serializable]

@@ -305,22 +305,220 @@ struct TerrainSurface
     bool sky;        // open sky (no back wall)
 };
 
-// Fluid over an open pixel. Liquids fill a cell from the bottom up to their level (full when the same liquid
-// is above), with a bright surface row; lava is self-lit and churns; gas is a dithered haze.
+// Falling liquid (Milestone 11): x = stream width per unit of level (in cells), y = streak speed (art pixels per second),
+// z = streak length (art pixels), w = share of a column's length that is a light streak.
+float4 _AntFall;
+float4 _AntWaterFoam;
+
+#define ANT_FULL_LIQUID 0.97
+
+bool CellOpen(int2 c) { return CellDensity(_AntCells[CellIndex(c)]) < 0.5; }
+
+float LiquidLevel(int2 c, uint kind)
+{
+    uint f = FluidWord(c);
+    return FluidKindOf(f) == kind ? FluidLevelOf(f) : 0.0;
+}
+
+// An open cell beside c with room for more of the liquid (not full of it, and no other fluid in it).
+bool RoomBeside(int2 c, uint kind)
+{
+    int2 l = c - int2(1, 0), r = c + int2(1, 0);
+    uint fl = FluidWord(l), fr = FluidWord(r);
+    bool roomL = CellOpen(l) && (FluidKindOf(fl) == 0u || (FluidKindOf(fl) == kind && FluidLevelOf(fl) < ANT_FULL_LIQUID));
+    bool roomR = CellOpen(r) && (FluidKindOf(fr) == 0u || (FluidKindOf(fr) == kind && FluidLevelOf(fr) < ANT_FULL_LIQUID));
+    return roomL || roomR;
+}
+
+// Liquid in c that is falling, drawn as a vertical stream instead of a cell filled from the bottom: nothing under it yet, or
+// the cell under it is part of the fall too (it has open room under it), or c is fed from above with room beside it (a
+// stream pouring into a pool). Liquid resting on a film of liquid (running down a tunnel) is not falling.
+bool LiquidFalls(int2 c, uint kind)
+{
+    if (LiquidLevel(c, kind) <= 0.0) return false;
+    int2 b = c - int2(0, 1);
+    if (!CellOpen(b)) return false;
+    float lb = LiquidLevel(b, kind);
+    if (lb <= 0.0) return true;
+    if (lb < ANT_FULL_LIQUID && CellOpen(b - int2(0, 1)) && LiquidLevel(b - int2(0, 1), kind) < ANT_FULL_LIQUID) return true;
+    return LiquidLevel(c + int2(0, 1), kind) > 0.0 && RoomBeside(c, kind);
+}
+
+// Height of the liquid surface beside c (cells, relative to c's floor) for smoothing c's surface toward it: a neighbour's
+// level (one cell more when liquid stands on it: the flow is deeper there), the step below when the liquid has run down to a
+// lower cell, the cell above a solid neighbour when the liquid comes from higher up, else c's own level (flat against a wall,
+// and beside a falling stream).
+float NeighbourSurface(int2 c, int dx, uint kind, float own)
+{
+    int2 n = c + int2(dx, 0);
+    float result = own;
+    if (CellOpen(n))
+    {
+        float ln = LiquidLevel(n, kind);
+        float lb = LiquidLevel(n - int2(0, 1), kind);
+        if (ln > 0.0)
+        {
+            float lu = LiquidLevel(n + int2(0, 1), kind);
+            if (!LiquidFalls(n, kind)) result = lu > 0.0 ? 1.0 + lu : ln;
+        }
+        else if (lb > 0.0) result = lb - 1.0;
+    }
+    else
+    {
+        float lu = CellOpen(n + int2(0, 1)) ? LiquidLevel(n + int2(0, 1), kind) : 0.0;
+        if (lu > 0.0) result = 1.0 + lu;
+    }
+    return result;
+}
+
+// Surface height at this pixel's column: the cell's own level sloped toward the neighbour it leans to, so liquid running down
+// a tunnel is a ramp instead of stairs. `own` may be below the cell's floor (an empty cell over liquid).
+float SmoothSurface(int2 c, PixelInfo p, uint kind, float own)
+{
+    float side = frac(p.cellPos.x) - 0.5;
+    return lerp(own, NeighbourSurface(c, side < 0.0 ? -1 : 1, kind, own), abs(side));
+}
+
+int StreamWidth(float level)
+{
+    float ppc = _AntPixel.y;
+    return (int)clamp(ceil(level * ppc * _AntFall.x), 2.0, ppc);
+}
+
+// The pixel's column inside a centred stream of `level` (optionally widened by `margin` pixels on each side).
+bool InStream(PixelInfo p, int2 c, float level, int margin)
+{
+    int ppc = (int)_AntPixel.y;
+    int lx = p.px.x - c.x * ppc;
+    int w = StreamWidth(level);
+    int x0 = (ppc - w) >> 1;
+    return lx >= x0 - margin && lx < x0 + w + margin;
+}
+
+// A vertical stream of liquid through cell c, `level` wide (pixels of the cell's column, centred), with light streaks
+// running down. False if the pixel is outside the stream.
+bool DrawStream(inout TerrainSurface s, PixelInfo p, int2 c, uint kind, float level)
+{
+    if (!InStream(p, c, level, 0)) return false;
+    int ppc = (int)_AntPixel.y;
+    int lx = p.px.x - c.x * ppc;
+    int w = StreamWidth(level);
+    int x0 = (ppc - w) >> 1;
+    bool rim = w > 3 && (lx == x0 || lx == x0 + w - 1);
+    float phase = Hash21(int2(p.px.x, 9311));
+    float speed = _AntFall.y * (0.8 + 0.4 * Hash21(int2(p.px.x, 4127)));
+    bool streak = frac((p.px.y + floor(_AntTime * speed)) / max(_AntFall.z, 1.0) + phase) < _AntFall.w;
+    if (kind == ANT_FLUID_WATER)
+    {
+        float3 body = lerp(s.albedo, _AntWater.rgb, max(_AntWater.a, 0.8));
+        s.albedo = streak ? lerp(body, _AntWaterSurface.rgb, 0.65) : rim ? lerp(body, _AntWaterSurface.rgb, 0.35) : body;
+    }
+    else
+    {
+        s.albedo = streak || rim ? _AntLavaHot.rgb : _AntLava.rgb;
+        s.unlit = true;
+    }
+    return true;
+}
+
+// Still or running liquid: the body, its bright surface row, foam (where a stream lands). Lava is self-lit and churns.
+void DrawLiquid(inout TerrainSurface s, PixelInfo p, uint kind, bool surface, bool foam)
+{
+    if (kind == ANT_FLUID_WATER)
+    {
+        s.albedo = foam ? _AntWaterFoam.rgb : surface ? _AntWaterSurface.rgb : lerp(s.albedo, _AntWater.rgb, _AntWater.a);
+    }
+    else
+    {
+        float churn = ValueNoise4(p.px + int2((int)(_AntTime * 5.0), (int)(_AntTime * 3.0)));
+        s.albedo = surface || foam || churn > 0.62 ? _AntLavaHot.rgb : _AntLava.rgb;
+        s.unlit = true;
+    }
+}
+
+// Foam flickering on and above a surface where a stream lands.
+bool Foam(PixelInfo p, int salt)
+{
+    return Hash21(p.px + int2((int)(_AntTime * 12.0) * 53, salt)) > 0.45;
+}
+
+// The liquid falling out of the cell above, if any (its kind, else 0).
+uint FallingAbove(int2 c, out float level)
+{
+    int2 a = c + int2(0, 1);
+    uint fa = FluidWord(a);
+    uint kind = FluidKindOf(fa);
+    level = FluidLevelOf(fa);
+    return (kind == ANT_FLUID_WATER || kind == ANT_FLUID_LAVA) && LiquidFalls(a, kind) ? kind : 0u;
+}
+
+// The open part of a cell above its liquid (or a cell with none): the stream falling into it from above, with foam thrown up
+// just over the surface at `top` where it lands.
+void AboveSurface(inout TerrainSurface s, PixelInfo p, int2 c, float local, float top)
+{
+    float la;
+    uint kind = FallingAbove(c, la);
+    if (kind == 0u) return;
+    if (top > 0.0 && local <= top + 2.0 * p.step && InStream(p, c, la, 2) && Foam(p, 31))
+    {
+        DrawLiquid(s, p, kind, false, true);
+        return;
+    }
+    DrawStream(s, p, c, kind, la);
+}
+
+// Fluid over an open pixel. Liquids fill a cell from the bottom up to their level (full when the same liquid is above), with
+// a bright surface row that slopes toward the neighbouring cells' surfaces (also through the empty cell over a lower step);
+// falling liquid is a stream with streaks running down and foam where it lands. Gas is a dithered haze.
 void ApplyFluid(inout TerrainSurface s, Neighborhood n, PixelInfo p)
 {
     int2 c = (int2)floor(p.cellPos);
+    float local = frac(p.cellPos.y);
     uint f = FluidWord(c);
     if (FluidKindOf(f) == 0u && n.density[4] >= 0.5)
     {
-        // An open-looking rim pixel of a solid cell: take the fluid of the open neighbour it leans toward.
-        float2 fr = frac(p.cellPos);
-        uint side = FluidWord(c + int2(fr.x < 0.5 ? -1 : 1, 0));
-        f = FluidKindOf(side) != 0u ? side : FluidWord(c + int2(0, 1));
+        // An open-looking rim pixel of a solid cell: take the fluid of the open neighbour it leans toward (filled from the
+        // bottom; never a stream, which keeps to the middle of its cell).
+        int2 src = c + int2(frac(p.cellPos.x) < 0.5 ? -1 : 1, 0);
+        if (FluidKindOf(FluidWord(src)) == 0u) src = c + int2(0, 1);
+        f = FluidWord(src);
+        uint rk = FluidKindOf(f);
+        float rl = FluidLevelOf(f);
+        if (rk == 0u || rk == ANT_FLUID_FIRE || rl <= 0.0) return;
+        if (rk == ANT_FLUID_GAS || rk == ANT_FLUID_SMOKE)
+        {
+            float4 tint = rk == ANT_FLUID_GAS ? _AntGas : _AntSmoke;
+            if (Bayer4(p.px + int2((int)(_AntTime * 2.0), 0)) < rl * tint.a * 1.6)
+                s.albedo = lerp(s.albedo, tint.rgb, 0.55);
+            return;
+        }
+        if (LiquidFalls(src, rk)) return;
+        bool rfull = LiquidLevel(src + int2(0, 1), rk) > 0.0;
+        float rtop = rfull ? 1.0 : max(rl, p.step);
+        if (local <= rtop) DrawLiquid(s, p, rk, !rfull && local > rtop - p.step, false);
+        return;
     }
+
     uint kind = FluidKindOf(f);
     float level = FluidLevelOf(f);
-    if (kind == 0u || kind == ANT_FLUID_FIRE || level <= 0.0) return;
+    if (kind == ANT_FLUID_FIRE) return;
+    if (kind == 0u || level <= 0.0)
+    {
+        // An empty cell: the surface of liquid one step lower may slope up into it; a stream may fall through it.
+        uint bk = FluidKindOf(FluidWord(c - int2(0, 1)));
+        float top = 0.0;
+        if ((bk == ANT_FLUID_WATER || bk == ANT_FLUID_LAVA) && !LiquidFalls(c - int2(0, 1), bk))
+        {
+            top = SmoothSurface(c, p, bk, LiquidLevel(c - int2(0, 1), bk) - 1.0);
+            if (local <= top)
+            {
+                DrawLiquid(s, p, bk, local > top - p.step, false);
+                return;
+            }
+        }
+        AboveSurface(s, p, c, local, top);
+        return;
+    }
 
     if (kind == ANT_FLUID_GAS || kind == ANT_FLUID_SMOKE)
     {
@@ -330,23 +528,42 @@ void ApplyFluid(inout TerrainSurface s, Neighborhood n, PixelInfo p)
         return;
     }
 
-    uint above = FluidWord(c + int2(0, 1));
-    bool full = FluidKindOf(above) == kind && FluidLevelOf(above) > 0.0;
-    float top = full ? 1.0 : max(level, p.step);
-    float local = frac(p.cellPos.y);
-    if (local > top) return;
-    bool surface = !full && local > top - p.step;
+    if (LiquidFalls(c, kind))
+    {
+        // Landing in a pool: the pool's surface beside the stream is in this row, and under it this cell is pool too.
+        if (LiquidLevel(c - int2(0, 1), kind) >= ANT_FULL_LIQUID)
+        {
+            float pool = max(LiquidLevel(c - int2(1, 0), kind), LiquidLevel(c + int2(1, 0), kind));
+            if (local <= pool)
+            {
+                bool top = local > pool - p.step;
+                DrawLiquid(s, p, kind, top, top && InStream(p, c, level, 2) && Foam(p, 13));
+                return;
+            }
+            if (pool > 0.0 && local <= pool + 2.0 * p.step && InStream(p, c, level, 2) && Foam(p, 31))
+            {
+                DrawLiquid(s, p, kind, false, true);
+                return;
+            }
+        }
+        // Taper toward the stream above so its width changes smoothly down the fall.
+        float la;
+        uint ka = FallingAbove(c, la);
+        DrawStream(s, p, c, kind, lerp(level, ka == kind ? la : level, local));
+        return;
+    }
 
-    if (kind == ANT_FLUID_WATER)
+    bool full = LiquidLevel(c + int2(0, 1), kind) > 0.0;
+    float top = full ? 1.0 : clamp(SmoothSurface(c, p, kind, level), p.step, 1.0);
+    if (local > top)
     {
-        s.albedo = surface ? _AntWaterSurface.rgb : lerp(s.albedo, _AntWater.rgb, _AntWater.a);
+        AboveSurface(s, p, c, local, top);
+        return;
     }
-    else
-    {
-        float churn = ValueNoise4(p.px + int2((int)(_AntTime * 5.0), (int)(_AntTime * 3.0)));
-        s.albedo = surface || churn > 0.62 ? _AntLavaHot.rgb : _AntLava.rgb;
-        s.unlit = true;
-    }
+    bool surface = !full && local > top - p.step;
+    float la;
+    bool fallingIn = !full && FallingAbove(c, la) == kind;
+    DrawLiquid(s, p, kind, surface, surface && fallingIn && InStream(p, c, la, 2) && Foam(p, 13));
 }
 
 // Pheromones: two cells per uint, each 16 bits = 2 bits per kind (0 none, 1..3 by strength).
@@ -376,6 +593,170 @@ void ApplyScent(inout TerrainSurface s, PixelInfo p)
         s.albedo = lerp(s.albedo, _AntScentColors[k].rgb, 0.75);
         s.glow = max(s.glow, 0.3);
     }
+}
+
+// Surface background (Milestone 11): up to 4 parallax layers behind the sky pixels, farthest first, and clouds.
+float4 _AntScenery[4];       // x = shape (0 off, 1 peaks, 2 hills, 3 trees), y = foot above the horizon, z = height, w = feature width (cells)
+float4 _AntSceneryColor[4];  // rgb = colour, a = haze toward the horizon colour
+float4 _AntSceneryMore[4];   // x = parallax (0 far .. 1 with the world), y = snow line above the horizon (cells, 0 = none), z = mist at the foot, w = tree spacing (art pixels)
+float4 _AntSceneryInfo;      // x = layer count, y = seed, w = how much the layers follow the camera up and down
+float4 _AntSnow;
+float4 _AntCloud;            // x = cover (0..1), y = haze, z = drift (art pixels per second), w = parallax
+float4 _AntCloudBand;        // x, y = lowest and highest cloud (cells above the horizon), z = cloud size (cells)
+float4 _AntCloudColor;
+float4 _AntCloudShade;
+
+float LineNoise(float x, int seed, bool smooth)
+{
+    float i = floor(x);
+    float f = x - i;
+    if (smooth) f = f * f * (3.0 - 2.0 * f);
+    return lerp(Hash21(int2((int)i, seed)), Hash21(int2((int)i + 1, seed)), f);
+}
+
+float PlaneNoise(float2 q, int seed)
+{
+    float2 i = floor(q);
+    float2 f = q - i;
+    f = f * f * (3.0 - 2.0 * f);
+    int2 c = (int2)i + int2(seed * 7, seed * 13);
+    return lerp(lerp(Hash21(c), Hash21(c + int2(1, 0)), f.x), lerp(Hash21(c + int2(0, 1)), Hash21(c + int2(1, 1)), f.x), f.y);
+}
+
+// Crowns of a row of trees (art pixels above the ground line): spruces (stepped triangles) and round broadleaves.
+float TreeCrowns(int lx, float spacing, int seed)
+{
+    int sp = max((int)spacing, 3);
+    int t0 = (int)floor((float)lx / sp);
+    float best = 0.0;
+    [unroll] for (int k = -1; k <= 1; k++)
+    {
+        int t = t0 + k;
+        float h1 = Hash21(int2(t, seed)), h2 = Hash21(int2(t, seed + 1)), h3 = Hash21(int2(t, seed + 2));
+        float cx = t * sp + sp * 0.5 + (h1 - 0.5) * sp * 0.6;
+        float dx = abs(lx + 0.5 - cx);
+        float height = sp * (1.0 + h2 * 1.2);
+        float r = sp * 0.62;
+        float crown = h3 < 0.55 ? height - floor(dx) * 2.0 : (dx < r ? height - r + sqrt(r * r - dx * dx) : -1.0);
+        best = max(best, crown);
+    }
+    return best;
+}
+
+// Mountains: one straight-sided peak per feature width (random height, place and steepness), the highest one wins. `face` is
+// -1 on the sunlit side of its ridgeline and 1 on the shaded side; the ridgeline runs down from the summit at a slant, so
+// for a pixel `yh` high (in the same units as the peak heights) it is offset from the summit by the slant times the drop.
+float Peaks(float x, float yh, int seed, out float face)
+{
+    float i0 = floor(x);
+    float best = -1.0;
+    face = 1.0;
+    [unroll] for (int k = -1; k <= 1; k++)
+    {
+        int i = (int)i0 + k;
+        float h = 0.35 + 0.65 * Hash21(int2(i, seed));
+        float cx = i + 0.5 + (Hash21(int2(i, seed + 1)) - 0.5) * 0.6;
+        float slope = 1.1 + 0.9 * Hash21(int2(i, seed + 2));
+        float slant = (Hash21(int2(i, seed + 3)) - 0.5) * 0.5;
+        float v = h - abs(x - cx) * slope;
+        if (v > best) { best = v; face = x - cx < (h - yh) * slant ? -1.0 : 1.0; }
+    }
+    return max(best, 0.0) + LineNoise(x * 5.0, seed + 17, false) * 0.05;
+}
+
+// Top of layer k at layer column lx, in art pixels above the horizon; `ly` is the pixel's height (for the peaks' faces).
+float SceneryRidge(int k, int lx, float ly, out float face)
+{
+    float4 sh = _AntScenery[k];
+    float cell = _AntPixel.y;
+    int seed = (int)_AntSceneryInfo.y + k * 7919;
+    float w = max(sh.w * cell, 1.0);
+    face = 0.0;
+    float h;
+    if (sh.x < 1.5)
+    {
+        // Big peaks with smaller ones on their shoulders.
+        float yh = (ly / cell - sh.y) / max(sh.z, 1e-3);
+        float small;
+        h = Peaks(lx / w, yh, seed, face);
+        float h2 = Peaks(lx / (w * 0.42) + 0.37, yh / 0.55, seed + 101, small) * 0.55;
+        if (h2 > h) { h = h2; face = small; }
+    }
+    else h = LineNoise(lx / w, seed, true) * 0.8 + LineNoise(lx / (w * 0.35), seed + 17, true) * 0.2;
+    float ridge = (sh.y + sh.z * h) * cell;
+    if (sh.x > 2.5) ridge += TreeCrowns(lx, _AntSceneryMore[k].w, seed + 31);
+    return floor(ridge);
+}
+
+// Pixels a layer moves by relative to the world, for a camera at `cam` (art pixels): far layers follow the camera.
+float2 SceneryShift(float parallax)
+{
+    float ppu = _AntPixel.x;
+    float2 cam = _WorldSpaceCameraPos.xy * ppu;
+    float horizon = _AntSkyRange.x * ppu;
+    return round(float2(cam.x, (cam.y - horizon) * _AntSceneryInfo.w) * (1.0 - parallax));
+}
+
+// The nearest background layer covering a sky pixel, lit by the sky and fading into the horizon colour with distance and
+// toward its foot. False if the pixel is open sky.
+bool ApplyScenery(inout float3 albedo, int2 px)
+{
+    float cell = _AntPixel.y;
+    float horizon = _AntSkyRange.x * _AntPixel.x;
+    for (int k = (int)_AntSceneryInfo.x - 1; k >= 0; k--)
+    {
+        if (_AntScenery[k].x < 0.5) continue;
+        float4 more = _AntSceneryMore[k];
+        float2 shift = SceneryShift(more.x);
+        int lx = px.x - (int)shift.x;
+        float ly = px.y - shift.y - horizon;
+        float face;
+        float ridge = SceneryRidge(k, lx, ly, face);
+        if (ly > ridge) continue;
+
+        float4 sh = _AntScenery[k];
+        float3 c = _AntSceneryColor[k].rgb;
+        bool snow = sh.x < 1.5 && more.y > 0.0 && ly > more.y * cell + (Hash21(int2(lx >> 1, 5)) - 0.5) * 4.0;
+        if (snow) c = _AntSnow.rgb;
+        if (sh.x < 1.5) c *= face < 0.0 ? 1.1 : 0.88;      // sunlit left slopes, shaded right ones
+        else if (ly > ridge - 1.0) c *= 1.18;            // a lit rim along the top of hills and trees
+        // Mist rises from the foot, up to half the layer's height (in eighths, ordered dither between them; flat above).
+        float mist = saturate(1.0 - ly / max((sh.y + sh.z * 0.5) * cell, 1.0));
+        float haze = saturate(_AntSceneryColor[k].a + floor(more.z * mist * 8.0 + Bayer4(px)) / 8.0);
+        albedo = lerp(c * _AntSkyLight.rgb, _AntSkyHorizon.rgb, haze);
+        return true;
+    }
+    return false;
+}
+
+float CloudDensity(float lx, float ly, float lo, float hi, float size, int seed)
+{
+    float n = PlaneNoise(float2(lx / (size * 2.4), ly / size), seed) * 0.65
+            + PlaneNoise(float2(lx / (size * 0.8), ly / (size * 0.45)), seed + 3) * 0.35;
+    float b = saturate((ly - lo) / max(hi - lo, 1.0));
+    return n * saturate(b * 8.0) * saturate((1.0 - b) * 2.5);   // flat-ish bottoms, rounded tops
+}
+
+// Drifting pixel clouds: a highlight on their tops and a shade along their bottoms.
+void ApplyClouds(inout float3 albedo, int2 px)
+{
+    float cover = _AntCloud.x;
+    if (cover <= 0.0) return;
+    float cell = _AntPixel.y;
+    float horizon = _AntSkyRange.x * _AntPixel.x;
+    float2 shift = SceneryShift(_AntCloud.w);
+    float ly = px.y - shift.y - horizon;
+    float lo = _AntCloudBand.x * cell, hi = _AntCloudBand.y * cell;
+    if (ly < lo || ly > hi) return;
+    float lx = px.x - shift.x - floor(_AntTime * _AntCloud.z);
+    float size = max(_AntCloudBand.z * cell, 2.0);
+    int seed = (int)_AntSceneryInfo.y + 4441;
+    float th = lerp(0.78, 0.3, saturate(cover));
+    if (CloudDensity(lx, ly, lo, hi, size, seed) <= th) return;
+    bool top = CloudDensity(lx, ly + 1.0, lo, hi, size, seed) <= th;
+    bool bottom = CloudDensity(lx, ly - 2.0, lo, hi, size, seed) <= th;
+    float3 c = bottom ? _AntCloudShade.rgb : _AntCloudColor.rgb * (top ? 1.06 : 1.0);
+    albedo = lerp(c * _AntSkyLight.rgb, _AntSkyHorizon.rgb, _AntCloud.y);
 }
 
 TerrainSurface EvaluateTerrain(float2 positionWS)
@@ -472,6 +853,8 @@ TerrainSurface EvaluateTerrain(float2 positionWS)
                 float twinkle = Hash21(p.px + int2((int)(_AntTime * 1.5), 77)) > 0.15 ? 1.0 : 0.4;
                 if (star > 0.9965) s.albedo = lerp(s.albedo, _AntStars.rgb, saturate(_AntStars.a * t * 1.6) * twinkle);
             }
+            // Mountains, hills and trees in front of the clouds.
+            if (!ApplyScenery(s.albedo, p.px)) ApplyClouds(s.albedo, p.px);
             s.unlit = true;
             s.sky = true;
             ApplyFluid(s, n, p);

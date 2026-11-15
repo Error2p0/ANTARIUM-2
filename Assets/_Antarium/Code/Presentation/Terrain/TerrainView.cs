@@ -61,7 +61,21 @@ namespace Antarium.Presentation
         static readonly int StarsId = Shader.PropertyToID("_AntStars");
         static readonly int ViewId = Shader.PropertyToID("_AntView");
         static readonly int LightRampId = Shader.PropertyToID("_AntLightRamp");
+        static readonly int FallId = Shader.PropertyToID("_AntFall");
+        static readonly int WaterFoamId = Shader.PropertyToID("_AntWaterFoam");
+        static readonly int SceneryId = Shader.PropertyToID("_AntScenery");
+        static readonly int SceneryColorId = Shader.PropertyToID("_AntSceneryColor");
+        static readonly int SceneryMoreId = Shader.PropertyToID("_AntSceneryMore");
+        static readonly int SceneryInfoId = Shader.PropertyToID("_AntSceneryInfo");
+        static readonly int SnowId = Shader.PropertyToID("_AntSnow");
+        static readonly int CloudId = Shader.PropertyToID("_AntCloud");
+        static readonly int CloudBandId = Shader.PropertyToID("_AntCloudBand");
+        static readonly int CloudColorId = Shader.PropertyToID("_AntCloudColor");
+        static readonly int CloudShadeId = Shader.PropertyToID("_AntCloudShade");
+        /// <summary>Most background layers the terrain shader draws.</summary>
+        public const int MaxSceneryLayers = 4;
         float _rain;
+        readonly uint _seed;
 
         readonly WorldGrid _world;
         readonly LightSystem _light;
@@ -79,8 +93,9 @@ namespace Antarium.Presentation
         readonly Mesh _mesh;
 
         public TerrainView(WorldGrid world, LightSystem light, PheromoneSystem pheromones, ContentDB content, RenderConfig render,
-            Material terrainMaterial, Transform parent)
+            Material terrainMaterial, Transform parent, uint seed = 0u)
         {
+            _seed = seed;
             _world = world;
             _light = light;
             _pheromones = pheromones;
@@ -150,6 +165,9 @@ namespace Antarium.Presentation
             Shader.SetGlobalColor(FireHotId, ToWorkingAlpha(render.fireHotColor));
             Shader.SetGlobalColor(EmberId, ToWorkingAlpha(render.emberColor));
             Shader.SetGlobalColor(GasId, ToWorkingAlpha(render.gasColor));
+            Shader.SetGlobalColor(WaterFoamId, ToWorkingAlpha(render.waterFoamColor));
+            Shader.SetGlobalVector(FallId, new Vector4(render.fallWidth, render.fallSpeed, render.fallStreakLength, render.fallStreakShare));
+            ApplyScenery(render);
             Shader.SetGlobalBuffer(MaterialsId, _materialBuffer);
             Shader.SetGlobalTexture(MaterialTexId, _materialTextures);
             Shader.SetGlobalVector(WorldId, new Vector4(_world.Width, _world.Height, _world.ChunksX, 0f));
@@ -174,6 +192,36 @@ namespace Antarium.Presentation
             Shader.SetGlobalVector(SkyRangeId, new Vector4(horizon, _world.Height * WorldConstants.CellSize, 0f, 0f));
         }
 
+        /// <summary>The surface background layers, snow and clouds (Milestone 11); the cloud cover follows the rain in <see cref="SetSky"/>.</summary>
+        void ApplyScenery(RenderConfig render)
+        {
+            var shape = new Vector4[MaxSceneryLayers];
+            var color = new Vector4[MaxSceneryLayers];
+            var more = new Vector4[MaxSceneryLayers];
+            int count = render.sceneryLayers != null ? Mathf.Min(render.sceneryLayers.Length, MaxSceneryLayers) : 0;
+            for (int i = 0; i < count; i++)
+            {
+                var l = render.sceneryLayers[i];
+                shape[i] = new Vector4((int)l.shape, l.foot, l.height, l.width);
+                var c = ToWorking(l.color);
+                color[i] = new Vector4(c.r, c.g, c.b, l.haze);
+                more[i] = new Vector4(l.parallax, l.snowLine, l.mist, l.treeSpacing);
+            }
+            Shader.SetGlobalVectorArray(SceneryId, shape);
+            Shader.SetGlobalVectorArray(SceneryColorId, color);
+            Shader.SetGlobalVectorArray(SceneryMoreId, more);
+            // The seed picks where the peaks and trees stand (kept small: it offsets integer hash lattices).
+            Shader.SetGlobalVector(SceneryInfoId, new Vector4(count, _seed % 65521u, 0f, render.sceneryVertical));
+            Shader.SetGlobalColor(SnowId, ToWorking(render.snowColor));
+            Shader.SetGlobalVector(CloudBandId, new Vector4(render.cloudBand.x, render.cloudBand.y, render.cloudSize, 0f));
+            Shader.SetGlobalColor(CloudColorId, ToWorking(render.cloudColor));
+            Shader.SetGlobalColor(CloudShadeId, ToWorking(render.cloudShadeColor));
+            SetCloudCover();
+        }
+
+        void SetCloudCover() => Shader.SetGlobalVector(CloudId,
+            new Vector4(Mathf.Lerp(_render.cloudCover, _render.rainCloudCover, _rain), _render.cloudHaze, _render.cloudDrift, _render.cloudParallax));
+
         /// <summary>
         /// Sky colours, sky light and stars for the time of day and the weather (rain greys the sky and dims the light; it
         /// fades in and out over a few seconds); <paramref name="flash"/> (0..1, a lightning bolt) lights sky and ground up
@@ -184,6 +232,7 @@ namespace Antarium.Presentation
             float d = surface.Daylight;
             float target = surface.Weather == WeatherKind.Rain ? 1f : 0f;
             _rain = Mathf.MoveTowards(_rain, target, dt / 4f);
+            SetCloudCover();
             var r = _render;
             float twilight = 1f - Mathf.Abs(2f * d - 1f); // 1 halfway through a sunrise or sunset
             var top = Color.Lerp(r.nightSkyTop, r.skyTop, d);

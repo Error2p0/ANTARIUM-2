@@ -349,7 +349,7 @@ namespace Antarium.Gameplay
             EndSession();
             _sim = sim;
             _worldSize = new float2(sim.World.Width, sim.World.Height) * WorldConstants.CellSize;
-            _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform);
+            _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform, sim.Seed);
             _terrain.Upload();
             SetOverlay(_overlayMode);
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);

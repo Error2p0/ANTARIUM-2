@@ -65,6 +65,48 @@ MonoBehaviour:
     starfallInterval: {x: 0.04, y: 0.18}
     lightningColor: {r: 0.92, g: 0.95, b: 1, a: 1}
     lightningFlash: 0.9
+    sceneryLayers:
+    - shape: 1
+      color: {r: 0.5, g: 0.55, b: 0.72, a: 1}
+      haze: 0.25
+      mist: 0.35
+      parallax: 0.1
+      foot: 5
+      height: 30
+      width: 30
+      snowLine: 17
+      treeSpacing: 6
+    - shape: 2
+      color: {r: 0.36, g: 0.53, b: 0.5, a: 1}
+      haze: 0.2
+      mist: 0.3
+      parallax: 0.25
+      foot: 1
+      height: 12
+      width: 20
+      snowLine: 0
+      treeSpacing: 6
+    - shape: 3
+      color: {r: 0.19, g: 0.36, b: 0.26, a: 1}
+      haze: 0.1
+      mist: 0
+      parallax: 0.45
+      foot: 0
+      height: 4
+      width: 26
+      snowLine: 0
+      treeSpacing: 6
+    sceneryVertical: 0.5
+    snowColor: {r: 0.9, g: 0.93, b: 1, a: 1}
+    cloudCover: 0.35
+    rainCloudCover: 0.9
+    cloudBand: {x: 17, y: 40}
+    cloudSize: 4
+    cloudDrift: 2
+    cloudParallax: 0.05
+    cloudHaze: 0.15
+    cloudColor: {r: 0.97, g: 0.97, b: 1, a: 1}
+    cloudShadeColor: {r: 0.78, g: 0.82, b: 0.9, a: 1}
     spriteMinLight: 0.85
     miningOrderColor: {r: 1, g: 0.69, b: 0.25, a: 1}
     storageColor: {r: 0.3, g: 0.75, b: 0.85, a: 1}
@@ -91,6 +133,11 @@ MonoBehaviour:
     oreSurveySeconds: 1
     waterColor: {r: 0.22, g: 0.48, b: 0.9, a: 0.62}
     waterSurfaceColor: {r: 0.62, g: 0.85, b: 1, a: 1}
+    waterFoamColor: {r: 0.88, g: 0.96, b: 1, a: 1}
+    fallWidth: 1.4
+    fallSpeed: 30
+    fallStreakLength: 9
+    fallStreakShare: 0.3
     lavaColor: {r: 0.95, g: 0.36, b: 0.08, a: 1}
     lavaHotColor: {r: 1, g: 0.85, b: 0.35, a: 1}
     gasColor: {r: 0.62, g: 0.85, b: 0.3, a: 0.55}
