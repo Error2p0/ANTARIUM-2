@@ -73,6 +73,42 @@ namespace Antarium.Tests
             Assert.IsFalse(back.Wants("flight"));
             Assert.IsTrue(CaptureRequest.Decode("all||0").Wants("flight"));
             Assert.IsTrue(CaptureRequest.Decode("||0").Wants("flight"), "no names = every shot");
+            var store = CaptureRequest.Decode("store||0");
+            Assert.IsTrue(store.Wants("surface", storeMedia: true));
+            Assert.IsFalse(store.Wants("trees", storeMedia: false), "\"store\" leaves out the review stills");
+            Assert.IsTrue(CaptureRequest.Decode("trees||0").Wants("trees", storeMedia: false));
+        }
+
+        [Test]
+        public void IntroScreen_PlaysLiftsAndSkips()
+        {
+            var intro = new IntroScreen();
+            int finished = 0;
+            intro.Finished += () => finished++;
+            Assert.IsFalse(intro.Playing);
+            intro.Play();
+            Assert.IsTrue(intro.Playing);
+            Assert.IsFalse(intro.Root.ClassListContains("hidden"));
+            // A long hitch only counts as a short step: the logos are not skipped by a slow first frame.
+            intro.Update(3f, false);
+            Assert.IsTrue(intro.Playing);
+            for (int i = 0; i < 20 * 10 && intro.Playing; i++) intro.Update(0.05f, false);
+            Assert.IsFalse(intro.Playing, "ends on its own in under ten seconds");
+            Assert.AreEqual(1, finished);
+            Assert.IsTrue(intro.Root.ClassListContains("hidden"));
+
+            // A press goes straight to a short lift, a second press ends it.
+            intro.Play();
+            intro.Update(0.05f, true);
+            Assert.IsTrue(intro.Playing, "the lift still fades");
+            intro.Update(0.05f, true);
+            Assert.IsFalse(intro.Playing);
+            Assert.AreEqual(2, finished);
+
+            intro.Play();
+            intro.Stop();
+            Assert.IsFalse(intro.Playing);
+            Assert.AreEqual(2, finished, "Stop is silent");
         }
 
         [Test]

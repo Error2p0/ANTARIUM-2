@@ -1,6 +1,6 @@
 """Cuts the store page GIFs out of the captured clips.
 
-Usage (from the project root, after Antarium -> Capture -> Run All Shots):
+Usage (from the project root, after Antarium -> Capture -> Run All Store Shots):
     python tools/media/make_gifs.py [--out Captures/gifs] [--only antarium_dig,antarium_raid]
 
 Each GIF is one or more segments of 1080p60 clips in Captures/clips: the centre 1280x720 is cut out and halved with
@@ -28,7 +28,9 @@ GIFS = {
     "antarium_colony": [("g_colony", 0.0, 4.5)],
     "antarium_dig": [("t03_dig", 0.3, 5.0)],
     "antarium_factory": [("g_factory", 0.0, 4.5)],
+    "antarium_sky": [("s02_starfall", 0.5, 3.0), ("s03_storm", 0.0, 3.0)],
     "antarium_depths": [("g_crystal", 0.0, 2.5), ("g_magma", 0.0, 2.5)],
+    "antarium_ruins": [("s05_glow_ruins", 0.0, 4.0)],
     "antarium_raid": [("t10_raid", 1.5, 4.5)],
     "antarium_possess": [("t11_possess", 0.5, 4.0)],
     "antarium_flight": [("t15_flight", 0.0, 4.5)],

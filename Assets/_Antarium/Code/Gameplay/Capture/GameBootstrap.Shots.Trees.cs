@@ -63,16 +63,7 @@ namespace Antarium.Gameplay
             }
 
             // The Elder Tree: its cavern revealed (as when the colony breaks in), then a golden apple and its hover text.
-            if (!_sim.Surface.HasElderTree) yield break;
-            var site = _sim.Surface.ElderTree;
-            var starts = new NativeList<int2>(1024, Allocator.TempJob);
-            for (int x = site.Center.x - site.Half.x; x <= site.Center.x + site.Half.x; x++)
-            for (int y = site.Center.y - site.Half.y; y <= site.Center.y + site.Half.y; y++)
-                if (Reveal.IsUnexploredOpen(world, x, y)) starts.Add(new int2(x, y));
-            Reveal.Flood(world, starts.AsArray(), config.dig.revealRadius, config.dig.caveRevealLimit);
-            starts.Dispose();
-            ElderTree.RevealTree(world, _content, site);
-            world.MarkAll(ChunkFlags.TerrainUpload);
+            if (!RevealElderTree(out var site)) yield break;
             Cam((float2)site.Center + new float2(0.5f, 2f), 2);
             yield return Seconds(2f);
             yield return Still("trees_elder");

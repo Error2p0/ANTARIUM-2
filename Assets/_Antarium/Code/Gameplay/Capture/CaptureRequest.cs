@@ -14,7 +14,10 @@ namespace Antarium.Gameplay
     {
         public const string EditorKey = "Antarium.CaptureRequest";
 
-        /// <summary>Shot names (see <c>GameBootstrap.Shots</c>); empty or "all" = every shot.</summary>
+        /// <summary>
+        /// Shot names (see <c>GameBootstrap.Shots</c>); empty or "all" = every shot, "store" = the store page media only
+        /// (not the review stills).
+        /// </summary>
         public string[] Shots = Array.Empty<string>();
         public string OutputDirectory;
         public bool RebuildShowcase;
@@ -23,11 +26,12 @@ namespace Antarium.Gameplay
         public string ScratchDirectory => Path.Combine(OutputDirectory, "_scratch");
         public string ShowcaseDirectory => Path.Combine(OutputDirectory, "_showcase");
 
-        public bool Wants(string shot)
+        /// <param name="storeMedia">The shot makes store page media (stills, clips), not review stills.</param>
+        public bool Wants(string shot, bool storeMedia = false)
         {
             if (Shots.Length == 0) return true;
             foreach (var s in Shots)
-                if (s == "all" || string.Equals(s, shot, StringComparison.OrdinalIgnoreCase)) return true;
+                if (s == "all" || storeMedia && s == "store" || string.Equals(s, shot, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 

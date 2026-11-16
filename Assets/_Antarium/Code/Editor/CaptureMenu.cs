@@ -14,11 +14,15 @@ namespace Antarium.Editor
     {
         public static string OutputDirectory => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Captures"));
 
-        [MenuItem("Antarium/Capture/Run All Shots")]
-        static void RunAll() => Run("all", rebuild: false);
+        /// <summary>The store page media (stills, trailer and GIF clips); not the review stills of each milestone.</summary>
+        [MenuItem("Antarium/Capture/Run All Store Shots")]
+        static void RunAll() => Run("store", rebuild: false);
 
-        [MenuItem("Antarium/Capture/Rebuild Showcase and Run All Shots")]
-        static void RebuildAll() => Run("all", rebuild: true);
+        [MenuItem("Antarium/Capture/Rebuild Showcase and Run All Store Shots")]
+        static void RebuildAll() => Run("store", rebuild: true);
+
+        [MenuItem("Antarium/Capture/Run Every Shot (with review stills)")]
+        static void RunEvery() => Run("all", rebuild: false);
 
         [MenuItem("Antarium/Capture/Open Output Folder")]
         static void OpenFolder()

@@ -3,7 +3,7 @@
 Usage (from the project root, after a capture run):
     python tools/media/make_thumbnail.py [--deep t07_crystal/00150] [--out Captures/trailer/antarium2_trailer_thumbnail.png]
 
-A cross-section like the game: the sunlit nest (sky, grass, the factory floor) on top, fading into a deep layer
+A cross-section like the game: the surface (hills, treeline, grass) and the nest on top, fading into a deep layer
 below, with the game logo large in the middle and a small caption under it. Frames are used at 1:1, never scaled,
 so the pixel art stays crisp. Needs Pillow.
 """
@@ -34,8 +34,8 @@ def vertical_mask(height, start, end):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--top", default="t05_factory/00300", help="clip/frame for the nest (sky at the top)")
-    parser.add_argument("--top-offset", type=int, default=60, help="frame row shown at the top of the image")
+    parser.add_argument("--top", default="s01_dusk/00030", help="clip/frame for the surface and the nest (sky at the top)")
+    parser.add_argument("--top-offset", type=int, default=300, help="frame row shown at the top of the image")
     parser.add_argument("--deep", default="t07_crystal/00150", help="clip/frame for the deep layer")
     parser.add_argument("--deep-offset", type=int, default=-470, help="frame row at the top of the image (negative = pushed down)")
     parser.add_argument("--seam", type=int, default=660, help="where the nest fades into the deep layer")

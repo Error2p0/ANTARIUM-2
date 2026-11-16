@@ -17,34 +17,43 @@ namespace Antarium.Gameplay
     /// </summary>
     public sealed partial class GameBootstrap
     {
-        IEnumerable<(string Name, Func<IEnumerator> Run)> Shots()
+        /// <summary>Every shot; <c>Store</c> = store page media (the "store" set), the rest are review stills.</summary>
+        IEnumerable<(string Name, Func<IEnumerator> Run, bool Store)> Shots()
         {
-            yield return ("stills", ShotStills);
-            yield return ("descent", ShotDescent);
-            yield return ("dig", ShotDig);
-            yield return ("factory", ShotFactory);
-            yield return ("deep", ShotDeep);
-            yield return ("raid", ShotRaid);
-            yield return ("possess", ShotPossess);
-            yield return ("abilities", ShotAbilities);
-            yield return ("panels", ShotPanels);
-            yield return ("flight", ShotFlight);
-            yield return ("gifs", ShotGifs);
-            yield return ("survey", ShotSurvey);
-            yield return ("art", ShotArt);
-            yield return ("depth", ShotColonyDepth);
-            yield return ("ruins", ShotRuins);
-            yield return ("bloodline", ShotBloodline);
-            yield return ("presentation", ShotPresentation);
-            yield return ("tweaks", ShotTweaks);
-            yield return ("wild", ShotWild);
-            yield return ("scenery", ShotScenery);
-            yield return ("trees", ShotTrees);
-            yield return ("stars", ShotStars);
-            yield return ("achievements11", ShotAchievements11);
+            yield return ("stills", ShotStills, true);
+            yield return ("descent", ShotDescent, true);
+            yield return ("dig", ShotDig, true);
+            yield return ("factory", ShotFactory, true);
+            yield return ("deep", ShotDeep, true);
+            yield return ("raid", ShotRaid, true);
+            yield return ("possess", ShotPossess, true);
+            yield return ("abilities", ShotAbilities, true);
+            yield return ("panels", ShotPanels, true);
+            yield return ("flight", ShotFlight, true);
+            yield return ("gifs", ShotGifs, true);
+            yield return ("surface", ShotSurface, true);
+            yield return ("story", ShotStory, true);
+            yield return ("living", ShotLiving, true);
+            yield return ("intro", ShotIntro, true);
+            yield return ("survey", ShotSurvey, false);
+            yield return ("art", ShotArt, false);
+            yield return ("depth", ShotColonyDepth, false);
+            yield return ("ruins", ShotRuins, false);
+            yield return ("bloodline", ShotBloodline, false);
+            yield return ("presentation", ShotPresentation, false);
+            yield return ("tweaks", ShotTweaks, false);
+            yield return ("wild", ShotWild, false);
+            yield return ("scenery", ShotScenery, false);
+            yield return ("trees", ShotTrees, false);
+            yield return ("stars", ShotStars, false);
+            yield return ("achievements11", ShotAchievements11, false);
         }
 
         // ---------------------------------------------------------------- stills
+
+        // The Steam screenshots are numbered in the suggested upload order (the first ones show on the store page):
+        // 01 surface, 02-04 stills, 05-06 story, 07 surface, 08-10 stills, 11 story, 12 raid, 13 surface, 14 possess,
+        // 15-19 living, 20 panels, 21 story, 22 panels, 23-24 flight, 25 surface, 26-29 stills.
 
         IEnumerator ShotStills()
         {
@@ -54,25 +63,25 @@ namespace Antarium.Gameplay
 
             Cam(q + new float2(18f, 4f), 3);
             yield return Seconds(2f);
-            yield return Still("01_colony");
+            yield return Still("02_colony");
 
             Cam((float2)_show.Factory + new float2(18f, 0f), 4);
             yield return Seconds(1f);
-            yield return Still("02_factory");
+            yield return Still("03_factory");
             ToggleOverlay();
             yield return Seconds(0.5f);
-            yield return Still("03_factory_flow_overlay");
+            yield return Still("04_factory_flow_overlay");
             ToggleOverlay();
 
             Cam((float2)_show.OreRoom + new float2(-6f, 4f), 4);
             yield return Seconds(1f);
-            yield return Still("04_ore_room");
+            yield return Still("26_ore_room");
 
             Cam(q + new float2(-22f, 2f), 4);
             yield return Seconds(1f);
-            yield return Still("05_queen_and_storage");
+            yield return Still("27_queen_and_storage");
 
-            string[] biomes = { "06_crystal_caverns", "07_fungal_depths", "08_magma_zone", "09_ancient_ruins" };
+            string[] biomes = { "08_crystal_caverns", "09_fungal_depths", "10_magma_zone", "29_ancient_ruins" };
             for (int i = 0; i < _show.Outposts.Length; i++)
             {
                 Cam(OutpostView(i), 3);
@@ -82,7 +91,7 @@ namespace Antarium.Gameplay
 
             Cam(q + new float2(14f, -4f), 2);
             yield return Seconds(1f);
-            yield return Still("10_nest_wide");
+            yield return Still("28_nest_wide");
         }
 
         float2 OutpostView(int i)
@@ -188,7 +197,7 @@ namespace Antarium.Gameplay
             yield return Clip("t10_raid", 11f);
             Hud(true);
             yield return Seconds(0.2f);
-            yield return Still("11_raid");
+            yield return Still("12_raid");
         }
 
         bool RaidCenter(out float2 center)
@@ -242,7 +251,7 @@ namespace Antarium.Gameplay
             yield return Seconds(0.3f);
             yield return Clip("t11_possess", 7f);
             Hud(true);
-            yield return Still("12_possession");
+            yield return Still("14_possession");
             _sim.EnqueueRelease();
         }
 
@@ -276,12 +285,12 @@ namespace Antarium.Gameplay
             yield return Seconds(1f);
             _hud.ShowModal(_hud.Research.Root);
             yield return Seconds(0.5f);
-            yield return Still("13_research");
+            yield return Still("20_research");
             yield return Clip("t14_research", 3f);
             _hud.HideModal();
             _hud.Castes?.Toggle();
             yield return Seconds(0.5f);
-            yield return Still("14_castes");
+            yield return Still("22_castes");
             _hud.Castes?.Toggle();
         }
 
@@ -295,14 +304,14 @@ namespace Antarium.Gameplay
             yield return Seconds(0.5f);
             ToggleFlight();
             yield return Seconds(0.5f);
-            yield return Still("15_flight_screen");
+            yield return Still("23_flight_screen");
             _camPath = null; // the flight moves the camera itself
             Hud(false);
             BeginFlight(Array.Empty<int>());
             yield return Clip("t15_flight", config.prestige.flightSeconds + 0.2f);
             Hud(true);
             yield return Seconds(1f);
-            yield return Still("16_genetic_tree");
+            yield return Still("24_genetic_tree");
             yield return Clip("t16_genetics", 3f);
         }
 

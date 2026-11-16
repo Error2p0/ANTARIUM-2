@@ -84,9 +84,9 @@ namespace Antarium.Gameplay
         {
             yield return null; // let the UI document build its panel
             var started = DateTime.Now;
-            foreach (var (name, shot) in Shots())
+            foreach (var (name, shot, store) in Shots())
             {
-                if (!_captureRequest.Wants(name)) continue;
+                if (!_captureRequest.Wants(name, store)) continue;
                 Debug.Log($"Capture: shot '{name}'");
                 var t0 = DateTime.Now;
                 ResetShot();
@@ -156,6 +156,7 @@ namespace Antarium.Gameplay
             SetFps(60);
             SetOverlay(OverlayMode.None);
             _hud.HideModal();
+            _hud.Intro?.Stop();
             _hud.SetTitle(false);
             Hud(true);
             _camera.ShakeScale = 1f;

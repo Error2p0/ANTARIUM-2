@@ -1,6 +1,6 @@
 """Assembles the Steam trailer from the captured clips.
 
-Usage (from the project root, after Antarium -> Capture -> Run All Shots):
+Usage (from the project root, after Antarium -> Capture -> Run All Store Shots):
     python tools/media/make_trailer.py [--music Assets/_Antarium/Audio/Music/music_title.wav] [--logo game_logo.png] [--studio studio_logo.png]
                                        [--out Captures/trailer/antarium2_trailer.mp4]
 
@@ -24,53 +24,71 @@ FPS = 60
 SIZE = (1920, 1080)
 FADE = 0.25  # seconds of crossfade between segments
 FONT = os.path.join("Assets", "_Antarium", "UI", "Fonts", "Silkscreen-Regular.ttf")
+STORY_FONT = os.path.join("Assets", "_Antarium", "UI", "Fonts", "VT323-Regular.ttf")
 ICONS = os.path.join("Assets", "_Antarium", "Icon")
 AMBER = (247, 190, 110)
+PARCHMENT = (230, 205, 165)
 DIM = (170, 150, 125)
 
-# ("clip", name, start s, seconds) or ("card", [lines], seconds)
+# ("clip", name, start s, seconds), ("card", [lines], seconds) = a beat in Silkscreen capitals,
+# ("story", [lines], seconds) = the Old Colony's story (the lore fragments) in the game's body font.
 EDIT = [
+    ("story", ["Long ago, the Old Colony filled these depths.", "Its queens lived for a hundred summers."], 3.4),
+    ("clip", "s05b_glow_ruins_pan", 0.0, 4.2),
+    ("story", ["Then the fire below grew restless,", "and its Engine fell silent."], 3.0),
     ("clip", "t01_sky_to_nest", 0.0, 6.5),
-    ("card", ["DIG DEEP."], 1.6),
-    ("clip", "t03_dig", 0.2, 5.0),
-    ("clip", "t03b_dig_haul", 0.0, 2.0),
+    ("story", ["Now a new queen begins to dig."], 2.4),
     ("clip", "t02_queen", 0.3, 3.0),
-    ("card", ["BUILD THE COLONY."], 1.6),
-    ("clip", "t04_ore_room", 0.5, 3.5),
-    ("clip", "t05_factory", 0.5, 5.5),
+    ("card", ["DIG DEEP."], 1.4),
+    ("clip", "t03_dig", 0.2, 4.6),
+    ("clip", "t03b_dig_haul", 0.0, 1.6),
+    ("card", ["BUILD A LIVING MACHINE."], 1.6),
+    ("clip", "t04_ore_room", 0.5, 3.0),
+    ("clip", "t05_factory", 0.5, 4.5),
     ("clip", "t05b_flow_overlay", 0.3, 2.0),
+    ("clip", "s09_waterworks", 0.5, 3.0),
+    ("card", ["DAY, NIGHT AND STORM."], 1.6),
+    ("clip", "s01_dusk", 0.0, 5.5),
+    ("clip", "s03_storm", 0.3, 3.6),
+    ("clip", "s02_starfall", 0.5, 3.6),
     ("card", ["DESCEND."], 1.4),
-    ("clip", "t06_dive", 0.5, 6.5),
-    ("clip", "t07_crystal", 0.5, 3.2),
-    ("clip", "t08_fungal", 0.5, 2.8),
-    ("clip", "t09_magma", 0.5, 3.2),
-    ("clip", "t09b_ruins", 0.5, 2.8),
+    ("clip", "t06_dive", 0.5, 6.0),
+    ("clip", "s04_elder_tree", 0.5, 4.2),
+    ("clip", "t07_crystal", 0.5, 2.6),
+    ("clip", "t08_fungal", 0.5, 2.4),
+    ("clip", "s08_fire_ants", 0.5, 3.0),
     ("card", ["DEFEND THE NEST."], 1.4),
-    ("clip", "t10_raid", 0.5, 6.0),
-    ("clip", "t11_possess", 0.3, 5.0),
-    ("clip", "t12_seismic", 0.0, 3.0),
-    ("card", ["RAISE A DYNASTY."], 1.6),
+    ("clip", "t10_raid", 0.5, 4.5),
+    ("clip", "s07_worm", 0.5, 3.6),
+    ("clip", "t11_possess", 0.3, 4.0),
+    ("story", ["\"To whoever digs this deep: you are our daughters' daughters.", "Wake the Engine, and remember us.\""], 3.8),
+    ("clip", "s06_engine", 0.4, 5.4),
+    ("card", ["RAISE A DYNASTY."], 1.4),
     ("clip", "t15_flight", 0.0, 4.6),
     ("clip", "t16_genetics", 0.0, 2.5),
     ("end", None, 5.0),
 ]
 
 
-def font(size):
-    return ImageFont.truetype(FONT, size)
+def font(size, path=FONT):
+    return ImageFont.truetype(path, size)
 
 
-def card(lines, size=72):
+def card(lines, size=72, path=FONT, color=AMBER, gap=30):
     im = Image.new("RGB", SIZE, (0, 0, 0))
     d = ImageDraw.Draw(im)
-    f = font(size)
+    f = font(size, path)
     heights = [d.textbbox((0, 0), line, font=f)[3] for line in lines]
-    y = (SIZE[1] - sum(heights) - 30 * (len(lines) - 1)) // 2
+    y = (SIZE[1] - sum(heights) - gap * (len(lines) - 1)) // 2
     for line, h in zip(lines, heights):
         w = d.textlength(line, font=f)
-        d.text(((SIZE[0] - w) // 2, y), line, font=f, fill=AMBER)
-        y += h + 30
+        d.text(((SIZE[0] - w) // 2, y), line, font=f, fill=color)
+        y += h + gap
     return im
+
+
+def story_card(lines):
+    return card(lines, size=64, path=STORY_FONT, color=PARCHMENT, gap=18)
 
 
 def paste_logo(im, path, box):
@@ -114,7 +132,7 @@ def segment_frames(kind, data, start, seconds, clips, tmp, logo, studio, index):
         if missing:
             raise FileNotFoundError(f"{data}: {len(missing)} of {count} frames missing (first {missing[0]})")
         return paths
-    im = card(data) if kind == "card" else end_card(logo, studio)
+    im = card(data) if kind == "card" else story_card(data) if kind == "story" else end_card(logo, studio)
     path = os.path.join(tmp, f"card_{index:02d}.png")
     im.save(path)
     return [path] * count
