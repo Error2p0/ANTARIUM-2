@@ -97,6 +97,8 @@ namespace Antarium.Gameplay
         public AchievementsDialog AchievementsPanel { get; }
         public HelpDialog Help { get; }
         public TitleScreen Title { get; }
+        /// <summary>The opening intro over the title screen when the game is launched.</summary>
+        public IntroScreen Intro { get; }
         /// <summary>A button was clicked / hovered, a dialog opened or closed, a toast appeared (for interface sounds).</summary>
         public event Action UiClicked, UiHovered, ModalOpened, ModalClosed, ToastShown;
         /// <summary>Hover help of HUD elements (10.7).</summary>
@@ -312,9 +314,11 @@ namespace Antarium.Gameplay
             Settings = new SettingsDialog(input);
             AchievementsPanel = new AchievementsDialog(content, art);
             Help = new HelpDialog(input);
-            Title = new TitleScreen(art);
+            Title = new TitleScreen();
             Title.Root.AddToClassList("hidden");
             _hudRoot?.Insert(_hudRoot.IndexOf(_modal), Title.Root);
+            Intro = new IntroScreen();
+            _hudRoot?.Add(Intro.Root); // over everything, toasts and dialogs included
 
             // Interface sounds: every button click and hover, wherever it is.
             root.RegisterCallback<ClickEvent>(e =>

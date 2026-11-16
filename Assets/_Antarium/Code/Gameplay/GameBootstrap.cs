@@ -53,6 +53,8 @@ namespace Antarium.Gameplay
         bool continueLastSave = true;
         [SerializeField, Tooltip("Open on the title screen. Off = straight into the colony (handy while developing).")]
         bool showTitle = true;
+        [SerializeField, Tooltip("Play the opening intro (studio logo, game logo) over the title screen on launch.")]
+        bool playIntro = true;
 
         ContentDB _content;
         IPlatformServices _platform;
@@ -166,7 +168,22 @@ namespace Antarium.Gameplay
             }
             if (!(continueLastSave && TryLoad(applyOffline: !showTitle)))
                 StartNewColony(randomSeed ? (uint)Environment.TickCount | 1u : seedOverride != 0 ? seedOverride : _content.WorldGen.defaultSeed, announce: !showTitle);
-            if (showTitle) ShowTitle();
+            if (showTitle)
+            {
+                ShowTitle();
+                if (playIntro) _hud.Intro?.Play();
+            }
+        }
+
+        /// <summary>Any key, mouse button or gamepad button pressed this frame (skips the intro).</summary>
+        static bool AnyPress()
+        {
+            var keys = Keyboard.current;
+            var mouse = Mouse.current;
+            var pad = Gamepad.current;
+            return keys != null && keys.anyKey.wasPressedThisFrame
+                   || mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
+                   || pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame);
         }
 
         string[] AchievementNames() => Array.ConvertAll(_content.Achievements, a => a.Def.apiName);
@@ -586,8 +603,8 @@ namespace Antarium.Gameplay
             string status = null;
             if (!_freshColony && _sim != null)
             {
-                string saved = _lastSaved.HasValue ? $"saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "";
-                status = $"Slot {_store.Slot + 1}: {NumberFormat.Format(_sim.Ants.Count)} ants, {_sim.Colony.Stats.MaxDepth} cells deep, played {HudText.Duration(_sim.PlayTime)}, {saved}";
+                string saved = _lastSaved.HasValue ? $", saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "";
+                status = $"Slot {_store.Slot + 1}: {NumberFormat.Format(_sim.Ants.Count)} ants, {_sim.Colony.Stats.MaxDepth} cells deep, played {HudText.Duration(_sim.PlayTime)}{saved}";
                 if (_sim.Legacy.Flights > 0) status += $". Generation {_sim.Legacy.Flights + 1}";
             }
             _hud.Title.SetSave(status);
@@ -695,7 +712,9 @@ namespace Antarium.Gameplay
                 return;
             }
 
-            if (!Capturing) HandleSystemKeys();
+            bool intro = _hud.Intro != null && _hud.Intro.Playing;
+            if (intro) _hud.Intro.Update(dt, !Capturing && AnyPress());
+            else if (!Capturing) HandleSystemKeys();
             bool title = _hud.TitleShowing;
             bool paused = Capturing ? _shotPaused : title || _overlayOpen || _hud.IsShowing(_hud.Menu?.Root) || SystemDialogOpen;
 

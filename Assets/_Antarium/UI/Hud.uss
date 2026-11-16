@@ -798,7 +798,7 @@
 }
 
 /* Titles in Silkscreen (capitals) */
-.panel__title, .dialog__title, .title__logo, .flight__heading, .help__heading {
+.panel__title, .dialog__title, .flight__heading, .help__heading {
     -unity-font-definition: url("Fonts/Silkscreen-Regular.asset");
 }
 .panel__title, .flight__heading, .help__heading {
@@ -837,13 +837,52 @@
 .title--leaving {
     opacity: 0;
 }
-.title__logo {
-    color: rgb(255, 210, 140);
-    font-size: 64px;
-    -unity-text-align: middle-center;
-    text-shadow: 4px 4px 0 rgb(40, 18, 8);
-    margin: 0;
-    padding: 0;
+/* The game logo (512 x 512 with 43 px clear above and below) at 3/4 size; the negative margins drop the clear rows. */
+.title__game-logo {
+    width: 384px;
+    height: 384px;
+    margin: -32px 0 -28px 0;
+    background-image: url("project://database/Assets/_Antarium/Icon/shortcut.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Opening intro (IntroScreen): opacity, scale and the black backdrop are set from code every frame. */
+.intro {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background-color: rgb(5, 3, 2);
+}
+.intro__studio {
+    position: absolute;
+    width: 720px;
+    height: 280px;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    background-image: url("project://database/Assets/_Antarium/Icon/elevate_white_logo.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+.intro__game {
+    position: absolute;
+    width: 512px;
+    height: 512px;
+    left: 50%;
+    top: 50%;
+    translate: -50% -58%;
+    background-image: url("project://database/Assets/_Antarium/Icon/shortcut.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+.intro__line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    translate: 0 196px;
+    color: rgb(230, 205, 165);
+    font-size: 26px;
+    -unity-text-align: upper-center;
+    text-shadow: 2px 2px 0 rgb(20, 10, 6);
+    white-space: normal;
 }
 .title__tagline {
     color: rgb(230, 215, 190);
@@ -1279,12 +1318,6 @@
     background-color: rgb(160, 126, 84);
 }
 
-/* Title screen: the crest (44 x 12 art pixels at 4 px each) over the logo. */
-.title__emblem {
-    width: 176px;
-    height: 48px;
-    margin-bottom: 4px;
-}
 .title__menu {
     padding: 14px 16px;
 }

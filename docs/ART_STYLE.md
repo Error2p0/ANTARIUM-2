@@ -186,7 +186,7 @@ what works (fire, dust, sprouts, a candle), never the outline. Where the game dr
 - A button with an icon holds its text in a label beside the icon: add the icon with
   `HudController.AddButtonIcon` and set the text with `HudController.SetButtonText`.
 - Cards that carry a state colour (events, toasts, alerts, research nodes, contracts) keep it and only get the
-  bevel. `UI/title_emblem` (44 × 12, shown at 4 px per art pixel) is the crest on the title screen.
+  bevel. `UI/title_emblem` (44 × 12) was the crest on the title screen; since the store page update the title shows the game logo (`Assets/_Antarium/Icon/shortcut.png`, set in `Hud.uss`) instead, and the crest is unused.
 
 ## 8. Adding a sprite
 
