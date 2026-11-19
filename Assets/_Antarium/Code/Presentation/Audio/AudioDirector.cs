@@ -48,6 +48,18 @@ namespace Antarium.Presentation
         int _ambienceSlot, _ambienceKey = int.MinValue;
         float _fade = 1f;
 
+        /// <summary>Clock of the voice limiter (default real time). Media capture uses game time, which runs at a fixed rate there.</summary>
+        public Func<double> Clock = () => Time.unscaledTimeAsDouble;
+
+        /// <summary>
+        /// Every sound started: clip, volume (buses applied), pitch, pan; music cues too (pitch 1, pan 0). Media capture
+        /// logs these per frame so the clips' sound can be mixed in sync (<c>tools/media/make_shorts.py</c>).
+        /// </summary>
+        public event Action<AudioClip, float, float, float> Started;
+
+        /// <summary>The ambience bed fading in (clip or null) and its bus volume.</summary>
+        public event Action<AudioClip, float> AmbienceChanged;
+
         public AudioDirector(SoundBank bank, ContentDB content, Transform parent)
         {
             _bank = bank;
@@ -258,7 +270,7 @@ namespace Antarium.Presentation
             if (v <= 0.001f) return;
             var clip = clips[_rng.NextInt(clips.Length)];
             float pitch = _rng.NextFloat(math.min(e.pitch.x, e.pitch.y), math.max(e.pitch.x, e.pitch.y) + 1e-4f);
-            if (!_limiter.TryStart(cue, Time.unscaledTimeAsDouble, clip.length / math.max(0.1f, pitch))) return;
+            if (!_limiter.TryStart(cue, Clock(), clip.length / math.max(0.1f, pitch))) return;
 
             // Take a free voice, else the oldest one in turn.
             AudioSource source = null;
@@ -274,6 +286,7 @@ namespace Antarium.Presentation
             source.pitch = pitch;
             source.panStereo = pan;
             source.Play();
+            Started?.Invoke(clip, source.volume, pitch, pan);
         }
 
         // ---------------------------------------------------------------- simulation events
@@ -437,7 +450,12 @@ namespace Antarium.Presentation
         // ---------------------------------------------------------------- ambience and music
 
         /// <summary>Plays a recorded music cue over the music (the Nuptial Flight, a new biome reached).</summary>
-        public void PlayMusicCue(AudioClip clip) => _music?.PlayCue(clip, Bus(SoundBus.Music));
+        public void PlayMusicCue(AudioClip clip)
+        {
+            if (_music == null || clip == null) return;
+            _music.PlayCue(clip, Bus(SoundBus.Music));
+            Started?.Invoke(clip, Bus(SoundBus.Music) * _bank.music.cueVolume, 1f, 0f);
+        }
 
         /// <param name="biome">Biome index under the camera, -1 above the surface.</param>
         /// <param name="muted">Silence everything (the game is in the background and the player asked for that).</param>
@@ -462,6 +480,7 @@ namespace Antarium.Presentation
                     next.Play();
                 }
                 _fade = 0f;
+                AmbienceChanged?.Invoke(next.clip, Bus(SoundBus.Ambience));
             }
             _fade = math.min(1f, _fade + dt / math.max(0.1f, _bank.ambienceFade));
             float bed = Bus(SoundBus.Ambience);

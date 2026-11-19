@@ -34,6 +34,7 @@ namespace Antarium.Gameplay
 
         CaptureRequest _captureRequest;
         CaptureRig _rig;
+        CaptureSound _captureSound;
         /// <summary>Seconds since the current shot began (fixed steps).</summary>
         float _shotTime;
         Func<float, CamPose> _camPath;
@@ -54,6 +55,11 @@ namespace Antarium.Gameplay
             Directory.CreateDirectory(request.OutputDirectory);
             _rig = new CaptureRig(worldCamera, _panelSettings);
             _rig.SetSize(1920, 1080);
+            if (_audio != null)
+            {
+                _audio.Clock = () => Time.timeAsDouble; // fixed-rate game time, like the frames
+                _captureSound = new CaptureSound(_audio, _rig, request.OutputDirectory);
+            }
             _debugHud.Visible = false;
             Application.runInBackground = true;
             QualitySettings.vSyncCount = 0;
@@ -105,6 +111,7 @@ namespace Antarium.Gameplay
                 _captureLog.AppendLine($"{name}\t{(DateTime.Now - t0).TotalSeconds:0.0}s");
             }
             _rig.Flush();
+            _captureSound?.Dispose();
             File.WriteAllText(Path.Combine(_captureRequest.OutputDirectory, "capture_log.txt"), _captureLog.ToString());
             Debug.Log($"Capture: done in {(DateTime.Now - started).TotalSeconds:0} s.\n{_captureLog}");
             Time.captureFramerate = 0;

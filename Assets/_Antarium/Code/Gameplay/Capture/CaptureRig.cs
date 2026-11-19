@@ -40,6 +40,8 @@ namespace Antarium.Gameplay
         public int CursorScale = 3;
         /// <summary>Show the UI layer.</summary>
         public bool ShowUi = true;
+        /// <summary>A clip began recording into this directory / stopped recording.</summary>
+        public event Action<string> ClipStarted, ClipEnded;
 
         public CaptureRig(Camera camera, PanelSettings panel)
         {
@@ -76,9 +78,15 @@ namespace Antarium.Gameplay
             ClipDirectory = directory;
             FrameIndex = 0;
             Recording = true;
+            ClipStarted?.Invoke(directory);
         }
 
-        public void EndClip() => Recording = false;
+        public void EndClip()
+        {
+            if (!Recording) return;
+            Recording = false;
+            ClipEnded?.Invoke(ClipDirectory);
+        }
 
         /// <summary>Call at the end of a frame (after rendering): writes the frame if a clip is recording.</summary>
         public void EndOfFrame()

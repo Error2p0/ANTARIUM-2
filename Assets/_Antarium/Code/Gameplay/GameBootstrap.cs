@@ -145,7 +145,7 @@ namespace Antarium.Gameplay
             _input = new GameInput(inputActions);
             _input.LoadOverrides(_settings.bindingOverrides);
             _cameraController = new CameraController(_camera, _input);
-            _audio = sounds != null && capture == null ? new AudioDirector(sounds, _content, transform) : null;
+            _audio = sounds != null ? new AudioDirector(sounds, _content, transform) : null; // muted while capturing (CaptureSound logs it)
             _achievements = new AchievementTracker(_content, _platform);
             _achievements.Unlocked += a =>
             {
@@ -810,7 +810,7 @@ namespace Antarium.Gameplay
             _audio.SetView(_camera.Position, _camera.HalfViewSize, _camera.StepsOut);
             int2 cell = WorldGrid.WorldToCell(_camera.Position);
             int depth = _sim.World.Depth(cell.x, cell.y);
-            _audio.Update(dt, depth < 0 ? -1 : _sim.BiomeAtDepth(depth), _settings.muteInBackground && !_focused, music);
+            _audio.Update(dt, depth < 0 ? -1 : _sim.BiomeAtDepth(depth), Capturing || _settings.muteInBackground && !_focused, music);
 
             // The first dig into a deeper biome gets the discovery cue.
             int reached = _sim.BiomeAtDepth(_sim.Colony.Stats.MaxDepth);
