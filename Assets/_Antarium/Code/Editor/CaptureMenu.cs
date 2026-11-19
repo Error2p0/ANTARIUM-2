@@ -21,6 +21,10 @@ namespace Antarium.Editor
         [MenuItem("Antarium/Capture/Rebuild Showcase and Run All Store Shots")]
         static void RebuildAll() => Run("store", rebuild: true);
 
+        /// <summary>Vertical 1080 × 1920 footage for TikTok / Shorts / Reels (<c>tools/media/make_shorts.py</c>).</summary>
+        [MenuItem("Antarium/Capture/Run Short-Form Video Shots")]
+        static void RunShorts() => Run("shorts", rebuild: false);
+
         [MenuItem("Antarium/Capture/Run Every Shot (with review stills)")]
         static void RunEvery() => Run("all", rebuild: false);
 

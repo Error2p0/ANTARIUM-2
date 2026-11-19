@@ -77,6 +77,34 @@ namespace Antarium.Tests
             Assert.IsTrue(store.Wants("surface", storeMedia: true));
             Assert.IsFalse(store.Wants("trees", storeMedia: false), "\"store\" leaves out the review stills");
             Assert.IsTrue(CaptureRequest.Decode("trees||0").Wants("trees", storeMedia: false));
+            var shorts = CaptureRequest.Decode("shorts||0");
+            Assert.IsTrue(shorts.Wants("shorts_deep"), "\"shorts\" runs the vertical short-form shots");
+            Assert.IsFalse(shorts.Wants("surface", storeMedia: true), "and nothing else");
+        }
+
+        [Test]
+        public void CaptureSound_WritesAPlayable16BitWav()
+        {
+            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "antarium_capture_sound_test.wav");
+            try
+            {
+                CaptureSound.WriteWav(path, new[] { 0f, 1f, -1f, 0.5f, 2f, -2f }, 2, 22050);
+                var bytes = System.IO.File.ReadAllBytes(path);
+                Assert.AreEqual(44 + 6 * 2, bytes.Length);
+                Assert.AreEqual("RIFF", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
+                Assert.AreEqual(36 + 12, System.BitConverter.ToInt32(bytes, 4));
+                Assert.AreEqual(2, System.BitConverter.ToInt16(bytes, 22), "channels");
+                Assert.AreEqual(22050, System.BitConverter.ToInt32(bytes, 24), "sample rate");
+                Assert.AreEqual(16, System.BitConverter.ToInt16(bytes, 34), "bits");
+                Assert.AreEqual(32767, System.BitConverter.ToInt16(bytes, 46));
+                Assert.AreEqual(-32767, System.BitConverter.ToInt16(bytes, 48));
+                Assert.AreEqual(32767, System.BitConverter.ToInt16(bytes, 52), "clipped, not wrapped");
+                Assert.AreEqual(-32768, System.BitConverter.ToInt16(bytes, 54));
+            }
+            finally
+            {
+                System.IO.File.Delete(path);
+            }
         }
 
         [Test]

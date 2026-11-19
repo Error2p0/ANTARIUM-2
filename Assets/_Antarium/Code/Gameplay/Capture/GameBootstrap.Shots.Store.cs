@@ -255,8 +255,11 @@ namespace Antarium.Gameplay
             _hud.HideModal();
         }
 
-        /// <summary>Carves a chamber with a pool at <paramref name="at"/>, hangs a water wheel in it and pours a stream onto it.</summary>
-        IEnumerator Waterworks(float2 at)
+        /// <summary>
+        /// Carves a chamber with a pool at <paramref name="at"/>, hangs a water wheel in it and pours a stream onto it; records
+        /// <paramref name="clip"/> and (unless null) the still <paramref name="still"/>.
+        /// </summary>
+        IEnumerator Waterworks(float2 at, string clip = "s09_waterworks", string still = "17_waterworks", int zoom = 6)
         {
             var c = (int2)math.floor(at);
             _sim.CarveRectNow(c + new int2(-9, -4), c + new int2(8, 7));
@@ -277,13 +280,18 @@ namespace Antarium.Gameplay
                 _sim.Fluids.AddWater(new int2(wheel.x, top), 9);
                 _sim.Fluids.AddWater(new int2(wheel.x + 1, top), 9);
             };
-            Cam((float2)wheel + new float2(1f, 1f), 6);
+            Cam((float2)wheel + new float2(1f, 1f), zoom);
             yield return Seconds(2.5f);
-            yield return Clip("s09_waterworks", 5f);
+            yield return Clip(clip, 5f);
+            if (still == null)
+            {
+                _shotTick = null;
+                yield break;
+            }
             Hud(true);
             Pointer((float2)wheel + 1f, true);
             yield return Seconds(0.3f);
-            yield return Still("17_waterworks");
+            yield return Still(still);
             Pointer(new float2(-50f, -50f), false);
             _shotTick = null;
             Hud(false);

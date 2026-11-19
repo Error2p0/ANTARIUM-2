@@ -17,7 +17,10 @@ namespace Antarium.Gameplay
     /// </summary>
     public sealed partial class GameBootstrap
     {
-        /// <summary>Every shot; <c>Store</c> = store page media (the "store" set), the rest are review stills.</summary>
+        /// <summary>
+        /// Every shot; <c>Store</c> = store page media (the "store" set), <c>shorts_*</c> = vertical footage for short-form
+        /// video (the "shorts" set), the rest are review stills.
+        /// </summary>
         IEnumerable<(string Name, Func<IEnumerator> Run, bool Store)> Shots()
         {
             yield return ("stills", ShotStills, true);
@@ -35,6 +38,14 @@ namespace Antarium.Gameplay
             yield return ("story", ShotStory, true);
             yield return ("living", ShotLiving, true);
             yield return ("intro", ShotIntro, true);
+            yield return ("shorts_surface", ShotShortsSurface, false);
+            yield return ("shorts_colony", ShotShortsColony, false);
+            yield return ("shorts_factory", ShotShortsFactory, false);
+            yield return ("shorts_deep", ShotShortsDeep, false);
+            yield return ("shorts_engine", ShotShortsEngine, false);
+            yield return ("shorts_action", ShotShortsAction, false);
+            yield return ("shorts_raid", ShotShortsRaid, false);
+            yield return ("shorts_flight", ShotShortsFlight, false);
             yield return ("survey", ShotSurvey, false);
             yield return ("art", ShotArt, false);
             yield return ("depth", ShotColonyDepth, false);

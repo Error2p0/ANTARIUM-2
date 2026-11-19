@@ -16,7 +16,7 @@ namespace Antarium.Gameplay
 
         /// <summary>
         /// Shot names (see <c>GameBootstrap.Shots</c>); empty or "all" = every shot, "store" = the store page media only
-        /// (not the review stills).
+        /// (not the review stills), "shorts" = the vertical short-form footage (<c>shorts_*</c>).
         /// </summary>
         public string[] Shots = Array.Empty<string>();
         public string OutputDirectory;
@@ -31,7 +31,8 @@ namespace Antarium.Gameplay
         {
             if (Shots.Length == 0) return true;
             foreach (var s in Shots)
-                if (s == "all" || storeMedia && s == "store" || string.Equals(s, shot, StringComparison.OrdinalIgnoreCase)) return true;
+                if (s == "all" || storeMedia && s == "store" || s == "shorts" && shot.StartsWith("shorts_", StringComparison.Ordinal)
+                    || string.Equals(s, shot, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 
