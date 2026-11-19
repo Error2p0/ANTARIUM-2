@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]很久以前，舊日蟻群遍布這片深處。牠們的隧道從樹根一路延伸到地火，而在萬物的最底層，牠們建造了引擎：一台由鋼鐵與歌唱水晶鑄成的機器，讓整個蟻群如同一個心智般思考。後來，地底的火焰躁動起來，引擎陷入了沉寂。[/i]
 
@@ -9,7 +9,7 @@
 [b]Antarium 2[/b] 既是一款需要主動操作的增量遊戲，也是一款蟻群自動化模擬遊戲。想親手挖就親手挖，熟練之後交給自動化，看著數百隻螞蟻推動你的蟻群不斷前進。
 
 [h2]你來挖掘，蟻群跟上[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]按住滑鼠親手挖掘：[/b]碎石飛濺，螢幕震動，只要你不停鑿碎岩石，連擊就會不斷累積。選擇筆刷大小，留意你的體力。
 [*][b]下達指令，而不是指揮每隻螞蟻。[/b]標記要開採的岩石，塗出儲存區域。工蟻會接下任務，把每一件發現搬回家，為此不惜攀爬牆壁和天花板。
@@ -17,7 +17,7 @@
 [/list]
 
 [h2]建造一台活的機器[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]絲質與鐵質輸送帶、樹根升降機、分流器、過濾器、箱子和卸貨器[/b]把礦石從採掘前線運到你的機器，物品在上面的流動清晰可見。
 [*][b]熔爐、粉碎機、真菌園、蚜蟲牧場、檔案館、育嬰室和公主巢室[/b]將原料轉化為銅、鐵、食物、蜜露、知識和王室血脈。
@@ -26,7 +26,7 @@
 [/list]
 
 [h2]地上與地下的世界[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]你的蟻群生活在[b]真實的天空[/b]下：晝夜交替、起伏的山丘、根系深紮的樹木、湖泊與河流，還有地平線上的群山。
 [*][b]雨水和雷雨[/b]會灌進挖得不夠小心的隧道。在罕見的[b]流星之夜[/b]，流星劃滿天空，掠食者也會待在家裡。
@@ -35,7 +35,7 @@
 [/list]
 
 [h2]七個地層，一層比一層奇異[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]表土、黏土與地下水、岩層、[b]發光的水晶洞窟[/b]、[b]真菌深層[/b]、[b]岩漿帶[/b]，以及世界最底部的[b]遠古遺跡[/b]。
 [*]水會氾濫，沙會坍塌，孢子毒氣沿著天花板蔓延，熔岩遇水凝成黑曜石，火焰會順著煤層和樹根蔓延。
@@ -44,7 +44,7 @@
 [/list]
 
 [h2]深處的故事[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]研究遺跡中的文物和鑲金石板，拼湊出[b]舊日蟻群的故事[/b]：共十二個片段，收錄在你的典籍中。
 [*]你所學到的會解鎖[b]遠古研究[/b]：牠們的砌築技藝、水晶晶格，最終是引擎本身的設計圖。
@@ -52,7 +52,7 @@
 [/list]
 
 [h2]保衛巢穴[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]白蟻襲擊[/b]直撲你的食物儲備，[b]敵對蟻群[/b]前來洗劫你的倉庫。
 [*]一隻[b]螻蛄[/b]朝著蟻后挖去，一條[b]巨型蚯蚓[/b]在你的隧道旁翻攪泥土。
@@ -61,7 +61,7 @@
 [/list]
 
 [h2]親自掌控[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]附身任何一隻螞蟻[/b]親自操作：奔跑、挖隧道、搬運、戰鬥，在黑暗中帶著一團溫暖的光。
 [*][b]繪製費洛蒙：[/b]讓螞蟻加速的路徑，吸引牠們去挖掘、採集或防禦的氣味，以及需要避開的區域。
@@ -71,7 +71,7 @@
 [/list]
 
 [h2]然後，蟻群振翅高飛[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]包含[b]46 項發現[/b]的研究樹可解鎖階級、建築、能力和升級，契約板總會顯示下一個目標。
 [*]培育公主，送她們踏上[b]婚飛[/b]：蟻群就此終結，但牠的[b]基因記憶[/b]會延續下去。

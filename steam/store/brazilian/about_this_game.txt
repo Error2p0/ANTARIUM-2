@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]Há muito tempo, a Antiga Colônia preenchia estas profundezas. Seus túneis iam das raízes até o fogo, e no fundo de tudo ela construiu o Motor, uma máquina de ferro e cristal cantante que permitia à colônia inteira pensar como uma só mente. Então o fogo lá embaixo ficou inquieto, e o Motor silenciou.[/i]
 
@@ -9,7 +9,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [b]Antarium 2[/b] é um jogo incremental ativo e um simulador de automação de colônia em um só. Cave com as próprias mãos quando quiser, automatize quando dominar e veja centenas de formigas levarem sua colônia adiante.
 
 [h2]Cave, e a colônia segue[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]Clique e segure para cavar[/b] você mesmo: detritos voam, a tela treme e um combo cresce enquanto você continua quebrando rocha. Escolha o tamanho do pincel e fique de olho na sua força.
 [*][b]Pinte ordens, não formigas.[/b] Marque rochas para mineração e pinte zonas de armazenamento. As operárias assumem as tarefas, levam cada achado para casa e escalam paredes e tetos para chegar lá.
@@ -17,7 +17,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]Construa uma máquina viva[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]Esteiras de seda e de ferro, elevadores de raiz, divisores, filtros, baús e descarregadores[/b] levam o minério da frente de mineração até suas máquinas, e dá para ver os itens viajando.
 [*][b]Fundições, britadores, jardins de fungos, fazendas de pulgões, arquivos, berçários e câmaras de princesas[/b] transformam achados brutos em cobre, ferro, comida, melada, conhecimento e sangue real.
@@ -26,7 +26,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]Um mundo em cima e embaixo[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]Sua colônia vive sob [b]um céu de verdade[/b]: dia e noite, colinas ondulantes, árvores de raízes profundas, lagos e rios, e montanhas no horizonte.
 [*][b]Chuvas e tempestades[/b] despejam água em túneis descuidados. Nas raras [b]noites de estrelas cadentes[/b], o céu se enche delas e os caçadores ficam em casa.
@@ -35,7 +35,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]Sete camadas, cada uma mais estranha que a anterior[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]Solo superficial, argila e lençol freático, estratos de pedra, [b]cavernas de cristal brilhantes[/b], [b]profundezas fúngicas[/b], a [b]zona de magma[/b] e as [b]ruínas antigas[/b] no fundo do mundo.
 [*]A água inunda, a areia desmorona, o gás de esporos se espalha pelos tetos, a lava vira obsidiana ao encontrar a água e o fogo se alastra por veios de carvão e raízes.
@@ -44,7 +44,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]A história lá embaixo[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]Estude as relíquias e as tábuas com incrustações de ouro das ruínas para montar [b]a história da Antiga Colônia[/b], doze fragmentos guardados no seu Códice.
 [*]O que você aprende libera [b]pesquisas ancestrais[/b]: a alvenaria deles, suas redes de cristal e, por fim, os projetos do próprio Motor.
@@ -52,7 +52,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]Defenda o ninho[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]Ataques de cupins[/b] marcham atrás dos seus estoques de comida, e [b]formigas rivais[/b] vêm saquear seus depósitos.
 [*]Uma [b]paquinha[/b] cava em direção à rainha, e uma [b]minhoca gigante[/b] revolve o solo ao lado dos seus túneis.
@@ -61,7 +61,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]Assuma o controle[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]Possua qualquer formiga[/b] e jogue com ela: corra, escave, carregue e lute, com uma luz quente no escuro.
 [*][b]Pinte feromônios:[/b] trilhas que aceleram as formigas, cheiros que as atraem para cavar, coletar ou defender, e áreas a evitar.
@@ -71,7 +71,7 @@ Você é a mente dessa colônia. Ela começa como uma rainha e um punhado de ope
 [/list]
 
 [h2]Então a colônia levanta voo[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]Uma árvore de pesquisa com [b]46 descobertas[/b] libera castas, construções, habilidades e melhorias, e um quadro de contratos sempre mostra o próximo objetivo.
 [*]Crie princesas e envie-as no [b]Voo Nupcial[/b]: a colônia chega ao fim, mas sua [b]Memória Genética[/b] continua viva.

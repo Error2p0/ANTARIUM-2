@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]Il y a longtemps, la Vieille Colonie peuplait ces profondeurs. Ses tunnels allaient des racines jusqu'au feu, et tout au fond, elle bâtit le Moteur, une machine de fer et de cristal chantant qui permettait à toute la colonie de penser comme un seul esprit. Puis le feu des profondeurs s'agita, et le Moteur se tut.[/i]
 
@@ -9,7 +9,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [b]Antarium 2[/b] est à la fois un jeu incrémental actif et une simulation d'automatisation de colonie. Creusez à la main quand vous le voulez, automatisez une fois que vous maîtrisez, et regardez des centaines de fourmis faire avancer votre colonie.
 
 [h2]Creusez, la colonie suit[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]Cliquez et maintenez pour creuser[/b] vous-même : les débris volent, l'écran tremble et un combo grimpe tant que vous continuez à briser la roche. Choisissez une taille de pinceau et surveillez votre force.
 [*][b]Peignez des ordres, pas des fourmis.[/b] Marquez la roche à extraire et peignez des zones de stockage. Les ouvrières prennent les tâches, rapportent chaque trouvaille au nid et grimpent aux murs et aux plafonds pour y parvenir.
@@ -17,7 +17,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]Bâtissez une machine vivante[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]Tapis de soie et de fer, ascenseurs de racines, répartiteurs, filtres, coffres et déchargeurs[/b] acheminent le minerai du front de taille jusqu'à vos machines, et l'on voit les objets voyager.
 [*][b]Fonderies, concasseurs, jardins de champignons, élevages de pucerons, archives, nurseries et chambres de princesses[/b] transforment les trouvailles brutes en cuivre, fer, nourriture, miellat, savoir et sang royal.
@@ -26,7 +26,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]Un monde dessus et dessous[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]Votre colonie vit sous [b]un vrai ciel[/b] : le jour et la nuit, des collines ondulantes, des arbres aux racines profondes, des lacs et des rivières, et des montagnes à l'horizon.
 [*][b]La pluie et les orages[/b] déversent de l'eau dans les tunnels mal pensés. Lors des rares [b]nuits d'étoiles filantes[/b], le ciel s'en remplit et les prédateurs restent chez eux.
@@ -35,7 +35,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]Sept couches, toujours plus étranges[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]Terre végétale, argile et nappe phréatique, strates rocheuses, [b]cavernes de cristal luminescentes[/b], [b]profondeurs fongiques[/b], la [b]zone de magma[/b] et les [b]ruines antiques[/b] au fond du monde.
 [*]L'eau inonde, le sable s'effondre, le gaz de spores rampe le long des plafonds, la lave se change en obsidienne au contact de l'eau, et le feu se propage dans les veines de charbon et les racines.
@@ -44,7 +44,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]L'histoire enfouie[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]Étudiez les reliques et les tablettes incrustées d'or des ruines pour reconstituer [b]l'histoire de la Vieille Colonie[/b], douze fragments conservés dans votre Codex.
 [*]Ce que vous apprenez débloque la [b]recherche antique[/b] : leur maçonnerie, leurs réseaux cristallins, et enfin les plans du Moteur lui-même.
@@ -52,7 +52,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]Défendez le nid[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*]Des [b]raids de termites[/b] marchent sur vos réserves de nourriture, et des [b]fourmis rivales[/b] viennent piller vos entrepôts.
 [*]Une [b]courtilière[/b] creuse vers la reine, et un [b]ver de terre géant[/b] laboure le sol près de vos tunnels.
@@ -61,7 +61,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]Prenez le contrôle[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]Possédez n'importe quelle fourmi[/b] et jouez-la vous-même : courez, creusez, portez et combattez, avec une lueur chaude dans le noir.
 [*][b]Peignez des phéromones :[/b] des pistes qui accélèrent les fourmis, des odeurs qui les attirent vers le creusage, la récolte ou la défense, et des zones à éviter.
@@ -71,7 +71,7 @@ Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poigné
 [/list]
 
 [h2]Puis la colonie prend son envol[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]Un arbre de recherche de [b]46 découvertes[/b] débloque castes, bâtiments, capacités et améliorations, et un tableau de contrats affiche toujours le prochain objectif.
 [*]Élevez des princesses et envoyez-les au [b]vol nuptial[/b] : la colonie s'éteint, sa [b]Mémoire génétique[/b] perdure.

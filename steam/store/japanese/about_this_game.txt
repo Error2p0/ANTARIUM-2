@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]はるか昔、この地の底は「古きコロニー」で満ちていた。そのトンネルは木の根から炎の層まで伸び、すべての最深部には「エンジン」が築かれた。鉄と歌うクリスタルでできたその機械は、コロニー全体をひとつの心として考えさせた。やがて地の底の炎が騒ぎだし、エンジンは沈黙した。[/i]
 
@@ -9,7 +9,7 @@
 [b]Antarium 2[/b]は、アクティブなインクリメンタルゲームであり、コロニー自動化シミュレーションでもある。好きなときに自分の手で掘り、慣れたら自動化し、何百匹ものアリがコロニーを前へ進めていく様子を眺めよう。
 
 [h2]掘れば、コロニーがついてくる[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]クリック長押しで自ら掘る：[/b]破片が飛び、画面が揺れ、岩を砕き続けるほどコンボが積み上がる。ブラシサイズを選び、体力に気を配ろう。
 [*][b]アリではなく、命令を描く。[/b]採掘する岩をマークし、保管ゾーンを塗る。働きアリが仕事を引き受け、見つけた物をすべて巣へ運び、そのためなら壁も天井もよじ登る。
@@ -17,7 +17,7 @@
 [/list]
 
 [h2]生きた機械を築く[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]絹と鉄のベルト、根のリフト、スプリッター、フィルター、チェスト、アンローダー[/b]が採掘現場から機械まで鉱石を運び、アイテムが流れていく様子が目に見える。
 [*][b]精錬炉、粉砕機、キノコ園、アブラムシ牧場、書庫、育児室、王女の間[/b]が、掘り出した素材を銅、鉄、食料、甘露、知識、そして王家の血へと変える。
@@ -26,7 +26,7 @@
 [/list]
 
 [h2]地上と地下、ふたつの世界[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]コロニーは[b]本物の空[/b]の下にある。昼と夜、なだらかな丘、深く根を張る木々、湖と川、地平線の山々。
 [*][b]雨と雷雨[/b]が不用意なトンネルに水を流し込む。まれに訪れる[b]流星の夜[/b]には空が流れ星で満たされ、捕食者たちは巣にこもる。
@@ -35,7 +35,7 @@
 [/list]
 
 [h2]七つの層、深いほど奇妙に[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]表土、粘土と地下水、岩石層、[b]輝くクリスタル洞窟[/b]、[b]菌類の深層[/b]、[b]マグマ帯[/b]、そして世界の底に眠る[b]古代遺跡[/b]。
 [*]水はあふれ、砂は崩れ、胞子ガスは天井を這い、溶岩は水に触れると黒曜石に変わり、炎は石炭層や根を伝って燃え広がる。
@@ -44,7 +44,7 @@
 [/list]
 
 [h2]地底に眠る物語[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]遺跡の遺物や金の象嵌が施された石板を調べ、[b]古きコロニーの物語[/b]を紐解こう。12の断章がコーデックスに収められる。
 [*]得た知識は[b]古代の研究[/b]を解き放つ。彼らの石工術、クリスタル格子、そしてついにはエンジンそのものの設計図。
@@ -52,7 +52,7 @@
 [/list]
 
 [h2]巣を守れ[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]シロアリの襲撃[/b]が食料庫を狙って行進し、[b]ライバルのアリ[/b]が貯蔵庫を荒らしにやって来る。
 [*][b]ケラ[/b]が女王めがけて掘り進み、[b]巨大ミミズ[/b]がトンネルのそばの土をかき回す。
@@ -61,7 +61,7 @@
 [/list]
 
 [h2]自らの手で操る[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]どのアリにも憑依[/b]して自分で操作できる。走り、掘り、運び、戦う。闇の中でも温かな光とともに。
 [*][b]フェロモンを描く：[/b]アリを速くする道、採掘・採集・防衛へと誘う匂い、そして避けるべきエリア。
@@ -71,7 +71,7 @@
 [/list]
 
 [h2]そしてコロニーは飛び立つ[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*][b]46の発見[/b]からなるリサーチツリーがカースト、建物、アビリティ、アップグレードを解放し、契約ボードが常に次の目標を示す。
 [*]王女を育てて[b]結婚飛行[/b]へ送り出そう。コロニーは終わりを迎えても、その[b]遺伝の記憶[/b]は受け継がれる。

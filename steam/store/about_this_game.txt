@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]Long ago, the Old Colony filled these depths. Its tunnels ran from the roots down to the fire, and at the bottom of everything it built the Engine, a machine of iron and singing crystal that let the whole colony think as one. Then the fire below grew restless, and the Engine fell silent.[/i]
 
@@ -9,7 +9,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [b]Antarium 2[/b] is an active incremental game and a colony automation sim in one. Dig by hand when you want to, automate it once you have mastered it, and watch hundreds of ants carry your colony forward.
 
 [h2]Dig, and the colony follows[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]Click and hold to dig[/b] yourself: debris flies, the screen shakes and a combo builds while you keep breaking rock. Pick a brush size, and mind your strength.
 [*][b]Paint orders, not ants.[/b] Mark rock for mining and paint storage zones. Workers take the jobs, haul every find home and climb walls and ceilings to get there.
@@ -17,7 +17,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]Build a living machine[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]Silk and iron belts, root lifts, splitters, filters, chests and unloaders[/b] move ore from the mining front to your machines, and the items visibly ride along.
 [*][b]Smelters, crushers, fungus gardens, aphid ranches, archives, nurseries and princess chambers[/b] turn raw finds into copper, iron, food, honeydew, knowledge and royalty.
@@ -26,7 +26,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]A world above and below[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]Your colony lives under [b]a real sky[/b]: day and night, rolling hills, trees with deep roots, lakes and rivers, and mountains on the horizon.
 [*][b]Rain and thunderstorms[/b] pour water into careless tunnels. On rare [b]starfall nights[/b] shooting stars fill the sky and the hunters stay home.
@@ -35,7 +35,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]Seven layers, each stranger than the last[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]Topsoil, clay and groundwater, stone strata, [b]glowing crystal caverns[/b], [b]fungal depths[/b], the [b]magma zone[/b] and the [b]ancient ruins[/b] at the bottom of the world.
 [*]Water floods, sand caves in, spore gas creeps along ceilings, lava turns to obsidian where it meets water, and fire spreads through coal seams and roots.
@@ -44,7 +44,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]The story beneath[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]Study the relics and gold-inlaid tablets of the ruins to piece together [b]the story of the Old Colony[/b], twelve fragments kept in your Codex.
 [*]What you learn opens [b]ancient research[/b]: their masonry, their crystal lattices, and finally the plans of the Engine itself.
@@ -52,7 +52,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]Defend the nest[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]Termite raids[/b] march in for your food stores, and [b]rival ants[/b] come to rob your storerooms.
 [*]A [b]mole cricket[/b] tunnels toward the queen, and a [b]giant earthworm[/b] churns through the soil by your tunnels.
@@ -61,7 +61,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]Take control[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]Possess any ant[/b] and play it yourself: run, tunnel, carry and fight, with a warm light in the dark.
 [*][b]Paint pheromones:[/b] trails that speed ants up, scents that pull them to digging, gathering or defending, and areas to avoid.
@@ -71,7 +71,7 @@ You are the mind of that colony. It starts as a queen and a handful of workers i
 [/list]
 
 [h2]Then the colony takes flight[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]A research tree of [b]46 discoveries[/b] unlocks castes, buildings, abilities and upgrades, and a contract board always shows the next goal.
 [*]Raise princesses and send them on the [b]Nuptial Flight[/b]: the colony ends, its [b]Genetic Memory[/b] lives on.

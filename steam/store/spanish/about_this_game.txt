@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]Hace mucho tiempo, la Antigua Colonia llenaba estas profundidades. Sus túneles iban desde las raíces hasta el fuego, y en lo más hondo construyó el Motor, una máquina de hierro y cristal cantor que permitía a toda la colonia pensar como una sola mente. Entonces el fuego de abajo se agitó, y el Motor enmudeció.[/i]
 
@@ -9,7 +9,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [b]Antarium 2[/b] es a la vez un juego incremental activo y un simulador de automatización de colonias. Cava a mano cuando quieras, automatízalo cuando lo domines y observa cómo cientos de hormigas hacen avanzar tu colonia.
 
 [h2]Cava, y la colonia te sigue[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]Haz clic y mantén pulsado para cavar[/b] tú mismo: los escombros saltan, la pantalla tiembla y se acumula un combo mientras sigues rompiendo roca. Elige un tamaño de pincel y vigila tu fuerza.
 [*][b]Pinta órdenes, no hormigas.[/b] Marca roca para minar y pinta zonas de almacén. Las obreras aceptan los trabajos, llevan cada hallazgo a casa y trepan por paredes y techos para llegar.
@@ -17,7 +17,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]Construye una máquina viva[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]Cintas de seda y de hierro, ascensores de raíz, divisores, filtros, cofres y descargadores[/b] llevan el mineral desde el frente de excavación hasta tus máquinas, y se ve cómo viajan los objetos.
 [*][b]Fundiciones, trituradoras, jardines de hongos, granjas de pulgones, archivos, guarderías y cámaras de princesas[/b] convierten los hallazgos en bruto en cobre, hierro, comida, mielada, conocimiento y sangre real.
@@ -26,7 +26,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]Un mundo arriba y abajo[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]Tu colonia vive bajo [b]un cielo de verdad[/b]: día y noche, colinas onduladas, árboles de raíces profundas, lagos y ríos, y montañas en el horizonte.
 [*][b]La lluvia y las tormentas[/b] inundan los túneles descuidados. En las raras [b]noches de estrellas fugaces[/b], el cielo se llena de ellas y los cazadores se quedan en casa.
@@ -35,7 +35,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]Siete capas, cada una más extraña que la anterior[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]Mantillo, arcilla y aguas subterráneas, estratos de piedra, [b]cavernas de cristal luminosas[/b], [b]profundidades fúngicas[/b], la [b]zona de magma[/b] y las [b]ruinas antiguas[/b] en el fondo del mundo.
 [*]El agua inunda, la arena se derrumba, el gas de esporas se arrastra por los techos, la lava se convierte en obsidiana al tocar el agua y el fuego se propaga por las vetas de carbón y las raíces.
@@ -44,7 +44,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]La historia de las profundidades[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]Estudia las reliquias y las tablillas con incrustaciones de oro de las ruinas para reconstruir [b]la historia de la Antigua Colonia[/b], doce fragmentos guardados en tu Códice.
 [*]Lo que aprendas desbloquea la [b]investigación ancestral[/b]: su mampostería, sus redes de cristal y, por último, los planos del propio Motor.
@@ -52,7 +52,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]Defiende el nido[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*]Los [b]asaltos de termitas[/b] marchan hacia tus reservas de comida, y las [b]hormigas rivales[/b] vienen a saquear tus almacenes.
 [*]Un [b]grillo topo[/b] excava hacia la reina, y una [b]lombriz gigante[/b] remueve la tierra junto a tus túneles.
@@ -61,7 +61,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]Toma el control[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]Posee a cualquier hormiga[/b] y juega con ella: corre, excava, carga y lucha, con una luz cálida en la oscuridad.
 [*][b]Pinta feromonas:[/b] rastros que aceleran a las hormigas, olores que las atraen a cavar, recolectar o defender, y zonas que deben evitar.
@@ -71,7 +71,7 @@ Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en 
 [/list]
 
 [h2]Y la colonia alza el vuelo[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]Un árbol de investigación con [b]46 descubrimientos[/b] desbloquea castas, edificios, habilidades y mejoras, y un tablón de encargos siempre muestra el siguiente objetivo.
 [*]Cría princesas y envíalas al [b]vuelo nupcial[/b]: la colonia termina, su [b]Memoria genética[/b] perdura.

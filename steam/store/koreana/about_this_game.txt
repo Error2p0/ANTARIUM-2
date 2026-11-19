@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]오래전, 이 깊은 땅속은 옛 군락으로 가득했다. 그들의 터널은 나무뿌리에서 불길이 이는 곳까지 뻗어 있었고, 가장 깊은 곳에는 엔진이 세워졌다. 철과 노래하는 수정으로 만든 그 기계 덕분에 군락 전체가 하나의 마음으로 생각할 수 있었다. 그러다 땅속 깊은 곳의 불길이 들끓기 시작했고, 엔진은 침묵했다.[/i]
 
@@ -9,7 +9,7 @@
 [b]Antarium 2[/b]는 액티브 인크리멘탈 게임이자 군락 자동화 시뮬레이션입니다. 원할 때는 직접 손으로 파고, 익숙해지면 자동화하고, 수백 마리의 개미가 군락을 이끌어 가는 모습을 지켜보세요.
 
 [h2]파는 곳마다 군락이 따라온다[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]클릭한 채로 누르고 있으면 직접 땅을 팝니다.[/b] 파편이 튀고 화면이 흔들리며, 계속 바위를 부수는 동안 콤보가 쌓입니다. 브러시 크기를 고르고 체력을 관리하세요.
 [*][b]개미가 아니라 명령을 칠하세요.[/b] 채굴할 바위를 표시하고 저장 구역을 칠하면, 일개미들이 작업을 맡아 발견한 모든 것을 집으로 나르고, 그곳에 가기 위해 벽과 천장을 기어오릅니다.
@@ -17,7 +17,7 @@
 [/list]
 
 [h2]살아 있는 기계를 건설하라[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]비단 벨트와 철 벨트, 뿌리 승강기, 분배기, 필터, 상자, 하역기[/b]가 채굴 현장에서 기계까지 광석을 옮기고, 아이템이 실려 가는 모습이 눈에 보입니다.
 [*][b]제련로, 분쇄기, 버섯 정원, 진딧물 목장, 기록 보관소, 육아실, 공주의 방[/b]이 원자재를 구리, 철, 식량, 감로, 지식, 왕실의 혈통으로 바꿉니다.
@@ -26,7 +26,7 @@
 [/list]
 
 [h2]위와 아래의 세계[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]군락은 [b]진짜 하늘[/b] 아래에 있습니다. 낮과 밤, 완만한 언덕, 깊이 뿌리내린 나무, 호수와 강, 그리고 지평선의 산들.
 [*][b]비와 뇌우[/b]가 부주의하게 판 터널에 물을 쏟아붓습니다. 드물게 찾아오는 [b]유성의 밤[/b]에는 하늘이 별똥별로 가득하고 사냥꾼들은 집에 머뭅니다.
@@ -35,7 +35,7 @@
 [/list]
 
 [h2]갈수록 기묘해지는 일곱 개의 층[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]표토, 점토와 지하수, 암석층, [b]빛나는 수정 동굴[/b], [b]균류 심층[/b], [b]마그마 지대[/b], 그리고 세상의 밑바닥에 있는 [b]고대 유적[/b].
 [*]물이 범람하고, 모래가 무너지고, 포자 가스가 천장을 따라 기어가며, 용암은 물과 만나 흑요석이 되고, 불은 석탄층과 뿌리를 타고 번집니다.
@@ -44,7 +44,7 @@
 [/list]
 
 [h2]땅속의 이야기[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]유적의 유물과 금으로 상감된 석판을 연구해 [b]옛 군락의 이야기[/b]를 맞춰 보세요. 열두 개의 조각이 코덱스에 기록됩니다.
 [*]알게 된 지식으로 [b]고대 연구[/b]가 열립니다. 그들의 석조 기술, 수정 격자, 그리고 마침내 엔진 그 자체의 설계도까지.
@@ -52,7 +52,7 @@
 [/list]
 
 [h2]둥지를 지켜라[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]흰개미 습격대[/b]가 식량 창고를 노리고 행진해 오고, [b]경쟁 개미[/b]들이 저장고를 약탈하러 옵니다.
 [*][b]땅강아지[/b]가 여왕을 향해 굴을 파고, [b]거대 지렁이[/b]가 터널 옆의 흙을 휘젓습니다.
@@ -61,7 +61,7 @@
 [/list]
 
 [h2]직접 조종하라[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]어떤 개미에든 빙의해[/b] 직접 플레이하세요. 달리고, 굴을 파고, 나르고, 싸우세요. 어둠 속에서도 따뜻한 빛과 함께.
 [*][b]페로몬을 칠하세요:[/b] 개미를 빠르게 하는 길, 채굴·채집·방어로 이끄는 냄새, 그리고 피해야 할 구역.
@@ -71,7 +71,7 @@
 [/list]
 
 [h2]그리고 군락은 날아오른다[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*][b]46가지 발견[/b]으로 이루어진 연구 트리가 계급, 건물, 능력, 업그레이드를 해금하고, 계약 게시판은 언제나 다음 목표를 보여 줍니다.
 [*]공주개미를 키워 [b]혼인 비행[/b]을 보내세요. 군락은 끝나도 그 [b]유전 기억[/b]은 이어집니다.

@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]很久以前，旧日蚁群遍布这片深处。它的隧道从树根一直延伸到地火，而在万物的最底层，它建造了引擎：一台由钢铁与歌唱水晶铸成的机器，让整个蚁群如同一个心智般思考。后来，地底的火焰躁动起来，引擎陷入了沉寂。[/i]
 
@@ -9,7 +9,7 @@
 [b]Antarium 2[/b] 既是一款需要主动操作的增量游戏，也是一款蚁群自动化模拟游戏。想亲手挖就亲手挖，熟练之后交给自动化，看着数百只蚂蚁推动你的蚁群不断前进。
 
 [h2]你来挖掘，蚁群跟上[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]按住鼠标亲手挖掘：[/b]碎石飞溅，屏幕震动，只要你不停凿碎岩石，连击就会不断累积。选择笔刷大小，留意你的体力。
 [*][b]下达指令，而不是指挥每只蚂蚁。[/b]标记要开采的岩石，涂出储存区域。工蚁会接下任务，把每一件发现搬回家，为此不惜攀爬墙壁和天花板。
@@ -17,7 +17,7 @@
 [/list]
 
 [h2]建造一台活的机器[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]丝质与铁质传送带、树根升降机、分流器、过滤器、箱子和卸货器[/b]把矿石从采掘前线运到你的机器，物品在上面的流动清晰可见。
 [*][b]熔炉、粉碎机、真菌园、蚜虫牧场、档案馆、育婴室和公主巢室[/b]将原材料转化为铜、铁、食物、蜜露、知识和王室血脉。
@@ -26,7 +26,7 @@
 [/list]
 
 [h2]地上与地下的世界[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]你的蚁群生活在[b]真实的天空[/b]下：昼夜交替、起伏的山丘、根系深扎的树木、湖泊与河流，还有地平线上的群山。
 [*][b]雨水和雷暴[/b]会灌进挖得不够小心的隧道。在罕见的[b]流星之夜[/b]，流星划满天空，捕食者也会待在家里。
@@ -35,7 +35,7 @@
 [/list]
 
 [h2]七个地层，一层比一层奇异[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]表土、黏土与地下水、岩层、[b]发光的水晶洞窟[/b]、[b]真菌深层[/b]、[b]岩浆带[/b]，以及世界最底部的[b]远古遗迹[/b]。
 [*]水会泛滥，沙会坍塌，孢子毒气沿着天花板蔓延，熔岩遇水凝成黑曜石，火焰会顺着煤层和树根蔓延。
@@ -44,7 +44,7 @@
 [/list]
 
 [h2]深处的故事[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]研究遗迹中的文物和镶金石板，拼凑出[b]旧日蚁群的故事[/b]：共十二个片段，收录在你的典籍中。
 [*]你所学到的会解锁[b]远古研究[/b]：他们的砌筑技艺、水晶晶格，最终是引擎本身的图纸。
@@ -52,7 +52,7 @@
 [/list]
 
 [h2]保卫巢穴[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]白蚁袭击[/b]直扑你的食物储备，[b]敌对蚁群[/b]前来洗劫你的仓库。
 [*]一只[b]蝼蛄[/b]朝着蚁后挖去，一条[b]巨型蚯蚓[/b]在你的隧道旁翻搅泥土。
@@ -61,7 +61,7 @@
 [/list]
 
 [h2]亲自掌控[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]附身任意一只蚂蚁[/b]亲自操作：奔跑、挖隧道、搬运、战斗，在黑暗中带着一团温暖的光。
 [*][b]绘制信息素：[/b]让蚂蚁加速的路径，吸引它们去挖掘、采集或防御的气味，以及需要避开的区域。
@@ -71,7 +71,7 @@
 [/list]
 
 [h2]然后，蚁群振翅高飞[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]包含[b]46 项发现[/b]的研究树可解锁品级、建筑、技能和升级，契约板总会显示下一个目标。
 [*]培育公主，送她们踏上[b]婚飞[/b]：蚁群就此终结，但它的[b]基因记忆[/b]会延续下去。

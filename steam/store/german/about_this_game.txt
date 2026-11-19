@@ -1,4 +1,4 @@
-[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
 
 [i]Vor langer Zeit füllte die Alte Kolonie diese Tiefen. Ihre Tunnel reichten von den Wurzeln bis hinab zum Feuer, und ganz unten baute sie die Maschine, ein Werk aus Eisen und singendem Kristall, mit dem die ganze Kolonie wie ein einziger Geist dachte. Dann wurde das Feuer in der Tiefe unruhig, und die Maschine verstummte.[/i]
 
@@ -9,7 +9,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [b]Antarium 2[/b] ist ein aktives Incremental-Spiel und eine Kolonie-Automatisierungssimulation in einem. Grabe von Hand, wann immer du willst, automatisiere, sobald du es gemeistert hast, und sieh zu, wie Hunderte Ameisen deine Kolonie voranbringen.
 
 [h2]Grabe, und die Kolonie folgt[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
 [list]
 [*][b]Klicken und halten zum Graben:[/b] Brocken fliegen, der Bildschirm bebt, und eine Kombo baut sich auf, solange du weiter Gestein brichst. Wähle eine Pinselgröße und achte auf deine Kraft.
 [*][b]Male Befehle, nicht Ameisen.[/b] Markiere Gestein zum Abbau und male Lagerzonen. Arbeiterinnen übernehmen die Aufträge, schleppen jeden Fund nach Hause und klettern dafür über Wände und Decken.
@@ -17,7 +17,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Baue eine lebendige Maschine[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
 [list]
 [*][b]Seiden- und Eisenbänder, Wurzelaufzüge, Verteiler, Filter, Truhen und Entlader[/b] bringen Erz von der Abbaufront zu deinen Maschinen, und man sieht die Gegenstände mitfahren.
 [*][b]Schmelzöfen, Brecher, Pilzgärten, Blattlausfarmen, Archive, Kinderstuben und Prinzessinnenkammern[/b] verwandeln Rohfunde in Kupfer, Eisen, Nahrung, Honigtau, Wissen und königliches Blut.
@@ -26,7 +26,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Eine Welt oben und unten[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
 [list]
 [*]Deine Kolonie lebt unter [b]einem echten Himmel[/b]: Tag und Nacht, sanfte Hügel, Bäume mit tiefen Wurzeln, Seen und Flüsse und Berge am Horizont.
 [*][b]Regen und Gewitter[/b] spülen Wasser in unvorsichtig gegrabene Tunnel. In seltenen [b]Sternschnuppennächten[/b] füllen Sternschnuppen den Himmel, und die Jäger bleiben zu Hause.
@@ -35,7 +35,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Sieben Schichten, eine seltsamer als die andere[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
 [list]
 [*]Mutterboden, Lehm und Grundwasser, Gesteinsschichten, [b]leuchtende Kristallhöhlen[/b], [b]Pilztiefen[/b], die [b]Magmazone[/b] und die [b]uralten Ruinen[/b] am Grund der Welt.
 [*]Wasser flutet, Sand stürzt ein, Sporengas kriecht an Decken entlang, Lava erstarrt zu Obsidian, wo sie auf Wasser trifft, und Feuer breitet sich durch Kohleflöze und Wurzeln aus.
@@ -44,7 +44,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Die Geschichte in der Tiefe[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
 [list]
 [*]Erforsche die Relikte und goldverzierten Tafeln der Ruinen und setze [b]die Geschichte der Alten Kolonie[/b] zusammen: zwölf Fragmente, gesammelt in deinem Kodex.
 [*]Was du lernst, schaltet [b]uralte Forschung[/b] frei: ihr Mauerwerk, ihre Kristallgitter und schließlich die Baupläne der Maschine selbst.
@@ -52,7 +52,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Verteidige das Nest[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
 [list]
 [*][b]Termitenüberfälle[/b] marschieren auf deine Nahrungsvorräte zu, und [b]rivalisierende Ameisen[/b] kommen, um deine Lagerräume zu plündern.
 [*]Eine [b]Maulwurfsgrille[/b] gräbt sich zur Königin vor, und ein [b]Riesenregenwurm[/b] wühlt sich neben deinen Tunneln durch die Erde.
@@ -61,7 +61,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Übernimm die Kontrolle[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
 [list]
 [*][b]Übernimm jede beliebige Ameise[/b] und spiele sie selbst: renne, grabe, trage und kämpfe, mit einem warmen Licht im Dunkeln.
 [*][b]Male Pheromone:[/b] Spuren, die Ameisen schneller machen, Duftmarken, die sie zum Graben, Sammeln oder Verteidigen ziehen, und Bereiche, die sie meiden sollen.
@@ -71,7 +71,7 @@ Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Ar
 [/list]
 
 [h2]Dann hebt die Kolonie ab[/h2]
-[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
 [list]
 [*]Ein Forschungsbaum mit [b]46 Entdeckungen[/b] schaltet Kasten, Gebäude, Fähigkeiten und Verbesserungen frei, und ein Auftragsbrett zeigt immer das nächste Ziel.
 [*]Ziehe Prinzessinnen auf und schicke sie auf den [b]Hochzeitsflug[/b]: Die Kolonie endet, ihr [b]Genetisches Gedächtnis[/b] lebt weiter.
