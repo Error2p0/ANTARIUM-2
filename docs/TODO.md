@@ -204,7 +204,8 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [x] Steamworks partner account, Steam Direct fee, app created: **App ID 4453940**.
 - [x] Developer / publisher: **Elevate Studios** = Player Settings → Company Name (save folder `LocalLow/Elevate Studios/ANTARIUM 2`; the old `DefaultCompany` folder is copied over once).
 - [x] Supported languages (English), tags and system requirements entered on the store page.
-- [ ] Price, release date (or "Coming soon"), whether there is a demo / Next Fest.
+- [x] Price and release date set.
+- [ ] Whether there is a demo / Next Fest.
 
 **Steamworks integration (code)**
 - [x] Steamworks.NET 2025.165.0 (UPM git package); the Gameplay assembly defines `ANTARIUM_STEAM` while it is installed (`versionDefines`). `StorePlatform` (plain C#: merge, stats, presence) over `SteamClient : IStoreClient` (init with `RestartAppIfNecessary` in builds, `InitEx`, callbacks in `Tick`, `SteamUserStats`, overlay callback → pause); `LocalPlatform` without Steam or with `-nosteam`. Editor opt-in *Antarium → Steam → Use Steam in Editor*. `steam_appid.txt` (4453940) in the project root and in development builds only.
@@ -212,18 +213,18 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [x] **(you)** Stats and achievements entered on Steamworks (`docs/STEAM.md` §1).
 - [x] Local achievements and stats are merged with Steam both ways on every Steam launch (not only the first), once Steam has the user's stats; stats only go up.
 - [x] **(you)** Steam Cloud Auto-Cloud entered: `Saves/*` and `profile.json` (not `settings.json`: display settings belong to the machine), quota (`docs/STEAM.md` §3).
-- [ ] Test Steam Cloud: a save syncs to a second machine, and the conflict dialog.
+- [x] Steam Cloud tested: a save syncs to a second machine, and the conflict dialog.
 - [x] Rich presence (*In the main menu*, *Founding a colony, N cells deep*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*; `steam/rich_presence_english.vdf`) and the overlay pausing the game. **(you)** upload the tokens file (`docs/STEAM.md` §2).
-- [ ] Verify against the real Steam client: init, achievements, stats, presence, overlay pause.
+- [x] Verified against the real Steam client: init, achievements, stats, presence, overlay pause.
 - [ ] Steam Deck / controller pass: stick aiming for the cursor, gamepad glyphs, readable text at 1280×800, Steam Input default layout; aim for *Playable* or *Verified*.
 
 **Release build (code)**
 - [x] *Antarium → Build → Windows Release / Windows Development* (x86_64, IL2CPP when the module is installed, else Mono; one scene; release has no debug keys and no `steam_appid.txt`; Burst / IL2CPP debug folders moved to `Builds/Symbols/<version>`). Version: Player Settings → Version only (0.9.0).
 - [x] **(you)** *Windows Build Support (IL2CPP)* and the VS *Desktop development with C++* workload installed.
-- [ ] A first IL2CPP release build (check it starts outside the editor and `Player.log` is clean).
+- [x] A first IL2CPP release build (starts outside the editor).
 - [x] *Antarium → Build → Apply Release Player Settings*: Company Name, product name, bundle id `com.elevatestudios.antarium2`, fullscreen window at native resolution, resizable, single instance, no Unity splash, minimal stripping.
 - [x] App icon set in Player Settings (exe); Steam client icon and shortcut icon uploaded on Steamworks.
-- [ ] Check the first-run experience on a clean Windows account.
+- [x] First-run experience checked on a clean Windows account.
 - [x] SteamPipe: `steam/upload.ps1` writes `app_build_4453940.vdf` + `depot_build_4453941.vdf` to `steam/output/` (git-ignored) and runs `steamcmd +run_app_build` (sets live on `beta`, `-Preview` for a dry run). **(you)** depot id check, `beta` branch, launch option, upload account and steamcmd in `tools/steamcmd/` (`docs/STEAM.md` §4–5).
 - [x] Logging location documented in `docs/STEAM.md` (Player.log, crash dumps, symbols).
 - [x] 148 EditMode tests (10 new: store merge both ways, waiting for the store's stats, giving up and resetting locally, rich presence only on change, moving the old save folder once; carving into the fog, placing without paying, research all, capture request round trip, the showcase colony builds complete).
@@ -237,9 +238,9 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [x] Short description (252 characters) and *About This Game* (BBCode with 7 GIF slots) in `steam/store/`; 7 GIFs (640×360, 15 fps, ~10 MB together) in `Captures/gifs`.
 - [x] **(you)** Screenshots, GIFs and the trailer uploaded; store texts in place.
 - [x] **(you)** Content survey completed, including the AI disclosure (pre-generated AI content: the music, made with Suno).
-- [ ] Privacy policy (only needed if anything is collected: nothing is) and EULA (Steam's default is fine): confirm nothing else is asked for.
+- [x] Privacy policy and EULA: not needed (nothing is collected; Steam's default EULA).
 - [x] **(you)** Store page submitted for review (2026-11-08; review takes several business days).
-- [ ] **(you)** After approval: make the *Coming Soon* page public. It must be public for at least 2 weeks before release; wishlists start then.
+- [x] **(you)** *Coming Soon* page made public (it must be public for at least 2 weeks before release; wishlists start then).
 
 **Store page refresh before going public** (2026-11-16, branch `store-page-refresh`: media and text redone with Milestones 10 and 11 and the Old Colony story; an opening intro)
 - [x] `Captures/` cleared and every store medium re-captured on a rebuilt showcase colony (the new world generation: hills, trees, mountains, lakes, the Elder Tree cavern).
@@ -251,14 +252,15 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [x] **Opening intro** (`IntroScreen`): Elevate Studios logo, then the game logo with the story's first lines, then the black lifts off the title screen; any key / click / gamepad button skips. The **title screen shows the game logo** instead of the text logo and crest. `GameBootstrap.playIntro` (on) turns it off while developing. Logo imports: mipmaps, uncompressed. Verified in play mode (capture shot *intro*: `intro_studio`, `intro_logo`, `intro_title`).
 - [x] **Gameplay trailer** (~67 s, `--cut gameplay`): straight into play from the first frame, captions over the footage instead of cards, for Steam's *Gameplay* category; the story trailer stays as *General / Cinematic*. **Thumbnails** are now a plain frame of each trailer (Steam rejects composites; the old composite was kept as `Captures/trailer/old_composite_thumbnail.png`).
 - [x] Redistributables checked: none needed (`docs/STEAM.md` → *Installation*).
-- [ ] **(you)** Upload the gameplay trailer, set its category to *Gameplay*, drag it first; set the story trailer to *General / Cinematic*; set both thumbnails; on *Installation → Redistributables* tick none.
-- [ ] **(you)** Replace the screenshots, the trailer (and its thumbnail) and the GIFs on Steamworks, paste the two texts, preview, publish. Upload the GIFs first (*About This Game* slots `antarium_sky.gif` and `antarium_ruins.gif` are new).
+- [x] **(you)** Upload the gameplay trailer, set its category to *Gameplay*, drag it first; set the story trailer to *General / Cinematic*; set both thumbnails; on *Installation → Redistributables* tick none.
+- [x] **(you)** Replace the screenshots, the trailer (and its thumbnail) and the GIFs on Steamworks, paste the two texts, preview, publish. Upload the GIFs first (*About This Game* slots `antarium_sky.gif` and `antarium_ruins.gif` are new).
 - Known limits: the raid clip fights inside the royal chamber (busy, not very readable); glow ants walk off to work during long clips, so the Engine clip is lit mostly at the start; the showcase still shows the unclaimed intro contracts in the HUD stills.
 
 **First upload and release**
-- [ ] Upload the first build to the `beta` branch, install it through Steam on a clean machine, test achievements, cloud saves, overlay and offline progress. Uploaded 0.9.0 (BuildID 26441965), but it has the startup bug fixed afterwards (`GameBootstrap` set up the UI before the `UIDocument` had a root): replace it with a new version on `beta` and `default`, then test.
+- [x] First build uploaded to the `beta` branch and tested through Steam (achievements, cloud saves, overlay). The first upload, 0.9.0 (BuildID 26441965), had a startup bug (`GameBootstrap` set up the UI before the `UIDocument` had a root), fixed before the build that went to review.
 - [ ] Release build log noise: `Hidden/Universal Render Pipeline/GaussianDepthOfField` "stripped from the build" is logged repeatedly (22 times in a 15 s run of the Development build), and "More than one global light" is logged during builds although `Main.unity` has one global light and no player run has logged it. Neither has a known visible effect; look into both.
-- [ ] **(you)** Submit the build for review; set the release date; release (or keep it in Coming Soon / playtest).
+- [x] **(you)** Build submitted for review; release date set.
+- [ ] **(you)** Release (or keep it in Coming Soon / playtest).
 
 ## Milestone 10 — Content complete ✅
 Build what is still on the *Missing / not built yet* list below, while M9 waits for Steam's approvals. Branch `milestone-10` (off `milestone-9`; builds for Steam keep coming from `milestone-9` until M10 is merged, because M10 changes the save format). Each phase ends playable, verified in the editor (play mode + captures), with tests, docs (GDD / TODO / HOW_TO_PLAY) and its own commits. Save format 5 grows section by section (one version byte per section, older saves keep loading). Phases are ordered so later ones build on earlier ones; each can ship alone.
@@ -527,4 +529,4 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Tooltips: every HUD element (10.7), in the info panel; dialogs have none.
 - Overlays: flow, light and ores (one at a time, 10.7), pheromones (always drawn faintly) and the Seismic Sense / scout glow.
 - Dynamic lights: the possessed ant's, up to 24 glow ants near the view and the Guiding Light at the pointer (Milestone 11), with ShadowCaster2D rock shadows near the glow and pointer lights (10.4). Glowing mushrooms light the light map; the view is a little brighter underground (Milestone 11).
-- Store page is in review, not public yet (media and text refreshed for Milestones 10 and 11 and the story); no Steam Deck pass or public build yet (Milestone 9). An opening intro plays on launch.
+- Store page is public as *Coming Soon* (media and text refreshed for Milestones 10 and 11 and the story); the first build is in review; no Steam Deck pass yet and not released (Milestone 9). An opening intro plays on launch.

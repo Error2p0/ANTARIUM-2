@@ -372,8 +372,9 @@ Versioned save format (binary or compressed JSON) including the full world grid,
 - ✅ *As built in M9:* **Steamworks.NET** (UPM package; the Gameplay assembly defines `ANTARIUM_STEAM` while it is installed). `PlatformServices.Create` returns a `StorePlatform` (logic, plain C#, tested with a fake store) over a `SteamClient` (thin Steamworks calls) when Steam runs, else `LocalPlatform`. Release builds started outside Steam are relaunched through it; the editor uses Steam only when *Antarium → Steam → Use Steam in Editor* is checked. The local profile stays the record and is **merged both ways** with Steam once Steam has the user's stats (unlocks union, stats max), so achievements earned offline or before Steam reach it later. **Rich presence** (title / first colony / generation and depth / flight), the **overlay pauses** the game, **Steam Cloud** by Auto-Cloud (saves + `profile.json`, not `settings.json`). Setup steps on the Steamworks site, builds and uploads: `docs/STEAM.md`.
 - **Company Name** is *Elevate Studios* (the save folder); the old `DefaultCompany` folder is copied over once.
 - *Store media*: the game renders its own screenshots, GIF footage and trailer clips (a showcase colony and scripted shots in a capture mode, `docs/STEAM.md`); store texts in `steam/store/`.
-- Store page: media and texts uploaded, content survey done, submitted for review.
-- Missing: Steam Deck / gamepad pass, the store page going public.
+- Store page: media and texts uploaded (refreshed for Milestones 10 and 11), content survey done, approved and public as *Coming Soon*; price and release date set.
+- Build: first IL2CPP release build, first-run experience checked on a clean Windows account, Steam Cloud and the real Steam client verified, uploaded to `beta` and submitted for review.
+- Missing: Steam Deck / gamepad pass, the release itself.
 
 ---
 
