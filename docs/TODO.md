@@ -204,8 +204,8 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [x] Steamworks partner account, Steam Direct fee, app created: **App ID 4453940**.
 - [x] Developer / publisher: **Elevate Studios** = Player Settings → Company Name (save folder `LocalLow/Elevate Studios/ANTARIUM 2`; the old `DefaultCompany` folder is copied over once).
 - [x] Supported languages (English), tags and system requirements entered on the store page.
-- [x] Price and release date set.
-- [ ] Whether there is a demo / Next Fest.
+- [x] Price and release date set. Release moved from 2026-12-18 (one day into the Winter Sale) to **Q1 2027**, after Steam Next Fest (February 2027).
+- [x] Demo / Next Fest: **yes**, a demo for the February 2027 Next Fest (categories *Simulation* + *Strategy*); see *Demo and Steam Next Fest* below.
 
 **Steamworks integration (code)**
 - [x] Steamworks.NET 2025.165.0 (UPM git package); the Gameplay assembly defines `ANTARIUM_STEAM` while it is installed (`versionDefines`). `StorePlatform` (plain C#: merge, stats, presence) over `SteamClient : IStoreClient` (init with `RestartAppIfNecessary` in builds, `InitEx`, callbacks in `Tick`, `SteamUserStats`, overlay callback → pause); `LocalPlatform` without Steam or with `-nosteam`. Editor opt-in *Antarium → Steam → Use Steam in Editor*. `steam_appid.txt` (4453940) in the project root and in development builds only.
@@ -268,6 +268,13 @@ Steamworks integration, store page and the first build on Steam (GDD §4). Many 
 - [ ] **(you)** Paste each language on Steamworks (`docs/STEAM.md` → *Store page media and text*), keep *Supported languages* at English only, preview, publish.
 - [ ] Have a native speaker skim at least Simplified Chinese, Japanese, Korean and Turkish (machine-quality risk is highest there; the text was written by Claude, not a professional translator).
 - Known limits: capsule art and trailers are not localized (the logo and trailer cards stay English); the store text isn't kept in sync automatically: change the English text → redo the translations.
+
+**Demo and Steam Next Fest** (February 2027; decided 2026-11-19: 3 days after the page went public it had 1,164 impressions, 349 visits and 6 wishlists, too few for a December launch)
+- [ ] **(you)** Register for the February 2027 Next Fest (categories *Simulation* + *Strategy*); note the registration and demo-build deadlines from the event page here.
+- [ ] **Demo build (future session)**: a `DEMO` build define / build menu entry (*Antarium → Build → Windows Demo*), same code, capped content. Cap to decide in that session (proposal: the first colony down to the end of the stone strata, research and contracts past that locked, no Nuptial Flight; or a time cap); an end screen that says what the full game adds, with a *Wishlist on Steam* button (Steam overlay to the store page); demo saves kept separate or carried over to the full game (decide); achievements off in the demo. Tests for the cap, verified in play mode, docs (GDD, TODO, HOW_TO_PLAY, STEAM.md) updated.
+- [ ] **(you)** Demo app in Steamworks (*Create demo* on the app: its own App ID, depot, store page that links to the main game), then `upload.ps1` support for the demo's app and depot ids.
+- [ ] Release the demo a few weeks before the fest (players and reviews before it starts); a Steam event post when it goes up; tell the creators who have keys about the new date.
+- [ ] Store page conversion: 349 visits → 6 wishlists in the first 3 days is low (the capsule draws clicks: ~30% of impressions turned into visits). Check the traffic sources in the Steamworks traffic report (phone visitors from the shorts are often not logged into Steam and can't wishlist), and the first trailer / first screenshots.
 
 **First upload and release**
 - [x] First build uploaded to the `beta` branch and tested through Steam (achievements, cloud saves, overlay). The first upload, 0.9.0 (BuildID 26441965), had a startup bug (`GameBootstrap` set up the UI before the `UIDocument` had a root), fixed before the build that went to review.
@@ -542,4 +549,4 @@ Things the current build is still missing, grouped by area. Many are planned for
 - Tooltips: every HUD element (10.7), in the info panel; dialogs have none.
 - Overlays: flow, light and ores (one at a time, 10.7), pheromones (always drawn faintly) and the Seismic Sense / scout glow.
 - Dynamic lights: the possessed ant's, up to 24 glow ants near the view and the Guiding Light at the pointer (Milestone 11), with ShadowCaster2D rock shadows near the glow and pointer lights (10.4). Glowing mushrooms light the light map; the view is a little brighter underground (Milestone 11).
-- Store page is public as *Coming Soon* (media and text refreshed for Milestones 10 and 11 and the story); the first build is in review; no Steam Deck pass yet and not released (Milestone 9). An opening intro plays on launch.
+- Store page is public as *Coming Soon* (media and text refreshed for Milestones 10 and 11 and the story, store text in 13 languages); the first build is in review; no Steam Deck pass yet and not released (Milestone 9; release Q1 2027 after the February Next Fest). No demo build yet. An opening intro plays on launch.

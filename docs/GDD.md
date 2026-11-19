@@ -374,7 +374,7 @@ Versioned save format (binary or compressed JSON) including the full world grid,
 - *Store media*: the game renders its own screenshots, GIF footage and trailer clips (a showcase colony and scripted shots in a capture mode, `docs/STEAM.md`); store texts in `steam/store/`.
 - Store page: media and texts uploaded (refreshed for Milestones 10 and 11), content survey done, approved and public as *Coming Soon*; price and release date set.
 - Build: first IL2CPP release build, first-run experience checked on a clean Windows account, Steam Cloud and the real Steam client verified, uploaded to `beta` and submitted for review.
-- Missing: Steam Deck / gamepad pass, the release itself.
+- Missing: Steam Deck / gamepad pass, a demo for Steam Next Fest (February 2027), the release itself (Q1 2027, after the fest).
 
 ---
 
