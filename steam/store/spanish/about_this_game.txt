@@ -1,0 +1,92 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+
+[i]Hace mucho tiempo, la Antigua Colonia llenaba estas profundidades. Sus túneles iban desde las raíces hasta el fuego, y en lo más hondo construyó el Motor, una máquina de hierro y cristal cantor que permitía a toda la colonia pensar como una sola mente. Entonces el fuego de abajo se agitó, y el Motor enmudeció.[/i]
+
+[i]Ahora, bajo la hierba, una nueva reina empieza a cavar.[/i]
+
+Eres la mente de esa colonia. Empieza como una reina y un puñado de obreras en un agujero en un prado. Crece hasta convertirse en una máquina viva: túneles, cintas de seda y cámaras llenas de actividad que descienden por cuevas de cristal y lava hasta las ruinas de la colonia que la precedió. Luego tus princesas alzan el vuelo y todo vuelve a empezar, más fuerte.
+
+[b]Antarium 2[/b] es a la vez un juego incremental activo y un simulador de automatización de colonias. Cava a mano cuando quieras, automatízalo cuando lo domines y observa cómo cientos de hormigas hacen avanzar tu colonia.
+
+[h2]Cava, y la colonia te sigue[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[list]
+[*][b]Haz clic y mantén pulsado para cavar[/b] tú mismo: los escombros saltan, la pantalla tiembla y se acumula un combo mientras sigues rompiendo roca. Elige un tamaño de pincel y vigila tu fuerza.
+[*][b]Pinta órdenes, no hormigas.[/b] Marca roca para minar y pinta zonas de almacén. Las obreras aceptan los trabajos, llevan cada hallazgo a casa y trepan por paredes y techos para llegar.
+[*]Cada objeto es físico: el mineral se amontona donde cae, descansa en estanterías de almacén y viaja sobre cintas.
+[/list]
+
+[h2]Construye una máquina viva[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[list]
+[*][b]Cintas de seda y de hierro, ascensores de raíz, divisores, filtros, cofres y descargadores[/b] llevan el mineral desde el frente de excavación hasta tus máquinas, y se ve cómo viajan los objetos.
+[*][b]Fundiciones, trituradoras, jardines de hongos, granjas de pulgones, archivos, guarderías y cámaras de princesas[/b] convierten los hallazgos en bruto en cobre, hierro, comida, mielada, conocimiento y sangre real.
+[*][b]Pon el mundo a trabajar:[/b] las bombas mueven agua, las norias aceleran las máquinas cercanas, el riego da cosechas mayores y una fundición construida sobre magma no necesita carbón.
+[*][b]Las vistas de flujo, luz y mineral[/b] muestran qué se mueve, qué está atascado, dónde está oscuro y dónde está el mineral, así que ajustar tus líneas se siente como un puzle.
+[/list]
+
+[h2]Un mundo arriba y abajo[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[list]
+[*]Tu colonia vive bajo [b]un cielo de verdad[/b]: día y noche, colinas onduladas, árboles de raíces profundas, lagos y ríos, y montañas en el horizonte.
+[*][b]La lluvia y las tormentas[/b] inundan los túneles descuidados. En las raras [b]noches de estrellas fugaces[/b], el cielo se llena de ellas y los cazadores se quedan en casa.
+[*][b]Recolecta en la naturaleza:[/b] semillas, bayas, manzanas y setas venenosas en la superficie, y hongos que brillan en las cuevas de abajo.
+[*]Los pájaros cazan a tus recolectoras de día, y las arañas lobo salen de noche.
+[/list]
+
+[h2]Siete capas, cada una más extraña que la anterior[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[list]
+[*]Mantillo, arcilla y aguas subterráneas, estratos de piedra, [b]cavernas de cristal luminosas[/b], [b]profundidades fúngicas[/b], la [b]zona de magma[/b] y las [b]ruinas antiguas[/b] en el fondo del mundo.
+[*]El agua inunda, la arena se derrumba, el gas de esporas se arrastra por los techos, la lava se convierte en obsidiana al tocar el agua y el fuego se propaga por las vetas de carbón y las raíces.
+[*]La luz importa: la luz del sol se desvanece a medida que cavas. Lleva [b]hormigas luminosas[/b] para iluminar la oscuridad y [b]hormigas de fuego[/b] para trabajar junto a la lava.
+[*]En algún lugar de la piedra hay una caverna oculta, y allí crece algo antiguo.
+[/list]
+
+[h2]La historia de las profundidades[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[list]
+[*]Estudia las reliquias y las tablillas con incrustaciones de oro de las ruinas para reconstruir [b]la historia de la Antigua Colonia[/b], doce fragmentos guardados en tu Códice.
+[*]Lo que aprendas desbloquea la [b]investigación ancestral[/b]: su mampostería, sus redes de cristal y, por último, los planos del propio Motor.
+[*]Levanta [b]resonadores de cristal[/b] sobre el cristal cantor, luego restaura [b]el Motor Ancestral[/b] paso a paso y despiértalo, como pidió la Antigua Colonia.
+[/list]
+
+[h2]Defiende el nido[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[list]
+[*]Los [b]asaltos de termitas[/b] marchan hacia tus reservas de comida, y las [b]hormigas rivales[/b] vienen a saquear tus almacenes.
+[*]Un [b]grillo topo[/b] excava hacia la reina, y una [b]lombriz gigante[/b] remueve la tierra junto a tus túneles.
+[*]Cada capa profunda tiene su propia criatura esperando en la oscuridad: ciempiés, arañas de cueva, ácaros fúngicos, escarabajos de fuego y guardianes de las ruinas.
+[*]Cría soldados, construye puertas de resina y de hierro, trampas y muros de tierra, y diseña cuellos de botella que resistan.
+[/list]
+
+[h2]Toma el control[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[list]
+[*][b]Posee a cualquier hormiga[/b] y juega con ella: corre, excava, carga y lucha, con una luz cálida en la oscuridad.
+[*][b]Pinta feromonas:[/b] rastros que aceleran a las hormigas, olores que las atraen a cavar, recolectar o defender, y zonas que deben evitar.
+[*][b]Diez castas:[/b] obreras, mineras, porteadoras, constructoras, nodrizas, exploradoras, ingenieras, soldados, hormigas luminosas y hormigas de fuego. Elige la proporción y la reina pone los huevos.
+[*][b]Haz evolucionar a tu reina[/b], fija prioridades de trabajo y mira cómo cada hormiga gana habilidad, niveles y rasgos.
+[*][b]Habilidades y eventos:[/b] Frenesí, Sentido sísmico, Decreto real, Estallido de feromonas y Aceleración; impactos de meteoritos, vetas ricas, escarabajos dorados y hormigas atrapadas a las que rescatar.
+[/list]
+
+[h2]Y la colonia alza el vuelo[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[list]
+[*]Un árbol de investigación con [b]46 descubrimientos[/b] desbloquea castas, edificios, habilidades y mejoras, y un tablón de encargos siempre muestra el siguiente objetivo.
+[*]Cría princesas y envíalas al [b]vuelo nupcial[/b]: la colonia termina, su [b]Memoria genética[/b] perdura.
+[*]Invierte en [b]23 rasgos genéticos permanentes[/b] que cambian cómo se juega cada colonia posterior, desde nidadas más grandes y linajes de castas hasta el [b]Trono de la reina[/b]. ¿Has cambiado de idea? Redistribuye.
+[*]Elige entre [b]12 modificadores de mundo[/b] para el siguiente mundo, desde vetas ricas y tierra hueca hasta profundidades volcánicas y nuevas variantes de biomas. Los mundos más duros dejan un legado mayor.
+[/list]
+
+[h2]Características[/h2]
+[list]
+[*]Pixel art nítido en una cuadrícula estricta, con luz que se apaga en los túneles y brilla en las cuevas
+[*]Cientos de hormigas individuales, cada una con su tarea, trepando por todas las superficies de tus túneles
+[*]Progreso sin conexión: tu colonia sigue trabajando mientras no estás (hasta 8 horas)
+[*]Música que cambia con cada capa que alcanzas
+[*]Tres ranuras de guardado, cada una su propio linaje
+[*]49 logros de Steam, guardado en Steam Cloud y controles totalmente reasignables
+[/list]
+
+[i]Nota: por ahora el juego solo está disponible en inglés.[/i]

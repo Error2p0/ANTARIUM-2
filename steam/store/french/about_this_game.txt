@@ -1,0 +1,92 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+
+[i]Il y a longtemps, la Vieille Colonie peuplait ces profondeurs. Ses tunnels allaient des racines jusqu'au feu, et tout au fond, elle bâtit le Moteur, une machine de fer et de cristal chantant qui permettait à toute la colonie de penser comme un seul esprit. Puis le feu des profondeurs s'agita, et le Moteur se tut.[/i]
+
+[i]Aujourd'hui, sous l'herbe, une nouvelle reine commence à creuser.[/i]
+
+Vous êtes l'esprit de cette colonie. Elle commence par une reine et une poignée d'ouvrières dans un trou au milieu d'une prairie. Elle devient une machine vivante : tunnels, tapis de soie et chambres affairées, qui s'enfoncent à travers les grottes de cristal et la lave jusqu'aux ruines de la colonie qui l'a précédée. Puis vos princesses prennent leur envol, et tout recommence, en plus fort.
+
+[b]Antarium 2[/b] est à la fois un jeu incrémental actif et une simulation d'automatisation de colonie. Creusez à la main quand vous le voulez, automatisez une fois que vous maîtrisez, et regardez des centaines de fourmis faire avancer votre colonie.
+
+[h2]Creusez, la colonie suit[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[list]
+[*][b]Cliquez et maintenez pour creuser[/b] vous-même : les débris volent, l'écran tremble et un combo grimpe tant que vous continuez à briser la roche. Choisissez une taille de pinceau et surveillez votre force.
+[*][b]Peignez des ordres, pas des fourmis.[/b] Marquez la roche à extraire et peignez des zones de stockage. Les ouvrières prennent les tâches, rapportent chaque trouvaille au nid et grimpent aux murs et aux plafonds pour y parvenir.
+[*]Chaque objet est physique : le minerai s'entasse là où il tombe, repose sur les étagères de stockage et circule sur les tapis.
+[/list]
+
+[h2]Bâtissez une machine vivante[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[list]
+[*][b]Tapis de soie et de fer, ascenseurs de racines, répartiteurs, filtres, coffres et déchargeurs[/b] acheminent le minerai du front de taille jusqu'à vos machines, et l'on voit les objets voyager.
+[*][b]Fonderies, concasseurs, jardins de champignons, élevages de pucerons, archives, nurseries et chambres de princesses[/b] transforment les trouvailles brutes en cuivre, fer, nourriture, miellat, savoir et sang royal.
+[*][b]Mettez le monde au travail :[/b] les pompes déplacent l'eau, les roues à aubes accélèrent les machines voisines, l'irrigation donne de meilleures récoltes, et une fonderie bâtie sur le magma n'a pas besoin de charbon.
+[*][b]Les vues de flux, de lumière et de minerai[/b] montrent ce qui circule, ce qui bloque, où il fait sombre et où se trouve le minerai : régler vos chaînes devient un puzzle.
+[/list]
+
+[h2]Un monde dessus et dessous[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[list]
+[*]Votre colonie vit sous [b]un vrai ciel[/b] : le jour et la nuit, des collines ondulantes, des arbres aux racines profondes, des lacs et des rivières, et des montagnes à l'horizon.
+[*][b]La pluie et les orages[/b] déversent de l'eau dans les tunnels mal pensés. Lors des rares [b]nuits d'étoiles filantes[/b], le ciel s'en remplit et les prédateurs restent chez eux.
+[*][b]Récoltez dans la nature :[/b] graines, baies, pommes et champignons vénéneux en surface, et champignons luminescents dans les grottes en dessous.
+[*]Les oiseaux chassent vos fourrageuses le jour, et les araignées-loups sortent la nuit.
+[/list]
+
+[h2]Sept couches, toujours plus étranges[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[list]
+[*]Terre végétale, argile et nappe phréatique, strates rocheuses, [b]cavernes de cristal luminescentes[/b], [b]profondeurs fongiques[/b], la [b]zone de magma[/b] et les [b]ruines antiques[/b] au fond du monde.
+[*]L'eau inonde, le sable s'effondre, le gaz de spores rampe le long des plafonds, la lave se change en obsidienne au contact de l'eau, et le feu se propage dans les veines de charbon et les racines.
+[*]La lumière compte : le soleil s'efface à mesure que vous creusez. Amenez des [b]fourmis lumineuses[/b] pour éclairer l'obscurité, et des [b]fourmis de feu[/b] pour travailler près de la lave.
+[*]Quelque part dans la pierre se cache une caverne secrète, et quelque chose d'ancien y pousse.
+[/list]
+
+[h2]L'histoire enfouie[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[list]
+[*]Étudiez les reliques et les tablettes incrustées d'or des ruines pour reconstituer [b]l'histoire de la Vieille Colonie[/b], douze fragments conservés dans votre Codex.
+[*]Ce que vous apprenez débloque la [b]recherche antique[/b] : leur maçonnerie, leurs réseaux cristallins, et enfin les plans du Moteur lui-même.
+[*]Érigez des [b]résonateurs de cristal[/b] sur le cristal chantant, puis restaurez [b]le Moteur Ancien[/b] étape par étape et réveillez-le, comme la Vieille Colonie l'a demandé.
+[/list]
+
+[h2]Défendez le nid[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[list]
+[*]Des [b]raids de termites[/b] marchent sur vos réserves de nourriture, et des [b]fourmis rivales[/b] viennent piller vos entrepôts.
+[*]Une [b]courtilière[/b] creuse vers la reine, et un [b]ver de terre géant[/b] laboure le sol près de vos tunnels.
+[*]Chaque couche profonde a sa propre créature tapie dans le noir : scolopendres, araignées des cavernes, acariens fongiques, scarabées de feu et gardiens des ruines.
+[*]Élevez des soldats, construisez des portes de résine et de fer, des pièges et des murs de terre, et concevez des goulets d'étranglement qui tiennent.
+[/list]
+
+[h2]Prenez le contrôle[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[list]
+[*][b]Possédez n'importe quelle fourmi[/b] et jouez-la vous-même : courez, creusez, portez et combattez, avec une lueur chaude dans le noir.
+[*][b]Peignez des phéromones :[/b] des pistes qui accélèrent les fourmis, des odeurs qui les attirent vers le creusage, la récolte ou la défense, et des zones à éviter.
+[*][b]Dix castes :[/b] ouvrières, mineuses, porteuses, bâtisseuses, nourrices, éclaireuses, ingénieures, soldats, fourmis lumineuses et fourmis de feu. Choisissez la répartition, la reine pond en conséquence.
+[*][b]Faites évoluer votre reine[/b], fixez les priorités de travail et regardez chaque fourmi gagner en compétence, en niveaux et en traits.
+[*][b]Capacités et événements :[/b] Frénésie, Sens sismique, Décret royal, Salve de phéromones et Accélération ; chutes de météorites, filons riches, scarabées dorés et fourmis piégées à secourir.
+[/list]
+
+[h2]Puis la colonie prend son envol[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[list]
+[*]Un arbre de recherche de [b]46 découvertes[/b] débloque castes, bâtiments, capacités et améliorations, et un tableau de contrats affiche toujours le prochain objectif.
+[*]Élevez des princesses et envoyez-les au [b]vol nuptial[/b] : la colonie s'éteint, sa [b]Mémoire génétique[/b] perdure.
+[*]Dépensez-la dans [b]23 traits génétiques permanents[/b] qui changent la façon dont se joue chaque colonie suivante, des couvées plus nombreuses aux lignées de castes jusqu'au [b]Trône de la reine[/b]. Changé d'avis ? Redistribuez.
+[*]Choisissez parmi [b]12 modificateurs de monde[/b] pour le monde suivant, des filons riches et de la terre creuse aux profondeurs volcaniques et aux nouvelles variantes de biomes. Plus le monde est rude, plus l'héritage est grand.
+[/list]
+
+[h2]Caractéristiques[/h2]
+[list]
+[*]Un pixel art net sur une grille stricte, avec une lumière qui s'estompe dans les tunnels et brille dans les grottes
+[*]Des centaines de fourmis individuelles, chacune avec sa tâche, qui grimpent sur chaque surface de vos tunnels
+[*]Progression hors ligne : votre colonie continue de travailler pendant votre absence (jusqu'à 8 heures)
+[*]Une musique qui change à chaque couche atteinte
+[*]Trois emplacements de sauvegarde, chacun sa propre lignée
+[*]49 succès Steam, sauvegardes Steam Cloud, commandes entièrement reconfigurables
+[/list]
+
+[i]Remarque : le jeu lui-même est pour l'instant disponible uniquement en anglais.[/i]

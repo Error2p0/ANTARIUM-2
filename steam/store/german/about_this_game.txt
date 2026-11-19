@@ -1,0 +1,92 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+
+[i]Vor langer Zeit füllte die Alte Kolonie diese Tiefen. Ihre Tunnel reichten von den Wurzeln bis hinab zum Feuer, und ganz unten baute sie die Maschine, ein Werk aus Eisen und singendem Kristall, mit dem die ganze Kolonie wie ein einziger Geist dachte. Dann wurde das Feuer in der Tiefe unruhig, und die Maschine verstummte.[/i]
+
+[i]Jetzt, unter dem Gras, beginnt eine neue Königin zu graben.[/i]
+
+Du bist der Geist dieser Kolonie. Sie beginnt als Königin mit einer Handvoll Arbeiterinnen in einem Loch auf einer Wiese. Sie wächst zu einer lebendigen Maschine heran: Tunnel, Seidenbänder und geschäftige Kammern, die durch Kristallhöhlen und Lava bis zu den Ruinen der Kolonie reichen, die vor ihr da war. Dann steigen deine Prinzessinnen in den Himmel auf, und alles beginnt von vorn, stärker als zuvor.
+
+[b]Antarium 2[/b] ist ein aktives Incremental-Spiel und eine Kolonie-Automatisierungssimulation in einem. Grabe von Hand, wann immer du willst, automatisiere, sobald du es gemeistert hast, und sieh zu, wie Hunderte Ameisen deine Kolonie voranbringen.
+
+[h2]Grabe, und die Kolonie folgt[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[list]
+[*][b]Klicken und halten zum Graben:[/b] Brocken fliegen, der Bildschirm bebt, und eine Kombo baut sich auf, solange du weiter Gestein brichst. Wähle eine Pinselgröße und achte auf deine Kraft.
+[*][b]Male Befehle, nicht Ameisen.[/b] Markiere Gestein zum Abbau und male Lagerzonen. Arbeiterinnen übernehmen die Aufträge, schleppen jeden Fund nach Hause und klettern dafür über Wände und Decken.
+[*]Jeder Gegenstand ist physisch: Erz häuft sich dort, wo es fällt, liegt in Lagerregalen und fährt auf Förderbändern.
+[/list]
+
+[h2]Baue eine lebendige Maschine[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[list]
+[*][b]Seiden- und Eisenbänder, Wurzelaufzüge, Verteiler, Filter, Truhen und Entlader[/b] bringen Erz von der Abbaufront zu deinen Maschinen, und man sieht die Gegenstände mitfahren.
+[*][b]Schmelzöfen, Brecher, Pilzgärten, Blattlausfarmen, Archive, Kinderstuben und Prinzessinnenkammern[/b] verwandeln Rohfunde in Kupfer, Eisen, Nahrung, Honigtau, Wissen und königliches Blut.
+[*][b]Lass die Welt für dich arbeiten:[/b] Pumpen bewegen Wasser, Wasserräder beschleunigen Maschinen in der Nähe, Bewässerung bringt größere Ernten, und ein Schmelzofen auf Magma braucht keine Kohle.
+[*][b]Fluss-, Licht- und Erzansichten[/b] zeigen, was sich bewegt, was feststeckt, wo es dunkel ist und wo das Erz liegt. So wird das Feintuning deiner Produktionslinien zum Puzzle.
+[/list]
+
+[h2]Eine Welt oben und unten[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[list]
+[*]Deine Kolonie lebt unter [b]einem echten Himmel[/b]: Tag und Nacht, sanfte Hügel, Bäume mit tiefen Wurzeln, Seen und Flüsse und Berge am Horizont.
+[*][b]Regen und Gewitter[/b] spülen Wasser in unvorsichtig gegrabene Tunnel. In seltenen [b]Sternschnuppennächten[/b] füllen Sternschnuppen den Himmel, und die Jäger bleiben zu Hause.
+[*][b]Sammle in der Wildnis:[/b] Samen, Beeren, Äpfel und Fliegenpilze an der Oberfläche und leuchtende Pilze in den Höhlen darunter.
+[*]Vögel jagen deine Sammlerinnen bei Tag, und nachts kommen Wolfsspinnen hervor.
+[/list]
+
+[h2]Sieben Schichten, eine seltsamer als die andere[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[list]
+[*]Mutterboden, Lehm und Grundwasser, Gesteinsschichten, [b]leuchtende Kristallhöhlen[/b], [b]Pilztiefen[/b], die [b]Magmazone[/b] und die [b]uralten Ruinen[/b] am Grund der Welt.
+[*]Wasser flutet, Sand stürzt ein, Sporengas kriecht an Decken entlang, Lava erstarrt zu Obsidian, wo sie auf Wasser trifft, und Feuer breitet sich durch Kohleflöze und Wurzeln aus.
+[*]Licht zählt: Das Sonnenlicht schwindet, je tiefer du gräbst. Bring [b]Leuchtameisen[/b] mit, um das Dunkel zu erhellen, und [b]Feuerameisen[/b], um an der Lava zu arbeiten.
+[*]Irgendwo im Gestein liegt eine verborgene Höhle, und dort wächst etwas Uraltes.
+[/list]
+
+[h2]Die Geschichte in der Tiefe[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[list]
+[*]Erforsche die Relikte und goldverzierten Tafeln der Ruinen und setze [b]die Geschichte der Alten Kolonie[/b] zusammen: zwölf Fragmente, gesammelt in deinem Kodex.
+[*]Was du lernst, schaltet [b]uralte Forschung[/b] frei: ihr Mauerwerk, ihre Kristallgitter und schließlich die Baupläne der Maschine selbst.
+[*]Errichte [b]Kristallresonatoren[/b] auf singendem Kristall, stelle dann [b]die Uralte Maschine[/b] Schritt für Schritt wieder her und erwecke sie, wie es die Alte Kolonie erbat.
+[/list]
+
+[h2]Verteidige das Nest[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[list]
+[*][b]Termitenüberfälle[/b] marschieren auf deine Nahrungsvorräte zu, und [b]rivalisierende Ameisen[/b] kommen, um deine Lagerräume zu plündern.
+[*]Eine [b]Maulwurfsgrille[/b] gräbt sich zur Königin vor, und ein [b]Riesenregenwurm[/b] wühlt sich neben deinen Tunneln durch die Erde.
+[*]In jeder tiefen Schicht wartet eine eigene Kreatur im Dunkeln: Hundertfüßer, Höhlenspinnen, Pilzmilben, Feuerkäfer und Ruinenwächter.
+[*]Ziehe Soldatinnen heran, baue Harz- und Eisentore, Fallen und Erdwälle und entwirf Engpässe, die standhalten.
+[/list]
+
+[h2]Übernimm die Kontrolle[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[list]
+[*][b]Übernimm jede beliebige Ameise[/b] und spiele sie selbst: renne, grabe, trage und kämpfe, mit einem warmen Licht im Dunkeln.
+[*][b]Male Pheromone:[/b] Spuren, die Ameisen schneller machen, Duftmarken, die sie zum Graben, Sammeln oder Verteidigen ziehen, und Bereiche, die sie meiden sollen.
+[*][b]Zehn Kasten:[/b] Arbeiterinnen, Minenarbeiterinnen, Trägerinnen, Baumeisterinnen, Ammen, Späherinnen, Ingenieurinnen, Soldatinnen, Leuchtameisen und Feuerameisen. Bestimme die Mischung, und die Königin legt die Eier dafür.
+[*][b]Entwickle deine Königin weiter[/b], setze Arbeitsprioritäten und sieh zu, wie einzelne Ameisen Können, Stufen und Eigenschaften gewinnen.
+[*][b]Fähigkeiten und Ereignisse:[/b] Raserei, Seismischer Sinn, Königlicher Erlass, Pheromonstoß und Beschleunigung; Meteoriteneinschläge, reiche Adern, goldene Käfer und eingeschlossene Ameisen, die gerettet werden wollen.
+[/list]
+
+[h2]Dann hebt die Kolonie ab[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[list]
+[*]Ein Forschungsbaum mit [b]46 Entdeckungen[/b] schaltet Kasten, Gebäude, Fähigkeiten und Verbesserungen frei, und ein Auftragsbrett zeigt immer das nächste Ziel.
+[*]Ziehe Prinzessinnen auf und schicke sie auf den [b]Hochzeitsflug[/b]: Die Kolonie endet, ihr [b]Genetisches Gedächtnis[/b] lebt weiter.
+[*]Investiere es in [b]23 dauerhafte genetische Merkmale[/b], die verändern, wie jede spätere Kolonie spielt, von größeren Bruten und Kastenlinien bis zum [b]Thron der Königin[/b]. Meinung geändert? Verteile alles neu.
+[*]Wähle aus [b]12 Weltmodifikatoren[/b] für die nächste Welt, von reichen Adern und hohler Erde bis zu vulkanischen Tiefen und neuen Biomvarianten. Härtere Welten hinterlassen ein größeres Vermächtnis.
+[/list]
+
+[h2]Features[/h2]
+[list]
+[*]Scharfe Pixelart auf einem strikten Pixelraster, mit Licht, das in Tunneln schwindet und in Höhlen leuchtet
+[*]Hunderte einzelne Ameisen, jede mit eigener Aufgabe, die jede Oberfläche deiner Tunnel erklimmen
+[*]Offline-Fortschritt: Deine Kolonie arbeitet weiter, während du weg bist (bis zu 8 Stunden)
+[*]Musik, die sich mit jeder erreichten Schicht verändert
+[*]Drei Speicherplätze, jeder eine eigene Blutlinie
+[*]49 Steam-Errungenschaften, Steam-Cloud-Speicherstände, frei belegbare Steuerung
+[/list]
+
+[i]Hinweis: Das Spiel selbst ist derzeit nur auf Englisch verfügbar.[/i]

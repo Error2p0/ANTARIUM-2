@@ -1,0 +1,92 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony.gif[/img]
+
+[i]Dawno temu te głębiny zamieszkiwała Stara Kolonia. Jej tunele biegły od korzeni aż do ognia, a na samym dnie zbudowała Mechanizm, maszynę z żelaza i śpiewającego kryształu, dzięki której cała kolonia myślała jak jeden umysł. Potem ogień w głębi stał się niespokojny i Mechanizm ucichł.[/i]
+
+[i]Teraz, pod trawą, nowa królowa zaczyna kopać.[/i]
+
+Jesteś umysłem tej kolonii. Zaczyna się od królowej i garstki robotnic w dziurze na łące. Wyrasta z niej żywa maszyna: tunele, jedwabne taśmy i tętniące życiem komory, sięgające przez kryształowe jaskinie i lawę aż do ruin kolonii, która była tu wcześniej. Potem twoje księżniczki wzbijają się w niebo i wszystko zaczyna się od nowa, silniejsze.
+
+[b]Antarium 2[/b] to aktywna gra inkrementalna i symulator automatyzacji kolonii w jednym. Kop ręcznie, kiedy chcesz, zautomatyzuj, gdy już to opanujesz, i patrz, jak setki mrówek pchają twoją kolonię naprzód.
+
+[h2]Kop, a kolonia pójdzie za tobą[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig.gif[/img]
+[list]
+[*][b]Kliknij i przytrzymaj, by kopać[/b] samodzielnie: gruz leci, ekran się trzęsie, a combo rośnie, dopóki kruszysz skałę. Wybierz rozmiar pędzla i uważaj na swoją siłę.
+[*][b]Maluj rozkazy, nie mrówki.[/b] Oznaczaj skałę do wydobycia i maluj strefy składowania. Robotnice biorą zadania, znoszą każde znalezisko do domu i wspinają się po ścianach i sufitach, by tam dotrzeć.
+[*]Każdy przedmiot jest fizyczny: ruda piętrzy się tam, gdzie spadnie, leży na regałach magazynowych i jedzie po taśmach.
+[/list]
+
+[h2]Zbuduj żywą maszynę[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory.gif[/img]
+[list]
+[*][b]Jedwabne i żelazne taśmy, windy z korzeni, rozdzielacze, filtry, skrzynie i rozładowywacze[/b] przewożą rudę z przodka do twoich maszyn, a przedmioty widocznie jadą po drodze.
+[*][b]Huty, kruszarki, ogrody grzybów, farmy mszyc, archiwa, żłobki i komnaty księżniczek[/b] zamieniają surowe znaleziska w miedź, żelazo, jedzenie, spadź, wiedzę i królewską krew.
+[*][b]Zaprzęgnij świat do pracy:[/b] pompy przetaczają wodę, koła wodne przyspieszają pobliskie maszyny, nawadnianie daje większe plony, a huta zbudowana na magmie nie potrzebuje węgla.
+[*][b]Widoki przepływu, światła i rud[/b] pokazują, co się porusza, co utknęło, gdzie jest ciemno i gdzie leży ruda, więc dostrajanie linii przypomina łamigłówkę.
+[/list]
+
+[h2]Świat na górze i na dole[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky.gif[/img]
+[list]
+[*]Twoja kolonia żyje pod [b]prawdziwym niebem[/b]: dzień i noc, łagodne wzgórza, drzewa o głębokich korzeniach, jeziora i rzeki oraz góry na horyzoncie.
+[*][b]Deszcze i burze[/b] zalewają nieostrożnie wykopane tunele. W rzadkie [b]noce spadających gwiazd[/b] niebo wypełniają meteory, a drapieżniki zostają w domu.
+[*][b]Zbieraj dary natury:[/b] nasiona, jagody, jabłka i muchomory na powierzchni oraz świecące grzyby w jaskiniach poniżej.
+[*]Za dnia ptaki polują na twoje zbieraczki, a nocą wychodzą pająki-wilki.
+[/list]
+
+[h2]Siedem warstw, każda dziwniejsza od poprzedniej[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths.gif[/img]
+[list]
+[*]Wierzchnia warstwa gleby, glina i wody gruntowe, warstwy skalne, [b]świecące kryształowe pieczary[/b], [b]grzybowe głębiny[/b], [b]strefa magmy[/b] i [b]pradawne ruiny[/b] na samym dnie świata.
+[*]Woda zalewa, piasek się osypuje, gaz z zarodników pełznie po sufitach, lawa zastyga w obsydian, gdy spotka wodę, a ogień rozprzestrzenia się po pokładach węgla i korzeniach.
+[*]Światło ma znaczenie: im głębiej kopiesz, tym mniej słońca. Weź [b]świecące mrówki[/b], by rozświetlić ciemność, i [b]ogniste mrówki[/b] do pracy przy lawie.
+[*]Gdzieś w skale jest ukryta pieczara, a rośnie w niej coś pradawnego.
+[/list]
+
+[h2]Historia w głębinach[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins.gif[/img]
+[list]
+[*]Badaj relikty i inkrustowane złotem tablice ruin, by poskładać [b]historię Starej Kolonii[/b]: dwanaście fragmentów zapisanych w twoim Kodeksie.
+[*]Zdobyta wiedza odblokowuje [b]pradawne badania[/b]: ich kamieniarstwo, ich kryształowe sieci i w końcu plany samego Mechanizmu.
+[*]Wznieś [b]kryształowe rezonatory[/b] na śpiewającym krysztale, a potem krok po kroku odbuduj [b]Pradawny Mechanizm[/b] i przebudź go, jak prosiła Stara Kolonia.
+[/list]
+
+[h2]Broń gniazda[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid.gif[/img]
+[list]
+[*][b]Najazdy termitów[/b] maszerują po twoje zapasy jedzenia, a [b]rywalizujące mrówki[/b] przychodzą plądrować twoje spiżarnie.
+[*][b]Turkuć podjadek[/b] ryje w stronę królowej, a [b]olbrzymia dżdżownica[/b] przekopuje ziemię obok twoich tuneli.
+[*]Każda głęboka warstwa ma własne stworzenie czające się w mroku: skolopendry, pająki jaskiniowe, grzybowe roztocza, ogniste chrząszcze i strażników ruin.
+[*]Wychowuj żołnierzy, buduj bramy z żywicy i żelaza, pułapki i ziemne mury, i projektuj wąskie gardła, które wytrzymają.
+[/list]
+
+[h2]Przejmij kontrolę[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess.gif[/img]
+[list]
+[*][b]Opętaj dowolną mrówkę[/b] i graj nią sam: biegaj, kop, noś i walcz, z ciepłym światłem w ciemności.
+[*][b]Maluj feromony:[/b] ślady, które przyspieszają mrówki, zapachy, które ciągną je do kopania, zbierania lub obrony, oraz obszary do omijania.
+[*][b]Dziesięć kast:[/b] robotnice, górniczki, tragarki, budowniczki, piastunki, zwiadowczynie, inżynierki, żołnierze, świecące mrówki i ogniste mrówki. Ustal proporcje, a królowa złoży odpowiednie jaja.
+[*][b]Rozwijaj królową[/b], ustalaj priorytety prac i patrz, jak poszczególne mrówki zdobywają umiejętności, poziomy i cechy.
+[*][b]Zdolności i wydarzenia:[/b] Szał, Zmysł Sejsmiczny, Królewski Dekret, Wybuch Feromonów i Przyspieszenie; uderzenia meteorytów, bogate żyły, złote chrząszcze i uwięzione mrówki do uratowania.
+[/list]
+
+[h2]A potem kolonia wzlatuje[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight.gif[/img]
+[list]
+[*]Drzewko badań z [b]46 odkryciami[/b] odblokowuje kasty, budynki, zdolności i ulepszenia, a tablica kontraktów zawsze pokazuje następny cel.
+[*]Wychowaj księżniczki i wyślij je w [b]lot godowy[/b]: kolonia się kończy, ale jej [b]Pamięć Genetyczna[/b] trwa.
+[*]Wydaj ją na [b]23 trwałe cechy genetyczne[/b], które zmieniają rozgrywkę każdej kolejnej kolonii, od liczniejszego czerwiu i linii kast po [b]Tron Królowej[/b]. Zmiana zdania? Rozdaj punkty od nowa.
+[*]Wybierz spośród [b]12 modyfikatorów świata[/b] dla następnego świata, od bogatych żył i pustej ziemi po wulkaniczne głębiny i nowe warianty biomów. Trudniejsze światy zostawiają większe dziedzictwo.
+[/list]
+
+[h2]Cechy gry[/h2]
+[list]
+[*]Ostry pixel art na ścisłej siatce pikseli, ze światłem, które gaśnie w tunelach i lśni w jaskiniach
+[*]Setki pojedynczych mrówek, każda z własnym zadaniem, wspinających się po każdej powierzchni twoich tuneli
+[*]Postęp offline: twoja kolonia pracuje dalej, gdy cię nie ma (do 8 godzin)
+[*]Muzyka zmieniająca się z każdą osiągniętą warstwą
+[*]Trzy miejsca zapisu, każde z własnym rodem
+[*]49 osiągnięć Steam, zapisy w Steam Cloud, w pełni konfigurowalne sterowanie
+[/list]
+
+[i]Uwaga: sama gra jest obecnie dostępna wyłącznie w języku angielskim.[/i]
