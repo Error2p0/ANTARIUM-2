@@ -74,6 +74,10 @@ namespace Antarium.Gameplay
         /// <summary>Per building: name of the genetic trait that unlocks it when no research does (10.6: the Queen's Throne), else null.</summary>
         readonly string[] _unlockedByTrait;
         float _caveInToastCooldown;
+        readonly VisualElement _contracts;
+        /// <summary>The HUD element the tutorial points at (blinks), or null.</summary>
+        VisualElement _glow;
+        float _glowTimer;
 
         public CastesPanel Castes { get; }
         /// <summary>The Queen panel (H): stats and evolutions (10.4).</summary>
@@ -96,6 +100,8 @@ namespace Antarium.Gameplay
         public SettingsDialog Settings { get; }
         public AchievementsDialog AchievementsPanel { get; }
         public HelpDialog Help { get; }
+        /// <summary>The first-colony tutorial's card (top left); null if the layout has no "tutorial" element.</summary>
+        public TutorialPanel TutorialCard { get; }
         public TitleScreen Title { get; }
         /// <summary>The opening intro over the title screen when the game is launched.</summary>
         public IntroScreen Intro { get; }
@@ -147,6 +153,7 @@ namespace Antarium.Gameplay
             var castes = root.Q<VisualElement>("castes");
             var priorities = root.Q<VisualElement>("priorities");
             var configure = root.Q<VisualElement>("configure");
+            var tutorial = root.Q<VisualElement>("tutorial");
             DebugLabel = root.Q<Label>("debug");
             var toolbar = root.Q<VisualElement>("toolbar");
             var contracts = root.Q<VisualElement>("contracts");
@@ -313,7 +320,10 @@ namespace Antarium.Gameplay
             Flight = new FlightDialog(content);
             Settings = new SettingsDialog(input);
             AchievementsPanel = new AchievementsDialog(content, art);
-            Help = new HelpDialog(input);
+            Help = new HelpDialog(input, art);
+            if (tutorial != null)
+                TutorialCard = new TutorialPanel(tutorial, def => content.TryGetBuildingIndex(def.Id, out int b) ? CostText(content.Buildings[b]) : "");
+            _contracts = contracts;
             Title = new TitleScreen();
             Title.Root.AddToClassList("hidden");
             _hudRoot?.Insert(_hudRoot.IndexOf(_modal), Title.Root);
@@ -647,6 +657,32 @@ namespace Antarium.Gameplay
             _staminaBox.EnableInClassList("stamina--low", !exhausted && percent < 25);
         }
 
+        /// <summary>Makes the HUD element a tutorial step is about blink (None: nothing blinks).</summary>
+        public void SetHighlight(TutorialHighlight target)
+        {
+            var element = target switch
+            {
+                TutorialHighlight.DigTool => _toolButtons[(int)ToolMode.Dig],
+                TutorialHighlight.MineTool => _toolButtons[(int)ToolMode.Mine],
+                TutorialHighlight.StorageTool => _toolButtons[(int)ToolMode.Storage],
+                TutorialHighlight.BuildTool => _toolButtons[(int)ToolMode.Build],
+                TutorialHighlight.QueenButton => _queenButton,
+                TutorialHighlight.ResearchButton => _researchButton,
+                TutorialHighlight.Contracts => _contracts,
+                TutorialHighlight.Resources => _resources,
+                _ => null,
+            };
+            if (element == _glow) return;
+            if (_glow != null)
+            {
+                _glow.RemoveFromClassList("tutorial-glow");
+                _glow.RemoveFromClassList("tutorial-glow--on");
+            }
+            _glow = element;
+            _glowTimer = 0f;
+            _glow?.AddToClassList("tutorial-glow");
+        }
+
         public void SetActiveTool(ToolMode mode)
         {
             for (int i = 0; i < _toolButtons.Length; i++)
@@ -742,6 +778,9 @@ namespace Antarium.Gameplay
             _infoIcon.EnableInClassList("hidden", !hasIcon);
             _infoIcon.style.backgroundImage = hasIcon ? new StyleBackground(texture) : new StyleBackground(StyleKeyword.None);
         }
+
+        /// <summary>A message is on screen (the help's "new topic" note waits for it).</summary>
+        public bool ToastShowing => _toastTimer > 0f;
 
         public void ShowToast(string text)
         {
@@ -1045,6 +1084,15 @@ namespace Antarium.Gameplay
                 if (_toastTimer <= 0f) _toast.AddToClassList("hidden");
             }
             if (_caveInToastCooldown > 0f) _caveInToastCooldown -= dt;
+            if (_glow != null)
+            {
+                _glowTimer -= dt;
+                if (_glowTimer <= 0f)
+                {
+                    _glowTimer = 0.45f;
+                    _glow.ToggleInClassList("tutorial-glow--on");
+                }
+            }
             if (_masterToastCooldown > 0f) _masterToastCooldown -= dt;
             _timer -= dt;
             if (_timer > 0f) return;

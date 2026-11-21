@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_screen
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_screen
+  displayName: The screen
+  order: 120
+  category: Basics
+  icon: level_pips
+  body: 'Top: the time of day and the weather, food, ants, eggs, storage, knowledge, and every item you own with how much arrives per minute. Click an item to choose how many to keep for building.
+
+
+    Right: the contracts, your current goals. Left: cards for events and threats; Go moves the view there.
+
+
+    Bottom: the tools and panels with their keys, the info panel and messages. Bottom right: your abilities.
+
+
+    A red line under the top bar warns you while the colony is starving, raiders are in the royal chamber or a bird is circling.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

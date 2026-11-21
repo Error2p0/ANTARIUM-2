@@ -25,6 +25,10 @@ namespace Antarium.Content
         public List<AchievementDef> achievements = new();
         public List<EvolutionDef> evolutions = new();
         public List<LoreDef> lore = new();
+        [Tooltip("Pages of the in-game help (F1).")]
+        public List<HelpTopicDef> helpTopics = new();
+        [Tooltip("Steps of the first-colony tutorial.")]
+        public List<TutorialStepDef> tutorialSteps = new();
         [Tooltip("Creatures that come from the surface in raids (picked at random).")]
         public List<EnemyDef> raiders = new();
         public WorldGenSettings worldGen;

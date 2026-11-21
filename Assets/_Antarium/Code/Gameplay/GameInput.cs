@@ -182,7 +182,7 @@ namespace Antarium.Gameplay
             Add("Panels", "Genetic Memory", Genetics);
             Add("Panels", "Nuptial Flight", Flight);
             Add("Game", "Menu / back", Menu);
-            Add("Game", "Controls and help", Help);
+            Add("Game", "Help and controls", Help);
             Add("Game", "Quick save", QuickSave);
             Add("Game", "Quick load", QuickLoad);
             return list.ToArray();

@@ -154,6 +154,7 @@ namespace Antarium.Editor
             CreateWild(database, worldGen);
             CreateTrees(database, worldGen);
             CreateMilestone11Achievements();
+            CreateHelpAndTutorial();
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;
@@ -822,13 +823,16 @@ namespace Antarium.Editor
             database.achievements = FindAll<AchievementDef>();
             database.evolutions = FindAll<EvolutionDef>();
             database.lore = FindAll<LoreDef>();
+            database.helpTopics = FindAll<HelpTopicDef>();
+            database.tutorialSteps = FindAll<TutorialStepDef>();
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
             Debug.Log($"ContentDatabase rebuilt: {database.materials.Count} materials, {database.items.Count} items, " +
                       $"{database.buildings.Count} buildings, {database.recipes.Count} recipes, {database.research.Count} research, " +
                       $"{database.abilities.Count} abilities, {database.contracts.Count} contracts, {database.events.Count} events, " +
                       $"{database.enemies.Count} enemies ({database.raiders.Count} raiders), {database.castes.Count} castes, " +
-                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers, {database.achievements.Count} achievements, {database.evolutions.Count} evolutions, {database.lore.Count} lore fragments.");
+                      $"{database.genetics.Count} genetic traits, {database.worldModifiers.Count} world modifiers, {database.achievements.Count} achievements, {database.evolutions.Count} evolutions, {database.lore.Count} lore fragments, " +
+                      $"{database.helpTopics.Count} help topics, {database.tutorialSteps.Count} tutorial steps.");
         }
 
         static List<T> FindAll<T>() where T : Object

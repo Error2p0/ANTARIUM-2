@@ -23,6 +23,16 @@ namespace Antarium.Gameplay
         public int ComboStreak => _combo.Streak;
         public DigStamina Stamina => _stamina;
 
+        int _dug;
+
+        /// <summary>Cells the tool dug out since the last call (the tutorial counts them).</summary>
+        public int TakeCellsDug()
+        {
+            int n = _dug;
+            _dug = 0;
+            return n;
+        }
+
         public DigTool(DigConfig config)
         {
             _config = config;
@@ -56,6 +66,7 @@ namespace Antarium.Gameplay
             {
                 bool mine = _pending > 0;
                 if (mine) _pending--;
+                if (mine) _dug += e.CellsBroken;
                 if (e.CellsDamaged <= 0) continue;
                 _combo.RegisterHit(now);
                 if (mine) _stamina.Spend(_stamina.HitCost(_size));

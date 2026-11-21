@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_digging
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_digging
+  displayName: Digging yourself
+  order: 130
+  category: Basics
+  icon: tool_dig
+  body: 'Press {Dig} for the Dig tool and hold the left mouse on rock you can see. Keep digging without a pause and a combo builds up: you dig faster and faster.
+
+
+    The Strength bar above the toolbar drains while you dig and fills up again while you rest. Your workers dig without limit, so use the Dig tool for quick jobs and give orders for the rest.
+
+
+    {Brush} changes the brush size (1, 2, 3). Hard rock takes more hits; the bedrock at the edge of the world can''t be dug.
+
+
+    Some rock drops an item when it breaks: ore, coal, amber, grubs and more fall to the floor, and workers carry them home.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

@@ -155,6 +155,7 @@ namespace Antarium.Gameplay
             };
             _hud = new HudController(hudDocument, _content, config.render, config.art, config.save.autosaveSeconds, _input);
             WireHud();
+            SetUpTutorialAndHelp();
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
             _targetingHints = new string[_content.Abilities.Length];
@@ -173,6 +174,7 @@ namespace Antarium.Gameplay
                 ShowTitle();
                 if (playIntro) _hud.Intro?.Play();
             }
+            else MaybeStartTutorial();
         }
 
         /// <summary>Any key, mouse button or gamepad button pressed this frame (skips the intro).</summary>
@@ -394,6 +396,8 @@ namespace Antarium.Gameplay
             _autosaveTimer = AutosaveSeconds;
             _speed = 0;
             _biomeReached = sim.BiomeAtDepth(sim.Colony.Stats.MaxDepth);
+            _tutorial?.Rebase();
+            SnapshotHelp();
         }
 
         void EndSession()
@@ -620,6 +624,7 @@ namespace Antarium.Gameplay
             LookAt(_sim.Colony.QueenCell + new int2(0, 4));
             if (_freshColony) _hud.ShowToast("A new colony begins. Contracts on the right show what to do next.");
             else CreditOffline(announceLoad: true);
+            MaybeStartTutorial();
         }
 
         void OpenSettings(bool fromMenu)
@@ -637,10 +642,11 @@ namespace Antarium.Gameplay
             _hud.ShowModal(_hud.AchievementsPanel.Root);
         }
 
-        void OpenHelp(bool fromMenu)
+        void OpenHelp(bool fromMenu, HelpTopicDef topic = null)
         {
             _backToMenu = fromMenu;
-            _hud.Help.Refresh();
+            _probe.HelpOpened++;
+            _hud.Help.Open(_sim, topic);
             _hud.ShowModal(_hud.Help.Root);
         }
 
@@ -727,6 +733,7 @@ namespace Antarium.Gameplay
                 if (possessing) FollowPossessed(dt);
             }
             _camera.Apply(dt, _worldSize);
+            TrackCamera(title);
             UpdateAmbient(dt);
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
             _pointerCell = WorldGrid.WorldToCell(pointerWorld);
@@ -774,9 +781,12 @@ namespace Antarium.Gameplay
             _audio?.Consume(events);
             PlayRuinCues(events);
             _tools.Consume(events, now);
+            _probe.PlayerDug += _tools.Dig.TakeCellsDug();
             _hud.Consume(events, _sim);
             _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null, _tools.Possessing, _tools.TargetingPossess);
             if (_hud.IsShowing(_hud.AchievementsPanel.Root)) _hud.AchievementsPanel.Refresh(_achievements, title ? null : _sim);
+            if (_hud.IsShowing(_hud.Help?.Root)) _hud.Help.Refresh();
+            UpdateTutorial(dt, title, paused);
             if (Capturing) pointerWorld = _shotPointer;
             _hoverInfo.Update(dt, _sim, WorldGrid.WorldToCell(pointerWorld), _tools, overUi);
             bool tip = !title && _tools.TargetingAbility < 0 && !_tools.TargetingPossess && (overUi || Capturing) && _hud.HoverTip != null;
@@ -982,7 +992,11 @@ namespace Antarium.Gameplay
         {
             if (_hud.Queen == null || _sim == null) return;
             if (_hud.IsShowing(_hud.Queen.Root)) _hud.HideModal();
-            else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Queen.Root);
+            else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen)
+            {
+                _hud.ShowModal(_hud.Queen.Root);
+                _probe.QueenOpened++;
+            }
         }
 
         /// <summary>The pointer is on the queen's sprite (24 x 12 art pixels standing on her cell's floor).</summary>
@@ -1115,7 +1129,11 @@ namespace Antarium.Gameplay
             _hud.ShowModal(_hud.Genetics?.Root);
         }
 
-        void LookAt(int2 cell) => _camera.Position = WorldGrid.CellCenterToWorld(cell);
+        void LookAt(int2 cell)
+        {
+            _camera.Position = WorldGrid.CellCenterToWorld(cell);
+            _cameraJumped = true;
+        }
 
         /// <summary>The camera eases toward the ant the player controls.</summary>
         void FollowPossessed(float dt)

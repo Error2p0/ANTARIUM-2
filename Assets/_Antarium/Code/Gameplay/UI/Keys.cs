@@ -73,6 +73,24 @@ namespace Antarium.Gameplay
         public static string Load => Of(_input?.QuickLoad, "F9");
         public static string Help => Of(_input?.Help, "F1");
 
+        /// <summary>The four camera pan keys in "W A S D" order (up, left, down, right).</summary>
+        public static string Pan
+        {
+            get
+            {
+                const string fallback = "W A S D";
+                var pan = _input?.Pan;
+                if (pan == null) return fallback;
+                int composite = -1;
+                for (int i = 0; i < pan.bindings.Count && composite < 0; i++)
+                    if (pan.bindings[i].isComposite) composite = i;
+                // The composite's parts follow it: up, down, left, right.
+                if (composite < 0 || composite + 4 >= pan.bindings.Count) return fallback;
+                return $"{GameInput.KeyName(pan, composite + 1)} {GameInput.KeyName(pan, composite + 3)} " +
+                       $"{GameInput.KeyName(pan, composite + 2)} {GameInput.KeyName(pan, composite + 4)}";
+            }
+        }
+
         /// <summary>The key of ability <paramref name="index"/> in bar order (Z, X, C, V, B by default).</summary>
         public static string Ability(int index)
         {

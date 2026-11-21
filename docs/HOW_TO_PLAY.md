@@ -130,8 +130,8 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
-| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, New bloodline, Settings, Achievements, Controls and help, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements, the help or the **Steam overlay** (Shift+Tab) are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
-| **F1** | Controls and help: every key as it is bound now, the mouse controls and a few tips |
+| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, New bloodline, Settings, Achievements, Help and controls, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements, the help or the **Steam overlay** (Shift+Tab) are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
+| **F1** | Help: the **Guide** (how every part of the game works) and **Controls** (every key as it is bound now, the mouse and a few tips); see *Tutorial and help* |
 | **F5** | Save now |
 | **F9** | Load the last save (no offline progress) |
 
@@ -162,6 +162,7 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **Princesses** waiting / how many count (once the Nuptial Flight is known) and **Memory** (gold): your unspent Genetic Memory (once you have had any).
   - One entry per resource you own, e.g. *Copper Ore 4 +12/min*. Entries appear once you have that item. The green number is how many arrived in the stock per minute recently.
 - **Alert (under the bar):** shows in red while the colony is starving, while raiders are in the royal chamber, and while a bird circles over your ants.
+- **Tutorial card (top left, while the tutorial runs):** the step (*Tutorial 3/12*), what to do, how far you are, and Continue / Skip step, More help, End tutorial. See *Tutorial and help*.
 - **Contracts (right):** your current goals with a progress bar and the reward. A finished contract turns gold with a **Claim reward** button.
 - **Event cards (left):** random events with the time left to act, a **Go** button that moves the camera there and **x** to dismiss the card. When an event ends, its card says how it went and fades after a few seconds.
   - **Raid** cards are red: first a warning with the time until the raiders arrive, then how many are left. **Go** jumps to the raiders. The card turns green if the raid is repelled.
@@ -236,6 +237,17 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 
 ### Your start
 You begin with a **queen** in a small chamber under the grass, connected to the surface by a shaft. She has **6 workers** and **40 food**. Everything outside the area around the nest is dark: unexplored.
+
+### Tutorial and help
+- **Tutorial:** the first time you play, a **tutorial card** appears at the top left when you start your first colony. It walks you through the first minutes in 12 steps: look around, dig yourself, give mining orders, paint storage, watch workers carry things home, meet the queen, claim a contract, buy a research, build a Smelter, open the help. Each step ends when you **do** what it asks (a line like *Cells dug: 4 / 6* shows how far you are); it turns green with *Done!* and a chime, and the next one starts. The button or panel the step is about **blinks gold**.
+  - **Continue** goes on from a message, **Skip step** skips a step, **More help** opens the help page about it, **End tutorial** (click twice) stops it.
+  - It remembers where you were if you quit, and carries on next time. Once finished or ended it doesn't come back by itself: **Restart tutorial** in the help starts it again from the first step.
+  - It starts by itself for a new player in a young first colony (played less than 5 minutes); if you played before the tutorial existed, start it from the help.
+- **Help (F1)**, also on the title screen and in the Esc menu (*Help and controls*). The game pauses while it is open.
+  - **Guide:** topics in six groups (Basics, Building, Colony, World, Dangers, Late game) on the left; click one to read it on the right. Keys in the text are the ones you have bound, highlighted.
+  - Topics about things your colony hasn't found yet are listed as **???**; their page says what reveals them (*Dig down to the Clay & Groundwater to learn about it*, or a research). When your colony reveals one, a message says *New in the help: ...* and the topic is **green** in the list until you read it.
+  - **Controls:** every key as it is bound now, the mouse and a few tips.
+  - **Restart tutorial** and **Close** at the bottom.
 
 ### Digging yourself (Dig tool)
 - Hold the left mouse button to dig at the cursor (about 10 hits per second, in a small round brush).
@@ -723,7 +735,7 @@ The last three are **biome variants**: the layer looks different, has its own na
 
 ### Title screen, settings and achievements
 - **Opening intro:** when the game starts, the Elevate Studios logo and then the Antarium 2 logo with the first lines of the story fade in on black (about 7 seconds), then the black lifts off the title screen. **Any key, mouse button or gamepad button** skips straight to the title screen.
-- **Title screen:** the game logo over the colony, which drifts paused in the background. **Continue** (with the slot, the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world in the same slot, keeping your Genetic Memory; if a save exists it asks for a second click. **Save slots** opens the slot picker (see *Save slots and bloodlines*). **Settings**, **Achievements**, **Controls and help** and **Quit**. The version is in the bottom right corner. On Steam, friends see what you are doing (*In the main menu*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*). *Save and return to title* in the Esc menu brings you back here.
+- **Title screen:** the game logo over the colony, which drifts paused in the background. **Continue** (with the slot, the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world in the same slot, keeping your Genetic Memory; if a save exists it asks for a second click. **Save slots** opens the slot picker (see *Save slots and bloodlines*). **Settings**, **Achievements**, **Help and controls** and **Quit**. The version is in the bottom right corner. On Steam, friends see what you are doing (*In the main menu*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*). *Save and return to title* in the Esc menu brings you back here.
 - **Settings** (title screen or Esc menu). Every change applies at once and is saved when you close the dialog, in `settings.json` next to the saves (settings are not part of the colony save).
   - **Audio:** master, music, effects, ambience and interface volume (off to 100% in steps of 10%), *Mute when in the background*.
   - **Display:** window (borderless fullscreen, exclusive fullscreen, windowed), resolution (*Native* or any your display offers), v-sync, frame limit without v-sync (30 to 240 fps or unlimited), interface size (*Auto*: 1× below 1440 lines, 2× from 1440, 3× from 3240; or 1× to 4×). Window and resolution changes only take effect in a built game, not in the editor.
@@ -738,7 +750,7 @@ The last three are **biome variants**: the layer looks different, has its own na
 
 ## A first session
 
-The **contracts** on the right walk you through the first steps; this is the same path with a little more detail.
+The **tutorial** (top left, see *Tutorial and help*) and then the **contracts** on the right walk you through the first steps; this is the same path with a little more detail.
 
 1. Press **3** and paint a small **storage zone** in the starting chamber. That raises your capacity.
 2. Press **2** and paint a **tunnel** sideways or downward from the chamber. Watch the workers walk over and dig it out. Copper ore, grubs and other drops get carried back automatically.

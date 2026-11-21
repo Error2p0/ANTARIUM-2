@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f796b96acc2d2ef42bae9ebd78a5593f, type: 3}
+  m_Name: tutorial_hauling
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TutorialStepDef
+  id: tutorial_hauling
+  displayName: Workers carry it home
+  order: 60
+  body: 'You never carry anything yourself: workers pick up whatever lies around and bring it in. Watch the top bar as it arrives.
+
+
+    Point at an ant, a pile or a cell: the panel at the bottom tells you what it is and what it''s doing.'
+  goal: 5
+  amount: 5
+  building: {fileID: 0}
+  highlight: 8
+  helpTopic: {fileID: 11400000, guid: 56e81e73a94b5b344823c502bf47ed4e, type: 2}

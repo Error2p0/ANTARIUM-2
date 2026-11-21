@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_raids
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_raids
+  displayName: Raids and defence
+  order: 500
+  category: Dangers
+  icon: caste_soldier
+  body: 'Once the colony has grown a little, termites from a rival mound raid it from the surface every several minutes. A red card warns you before they arrive.
+
+
+    Raiders head for the royal chamber and eat your food while the queen stops laying, then leave. Kill them all before they eat and the raid is repelled. Later, rival ants come for your stock instead and carry items away.
+
+
+    Every ant next to an enemy bites back, but workers are weak. Research Soldier Caste: soldiers hunt enemies and guard Guard Posts and Defend scent. Gates and traps (research Fortification) hold raiders at a narrow tunnel, and a Pheromone Burst throws every ant nearby at them.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

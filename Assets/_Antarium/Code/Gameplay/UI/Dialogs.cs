@@ -55,8 +55,8 @@ namespace Antarium.Gameplay
             });
             Dialogs.Button(Root, "Settings", () => Settings?.Invoke());
             Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
-            var help = Dialogs.Button(Root, "Controls and help", () => Help?.Invoke());
-            Keys.Bind(() => help.text = Keys.With("Controls and help", Keys.Help));
+            var help = Dialogs.Button(Root, "Help and controls", () => Help?.Invoke());
+            Keys.Bind(() => help.text = Keys.With("Help and controls", Keys.Help));
             Dialogs.Button(Root, "Save and return to title", () => MainMenu?.Invoke());
             Dialogs.Button(Root, "Save and quit", () => Quit?.Invoke());
             Dialogs.Text(Root, (autosaveSeconds > 0f ? $"The game saves itself every {HudText.Duration(autosaveSeconds)} and when you quit. "

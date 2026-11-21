@@ -1697,3 +1697,194 @@
     color: rgb(255, 230, 150);
     background-color: rgb(96, 70, 40);
 }
+
+/* ---------------------------------------------------------------- Tutorial and help */
+/* Left column: the tutorial card above the event cards. */
+.side--left {
+    width: 320px;
+    align-items: flex-start;
+}
+.events {
+    width: 250px;
+    flex-direction: column;
+}
+.tutorial {
+    width: 320px;
+    margin-bottom: 8px;
+    border-left-width: 0;
+}
+.tutorial--done .tutorial__title, .tutorial--done .tutorial__progress {
+    color: rgb(150, 230, 140);
+}
+.tutorial__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(88, 64, 42);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+.tutorial__count {
+    border-bottom-width: 0;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 1;
+}
+.tutorial__end {
+    margin: 0 0 0 6px;
+    background-color: rgb(40, 26, 18);
+    border-color: rgb(96, 64, 42);
+    color: rgb(190, 175, 150);
+}
+.tutorial__end:hover {
+    background-color: rgb(62, 41, 28);
+}
+.tutorial__end--warn {
+    border-color: rgb(220, 110, 80);
+    color: rgb(255, 170, 140);
+}
+.tutorial__title {
+    color: rgb(255, 210, 140);
+    font-size: 20px;
+    margin: 0 0 2px 0;
+    padding: 0;
+    white-space: normal;
+}
+.tutorial__text {
+    color: rgb(230, 220, 200);
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+.tutorial__progress {
+    color: rgb(255, 210, 140);
+    font-size: 16px;
+    margin: 6px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+.tutorial__buttons {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 8px;
+}
+.tutorial__button {
+    margin: 0;
+    padding: 0 12px;
+    min-width: 96px;
+}
+.tutorial__button--skip {
+    background-color: rgb(40, 26, 18);
+    border-color: rgb(96, 64, 42);
+    color: rgb(200, 185, 160);
+}
+.tutorial__button--skip:hover {
+    background-color: rgb(62, 41, 28);
+}
+.tutorial__more {
+    height: 22px;
+    margin-left: 8px;
+}
+
+/* The HUD element a tutorial step is about blinks gold. */
+.tutorial-glow {
+    border-width: 2px;
+}
+.tutorial-glow--on, .tool.tutorial-glow--on, .tool--active.tutorial-glow--on {
+    border-color: rgb(255, 240, 150);
+    background-color: rgb(140, 100, 36);
+}
+.side--right.tutorial-glow--on, .resources.tutorial-glow--on {
+    background-color: rgba(110, 80, 30, 0.35);
+}
+
+/* Help: the guide (topics | page) and the controls list. */
+.help {
+    width: 960px;
+    max-width: 96%;
+}
+.help__guide {
+    flex-direction: row;
+    height: 460px;
+}
+.help__list {
+    width: 260px;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+.help__list .help__heading {
+    margin: 8px 0 2px 0;
+}
+.help__topic {
+    height: 26px;
+    margin: 1px 6px 1px 0;
+    padding: 0 8px;
+    -unity-text-align: middle-left;
+    background-color: rgb(40, 26, 18);
+    color: rgb(230, 215, 190);
+    border-width: 2px;
+    border-color: rgb(58, 42, 28);
+    border-radius: 0;
+    font-size: 20px;
+}
+.help__topic:hover {
+    background-color: rgb(62, 41, 28);
+}
+.help__topic--active {
+    border-color: rgb(255, 190, 90);
+    background-color: rgb(86, 54, 30);
+}
+.help__topic--locked {
+    color: rgb(130, 115, 100);
+}
+.help__topic--new {
+    color: rgb(150, 230, 140);
+    border-color: rgb(120, 200, 120);
+}
+.help__page {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+.help__page-title {
+    color: rgb(255, 210, 140);
+    font-size: 24px;
+    margin: 0 0 6px 0;
+    padding: 0;
+    -unity-font-definition: url("Fonts/Silkscreen-Regular.asset");
+}
+.help__page-scroll {
+    flex-grow: 1;
+}
+.help__page-text {
+    color: rgb(230, 220, 200);
+    font-size: 20px;
+    white-space: normal;
+    margin: 0 8px 0 0;
+    padding: 0;
+}
+.help__controls {
+    height: 460px;
+}
+.help__controls .scroll {
+    max-height: 460px;
+}
+.help__topic.tool--icon {
+    justify-content: flex-start;
+    padding-left: 6px;
+}
+.help__page-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.help__page-header .help__page-title {
+    margin: 0;
+}
+.help__page-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}

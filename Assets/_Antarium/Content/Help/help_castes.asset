@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_castes
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_castes
+  displayName: Castes
+  order: 320
+  category: Colony
+  icon: tool_castes
+  body: 'At first the queen lays only workers, who do a bit of everything. Research unlocks castes that each do one thing better: soldiers fight, miners dig, haulers carry three at a time, builders build, nurses carry eggs to nurseries, scouts reveal the rock around your tunnels and engineers speed up machines. Deeper finds bring glow ants that light the dark and fire ants that don''t mind the heat.
+
+
+    Press {Castes} to set each caste''s share of the colony. Workers fill the rest, and the queen lays whichever caste is furthest below its share.
+
+
+    Specialists only do their own work: miners stand idle without mining orders, builders without blueprints. Keep their shares to what you need.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

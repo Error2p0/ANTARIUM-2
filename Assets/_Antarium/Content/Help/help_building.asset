@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_building
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_building
+  displayName: Building
+  order: 200
+  category: Building
+  icon: tool_build
+  body: 'Press {Build} and pick a building in the palette ({Previous} / {Next} go through it, {Rotate} turns it). A green preview means it fits; red means it doesn''t, and the info panel says why.
+
+
+    The cost comes out of your stock when you place it, and a see-through blueprint appears. Workers walk over and build it. Removing a building (right mouse) gives its cost back.
+
+
+    Belts, lifts and other small buildings need open space ants can walk on. Machines need dug-out space underground with a flat, solid floor under their whole width.
+
+
+    Locked buildings are faded in the palette: research unlocks them. Point at one to see what it does and costs.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

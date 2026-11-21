@@ -8,7 +8,10 @@
             <ui:Label name="alert" class="alert hidden" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:Label name="debug" class="debug" picking-mode="Ignore" />
-        <ui:VisualElement name="events" class="side side--left" picking-mode="Ignore" />
+        <ui:VisualElement name="left" class="side side--left" picking-mode="Ignore">
+            <ui:VisualElement name="tutorial" class="panel tutorial hidden" />
+            <ui:VisualElement name="events" class="events" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement name="contracts" class="side side--right" picking-mode="Ignore" />
         <ui:VisualElement name="bottom" class="bottom" picking-mode="Ignore">
             <ui:Label name="toast" class="toast hidden" picking-mode="Ignore" />

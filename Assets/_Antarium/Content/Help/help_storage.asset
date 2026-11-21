@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_storage
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_storage
+  displayName: Storage and hauling
+  order: 150
+  category: Basics
+  icon: storage
+  body: 'Workers pick up whatever lies around and carry it to the nearest place with room: the royal chamber around the queen, or a storage zone. A machine that needs an item gets it first.
+
+
+    Press {Storage} and paint storage on dug-out cells underground. Every storage cell adds room for items and a little food. Chests (Build tool) hold more in one cell.
+
+
+    Stored items are really there: you see them stacked in the cells. When storage is full, piles wait on the floor until there is room; Storage in the top bar turns orange.
+
+
+    Point at a storage zone or a chest and press {Configure} to choose which items it takes.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

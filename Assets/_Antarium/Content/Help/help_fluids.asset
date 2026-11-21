@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_fluids
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_fluids
+  displayName: Water, lava and gas
+  order: 430
+  category: World
+  icon: building_earth_wall
+  body: 'Some caves hold water, lava or gas. They stay put until you dig into them, then flow into your tunnels.
+
+    - Water falls and spreads. Deep water blocks ants, and ants caught in it can drown.
+
+    - Lava flows slowly, burns ants and lights things up. Where it meets water it turns to obsidian.
+
+    - Gas rises, spreads under ceilings and hurts ants inside it.
+
+    - Sand falls into any gap dug under it; fallen sand is ordered for mining by itself.
+
+
+    Seal off what you don''t want with Earth Walls (Build tool, drag to paint): they become solid packed earth. A pit dug below a flood drains it.'
+  reveal: 1
+  revealBiome: {fileID: 11400000, guid: 6dd87aa3e609aa848bd80e10513cee77, type: 2}
+  revealResearch: {fileID: 0}

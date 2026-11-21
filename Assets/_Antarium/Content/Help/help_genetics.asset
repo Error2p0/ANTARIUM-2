@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_genetics
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_genetics
+  displayName: Genetic Memory
+  order: 630
+  category: Late game
+  icon: memory
+  body: 'Genetic Memory buys traits in the genetic tree ({Genetics}): more starting workers and food, faster digging, research that every colony knows from the start, more world modifiers and much more. Traits are kept forever, in every colony of your bloodline.
+
+
+    Respec gives back what you spent (free once per colony). Each save slot holds its own bloodline; New bloodline in the menu starts over without Genetic Memory.'
+  reveal: 3
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 11400000, guid: 275c010452000b34390e5babf3d92fe8, type: 2}

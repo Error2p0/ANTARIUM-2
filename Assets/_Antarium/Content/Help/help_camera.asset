@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_camera
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_camera
+  displayName: Looking around
+  order: 110
+  category: Basics
+  icon: sun
+  body: 'Pan with {Pan} or the arrow keys, or hold the middle mouse button and drag. The mouse wheel zooms toward the pointer, in whole steps so the pixel art stays sharp.
+
+
+    Everything away from your tunnels is dark until your ants dig near it. Breaking into a cave reveals the whole cave at once.
+
+
+    Point at anything, in the world or on the screen, and the info panel at the bottom says what it is: an ant''s job and health, what a building does and why it waits, what a cell of rock gives when it is dug.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

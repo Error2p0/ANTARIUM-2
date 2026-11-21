@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f796b96acc2d2ef42bae9ebd78a5593f, type: 3}
+  m_Name: tutorial_look_around
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TutorialStepDef
+  id: tutorial_look_around
+  displayName: Look around
+  order: 20
+  body: 'Move the view with {Pan} or the arrow keys (or drag with the middle mouse button). Zoom with the mouse wheel: zoom in to watch your ants up close.'
+  goal: 1
+  amount: 8
+  building: {fileID: 0}
+  highlight: 0
+  helpTopic: {fileID: 11400000, guid: b349773cd5470b34393950063cf2d15b, type: 2}

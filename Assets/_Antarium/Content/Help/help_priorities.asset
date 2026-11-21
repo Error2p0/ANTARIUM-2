@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_priorities
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_priorities
+  displayName: Job priorities
+  order: 330
+  category: Colony
+  icon: priority_dig
+  body: 'Press {Priorities} to set which jobs ants pick first: dig, haul, build, supply (fetching machine inputs from storage), tend (engineers) and nurse, each from 1 (lowest) to 5 (highest).
+
+
+    A higher priority makes ants walk farther for that job. Raise hauling when finds pile up while ants dig, or building when blueprints wait. Each caste still only does its own kinds of work.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

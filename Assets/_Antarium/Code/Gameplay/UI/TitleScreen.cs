@@ -76,7 +76,7 @@ namespace Antarium.Gameplay
             Dialogs.Button(_menu, "Save slots", () => ShowSlots(true));
             Dialogs.Button(_menu, "Settings", () => Settings?.Invoke());
             Dialogs.Button(_menu, "Achievements", () => Achievements?.Invoke());
-            Dialogs.Button(_menu, "Controls and help", () => Help?.Invoke());
+            Dialogs.Button(_menu, "Help and controls", () => Help?.Invoke());
             Dialogs.Button(_menu, "Quit", () => Quit?.Invoke());
 
             _slots = new VisualElement();

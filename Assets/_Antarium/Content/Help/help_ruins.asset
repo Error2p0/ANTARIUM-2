@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_ruins
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_ruins
+  displayName: The ruins and the Codex
+  order: 610
+  category: Late game
+  icon: lore_fragment
+  body: 'The deepest layer holds the rooms of a lost ant colony, still guarded. The relics and ancient tablets found there tell its story: study them in an Archive and fragments of the story appear in the Codex ({Codex}).
+
+
+    The ancient research needs fragments found. Its last node unlocks the Ancient Engine: build it in the ruins and restore it step by step ({Configure} on it). A running Engine makes knowledge and doubles the Genetic Memory of this colony''s Nuptial Flight.'
+  reveal: 1
+  revealBiome: {fileID: 11400000, guid: b3eeca26cf81ea4499940dbcea578f82, type: 2}
+  revealResearch: {fileID: 0}
