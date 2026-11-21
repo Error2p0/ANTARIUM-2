@@ -16,6 +16,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cb82451f557686e41b367b63ec284a90, type: 2}
   - {fileID: 11400000, guid: 7def0e179ba399b4cb5c709014eada32, type: 2}
   - {fileID: 11400000, guid: e44c100373497e44eb91e91a470ed643, type: 2}
+  - {fileID: 11400000, guid: aaf17ee359046dd46917e32c92188cfa, type: 2}
   - {fileID: 11400000, guid: 1585313deb4f6ea46a9b5c83a4935644, type: 2}
   - {fileID: 11400000, guid: 9bd4accdced9fcb4d9025bcc75f7ab28, type: 2}
   - {fileID: 11400000, guid: 93805c4604632d04fac6c5d05a2a4993, type: 2}
@@ -412,3 +413,4 @@ MonoBehaviour:
   royalTreat: {fileID: 11400000, guid: ea5eb58177b731a4080ab9caec803f62, type: 2}
   nightHunters:
   - {fileID: 11400000, guid: 70bf14c6b6620244994406fde2a586b4, type: 2}
+  demo: {fileID: 11400000, guid: 204b3a67f18415548ba60d298327b599, type: 2}

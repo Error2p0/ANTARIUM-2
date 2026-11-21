@@ -22,14 +22,16 @@ namespace Antarium.Gameplay
         /// </summary>
         /// <param name="achievements">API names of every achievement, merged with the store on the first frames.</param>
         /// <param name="stats">API names of every stat.</param>
-        public static IPlatformServices Create(string dataDirectory, IReadOnlyList<string> achievements, IReadOnlyList<string> stats)
+        /// <param name="appId">The Steam app this build is (the demo has its own; 0 = run without Steam).</param>
+        public static IPlatformServices Create(string dataDirectory, IReadOnlyList<string> achievements, IReadOnlyList<string> stats,
+            uint appId = SteamAppId)
         {
             MoveOldFolder(dataDirectory, OldCompanyName);
             var local = new LocalPlatform(dataDirectory);
 #if ANTARIUM_STEAM && UNITY_STANDALONE
-            if (UseSteam)
+            if (UseSteam && appId != 0)
             {
-                var steam = SteamClient.TryCreate(SteamAppId, out bool restarting);
+                var steam = SteamClient.TryCreate(appId, out bool restarting);
                 if (restarting)
                 {
                     Application.Quit();

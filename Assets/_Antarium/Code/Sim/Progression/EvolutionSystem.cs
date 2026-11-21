@@ -10,6 +10,8 @@ namespace Antarium.Sim
         MaxLevel,
         NeedsPrerequisites,
         CantAfford,
+        /// <summary>The demo: the next level is in the full game only (GDD 2.16).</summary>
+        FullGame,
         Unknown,
     }
 
@@ -25,6 +27,16 @@ namespace Antarium.Sim
 
         /// <summary>Per evolution (index into <see cref="ContentDB.Evolutions"/>): levels bought.</summary>
         public readonly int[] Levels;
+        /// <summary>The demo: per evolution, per level (0 = the first), full game only (null = nothing locked).</summary>
+        public bool[][] FullGame;
+
+        /// <summary>The next level of <paramref name="index"/> can't be bought in this run (the demo).</summary>
+        public bool NextIsFullGame(int index)
+        {
+            if (FullGame == null || index < 0 || index >= FullGame.Length) return false;
+            int level = Levels[index];
+            return level < FullGame[index].Length && FullGame[index][level];
+        }
 
         public EvolutionSystem(ContentDB content, Colony colony, EventBus events)
         {
@@ -74,6 +86,7 @@ namespace Antarium.Sim
         {
             if (index < 0 || index >= Levels.Length) return EvolutionResult.Unknown;
             if (IsMaxed(index)) return EvolutionResult.MaxLevel;
+            if (NextIsFullGame(index)) return EvolutionResult.FullGame;
             if (!IsAvailable(index)) return EvolutionResult.NeedsPrerequisites;
             return CanAfford(index) ? EvolutionResult.Ok : EvolutionResult.CantAfford;
         }

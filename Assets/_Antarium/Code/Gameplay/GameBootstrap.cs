@@ -124,14 +124,18 @@ namespace Antarium.Gameplay
 
             _content = ContentDB.Build(content);
             var capture = CaptureRequest.Get();
+            // The demo (GDD 2.16): sealed colonies, full game locks, its own save folder and Steam app, no achievements.
+            _content.DemoActive = capture == null && DemoBuild && _content.Demo != null;
+            string data = DataDirectory(IsDemo);
             // Media capture never touches the player's profile, saves, settings or Steam.
             _platform = capture != null ? new LocalPlatform(capture.ScratchDirectory)
-                : PlatformServices.Create(Application.persistentDataPath, AchievementNames(), StatNames());
+                : IsDemo ? PlatformServices.Create(data, Array.Empty<string>(), Array.Empty<string>(), _content.Demo.Def.demoAppId)
+                : PlatformServices.Create(data, AchievementNames(), StatNames());
             _platform.OverlayChanged += open => _overlayOpen = open;
             _stores = new SaveStore[SaveStore.SlotCount];
             for (int i = 0; i < _stores.Length; i++) _stores[i] = new SaveStore(_platform.SaveDirectory, i);
             _store = _stores[SaveStore.LatestSlot(_stores)]; // Continue = the slot played last
-            _settingsStore = new SettingsStore(Application.persistentDataPath);
+            _settingsStore = new SettingsStore(data);
             _settings = capture != null ? new GameSettings() : _settingsStore.Load();
             if (globalLight != null) globalLight.intensity = config.render.ambient;
             if (hudDocument != null && hudDocument.panelSettings != null)
@@ -155,6 +159,7 @@ namespace Antarium.Gameplay
             };
             _hud = new HudController(hudDocument, _content, config.render, config.art, config.save.autosaveSeconds, _input);
             WireHud();
+            WireDemo();
             SetUpTutorialAndHelp();
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
@@ -612,6 +617,7 @@ namespace Antarium.Gameplay
                 if (_sim.Legacy.Flights > 0) status += $". Generation {_sim.Legacy.Flights + 1}";
             }
             _hud.Title.SetSave(status);
+            _hud.Title.SetImport(DemoImportNote());
             _hud.Title.SetSlots(SlotViews());
             _hud.SetTitle(true);
             _titleTime = 0f;
@@ -650,7 +656,8 @@ namespace Antarium.Gameplay
             _hud.ShowModal(_hud.Help.Root);
         }
 
-        bool SystemDialogOpen => _hud.IsShowing(_hud.Settings?.Root) || _hud.IsShowing(_hud.AchievementsPanel?.Root) || _hud.IsShowing(_hud.Help?.Root);
+        bool SystemDialogOpen => _hud.IsShowing(_hud.Settings?.Root) || _hud.IsShowing(_hud.AchievementsPanel?.Root) || _hud.IsShowing(_hud.Help?.Root)
+                                 || _hud.IsShowing(_hud.DemoPanel?.Root);
 
         void CloseSystemDialog()
         {
@@ -708,7 +715,7 @@ namespace Antarium.Gameplay
             float dt = Time.deltaTime;
             double now = Time.timeAsDouble;
             ApplyUiScale();
-            _platform.SetPresence(_flight != null ? new Presence(PresenceState.Flight)
+            if (!IsDemo) _platform.SetPresence(_flight != null ? new Presence(PresenceState.Flight)
                 : _hud.TitleShowing ? new Presence(PresenceState.Title)
                 : new Presence(PresenceState.Colony, _sim.Legacy.Flights + 1, _sim.Colony.Stats.MaxDepth));
             if (_flight != null)
@@ -783,6 +790,7 @@ namespace Antarium.Gameplay
             _tools.Consume(events, now);
             _probe.PlayerDug += _tools.Dig.TakeCellsDug();
             _hud.Consume(events, _sim);
+            UpdateDemo(dt, title, overUi, events);
             _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null, _tools.Possessing, _tools.TargetingPossess);
             if (_hud.IsShowing(_hud.AchievementsPanel.Root)) _hud.AchievementsPanel.Refresh(_achievements, title ? null : _sim);
             if (_hud.IsShowing(_hud.Help?.Root)) _hud.Help.Refresh();
@@ -803,7 +811,7 @@ namespace Antarium.Gameplay
                 : _sim.Enemies.ActiveRaid != 0 ? MusicMode.Raid
                 : MusicMode.Play);
             events.Flush();
-            if (!title && !Capturing) _achievements.Update(dt, _sim);
+            if (!title && !Capturing && !IsDemo) _achievements.Update(dt, _sim); // the demo has no achievements
 
             if (!paused && AutosaveSeconds > 0f && !Capturing)
             {
@@ -1031,14 +1039,14 @@ namespace Antarium.Gameplay
 
         void ToggleGenetics()
         {
-            if (_hud.Genetics == null || _sim == null) return;
+            if (_hud.Genetics == null || _sim == null || DemoTeaser()) return;
             if (_hud.IsShowing(_hud.Genetics.Root)) _hud.HideModal();
             else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen && (_sim.Legacy.Awakened || _hud.FlightKnown(_sim))) _hud.ShowModal(_hud.Genetics.Root);
         }
 
         void ToggleFlight()
         {
-            if (_hud.Flight == null || _sim == null) return;
+            if (_hud.Flight == null || _sim == null || DemoTeaser()) return;
             if (_hud.IsShowing(_hud.Flight.Root)) _hud.HideModal();
             else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen && _hud.FlightKnown(_sim))
             {

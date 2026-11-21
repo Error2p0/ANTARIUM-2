@@ -53,6 +53,11 @@ namespace Antarium.Gameplay
 
         public void Tick() { }
 
+        /// <summary>No store client: the store page opens in the browser.</summary>
+        public void OpenStorePage(uint appId) => Application.OpenURL(StoreUrl(appId));
+
+        public static string StoreUrl(uint appId) => $"https://store.steampowered.com/app/{appId}/";
+
         public bool IsAchievementUnlocked(string apiName) => _unlocked.Contains(apiName);
 
         public void UnlockAchievement(string apiName)

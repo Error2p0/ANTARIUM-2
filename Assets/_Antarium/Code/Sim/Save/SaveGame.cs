@@ -53,7 +53,8 @@ namespace Antarium.Sim
         /// diggers, the raid kind, the digger timer) and RUIN (items studied, lore fragments found by id, rival raids beaten).
         /// Version 6 (10.6): the header holds the bloodline's generation (save slot picker); LGCY 2 adds the colony's respecs.
         /// Milestone 11 (same format version, older sections still load): SURF 2 adds the thunderstorm, the lightning timer
-        /// and the starfall night; QUEN 2 adds whether the player stopped the queen laying.
+        /// and the starfall night; QUEN 2 adds whether the player stopped the queen laying. The demo (GDD 2.16) adds DEMO, only
+        /// in colonies founded in the demo (the full game opens their seal when it loads them).
         /// </summary>
         public const int Version = 6;
 
@@ -94,6 +95,7 @@ namespace Antarium.Sim
             snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
             snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
             snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim), 2)));
+            if (sim.Demo.Sealed) snap.Sections.Add(new("DEMO", Section(w => WriteDemo(w, sim))));
             if (sim.Wild.Placed) snap.Sections.Add(new("WILD", Section(w => WriteWild(w, sim), 2))); // else the next load places them
             return snap;
         }
@@ -649,6 +651,26 @@ namespace Antarium.Sim
             sim.Colony.Stats.StarfallNights = math.max(0, r.ReadInt32());
         }
 
+        /// <summary>DEMO (GDD 2.16): a colony founded in the demo: its world has the seal; whether it reached it and saw the end screen.</summary>
+        static void WriteDemo(BinaryWriter w, Simulation sim)
+        {
+            var d = sim.Demo;
+            w.Write(d.Sealed);
+            w.Write(d.SealReached);
+            w.Write(d.Contact.x);
+            w.Write(d.Contact.y);
+            w.Write(d.EndShown);
+        }
+
+        static void ReadDemo(BinaryReader r, Simulation sim)
+        {
+            var d = sim.Demo;
+            d.Sealed = r.ReadBoolean();
+            d.SealReached = r.ReadBoolean();
+            d.Contact = new int2(r.ReadInt32(), r.ReadInt32());
+            d.EndShown = r.ReadBoolean();
+        }
+
         /// <summary>
         /// WILD (Milestone 11): the berry and toadstool timers and every cave growth spot (cell, item, grown, regrow time);
         /// v2 (batch 6): the apple timer and whether the Elder Tree was found.
@@ -775,6 +797,7 @@ namespace Antarium.Sim
                 Read(sections, "WILD", (r, v) => ReadWild(r, sim, map, v));
                 Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
                 Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));
+                Read(sections, "DEMO", (r, _) => ReadDemo(r, sim));
                 PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
                 return sim;

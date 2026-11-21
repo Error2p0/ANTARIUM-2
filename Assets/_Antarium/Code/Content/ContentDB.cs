@@ -149,6 +149,8 @@ namespace Antarium.Content
         public IReadOnlyList<EnemyDef> NightHunters;
         /// <summary>The ruins' story, shown in the Codex (10.5).</summary>
         public IReadOnlyList<LoreDef> Lore;
+        /// <summary>The demo's seal and full game locks (GDD 2.16), or null.</summary>
+        public DemoConfig Demo;
     }
 
     /// <summary>Baked genetic trait: dense indices.</summary>
@@ -248,6 +250,15 @@ namespace Antarium.Content
         public readonly ItemDef[] Items;
         public readonly ushort[] SurfaceForage;
         public readonly WorldGenSettings WorldGen;
+        /// <summary>The demo's seal and full game locks (GDD 2.16); null when the database has no <see cref="DemoConfig"/>.</summary>
+        public DemoData Demo { get; private set; }
+        /// <summary>
+        /// This run is the demo (set by the game at startup, or by tests): new colonies get the seal and full game content is locked.
+        /// Off, a colony carried over from the demo has its seal broken when it loads.
+        /// </summary>
+        public bool DemoActive { get; set; }
+        /// <summary>The demo's rules apply: <see cref="DemoActive"/> and a <see cref="Demo"/> to apply.</summary>
+        public DemoData ActiveDemo => DemoActive ? Demo : null;
         public NativeArray<MaterialSim> MaterialSim;
 
         /// <summary>Buildings in palette order.</summary>
@@ -1021,6 +1032,7 @@ namespace Antarium.Content
                     RoyalTreat = database.royalTreat,
                     NightHunters = database.nightHunters,
                     Lore = database.lore,
+                    Demo = database.demo,
                 });
         }
 
@@ -1065,6 +1077,7 @@ namespace Antarium.Content
 
             var db = new ContentDB(ordered.ToArray(), itemList.ToArray(), surfaceForage, worldGen, buildings, progression);
             db.ValidateWorldGen();
+            if (progression?.Demo != null) db.Demo = DemoData.Bake(db, progression.Demo);
             return db;
         }
 

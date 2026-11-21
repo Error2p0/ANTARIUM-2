@@ -88,6 +88,7 @@ namespace Antarium.Gameplay
             {
                 DescribeStock(sim, cell);
                 if (_sb.Length == 0) DescribeWild(sim, cell);
+                if (_sb.Length == 0) DescribeSeal(sim, cell);
                 if (_sb.Length == 0) DescribeFind(sim, cell);
                 if (_sb.Length == 0) DescribeFluid(sim, cell);
                 if (_sb.Length == 0) DescribeFire(sim, cell);
@@ -220,6 +221,14 @@ namespace Antarium.Gameplay
                 return;
             }
             _sb.Append("\nBites for ").Append(def.damage.ToString("0")).Append(". Soldiers (and workers, weakly) fight back.");
+        }
+
+        /// <summary>The demo's Ancient Seal (GDD 2.16): why it can't be dug.</summary>
+        void DescribeSeal(Simulation sim, int2 cell)
+        {
+            var demo = _content.Demo;
+            if (demo == null || !IsVisible(sim, cell) || !sim.IsSeal(cell)) return;
+            _sb.Append(_content.Materials[demo.SealMaterial].DisplayName).Append("  -  ").Append(demo.Def.sealHover);
         }
 
         /// <summary>A find in the rock (ore, coal, amber...; 10.7) or a tablet in a ruin floor (10.5): what it gives.</summary>

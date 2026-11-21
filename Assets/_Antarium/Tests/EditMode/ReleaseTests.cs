@@ -23,6 +23,14 @@ namespace Antarium.Tests
             public event Action<bool> OverlayChanged;
             public void Overlay(bool open) => OverlayChanged?.Invoke(open);
             public void RunCallbacks() { }
+            public uint OpenedStore;
+            public bool OverlayEnabled = true;
+            public bool OpenStore(uint appId)
+            {
+                if (!OverlayEnabled) return false;
+                OpenedStore = appId;
+                return true;
+            }
 
             public bool TryGetAchievement(string apiName, out bool unlocked)
             {
@@ -218,6 +226,16 @@ namespace Antarium.Tests
 
             Assert.IsFalse(PlatformServices.MoveOldFolder(old, "DefaultCompany"), "nothing to do when still on the old name");
             Assert.IsFalse(PlatformServices.MoveOldFolder(Path.Combine(_dir, "Other", "ANTARIUM 2"), "Nobody"), "no old folder");
+        }
+
+        [Test]
+        public void Store_OpensTheStorePageInTheOverlay()
+        {
+            var store = new FakeStore();
+            var p = new StorePlatform(store, new LocalPlatform(_dir), Achs, Stats);
+            p.OpenStorePage(PlatformServices.SteamAppId);
+            Assert.AreEqual(PlatformServices.SteamAppId, store.OpenedStore, "the demo's Wishlist button opens the full game in the overlay");
+            p.Dispose();
         }
     }
 }

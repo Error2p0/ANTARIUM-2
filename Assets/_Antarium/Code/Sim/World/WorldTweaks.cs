@@ -15,6 +15,26 @@ namespace Antarium.Sim
         public float BiomeScale;
         /// <summary>Per biome: the variant a world modifier puts in its place (10.6), or null. Null array = no variants.</summary>
         public BiomeVariantData[] Variants;
+        /// <summary>
+        /// The demo (GDD 2.16): an unbreakable seal of <see cref="SealMaterial"/>, at least <see cref="SealThickness"/> rows, along
+        /// the lower border of biome <see cref="SealBiome"/>. Nothing else in the world changes (no extra random numbers are drawn).
+        /// </summary>
+        public bool Seal;
+        public int SealBiome;
+        public ushort SealMaterial;
+        public int SealThickness;
+
+        /// <summary>These tweaks with the demo's seal.</summary>
+        public WorldTweaks WithSeal(ContentDB content, DemoData demo)
+        {
+            var t = this;
+            if (demo == null) return t;
+            t.Seal = true;
+            t.SealBiome = demo.LastBiome;
+            t.SealMaterial = demo.SealMaterial;
+            t.SealThickness = System.Math.Max(2, demo.Def.sealThickness);
+            return t;
+        }
 
         public static WorldTweaks None => new() { BiomeScale = 1f };
 

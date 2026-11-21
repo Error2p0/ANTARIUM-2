@@ -31,6 +31,9 @@ namespace Antarium.Gameplay
         /// <summary>What the player is doing, shown to friends (Steam rich presence). Cheap to call every frame.</summary>
         void SetPresence(Presence presence);
 
+        /// <summary>Shows the store page of <paramref name="appId"/> (the demo's Wishlist buttons): in the store overlay, else in the browser.</summary>
+        void OpenStorePage(uint appId);
+
         /// <summary>The store overlay opened (true) or closed (false). The game pauses while it is open.</summary>
         event Action<bool> OverlayChanged;
     }

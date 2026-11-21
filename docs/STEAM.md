@@ -13,6 +13,7 @@ Steamworks changes its pages now and then: if a menu name below does not match, 
 - **Stats** (`STAT_MAX_DEPTH`, `STAT_MAX_ANTS`, `STAT_FLIGHTS`) are sent after the merge, only ever upward.
 - **Rich presence**: *In the main menu*, *Founding a colony, 120 cells deep*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight* (tokens in `steam/rich_presence_english.vdf`).
 - **Overlay**: the game pauses while the Steam overlay is open.
+- **The demo** is the same code built with `ANTARIUM_DEMO` as its own product and Steam app: see [The demo](#the-demo).
 - **Saves**: `%USERPROFILE%/AppData/LocalLow/Elevate Studios/ANTARIUM 2/` holds `Saves/colony.sav` (+ `colony.bak`), `profile.json` (local achievements and stats) and `settings.json`. The first start after the Company Name change copies the old `DefaultCompany` folder over once.
 
 ## One-time setup on Steamworks
@@ -100,6 +101,20 @@ This only had to be done once. **BuildID 26441965 has a startup bug and must be 
 | `steamcmd failed with exit code 6`, and `Failed to commit build for AppID 4453940 : Failure` in the log | The content uploaded, but the commit failed. Here the branch in `SetLive` did not exist; the log does not name the cause | Create the branch and upload again. If it still fails, try `-Branch ""`; if that fails too, check the account's *Publish App Changes To Steam* right and that the Steamworks changes are published |
 
 Logs: `steam/output/log/app_build_4453940.log` (the commit result), `steam/output/log/depot_build_4453941.log` (files and chunks), `tools/steamcmd/logs/console_log.txt` (the whole steamcmd session). The first two are overwritten by each run.
+
+## The demo
+
+The Steam Next Fest demo (GDD 2.16) is the same project built with `ANTARIUM_DEMO`: the first colony down to the Ancient Seal at the bottom of the stone strata, no achievements, Wishlist buttons. On Steam it is **its own app** (a demo app linked to Antarium 2), with its own App ID and depot.
+
+**What the code does.** *Antarium → Build → Windows Demo* builds `Builds/Windows/Demo/Antarium2Demo.exe` with the define, product name *ANTARIUM 2 Demo* and bundle id `com.elevatestudios.antarium2.demo` (both only for the build; Player Settings go back to the full game's afterwards), so the demo's saves, settings and profile live in `LocalLow/Elevate Studios/ANTARIUM 2 Demo/`. It starts Steam with `DemoConfig.demoAppId` (`Assets/_Antarium/Content/DemoConfig.asset`); while that is **0** the demo runs without Steam and *Wishlist on Steam* opens the store page in the browser. With Steam it opens the full game's page (`fullGameAppId`, 4453940) in the overlay. No achievements, stats or rich presence are sent from the demo. *Windows Demo (Development)* adds `steam_appid.txt` with the demo's App ID. The full game's title screen offers *Continue your demo colony* when it has no saves and finds one in the demo's folder (same PC only: Steam Cloud is per app).
+
+**One-time setup (you):**
+1. Steamworks → Antarium 2 → **Create demo** (on the app's landing page, under *All Associated Packages, DLC, Demos and Tools* or the *Demo* section; Valve's wording changes). It gets its own App ID; the depot is usually that ID + 1.
+2. The demo's store page is short: it inherits most of the main page. Fill in what Steamworks asks for (capsules can reuse the main ones with a *Demo* tag). Check *Steam Next Fest* rules for the demo (a playable build, no time-limited trials that hide the game, available during the fest).
+3. **Installation → General**: launch option `Antarium2Demo.exe`, *Launch (Default)*, Windows. **Redistributables**: none (as the main app). Steam Cloud is not needed for the demo.
+4. Enter the App ID in `DemoConfig.asset` → *Demo App Id*, and `$DemoAppId` / `$DemoDepotId` in `steam/upload.ps1`. Rebuild (*Antarium → Build → Windows Demo*).
+5. Upload: `./steam/upload.ps1 -User <account> -Demo` (`-Preview` for a dry run; as for the main app the first upload may need the `default` build set live by hand before a `beta` branch can be made). Install the demo from Steam, start it, check `LocalLow/Elevate Studios/ANTARIUM 2 Demo/Player.log`, the Wishlist button (overlay) and that nothing unlocks achievements.
+6. Publish the demo (Valve reviews it like any build; allow several business days, more over the holidays), then post a Steam event on the main page.
 
 ## Store page media and text
 

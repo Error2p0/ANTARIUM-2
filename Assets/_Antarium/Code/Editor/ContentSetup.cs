@@ -155,6 +155,7 @@ namespace Antarium.Editor
             CreateTrees(database, worldGen);
             CreateMilestone11Achievements();
             CreateHelpAndTutorial();
+            CreateDemo(database);
             RebuildDatabase();
             AssetDatabase.SaveAssets();
             return database;

@@ -186,14 +186,16 @@ namespace Antarium.Gameplay
                 var data = _content.Evolutions[i];
                 int level = evo.Levels[i];
                 bool done = level >= data.MaxLevel;
-                bool available = !done && evo.IsAvailable(i);
+                bool fullGame = !done && evo.NextIsFullGame(i);
+                bool available = !done && !fullGame && evo.IsAvailable(i);
                 bool affordable = available && evo.CanAfford(i);
                 var node = _nodes[i];
+                node.EnableInClassList("node--full-game", fullGame);
                 node.EnableInClassList("node--done", done);
                 node.EnableInClassList("node--owned", !done && level > 0);
                 node.EnableInClassList("node--available", available);
                 node.EnableInClassList("node--affordable", affordable);
-                string cost = done ? "All levels" : CostText(data, level, inv);
+                string cost = done ? "All levels" : fullGame ? "Full game" : CostText(data, level, inv);
                 if (_costs[i].text != cost) _costs[i].text = cost;
                 if (_shownLevel[i] == level) continue;
                 _shownLevel[i] = level;
@@ -324,6 +326,7 @@ namespace Antarium.Gameplay
                 ready = false;
             }
             _sb.Append("\nLevel ").Append(level + 1).Append('/').Append(data.MaxLevel).Append(": ").Append(CostText(data, level, sim.Colony.Inventory));
+            if (evo.NextIsFullGame(_hovered)) return _sb.Append("\nThis level is in the full game: it needs what lies below the Ancient Seal.").ToString();
             if (ready) _sb.Append(evo.CanAfford(_hovered) ? "  -  click to evolve" : "  -  not enough in the stock yet");
             return _sb.ToString();
         }

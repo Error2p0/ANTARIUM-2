@@ -76,6 +76,13 @@ namespace Antarium.Gameplay
         public bool StoreStats() => SteamUserStats.StoreStats();
         public void SetPresence(string key, string value) => SteamFriends.SetRichPresence(key, value);
 
+        public bool OpenStore(uint appId)
+        {
+            if (!SteamUtils.IsOverlayEnabled()) return false;
+            SteamFriends.ActivateGameOverlayToStore(new AppId_t(appId), EOverlayToStoreFlag.k_EOverlayToStoreFlag_None);
+            return true;
+        }
+
         public void Dispose()
         {
             if (_disposed) return;

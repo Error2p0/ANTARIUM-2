@@ -94,10 +94,17 @@ namespace Antarium.Sim
             var def = data.Def;
             if (def.kind == ContractKind.ReachDepth)
                 return new ActiveContract { Def = index, Target = def.amount, Baseline = 0, RewardScale = 1f };
-            float scale = def.repeatable ? math.pow(1f + def.growth, Completed[index]) : 1f;
-            long target = math.max(1, (long)math.round(def.amount * scale));
+            long target = Target(index);
             long baseline = Measure(data);
             return new ActiveContract { Def = index, Target = target, Baseline = baseline, RewardScale = target / (float)def.amount };
+        }
+
+        /// <summary>How much contract <paramref name="index"/> asks for the next time (repeats grow).</summary>
+        long Target(int index)
+        {
+            var def = _content.Contracts[index].Def;
+            float scale = def.repeatable ? math.pow(1f + def.growth, Completed[index]) : 1f;
+            return math.max(1, (long)math.round(def.amount * scale));
         }
 
         long Measure(ContractData data)
@@ -133,6 +140,14 @@ namespace Antarium.Sim
             if (data.Requires >= 0 && !_sim.Research.Done[data.Requires]) return false;
             if (def.minDepth > _sim.Colony.Stats.MaxDepth) return false;
             if (data.Building >= 0 && !_sim.Colony.BuildingUnlocked[data.Building]) return false;
+            var demo = _sim.DemoRules;
+            if (demo != null)
+            {
+                // The demo (GDD 2.16): nothing that needs the full game, and no dig deeper than the seal allows.
+                if (demo.FullGameContract[index]) return false;
+                if (def.kind == ContractKind.DigDeeper && _sim.Colony.Stats.MaxDepth + Target(index) > _sim.DemoDepthLimit) return false;
+                if (def.kind == ContractKind.ReachDepth && def.amount > _sim.DemoDepthLimit) return false;
+            }
             return !IsActive(index);
         }
 

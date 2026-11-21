@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-  Uploads Builds/Windows/Release to Steam with SteamPipe (steamcmd) and sets it live on a branch.
+  Uploads Builds/Windows/Release (or with -Demo Builds/Windows/Demo) to Steam with SteamPipe (steamcmd) and sets it live on a branch.
 
 .DESCRIPTION
-  Build first: Unity menu Antarium -> Build -> Windows Release.
+  Build first: Unity menu Antarium -> Build -> Windows Release (the demo: Antarium -> Build -> Windows Demo).
+  The demo is its own app on Steam: fill in $DemoAppId and $DemoDepotId below once it exists (docs/STEAM.md, The demo).
   Needs steamcmd (tools/steamcmd/steamcmd.exe, or -SteamCmd / $env:STEAMCMD) and a Steam account with
   upload rights for the app (-User or $env:STEAM_BUILDER). The first login asks for the password and the
   Steam Guard code in this window; steamcmd remembers the login afterwards.
@@ -13,13 +14,15 @@
   ./steam/upload.ps1 -User mybuilder                 # upload and set live on 'beta'
   ./steam/upload.ps1 -User mybuilder -Preview        # check what would be uploaded, upload nothing
   ./steam/upload.ps1 -User mybuilder -Branch ""      # upload only, set live by hand
+  ./steam/upload.ps1 -User mybuilder -Demo           # the demo's build to the demo app
 #>
 param(
     [string]$User = $env:STEAM_BUILDER,
     [string]$Branch = "beta",
     [string]$Description = "",
     [string]$SteamCmd = $env:STEAMCMD,
-    [switch]$Preview
+    [switch]$Preview,
+    [switch]$Demo
 )
 $ErrorActionPreference = "Stop"
 
@@ -27,11 +30,24 @@ $ErrorActionPreference = "Stop"
 $AppId = 4453940
 $DepotId = 4453941
 $Exe = "Antarium2.exe"
+$Folder = "Release"
+$Menu = "Windows Release"
+# The demo: must match DemoConfig.demoAppId (Assets/_Antarium/Content/DemoConfig.asset) and its depot. 0 = not created yet.
+$DemoAppId = 0
+$DemoDepotId = 0
+if ($Demo) {
+    if ($DemoAppId -eq 0 -or $DemoDepotId -eq 0) { throw "Fill in `$DemoAppId and `$DemoDepotId in steam/upload.ps1 first (Steamworks -> the app -> Create demo; docs/STEAM.md)." }
+    $AppId = $DemoAppId
+    $DepotId = $DemoDepotId
+    $Exe = "Antarium2Demo.exe"
+    $Folder = "Demo"
+    $Menu = "Windows Demo"
+}
 
 $root = Split-Path -Parent $PSScriptRoot
-$content = Join-Path $root "Builds\Windows\Release"
-if (-not (Test-Path (Join-Path $content $Exe))) { throw "No release build in $content. Build it in Unity: Antarium -> Build -> Windows Release." }
-if (Test-Path (Join-Path $content "steam_appid.txt")) { throw "steam_appid.txt is in the release build: rebuild with Antarium -> Build -> Windows Release." }
+$content = Join-Path $root "Builds\Windows\$Folder"
+if (-not (Test-Path (Join-Path $content $Exe))) { throw "No build in $content. Build it in Unity: Antarium -> Build -> $Menu." }
+if (Test-Path (Join-Path $content "steam_appid.txt")) { throw "steam_appid.txt is in the build: rebuild with Antarium -> Build -> $Menu." }
 if (-not $SteamCmd) { $SteamCmd = Join-Path $root "tools\steamcmd\steamcmd.exe" }
 if (-not (Test-Path $SteamCmd)) { throw "steamcmd not found at $SteamCmd. See docs/STEAM.md (Upload a build)." }
 if (-not $User) { throw "Give the Steam account with -User (or set STEAM_BUILDER)." }
@@ -39,7 +55,7 @@ if ($Branch -eq "default") { throw "The default branch can only be set live on t
 
 $version = (Select-String -Path (Join-Path $root "ProjectSettings\ProjectSettings.asset") -Pattern '^\s*bundleVersion:\s*(.+)$').Matches[0].Groups[1].Value.Trim()
 $commit = (git -C $root rev-parse --short HEAD 2>$null)
-if (-not $Description) { $Description = "v$version ($commit)" }
+if (-not $Description) { $Description = "v$version$(if ($Demo) { ' demo' }) ($commit)" }
 
 $out = Join-Path $PSScriptRoot "output"
 New-Item -ItemType Directory -Force $out | Out-Null

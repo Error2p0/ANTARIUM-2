@@ -46,5 +46,7 @@ namespace Antarium.Content
         public ItemDef royalTreat;
         [Tooltip("Creatures that hunt on the surface at night.")]
         public List<EnemyDef> nightHunters = new();
+        [Tooltip("The Steam Next Fest demo: where the seal lies and what is full game only (GDD 2.16).")]
+        public DemoConfig demo;
     }
 }

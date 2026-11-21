@@ -192,6 +192,7 @@ namespace Antarium.Sim
 
         void BuyGenetic(int trait)
         {
+            if (IsDemo) return; // the demo has no Genetic Memory to spend (GDD 2.16)
             var result = Legacy.Buy(trait);
             if (result != GeneticResult.Ok)
             {
@@ -248,7 +249,7 @@ namespace Antarium.Sim
         public bool TryNuptialFlight(out Legacy next, out int earned)
         {
             var estimate = EstimateFlight();
-            if (!estimate.CanFly)
+            if (!estimate.CanFly || IsDemo) // the demo: no Nuptial Flight (GDD 2.16)
             {
                 next = null;
                 earned = 0;

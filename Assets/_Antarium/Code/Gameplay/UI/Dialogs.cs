@@ -15,12 +15,14 @@ namespace Antarium.Gameplay
     {
         const float ConfirmSeconds = 3f;
 
-        readonly Button _newGame, _newBloodline;
+        readonly Button _newGame, _newBloodline, _achievements, _wishlist, _fullGame;
         readonly Label _status;
         float _confirm, _confirmBloodline;
 
         public VisualElement Root { get; }
         public event Action Resume, Save, Load, NewGame, NewBloodline, Settings, Achievements, Help, MainMenu, Quit;
+        /// <summary>The demo (GDD 2.16): Wishlist on Steam, and what the full game adds.</summary>
+        public event Action Wishlist, FullGame;
 
         public MenuDialog(float autosaveSeconds)
         {
@@ -54,14 +56,27 @@ namespace Antarium.Gameplay
                 else _confirmBloodline = ConfirmSeconds;
             });
             Dialogs.Button(Root, "Settings", () => Settings?.Invoke());
-            Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
+            _achievements = Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
             var help = Dialogs.Button(Root, "Help and controls", () => Help?.Invoke());
             Keys.Bind(() => help.text = Keys.With("Help and controls", Keys.Help));
+            _fullGame = Dialogs.Button(Root, "The full game", () => FullGame?.Invoke());
+            _fullGame.AddToClassList("hidden");
+            _wishlist = Dialogs.Button(Root, "Wishlist on Steam", () => Wishlist?.Invoke());
+            _wishlist.AddToClassList("menu-button--wishlist");
+            _wishlist.AddToClassList("hidden");
             Dialogs.Button(Root, "Save and return to title", () => MainMenu?.Invoke());
             Dialogs.Button(Root, "Save and quit", () => Quit?.Invoke());
             Dialogs.Text(Root, (autosaveSeconds > 0f ? $"The game saves itself every {HudText.Duration(autosaveSeconds)} and when you quit. "
                                                        : "The game saves when you quit. ")
                                + "The colony keeps working while the game is closed.", "dialog__note");
+        }
+
+        /// <summary>The demo: Wishlist on Steam and the full game's features instead of achievements.</summary>
+        public void SetDemo(bool demo)
+        {
+            _wishlist.EnableInClassList("hidden", !demo);
+            _fullGame.EnableInClassList("hidden", !demo);
+            _achievements.EnableInClassList("hidden", demo);
         }
 
         public void Update(float dt, string status)

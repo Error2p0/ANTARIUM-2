@@ -23,8 +23,8 @@ namespace Antarium.Gameplay
     {
         const float ConfirmSeconds = 3f;
 
-        readonly Button _continue, _newGame;
-        readonly Label _status;
+        readonly Button _continue, _newGame, _achievements, _wishlist, _import, _fullGame;
+        readonly Label _status, _demoBadge, _importNote, _version;
         readonly VisualElement _menu, _slots;
         readonly SlotCard[] _cards;
         float _confirm;
@@ -41,6 +41,10 @@ namespace Antarium.Gameplay
 
         public VisualElement Root { get; }
         public event Action Continue, NewColony, Settings, Achievements, Help, Quit;
+        /// <summary>The demo (GDD 2.16): Wishlist on Steam, and what the full game adds.</summary>
+        public event Action Wishlist, FullGame;
+        /// <summary>The full game: continue the colony found in the demo's save folder.</summary>
+        public event Action ImportDemo;
         /// <summary>Play the slot (load it; the current slot = continue).</summary>
         public event Action<int> PlaySlot;
         /// <summary>Start a new bloodline in an empty slot.</summary>
@@ -57,6 +61,8 @@ namespace Antarium.Gameplay
             logo.AddToClassList("title__game-logo");
             Root.Add(logo);
             Dialogs.Text(Root, "Dig deep. Build the colony. Raise a dynasty.", "title__tagline");
+            _demoBadge = Dialogs.Text(Root, "DEMO", "title__demo");
+            _demoBadge.AddToClassList("hidden");
 
             _menu = new VisualElement();
             _menu.AddToClassList("panel");
@@ -64,6 +70,11 @@ namespace Antarium.Gameplay
             Root.Add(_menu);
             _continue = Dialogs.Button(_menu, "Continue", () => Continue?.Invoke());
             _status = Dialogs.Text(_menu, "", "dialog__note");
+            _import = Dialogs.Button(_menu, "Continue your demo colony", () => ImportDemo?.Invoke());
+            _import.AddToClassList("menu-button--wishlist");
+            _import.AddToClassList("hidden");
+            _importNote = Dialogs.Text(_menu, "", "dialog__note");
+            _importNote.AddToClassList("hidden");
             _newGame = Dialogs.Button(_menu, "New colony", () =>
             {
                 if (!_hasSave || _confirm > 0f)
@@ -75,8 +86,13 @@ namespace Antarium.Gameplay
             });
             Dialogs.Button(_menu, "Save slots", () => ShowSlots(true));
             Dialogs.Button(_menu, "Settings", () => Settings?.Invoke());
-            Dialogs.Button(_menu, "Achievements", () => Achievements?.Invoke());
+            _achievements = Dialogs.Button(_menu, "Achievements", () => Achievements?.Invoke());
             Dialogs.Button(_menu, "Help and controls", () => Help?.Invoke());
+            _fullGame = Dialogs.Button(_menu, "The full game", () => FullGame?.Invoke());
+            _fullGame.AddToClassList("hidden");
+            _wishlist = Dialogs.Button(_menu, "Wishlist on Steam", () => Wishlist?.Invoke());
+            _wishlist.AddToClassList("menu-button--wishlist");
+            _wishlist.AddToClassList("hidden");
             Dialogs.Button(_menu, "Quit", () => Quit?.Invoke());
 
             _slots = new VisualElement();
@@ -91,9 +107,27 @@ namespace Antarium.Gameplay
             for (int i = 0; i < slots; i++) _cards[i] = BuildCard(i);
             Dialogs.Button(_slots, "Back", () => ShowSlots(false));
 
-            var version = new Label($"v{Application.version}");
-            version.AddToClassList("title__version");
-            Root.Add(version);
+            _version = new Label($"v{Application.version}");
+            _version.AddToClassList("title__version");
+            Root.Add(_version);
+        }
+
+        /// <summary>The demo (GDD 2.16): the DEMO badge, Wishlist on Steam and the full game's features; no achievements.</summary>
+        public void SetDemo(bool demo)
+        {
+            _demoBadge.EnableInClassList("hidden", !demo);
+            _wishlist.EnableInClassList("hidden", !demo);
+            _fullGame.EnableInClassList("hidden", !demo);
+            _achievements.EnableInClassList("hidden", demo);
+            _version.text = demo ? $"v{Application.version} demo" : $"v{Application.version}";
+        }
+
+        /// <param name="note">The colony found in the demo's save folder (one line), or null: no button.</param>
+        public void SetImport(string note)
+        {
+            _import.EnableInClassList("hidden", note == null);
+            _importNote.EnableInClassList("hidden", note == null);
+            _importNote.text = note ?? "";
         }
 
         SlotCard BuildCard(int slot)

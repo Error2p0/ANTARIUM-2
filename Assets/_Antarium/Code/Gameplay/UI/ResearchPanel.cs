@@ -114,15 +114,18 @@ namespace Antarium.Gameplay
             for (int i = 0; i < _nodes.Length; i++)
             {
                 bool done = research.Done[i];
-                bool available = !done && research.IsAvailable(i) && research.HasLore(i);
+                bool fullGame = !done && research.IsFullGame(i);
+                bool available = !done && !fullGame && research.IsAvailable(i) && research.HasLore(i);
                 bool affordable = available && research.CanAfford(i);
                 var node = _nodes[i];
+                node.EnableInClassList("node--full-game", fullGame);
                 node.EnableInClassList("node--done", done);
                 node.EnableInClassList("node--available", available);
                 node.EnableInClassList("node--affordable", affordable);
                 var data = _content.Research[i];
                 _sb.Clear();
                 if (done) _sb.Append("Researched");
+                else if (fullGame) _sb.Append("Full game");
                 else if (!research.HasLore(i)) _sb.Append("Lore ").Append(sim.Lore.FoundCount).Append('/').Append(research.LoreRequired(i));
                 else HudText.AppendCost(_sb, _content, data.Def.knowledgeCost, data.CostItems, data.CostCounts, data.Def.foodCost);
                 string cost = _sb.ToString();
@@ -158,6 +161,12 @@ namespace Antarium.Gameplay
 
             var research = sim.Research;
             if (research.Done[_hovered]) return _sb.Append("\nAlready researched.").ToString();
+            if (research.IsFullGame(_hovered))
+            {
+                _sb.Append("\nIn the full game: it needs what lies below the Ancient Seal at the bottom of the stone strata. Cost: ");
+                HudText.AppendCost(_sb, _content, def.knowledgeCost, data.CostItems, data.CostCounts, def.foodCost);
+                return _sb.ToString();
+            }
             bool first = true;
             foreach (int p in data.Prerequisites)
             {

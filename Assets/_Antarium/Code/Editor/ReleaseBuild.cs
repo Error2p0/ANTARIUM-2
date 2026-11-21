@@ -30,6 +30,14 @@ namespace Antarium.Editor
         public static string ReleaseFolder => Path.Combine(BuildRoot, "Windows", "Release");
         public static string DevelopmentFolder => Path.Combine(BuildRoot, "Windows", "Development");
 
+        /// <summary>The demo (GDD 2.16): the same project built with <c>ANTARIUM_DEMO</c>, its own product name (save folder) and exe.</summary>
+        public const string DemoDefine = "ANTARIUM_DEMO";
+        public const string DemoProductName = GameBootstrap.DemoProductName;
+        public const string DemoBundleId = BundleId + ".demo";
+        public const string DemoExeName = "Antarium2Demo.exe";
+        public static string DemoFolder => Path.Combine(BuildRoot, "Windows", "Demo");
+        public static string DemoDevelopmentFolder => Path.Combine(BuildRoot, "Windows", "DemoDevelopment");
+
         /// <summary>
         /// Company and product name (these pick the save folder: never change them after a public build), bundle id,
         /// window defaults, one instance at a time (two would write the same save), no Unity splash.
@@ -61,6 +69,12 @@ namespace Antarium.Editor
         [MenuItem("Antarium/Build/Windows Development")]
         public static void BuildDevelopment() => Build(development: true);
 
+        [MenuItem("Antarium/Build/Windows Demo")]
+        public static void BuildDemo() => Build(development: false, demo: true);
+
+        [MenuItem("Antarium/Build/Windows Demo (Development)")]
+        public static void BuildDemoDevelopment() => Build(development: true, demo: true);
+
         /// <summary>IL2CPP when the editor has the Windows IL2CPP module, otherwise Mono.</summary>
         public static bool Il2CppInstalled
         {
@@ -71,27 +85,51 @@ namespace Antarium.Editor
             }
         }
 
-        /// <summary>Builds the game; returns the build report (also used by the command line / CI).</summary>
-        public static BuildReport Build(bool development)
+        /// <summary>
+        /// Builds the game (or with <paramref name="demo"/> the demo: <c>ANTARIUM_DEMO</c>, product name <see cref="DemoProductName"/> and
+        /// its bundle id for the duration of the build, so it keeps its own save folder); returns the build report (also used by the
+        /// command line / CI).
+        /// </summary>
+        public static BuildReport Build(bool development, bool demo = false)
         {
             if (PlayerSettings.companyName != CompanyName || PlayerSettings.productName != ProductName) ApplyPlayerSettings();
             bool il2cpp = Il2CppInstalled;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, il2cpp ? ScriptingImplementation.IL2CPP : ScriptingImplementation.Mono2x);
             if (!il2cpp) Debug.LogWarning("The Windows IL2CPP module is not installed: building with Mono.");
 
-            string folder = development ? DevelopmentFolder : ReleaseFolder;
+            string folder = demo ? development ? DemoDevelopmentFolder : DemoFolder : development ? DevelopmentFolder : ReleaseFolder;
             if (Directory.Exists(folder)) Directory.Delete(folder, true);
             Directory.CreateDirectory(folder);
 
             var options = new BuildPlayerOptions
             {
                 scenes = new[] { MainScene },
-                locationPathName = Path.Combine(folder, ExeName),
+                locationPathName = Path.Combine(folder, demo ? DemoExeName : ExeName),
                 target = BuildTarget.StandaloneWindows64,
                 targetGroup = BuildTargetGroup.Standalone,
                 options = development ? BuildOptions.Development : BuildOptions.None,
+                extraScriptingDefines = demo ? new[] { DemoDefine } : null,
             };
-            var report = BuildPipeline.BuildPlayer(options);
+            BuildReport report;
+            try
+            {
+                if (demo)
+                {
+                    PlayerSettings.productName = DemoProductName;
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, DemoBundleId);
+                }
+                report = BuildPipeline.BuildPlayer(options);
+            }
+            finally
+            {
+                if (demo)
+                {
+                    // Back to the full game's names, saved at once: the build wrote the demo's into ProjectSettings.asset.
+                    PlayerSettings.productName = ProductName;
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, BundleId);
+                    AssetDatabase.SaveAssets();
+                }
+            }
             var summary = report.summary;
             if (summary.result != BuildResult.Succeeded)
             {
@@ -99,22 +137,31 @@ namespace Antarium.Editor
                 return report;
             }
 
-            MoveDoNotShip(folder, development);
+            MoveDoNotShip(folder, development, demo);
             string appId = Path.Combine(folder, "steam_appid.txt");
+            uint id = demo ? DemoAppId() : PlatformServices.SteamAppId;
             // Development builds run without being started by Steam; release builds must not carry the file.
-            if (development) File.WriteAllText(appId, PlatformServices.SteamAppId.ToString());
+            if (development && id != 0) File.WriteAllText(appId, id.ToString());
             else if (File.Exists(appId)) File.Delete(appId);
+            if (demo && id == 0) Debug.LogWarning("DemoConfig.demoAppId is 0: the demo runs without Steam. Create the demo app in Steamworks and enter its App ID.");
 
             long bytes = FolderSize(folder);
-            Debug.Log($"Built {(development ? "development" : "release")} {PlayerSettings.bundleVersion} ({(il2cpp ? "IL2CPP" : "Mono")}) " +
+            Debug.Log($"Built {(demo ? "demo " : "")}{(development ? "development" : "release")} {PlayerSettings.bundleVersion} ({(il2cpp ? "IL2CPP" : "Mono")}) " +
                       $"to {Path.GetFullPath(folder)}: {bytes / (1024f * 1024f):0.0} MB in {summary.totalTime.TotalSeconds:0} s.");
             return report;
         }
 
         /// <summary>Moves the Burst / IL2CPP debug folders out of the build so SteamPipe never uploads them.</summary>
-        static void MoveDoNotShip(string folder, bool development)
+        /// <summary>The demo's Steam App ID from the DemoConfig (0 = none yet).</summary>
+        static uint DemoAppId()
         {
-            string symbols = Path.Combine(BuildRoot, "Symbols", PlayerSettings.bundleVersion + (development ? "-dev" : ""));
+            var config = AssetDatabase.LoadAssetAtPath<Antarium.Content.DemoConfig>(ContentSetup.DemoConfigPath);
+            return config != null ? config.demoAppId : 0;
+        }
+
+        static void MoveDoNotShip(string folder, bool development, bool demo = false)
+        {
+            string symbols = Path.Combine(BuildRoot, "Symbols", PlayerSettings.bundleVersion + (demo ? "-demo" : "") + (development ? "-dev" : ""));
             foreach (var dir in Directory.GetDirectories(folder))
             {
                 string name = Path.GetFileName(dir);

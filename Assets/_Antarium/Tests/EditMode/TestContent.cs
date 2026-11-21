@@ -94,6 +94,15 @@ namespace Antarium.Tests
         public readonly ContractDef DigIntro, DeliverOre;
         public readonly RandomEventDef MeteorEvent, VeinEvent, BeetleEvent, TrappedEvent;
         public readonly ProgressionContent Progression;
+        /// <summary>
+        /// The demo (GDD 2.16), only with <c>demo: true</c>: Seal (indestructible) ends the world at the bottom of Topsoil; relics and
+        /// chitin are full game items and AncientResearch is full game only. DeliverRelic and DigDeeper are contracts for the locks.
+        /// <see cref="ContentDB.DemoActive"/> stays off until a test turns it on.
+        /// </summary>
+        public readonly TerrainMaterialDef Seal;
+        public readonly DemoConfig Demo;
+        public readonly ContractDef DeliverRelic, DigDeeper;
+        readonly bool _demo;
         /// <summary>AchDig: dig out 5 cells. AchFlight: one Nuptial Flight (pushes the stat STAT_FLIGHTS).</summary>
         public readonly AchievementDef AchDig, AchFlight;
         public readonly WorldGenSettings WorldGen;
@@ -104,8 +113,10 @@ namespace Antarium.Tests
 
         /// <param name="creatures">Cave creatures (<see cref="Spider"/>) live in the deep biome's caves.</param>
         /// <param name="ores">The deep biome has a deposit of <see cref="OreRock"/> (drops ore).</param>
-        public TestContent(int chunksX = 4, int chunksY = 4, bool caves = true, bool creatures = false, bool ores = false)
+        /// <param name="demo">Adds the demo's seal, config and contracts (see <see cref="Demo"/>).</param>
+        public TestContent(int chunksX = 4, int chunksY = 4, bool caves = true, bool creatures = false, bool ores = false, bool demo = false)
         {
+            _demo = demo;
             Ore = Make<ItemDef>("ore");
             Seed = Make<ItemDef>("seed");
             Seed.foodValue = 2f;
@@ -569,6 +580,29 @@ namespace Antarium.Tests
                 RoyalTreat = Honeydew,
                 NightHunters = new[] { WolfSpider },
             };
+            if (demo)
+            {
+                Seal = Mat("seal", 1f, MaterialFlags.Indestructible);
+                DeliverRelic = Make<ContractDef>("deliver_relic");
+                DeliverRelic.kind = ContractKind.Deliver;
+                DeliverRelic.item = Relic;
+                DeliverRelic.amount = 1;
+                DigDeeper = Make<ContractDef>("dig_deeper");
+                DigDeeper.kind = ContractKind.DigDeeper;
+                DigDeeper.amount = 10;
+                Progression.Contracts = new[] { DeliverOre, DigIntro, DeliverRelic, DigDeeper };
+                Demo = ScriptableObject.CreateInstance<DemoConfig>();
+                _objects.Add(Demo);
+                Demo.sealMaterial = Seal;
+                Demo.sealThickness = 3;
+                Demo.glimpseRadius = 5;
+                Demo.glimpseDepth = 6;
+                Demo.fullGameItems.Add(Relic);
+                Demo.fullGameItems.Add(Chitin);
+                Demo.fullGameResearch.Add(AncientResearch);
+                Demo.endScreenMinutes = 0.05f; // 3 s
+                Progression.Demo = Demo;
+            }
 
             Topsoil = Make<BiomeDef>("topsoil");
             Topsoil.thickness = 30;
@@ -594,6 +628,7 @@ namespace Antarium.Tests
             WorldGen.surfaceMaterial = Grass;
             WorldGen.bedrock = Bedrock;
             WorldGen.biomes = new List<BiomeDef> { Topsoil, Deep };
+            if (demo) Demo.lastBiome = Topsoil;
             WorldGen.caveMinDepth = 12;
             WorldGen.nestDepth = 8;
             WorldGen.nestRadius = new Vector2(4, 2);
@@ -627,8 +662,10 @@ namespace Antarium.Tests
         public ContentDB Rebuild()
         {
             // Deliberately not air-first, to exercise ContentDB ordering.
-            return ContentDB.Build(new[] { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash, TabletRock,
-                    VariantRock, TreeRoot, ElderWood, ElderLeaves, DeadWood },
+            var materials = new List<TerrainMaterialDef> { Dirt, Air, Grass, Stone, Crystal, Bedrock, Meteor, Sand, Obsidian, Packed, OreRock, Root, CoalRock, Magma, Ash,
+                TabletRock, VariantRock, TreeRoot, ElderWood, ElderLeaves, DeadWood };
+            if (_demo) materials.Add(Seal);
+            return ContentDB.Build(materials,
                 WorldGen, new[] { Ore, Seed, Bar, Chitin, Leaf, Honeydew, Fibre, Coal, Relic, Tablet, Berry, Toadstool, Mushroom, GlowMushroom, Apple, GoldenApple }, null,
                 new[] { Smelter, Belt, Lift, Splitter, Filter, Lab, Gate, Trap, Post, Wall, Nursery, Emitter, Chamber, Chest, Unloader, IronBelt, Mixer, Ranch,
                     Pump, Wheel, Forge, Farm, Resonator, Engine, Scriptorium, Throne },

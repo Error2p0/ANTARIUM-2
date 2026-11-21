@@ -100,6 +100,8 @@ namespace Antarium.Gameplay
         public SettingsDialog Settings { get; }
         public AchievementsDialog AchievementsPanel { get; }
         public HelpDialog Help { get; }
+        /// <summary>The demo's end screen and full game teaser (GDD 2.16); null when the content has no demo.</summary>
+        public DemoDialog DemoPanel { get; }
         /// <summary>The first-colony tutorial's card (top left); null if the layout has no "tutorial" element.</summary>
         public TutorialPanel TutorialCard { get; }
         public TitleScreen Title { get; }
@@ -321,6 +323,7 @@ namespace Antarium.Gameplay
             Settings = new SettingsDialog(input);
             AchievementsPanel = new AchievementsDialog(content, art);
             Help = new HelpDialog(input, art);
+            if (content.Demo != null) DemoPanel = new DemoDialog(content.Demo.Def);
             if (tutorial != null)
                 TutorialCard = new TutorialPanel(tutorial, def => content.TryGetBuildingIndex(def.Id, out int b) ? CostText(content.Buildings[b]) : "");
             _contracts = contracts;
@@ -833,6 +836,7 @@ namespace Antarium.Gameplay
                     ResearchResult.NeedsLore =>
                         $"{name} needs {_content.Research[e.Research].Def.loreRequired} lore fragments; {sim.Lore.FoundCount} found. Study relics in an Archive (Codex: {CodexKey}).",
                     ResearchResult.CantAfford => $"Not enough for {name} yet.",
+                    ResearchResult.FullGame => $"{name} is in the full game: it needs what lies below the Ancient Seal.",
                     _ => $"{name} is already researched.",
                 });
             }
@@ -914,6 +918,7 @@ namespace Antarium.Gameplay
                 {
                     EvolutionResult.NeedsPrerequisites => $"{name} needs the evolution to its left first.",
                     EvolutionResult.CantAfford => $"Not enough in the stock for {name} yet.",
+                    EvolutionResult.FullGame => $"The next level of {name} is in the full game: it needs what lies below the Ancient Seal.",
                     _ => $"{name} is fully evolved.",
                 });
             }
@@ -927,6 +932,8 @@ namespace Antarium.Gameplay
                 ShowToast(e.Total >= sim.Colony.PrincessCap
                     ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen ({Keys.Flight})."
                     : $"A princess is ready ({e.Total}/{sim.Colony.PrincessCap}). Each one raises the Genetic Memory of a Nuptial Flight ({Keys.Flight}).");
+            foreach (var e in events.Read<DemoSealBrokenEvent>())
+                ShowToast("The Ancient Seal is broken: the depths below the stone strata are open to your colony.");
             if (events.Read<ElderTreeFoundEvent>().Length > 0)
                 ShowToast("Your diggers broke into a vast cavern: an ancient tree grows down here. Its golden apples glow in the dark and grow back once picked.");
             foreach (var e in events.Read<LoreFoundEvent>())
@@ -1144,7 +1151,7 @@ namespace Antarium.Gameplay
             _researchButton.EnableInClassList("tool--on", researchOpen);
             if (researchOpen) Research.Refresh(sim);
             bool flightKnown = FlightKnown(sim);
-            _flightButton.EnableInClassList("hidden", !flightKnown);
+            _flightButton.EnableInClassList("hidden", !flightKnown && !sim.IsDemo); // the demo: a teaser of the full game
             _geneticsButton.EnableInClassList("hidden", !sim.Legacy.Awakened);
             bool geneticsOpen = IsShowing(Genetics.Root), flightOpen = IsShowing(Flight.Root);
             _geneticsButton.EnableInClassList("tool--on", geneticsOpen);

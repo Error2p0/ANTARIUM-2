@@ -18,6 +18,8 @@ namespace Antarium.Gameplay
         bool SetStat(string apiName, int value);
         bool StoreStats();
         void SetPresence(string key, string value);
+        /// <summary>Opens the store page of <paramref name="appId"/> in the overlay; false when the overlay is off.</summary>
+        bool OpenStore(uint appId);
         event Action<bool> OverlayChanged;
     }
 
@@ -155,6 +157,11 @@ namespace Antarium.Gameplay
             _synced = false;
             _syncAttempts = 0;
             _syncTimer = 0f;
+        }
+
+        public void OpenStorePage(uint appId)
+        {
+            if (!_store.OpenStore(appId)) _local.OpenStorePage(appId);
         }
 
         public void SetPresence(Presence presence)

@@ -1888,3 +1888,46 @@
     margin-right: 8px;
     flex-shrink: 0;
 }
+
+/* The demo (GDD 2.16): full game nodes, the end screen and teaser, Wishlist buttons, the DEMO badge */
+.node--full-game {
+    border-color: rgb(150, 115, 60);
+    background-color: rgb(34, 26, 20);
+}
+.node--full-game .node__name {
+    color: rgb(170, 150, 120);
+}
+.node--full-game .node__cost {
+    color: rgb(230, 180, 90);
+}
+.demo {
+    max-width: 640px;
+    width: 640px;
+}
+.demo__heading {
+    color: rgb(255, 210, 140);
+    font-size: 20px;
+    margin: 10px 0 2px 0;
+}
+.demo__feature {
+    color: rgb(230, 220, 200);
+    font-size: 18px;
+    white-space: normal;
+    padding: 0 0 0 12px;
+    margin: 1px 0;
+}
+.menu-button--wishlist {
+    border-color: rgb(230, 180, 90);
+    background-color: rgb(70, 46, 20);
+    color: rgb(255, 225, 160);
+}
+.menu-button--wishlist:hover {
+    background-color: rgb(96, 64, 28);
+}
+.title__demo {
+    color: rgb(255, 205, 120);
+    font-size: 20px;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 0 rgb(20, 10, 6);
+    margin: -18px 0 18px 0;
+}

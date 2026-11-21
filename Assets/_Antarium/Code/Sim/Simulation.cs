@@ -144,6 +144,7 @@ namespace Antarium.Sim
 
             bool fresh = loadedWorld == null;
             InitPrestige(legacy, worldModifiers);
+            PrepareDemoWorld(fresh);
             World = loadedWorld ?? WorldGenerator.Create(content, seed, Tweaks);
             Fluids = new FluidSystem(World, config.fluids);
             Fluids.SetReactionMaterial(content.FluidReactionMaterial != ContentDB.AirIndex
@@ -194,6 +195,7 @@ namespace Antarium.Sim
             Contracts = new ContractSystem(content, config.progression, this, seed);
             RandomEvents = new RandomEventSystem(content, config.progression, this, seed);
             Enemies = new EnemySystem(content, config, this, seed);
+            InitDemo(fresh);
             InitSurface();
             ApplyLegacyEffects();
             BuildHeatRows();
@@ -211,6 +213,7 @@ namespace Antarium.Sim
         /// <summary>Rebuilds derived state after a save was loaded into this simulation.</summary>
         internal void FinishLoad()
         {
+            FinishDemoLoad(); // the full game opens the seal of a colony from the demo
             Colony.Designated.Clear();
             Colony.StorageCells.Clear();
             for (int i = 0; i < World.Cells.Length; i++)
@@ -527,7 +530,7 @@ namespace Antarium.Sim
                 {
                     var mat = Content.MaterialSim[cell.Material];
                     flag = CellFlags.DigDesignated;
-                    eligible = !cell.IsEmpty && !mat.IsIndestructible && !mat.IsAir;
+                    eligible = !cell.IsEmpty && !mat.IsIndestructible && !mat.IsAir && !IsBeyondSeal(x, y);
                 }
                 else
                 {
@@ -642,6 +645,7 @@ namespace Antarium.Sim
             if (Colony.Designated.Remove(index)) _designationsChanged = true;
 
             Reveal.Around(World, c, Config.dig.revealRadius);
+            CheckSealContact(c);
             if (VeinInstinctActive) FollowVein(c);
             Fire.Remove(c);
             Fluids.Wake(c);

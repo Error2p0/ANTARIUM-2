@@ -12,6 +12,8 @@ namespace Antarium.Sim
         /// <summary>The ancient tier: not enough lore fragments found yet (10.5).</summary>
         NeedsLore,
         CantAfford,
+        /// <summary>The demo: this node is in the full game only (GDD 2.16).</summary>
+        FullGame,
         Unknown,
     }
 
@@ -28,6 +30,11 @@ namespace Antarium.Sim
 
         /// <summary>Per research node (index into <see cref="ContentDB.Research"/>).</summary>
         public readonly bool[] Done;
+        /// <summary>The demo: per node, full game only (null = nothing locked).</summary>
+        public bool[] FullGame;
+
+        /// <summary>The node can't be researched in this run (the demo).</summary>
+        public bool IsFullGame(int index) => FullGame != null && index >= 0 && index < FullGame.Length && FullGame[index];
 
         public ResearchSystem(ContentDB content, Colony colony, EventBus events, LoreSystem lore = null)
         {
@@ -52,6 +59,7 @@ namespace Antarium.Sim
         {
             if (index < 0 || index >= Done.Length) return ResearchResult.Unknown;
             if (Done[index]) return ResearchResult.AlreadyDone;
+            if (IsFullGame(index)) return ResearchResult.FullGame;
             foreach (int p in _content.Research[index].Prerequisites)
                 if (!Done[p]) return ResearchResult.NeedsPrerequisites;
             if (!HasLore(index)) return ResearchResult.NeedsLore;

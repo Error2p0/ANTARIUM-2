@@ -151,6 +151,9 @@ namespace Antarium.Sim
                     }
                 }
 
+                // Drawn here, in the order the job's initializer drew them, so the demo's seal can follow the same warped border.
+                float2 warpOffset = NextOffset();
+                float2 caveOffset = NextOffset();
                 new GenerateJob
                 {
                     Cells = world.Cells,
@@ -170,9 +173,10 @@ namespace Antarium.Sim
                     CaveFadeDepth = gen.caveFadeDepth,
                     WarpAmplitude = gen.biomeWarpAmplitude,
                     WarpFrequency = gen.biomeWarpFrequency,
-                    WarpOffset = NextOffset(),
-                    CaveOffset = NextOffset(),
+                    WarpOffset = warpOffset,
+                    CaveOffset = caveOffset,
                 }.Schedule(world.ChunkCount, 4).Complete();
+                if (tweaks.Seal) PlaceSeal(world, gen, tweaks, scale, warpOffset);
 
                 new DropFluidsJob
                 {
@@ -198,6 +202,45 @@ namespace Antarium.Sim
             PlaceTablets(world, content, seed, scale);
             CarveNest(world, gen);
             world.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightRecompute);
+        }
+
+        /// <summary>
+        /// The demo's Ancient Seal (GDD 2.16): in every column, from the first cell of the biome below <see cref="WorldTweaks.SealBiome"/>
+        /// (the same warped border the biomes use) down at least <see cref="WorldTweaks.SealThickness"/> rows, and on down to
+        /// where the neighbouring columns' seal starts, so no tunnel or cave can pass it diagonally. Caves and fluid inside it are
+        /// filled. Runs before fluids are dropped, so water above it settles on it. Draws no random numbers.
+        /// </summary>
+        static void PlaceSeal(WorldGrid world, WorldGenSettings gen, in WorldTweaks tweaks, float scale, float2 warpOffset)
+        {
+            float bottom = 0f;
+            for (int i = 0; i <= tweaks.SealBiome && i < gen.biomes.Count; i++) bottom += ContentDB.BiomeThickness(gen.biomes[i], scale);
+            int edge = gen.bedrockThickness, width = world.Width;
+            var top = new int[width];
+            int search = (int)math.ceil(gen.biomeWarpAmplitude) + 2;
+            for (int x = 0; x < width; x++)
+            {
+                int surface = world.SurfaceY[x];
+                int depth = math.max(gen.grassDepth, (int)bottom - search);
+                for (; depth < (int)bottom + search; depth++)
+                {
+                    int y = surface - depth;
+                    float warped = depth + noise.snoise(new float2(x, y) * gen.biomeWarpFrequency + warpOffset) * gen.biomeWarpAmplitude;
+                    if (warped >= bottom) break;
+                }
+                top[x] = surface - depth;
+            }
+            ushort seal = tweaks.SealMaterial;
+            int thickness = math.max(2, tweaks.SealThickness);
+            for (int x = edge; x < width - edge; x++)
+            {
+                int low = math.min(top[x], math.min(top[math.max(0, x - 1)], top[math.min(width - 1, x + 1)])) - (thickness - 1);
+                for (int y = math.max(edge, low); y <= top[x] && y < world.Height; y++)
+                {
+                    int i = world.Index(x, y);
+                    world.Cells[i] = new Cell(seal, Cell.Full);
+                    world.Fluid[i] = FluidCell.Empty;
+                }
+            }
         }
 
         /// <summary>
