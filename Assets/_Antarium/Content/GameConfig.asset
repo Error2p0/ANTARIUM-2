@@ -21,6 +21,14 @@ MonoBehaviour:
     brushEdgeFactor: 0.35
     hitsPerSecond: 10
     orderBrushRadius: 1.6
+    brushSizeScales:
+    - 0.5
+    - 1
+    - 1.75
+    staminaPerHit: 0.0085
+    staminaRegen: 0.05
+    staminaRegenDelay: 1
+    staminaResume: 0.25
     comboWindow: 0.45
     comboPerHit: 0.04
     maxCombo: 2.5
@@ -37,9 +45,69 @@ MonoBehaviour:
     wallBrightness: 0.42
     wallOcclusion: 0.55
     wallContrast: 0.35
+    patchContrast: 0.26
+    patchTint: 0.07
     ambient: 0.025
+    undergroundAmbient: 0.06
+    undergroundFade: {x: 3, y: 16}
     skyTop: {r: 0.36, g: 0.62, b: 0.86, a: 1}
     skyHorizon: {r: 0.72, g: 0.86, b: 0.93, a: 1}
+    nightSkyTop: {r: 0.03, g: 0.04, b: 0.12, a: 1}
+    nightSkyHorizon: {r: 0.1, g: 0.12, b: 0.26, a: 1}
+    duskSkyHorizon: {r: 0.95, g: 0.55, b: 0.35, a: 1}
+    rainSky: {r: 0.42, g: 0.46, b: 0.52, a: 1}
+    nightLight: {r: 0.55, g: 0.65, b: 1, a: 1}
+    nightLightStrength: 0.3
+    rainLight: 0.7
+    starColor: {r: 0.9, g: 0.92, b: 1, a: 1}
+    rainColor: {r: 0.65, g: 0.75, b: 0.95, a: 0.7}
+    shootingStarInterval: {x: 6, y: 20}
+    starfallInterval: {x: 0.04, y: 0.18}
+    lightningColor: {r: 0.92, g: 0.95, b: 1, a: 1}
+    lightningFlash: 0.9
+    sceneryLayers:
+    - shape: 1
+      color: {r: 0.5, g: 0.55, b: 0.72, a: 1}
+      haze: 0.25
+      mist: 0.35
+      parallax: 0.1
+      foot: 5
+      height: 30
+      width: 30
+      snowLine: 17
+      treeSpacing: 6
+    - shape: 2
+      color: {r: 0.36, g: 0.53, b: 0.5, a: 1}
+      haze: 0.2
+      mist: 0.3
+      parallax: 0.25
+      foot: 1
+      height: 12
+      width: 20
+      snowLine: 0
+      treeSpacing: 6
+    - shape: 3
+      color: {r: 0.19, g: 0.36, b: 0.26, a: 1}
+      haze: 0.1
+      mist: 0
+      parallax: 0.45
+      foot: 0
+      height: 4
+      width: 26
+      snowLine: 0
+      treeSpacing: 6
+    sceneryVertical: 0.5
+    snowColor: {r: 0.9, g: 0.93, b: 1, a: 1}
+    cloudCover: 0.35
+    rainCloudCover: 0.9
+    cloudBand: {x: 17, y: 40}
+    cloudSize: 4
+    cloudDrift: 2
+    cloudParallax: 0.05
+    starParallax: 0.01
+    cloudHaze: 0.15
+    cloudColor: {r: 0.97, g: 0.97, b: 1, a: 1}
+    cloudShadeColor: {r: 0.78, g: 0.82, b: 0.9, a: 1}
     spriteMinLight: 0.85
     miningOrderColor: {r: 1, g: 0.69, b: 0.25, a: 1}
     storageColor: {r: 0.3, g: 0.75, b: 0.85, a: 1}
@@ -54,11 +122,30 @@ MonoBehaviour:
     overlayStarvedColor: {r: 1, g: 0.85, b: 0.3, a: 1}
     overlayIdleAntColor: {r: 0.45, g: 0.7, b: 1, a: 1}
     stockBrightness: 0.8
+    lightOverlayRamp:
+    - {r: 0.07, g: 0.07, b: 0.2, a: 1}
+    - {r: 0.2, g: 0.13, b: 0.45, a: 1}
+    - {r: 0.47, g: 0.16, b: 0.5, a: 1}
+    - {r: 0.75, g: 0.24, b: 0.24, a: 1}
+    - {r: 0.9, g: 0.55, b: 0.2, a: 1}
+    - {r: 0.98, g: 0.86, b: 0.35, a: 1}
+    - {r: 1, g: 0.98, b: 0.9, a: 1}
+    oreOverlayDim: 0.45
+    oreSurveySeconds: 1
     waterColor: {r: 0.22, g: 0.48, b: 0.9, a: 0.62}
     waterSurfaceColor: {r: 0.62, g: 0.85, b: 1, a: 1}
+    waterFoamColor: {r: 0.88, g: 0.96, b: 1, a: 1}
+    fallWidth: 1.4
+    fallSpeed: 30
+    fallStreakLength: 9
+    fallStreakShare: 0.3
     lavaColor: {r: 0.95, g: 0.36, b: 0.08, a: 1}
     lavaHotColor: {r: 1, g: 0.85, b: 0.35, a: 1}
     gasColor: {r: 0.62, g: 0.85, b: 0.3, a: 0.55}
+    smokeColor: {r: 0.42, g: 0.4, b: 0.4, a: 0.6}
+    fireColor: {r: 1, g: 0.5, b: 0.12, a: 1}
+    fireHotColor: {r: 1, g: 0.9, b: 0.45, a: 1}
+    emberColor: {r: 0.55, g: 0.12, b: 0.04, a: 1}
     healthBarColor: {r: 0.45, g: 0.95, b: 0.4, a: 1}
     healthBarBackColor: {r: 0.15, g: 0.05, b: 0.05, a: 1}
     enemyHealthBarColor: {r: 1, g: 0.35, b: 0.25, a: 1}
@@ -99,6 +186,7 @@ MonoBehaviour:
     maxPops: 48
     machinePuffSeconds: 0.35
   colony:
+    wallOrderSlack: 1
     startingWorkers: 6
     startingFood: 40
     baseItemCapacity: 40
@@ -114,6 +202,8 @@ MonoBehaviour:
     forageInterval: 5
     maxSurfaceFood: 12
     forageRange: 120
+    forageHaulDelay: 30
+    plantForageStockLimit: 10
     fieldRefreshTicks: 4
   worker:
     moveSpeed: 3
@@ -135,9 +225,9 @@ MonoBehaviour:
     refundFraction: 1
   progression:
     contractSlots: 3
-    firstEventDelay: 150
-    eventIntervalMin: 180
-    eventIntervalMax: 360
+    firstEventDelay: 225
+    eventIntervalMin: 270
+    eventIntervalMax: 540
     maxActiveEvents: 2
     critterSpeed: 2.2
     catchRadius: 1.5
@@ -169,6 +259,8 @@ MonoBehaviour:
     drownDamage: 6
     lavaDamage: 40
     gasDamage: 4
+    fireDamage: 10
+    heatDamage: 3
     caveInDamage: 25
     swimSpeedFactor: 0.55
     soldierRange: 60
@@ -188,6 +280,22 @@ MonoBehaviour:
     raidMaxSize: 40
     raidDistance: {x: 60, y: 100}
     raidKnowledge: 10
+    rivalFirstSeconds: 1500
+    rivalRaidChance: 0.4
+    moleFirstSeconds: 1080
+    moleIntervalMin: 480
+    moleIntervalMax: 840
+    moleMinAnts: 15
+    moleDistance: {x: 26, y: 42}
+    moleClearance: 8
+    moleGiveUpSeconds: 30
+    wormSegments: 7
+    wormDistance: {x: 9, y: 18}
+    wormClearance: 3
+    wormLeash: 22
+    wormTurnChance: 0.3
+    wormMinDepth: 3
+    wormDigDamage: 2.5
   castes:
     shareStep: 0.05
     maxShare: 0.5
@@ -224,3 +332,121 @@ MonoBehaviour:
     veinRadius: 2
     flightSeconds: 4.5
     flightSpeed: 9
+    engineMemoryBonus: 1
+    freeRespecs: 1
+    respecFee: 0.25
+  surface:
+    dayLengthSeconds: 720
+    dayShare: 0.65
+    twilight: 0.06
+    startTime: 0.3
+    firstWeatherSeconds: 600
+    weatherIntervalMin: 360
+    weatherIntervalMax: 600
+    rainChance: 0.6
+    thunderstormChance: 0.35
+    stormRainFactor: 1.5
+    lightningInterval: {x: 3, y: 9}
+    rainSeconds: {x: 60, y: 100}
+    droughtSeconds: {x: 180, y: 300}
+    droughtForage: 0.5
+    rainRange: 150
+    rainDropsPerStep: 10
+    rainDropLevel: 24
+    soakDepth: 40
+    soakChance: 0.3
+    leafInterval: 6
+    maxSurfaceLeaves: 10
+    honeydewSeconds: 20
+    honeydewLaying: 0.5
+    firstBirdSeconds: 480
+    birdIntervalMin: 150
+    birdIntervalMax: 300
+    birdWarningSeconds: 8
+    birdStrikeRadius: 3
+    birdMaxKills: 4
+    birdSpeed: 6
+    birdShelterSeconds: 4
+    firstSpiderSeconds: 900
+    spiderMinAnts: 15
+    spidersBase: 1
+    spidersPerAnt: 0.02
+    spidersMax: 4
+    spiderDistance: {x: 12, y: 40}
+    spiderSpawnWindow: 60
+    starfallChance: 0.15
+    firstStarfallSeconds: 900
+  waterworks:
+    pumpReach: 8
+    checkSeconds: 0.5
+    wheelSmoothing: 0.1
+    irrigationMinLevel: 24
+    irrigationWater: 48
+  fire:
+    burnSeconds: 15
+    spreadPerSecond: 0.25
+    lavaIgniteChance: 0.05
+    smokePerStep: 4
+    extinguishLevel: 32
+    extinguishWater: 16
+    maxBurning: 2000
+    meteoriteIgniteRadius: 3
+    light: {r: 1, g: 0.55, b: 0.2, a: 1}
+    lightStrength: 0.6
+  growth:
+    priorityWeights:
+    - 4
+    - 2
+    - 1
+    - 0.5
+    - 0.25
+    roleWeight: 0.1
+    levelXp:
+    - 15
+    - 45
+    - 110
+    - 240
+    levelBonus: 0.05
+    levelPreference: 0.05
+    digXp: 1
+    buildXp: 1
+    haulXp: 1
+    supplyXp: 1
+    tendXp: 0.1
+    nurseXp: 2
+    traitChance: 0.3
+    swiftSpeed: 1.2
+    luckyChance: 0.25
+    lazyWork: 0.8
+    speedJitter: 0.07
+    laneOffsetPixels: 3
+    laneUpPixels: 3
+    laneDownPixels: 2
+  glow:
+    maxLights: 24
+    color: {r: 0.62, g: 1, b: 0.55, a: 1}
+    intensity: 0.9
+    innerShare: 0.25
+    shadows: 1
+    shadowIntensity: 0.85
+    maxCasters: 768
+    casterRefresh: 0.25
+    cursorRadius: 9
+    cursorColor: {r: 0.78, g: 1, b: 0.72, a: 1}
+    cursorIntensity: 1
+    cursorCasterStep: 2
+    cursorSnapCells: 3
+  wild:
+    berryInterval: 10
+    maxSurfaceBerries: 8
+    appleInterval: 20
+    maxSurfaceApples: 6
+    appleSpread: 3
+    toadstoolInterval: 45
+    rainToadstoolFactor: 4
+    afterRainSeconds: 90
+    maxSurfaceToadstools: 4
+    regrowSeconds: {x: 240, y: 480}
+    checkInterval: 1
+    maxWater: 64
+  art: {fileID: 11400000, guid: 69e467dcbcbaa4744a8617661c046247, type: 2}

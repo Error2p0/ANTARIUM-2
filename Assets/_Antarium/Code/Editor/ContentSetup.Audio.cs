@@ -98,6 +98,42 @@ namespace Antarium.Editor
             Ui(SoundCue.Refused, Patch(SynthWave.Square, 0.15f, 220f, 180f, decay: 2f, lowpass: 1800f, notes: 2), 0.28f, 0.2f);
             Ui(SoundCue.Toast, Patch(SynthWave.Sine, 0.06f, 1320f, decay: 3f), 0.1f, 0.5f, 1);
 
+            // the surface
+            Note(SoundCue.BirdCry, Patch(SynthWave.Sine, 0.55f, 2600f, 1500f, attack: 0.02f, decay: 1.5f, harmonics: 0.2f, vibratoHz: 18f, vibratoDepth: 1.5f, notes: 2, noteStep: -3f), 0.5f, 1f);
+            Sfx(SoundCue.BirdStrike, Patch(SynthWave.Noise, 0.45f, 2000f, 300f, attack: 0.15f, decay: 1.5f, lowpass: 3500f), 0.6f, 0.5f, 1);
+            Note(SoundCue.Rain, Patch(SynthWave.Noise, 2.2f, 200f, 40f, attack: 0.05f, decay: 1.2f, lowpass: 500f, gain: 1.4f), 0.6f, 2f);
+            Note(SoundCue.Dusk, Patch(SynthWave.Sine, 1.4f, 330f, attack: 0.3f, decay: 1.5f, harmonics: 0.3f, notes: 3, noteStep: -4f), 0.3f, 2f);
+            Note(SoundCue.Dawn, Patch(SynthWave.Sine, 1.2f, 392f, attack: 0.2f, decay: 1.6f, harmonics: 0.4f, notes: 3, noteStep: 4f), 0.3f, 2f);
+
+            // the living world: a crackling whoosh when something catches fire (water on a fire reuses the lava sizzle)
+            Sfx(SoundCue.FireIgnite, Patch(SynthWave.Noise, 0.9f, 300f, 2400f, attack: 0.12f, decay: 1.4f, lowpass: 3000f, crush: 2500f, gain: 1.2f), 0.5f, 0.8f, 2);
+
+            // the deep endgame: a glassy chime for lore, a heavy clank per engine step, a rising hum when it wakes,
+            // the mole cricket's muffled scraping, a quick snatch when a rival ant grabs an item
+            Note(SoundCue.LoreFound, Patch(SynthWave.Sine, 1.3f, 784f, attack: 0.01f, decay: 1.8f, harmonics: 0.6f, vibratoHz: 4f, vibratoDepth: 0.1f, notes: 4, noteStep: -5f), 0.45f, 1f);
+            Sfx(SoundCue.EngineStage, Patch(SynthWave.Square, 0.7f, 98f, 82f, decay: 2f, noise: 0.35f, lowpass: 900f, notes: 3, noteStep: 7f, crush: 5000f), 0.6f, 0.5f, 1);
+            Note(SoundCue.EngineAwakened, Patch(SynthWave.Saw, 3f, 55f, 220f, attack: 0.8f, decay: 1.1f, lowpass: 1600f, harmonics: 0.5f, vibratoHz: 3f, vibratoDepth: 0.2f, gain: 1.1f), 0.7f, 3f);
+            Sfx(SoundCue.Burrow, Patch(SynthWave.Noise, 0.35f, 180f, 90f, attack: 0.05f, decay: 1.5f, lowpass: 450f, gain: 1.2f), 0.4f, 0.6f, 1);
+            Sfx(SoundCue.ItemStolen, Patch(SynthWave.Triangle, 0.12f, 900f, 1500f, decay: 2.5f), 0.3f, 0.15f, 2);
+
+            // the presentation pass: a warm rising swell when the queen evolves, a tiny two-note blip where an ant levels up,
+            // a falling shimmer when the bloodline forgets its traits, a fast rising arpeggio for the Quickening, a mocking
+            // falling blip where raiders get away with food
+            Ui(SoundCue.Evolution, Patch(SynthWave.Triangle, 1.1f, 262f, attack: 0.08f, decay: 1.6f, harmonics: 0.5f, vibratoHz: 5f, vibratoDepth: 0.15f, notes: 3, noteStep: 4f), 0.5f, 0.5f);
+            Sfx(SoundCue.LevelUp, Patch(SynthWave.Square, 0.16f, 1047f, decay: 2.5f, lowpass: 5000f, notes: 2, noteStep: 7f, crush: 9000f), 0.14f, 0.5f, 1, variants: 1);
+            Ui(SoundCue.Respec, Patch(SynthWave.Sine, 1.2f, 1400f, 300f, attack: 0.02f, decay: 1.4f, harmonics: 0.4f, vibratoHz: 9f, vibratoDepth: 0.4f), 0.45f, 1f);
+            Ui(SoundCue.Quickening, Patch(SynthWave.Pluck, 0.9f, 523f, decay: 2f, harmonics: 0.3f, notes: 6, noteStep: 2f), 0.5f, 0.5f);
+            Sfx(SoundCue.Escaped, Patch(SynthWave.Triangle, 0.35f, 600f, 250f, decay: 2f, lowpass: 3000f, notes: 2, noteStep: -3f), 0.35f, 1f, 1);
+
+            // Milestone 11: a low rolling rumble for lightning (it swells in a moment after the flash), a high sparkling
+            // arpeggio when a starfall night begins
+            Sfx(SoundCue.Thunder, Patch(SynthWave.Noise, 2.6f, 160f, 35f, attack: 0.18f, decay: 1.1f, lowpass: 420f, gain: 1.7f), 0.75f, 1.2f, 2,
+                positional: false, pitchLow: 0.8f, pitchHigh: 1.15f, variants: 3);
+            Note(SoundCue.Starfall, Patch(SynthWave.Sine, 1.6f, 1568f, attack: 0.01f, decay: 1.6f, harmonics: 0.5f, vibratoHz: 7f, vibratoDepth: 0.1f, notes: 5, noteStep: -3f), 0.35f, 2f);
+            // Milestone 11 batch 3: a quick rising twinkle when a shooting star is caught, a soft wet churn when the giant worm digs
+            Ui(SoundCue.StarCaught, Patch(SynthWave.Sine, 0.7f, 1319f, attack: 0.005f, decay: 2.2f, harmonics: 0.6f, vibratoHz: 11f, vibratoDepth: 0.2f, notes: 4, noteStep: 5f), 0.4f, 0.3f);
+            Sfx(SoundCue.WormBurrow, Patch(SynthWave.Noise, 0.45f, 220f, 90f, attack: 0.05f, decay: 1.5f, lowpass: 600f, gain: 1.1f), 0.3f, 0.35f, 2, variants: 3);
+
             void Bed(string biomeId, AmbiencePatch patch)
             {
                 var biome = biomeId == null ? null : AssetDatabase.LoadAssetAtPath<BiomeDef>($"{BiomesFolder}/{biomeId}.asset");

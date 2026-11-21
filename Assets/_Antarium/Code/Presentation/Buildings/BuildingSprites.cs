@@ -5,9 +5,10 @@ using UnityEngine;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Placeholder pixel-art atlas for buildings, generated in code until real art exists: animated silk
-    /// belts and root lifts, splitter knot, filter frame, smelter kiln and fungus garden, plus a small item
-    /// blob and dot that are tinted per item through vertex colour.
+    /// The building atlas: animated silk belts and root lifts, splitter knot, filter frame, smelter kiln, fungus
+    /// garden and the rest, plus a small item blob and dot that are tinted per item through vertex colour. Every
+    /// sprite is first generated in code (the fallback) and then replaced by its PNG from the <see cref="ArtLibrary"/>
+    /// when there is one (<c>Art/Buildings/...</c>, see <c>docs/ART_STYLE.md</c>).
     /// </summary>
     public sealed class BuildingSprites : System.IDisposable
     {
@@ -18,7 +19,7 @@ namespace Antarium.Presentation
         public const int GardenWidth = 32, GardenHeight = 16;
         public const int ArchiveWidth = 24, ArchiveHeight = 16;
 
-        const int AtlasWidth = 128, AtlasHeight = 96;
+        const int AtlasWidth = 128, AtlasHeight = 144;
 
         // Rect indices.
         public const int BeltRect = 0;                      // 4 frames
@@ -48,11 +49,76 @@ namespace Antarium.Presentation
         public const int PrincessChamberWidth = 32, PrincessChamberHeight = 24;
         /// <summary>Pixel positions of the princess beds from the chamber's bottom-left: two on the floor, one on a raised ledge.</summary>
         public static readonly int2[] PrincessBeds = { new(8, 0), new(24, 0), new(16, 9) };
-        const int RectCount = PrincessChamberRect + 2;
+        /// <summary>Iron tier of the belt and the lift (4 frames each) and the iron gate.</summary>
+        public const int IronBeltRect = PrincessChamberRect + 2;
+        public const int IronLiftRect = IronBeltRect + AnimFrames;
+        public const int IronGateRect = IronLiftRect + AnimFrames;
+        /// <summary>Chest: 2 frames (empty, holding goods); the top item shows as a tinted dot.</summary>
+        public const int ChestRect = IronGateRect + 1;
+        /// <summary>Unloader: a hopper with an arrow (drawn turned like the filter); its item shows as a dot.</summary>
+        public const int UnloaderRect = ChestRect + 2;
+        /// <summary>Crusher (2×2 cells): 2 frames, idle and grinding.</summary>
+        public const int CrusherRect = UnloaderRect + 1;
+        public const int CrusherWidth = 16, CrusherHeight = 16;
+        /// <summary>Aphid Ranch (4×2 cells): 2 frames, grazing and with honeydew drops. The aphids themselves are drawn moving.</summary>
+        public const int RanchRect = CrusherRect + 2;
+        public const int RanchWidth = 32, RanchHeight = 16;
+        /// <summary>Pump: 2 frames (its impeller turned an eighth), outlet to the right (drawn turned like the filter).</summary>
+        public const int PumpRect = RanchRect + 2;
+        /// <summary>Water wheel (2×2 cells): 4 frames turning an eighth of a paddle each.</summary>
+        public const int WheelRect = PumpRect + 2;
+        public const int WheelSize = 16;
+        /// <summary>Crystal Resonator (2 x 2): idle, resonating (10.5).</summary>
+        public const int ResonatorRect = WheelRect + AnimFrames;
+        public const int ResonatorSize = 16;
+        /// <summary>Ancient Engine (4 x 3): one frame per restoration stage, the last one running (10.5).</summary>
+        public const int EngineRect = ResonatorRect + 2;
+        public const int EngineWidth = 32, EngineHeight = 24, EngineFrames = 4;
+        /// <summary>Queen's Throne (4 x 2): a dais between two lamp pillars; the queen is drawn on the dais (10.6).</summary>
+        public const int ThroneRect = EngineRect + EngineFrames;
+        public const int ThroneWidth = 32, ThroneHeight = 16;
+        /// <summary>Height of the dais top above the floor, in art pixels: the queen rests there.</summary>
+        public const int ThroneDais = 5;
+        const int RectCount = ThroneRect + 1;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax).</summary>
         public NativeArray<float4> Rects;
+
+        /// <summary>Every sprite a PNG can replace (<c>Art/Buildings/</c>). Sizes and frames: see <c>docs/ART_STYLE.md</c>.</summary>
+        public static readonly ArtSlot[] Slots =
+        {
+            ArtSlot.Strip("Buildings/silk_belt", BeltRect, AnimFrames),
+            ArtSlot.Strip("Buildings/root_lift", LiftRect, AnimFrames),
+            ArtSlot.Strip("Buildings/iron_belt", IronBeltRect, AnimFrames),
+            ArtSlot.Strip("Buildings/iron_lift", IronLiftRect, AnimFrames),
+            ArtSlot.Strip("Buildings/splitter", SplitterRect),
+            ArtSlot.Strip("Buildings/filter", FilterRect),
+            ArtSlot.Strip("Buildings/unloader", UnloaderRect),
+            ArtSlot.Strip("Buildings/chest", ChestRect, 2),
+            ArtSlot.Strip("Buildings/smelter", SmelterRect, 2),
+            ArtSlot.Strip("Buildings/crusher", CrusherRect, 2),
+            ArtSlot.Strip("Buildings/fungus_garden", GardenRect, 2),
+            ArtSlot.Strip("Buildings/aphid_ranch", RanchRect, 2),
+            ArtSlot.Strip("Buildings/archive", ArchiveRect, 2),
+            ArtSlot.Strip("Buildings/nursery", NurseryRect),
+            ArtSlot.Strip("Buildings/pheromone_emitter", EmitterRect),
+            ArtSlot.Strip("Buildings/princess_chamber", PrincessChamberRect, 2),
+            ArtSlot.Strip("Buildings/resin_gate", GateRect),
+            ArtSlot.Strip("Buildings/iron_gate", IronGateRect),
+            ArtSlot.Strip("Buildings/resin_trap", TrapRect, 2),
+            ArtSlot.Strip("Buildings/guard_post", GuardPostRect),
+            ArtSlot.Strip("Buildings/earth_wall", WallRect),
+            ArtSlot.Strip("Buildings/pump", PumpRect, 2),
+            ArtSlot.Strip("Buildings/water_wheel", WheelRect, AnimFrames),
+            ArtSlot.Strip("Buildings/crystal_resonator", ResonatorRect, 2),
+            ArtSlot.Strip("Buildings/ancient_engine", EngineRect, EngineFrames),
+            ArtSlot.Strip("Buildings/queens_throne", ThroneRect),
+            ArtSlot.Strip("Buildings/generic", GenericRect),
+            ArtSlot.Strip("Buildings/belt_item", ItemRect),
+            ArtSlot.Strip("Buildings/dot", DotRect),
+            ArtSlot.Strip("Buildings/stored_item", StoredRect),
+        };
 
         static readonly Color32 SilkHigh = Hex(0xfff4dc), SilkMid = Hex(0xe2d2ae), SilkDark = Hex(0xa8916a), SilkShadow = Hex(0x6f5d44);
         static readonly Color32 Root = Hex(0x6b4a2c), RootHigh = Hex(0x93693f);
@@ -66,10 +132,14 @@ namespace Antarium.Presentation
         static readonly Color32 Resin = Hex(0xc8902a), ResinDark = Hex(0x7a5218), ResinHigh = Hex(0xf0c060), Tooth = Hex(0xf0e8d8);
         static readonly Color32 Banner = Hex(0xc03a2a), BannerHigh = Hex(0xe8644a), Earth = Hex(0x5e4128), EarthHigh = Hex(0x7d583a), EarthDark = Hex(0x3e2a19);
         static readonly Color32 Gland = Hex(0xd8b8a0), GlandHigh = Hex(0xf4e2d0), GlandDark = Hex(0x8a6a58), Vent = Hex(0x4a3428);
+        static readonly Color32 IronHigh = Hex(0xe4eaf2), IronMid = Hex(0xaeb8c6), IronDark = Hex(0x6e7884), IronShadow = Hex(0x454c56), Rivet = Hex(0x2e333a);
+        static readonly Color32 Stone = Hex(0x8b8f99), StoneDark = Hex(0x5d6068), StoneHigh = Hex(0xb4b8c0), Dust = Hex(0xd8ccb4);
+        static readonly Color32 Water = Hex(0x4a90dc), WaterHigh = Hex(0xa8d8ff);
 
         readonly Color32[] _px = new Color32[AtlasWidth * AtlasHeight];
 
-        public BuildingSprites()
+        /// <param name="art">PNG overrides; null = generated sprites only.</param>
+        public BuildingSprites(Antarium.Content.ArtLibrary art = null)
         {
             Rects = new NativeArray<float4>(RectCount, Allocator.Persistent);
 
@@ -127,6 +197,60 @@ namespace Antarium.Presentation
             Rects[PrincessChamberRect] = Rect(0, 64, PrincessChamberWidth, PrincessChamberHeight);
             Rects[PrincessChamberRect + 1] = Rect(32, 64, PrincessChamberWidth, PrincessChamberHeight);
 
+            // Milestone 10: iron belts / lifts / gate, chest, unloader, crusher (row y = 48).
+            for (int f = 0; f < AnimFrames; f++)
+            {
+                PaintIronBelt(f * Cell, 48, f);
+                Rects[IronBeltRect + f] = Rect(f * Cell, 48, Cell, Cell);
+                PaintIronLift(32 + f * Cell, 48, f);
+                Rects[IronLiftRect + f] = Rect(32 + f * Cell, 48, Cell, Cell);
+            }
+            Blit(64, 48, new[] { "KIIIIIIK", "KiKiKiKK", "KiKiKiKK", "KIIIIIIK", "KiKiKiKK", "KiKiKiKK", "KIIIIIIK", "KKKKKKKK" });
+            Rects[IronGateRect] = Rect(64, 48, Cell, Cell);
+            Blit(72, 48, new[] { "........", ".pppppp.", "pPPPPPPp", "pWWWWWWp", "pPPhPPPp", "pPPdPPPp", "pPPPPPPp", "pppppppp" });
+            Rects[ChestRect] = Rect(72, 48, Cell, Cell);
+            Blit(72, 56, new[] { ".ggkwg..", "pwgkggwp", "pPPPPPPp", "pWWWWWWp", "pPPhPPPp", "pPPdPPPp", "pPPPPPPp", "pppppppp" });
+            Rects[ChestRect + 1] = Rect(72, 56, Cell, Cell);
+            // Hopper with the arrow pointing right (turned by the renderer like the filter).
+            Blit(80, 48, new[] { "KKKKKK..", "KiiiiK..", "KiIIiKI.", "KiIIiKII", "KiIIiKII", "KiIIiKI.", "KiiiiK..", "KKKKKK.." });
+            Rects[UnloaderRect] = Rect(80, 48, Cell, Cell);
+            PaintCrusher(96, 48, working: false);
+            PaintCrusher(112, 48, working: true);
+            Rects[CrusherRect] = Rect(96, 48, CrusherWidth, CrusherHeight);
+            Rects[CrusherRect + 1] = Rect(112, 48, CrusherWidth, CrusherHeight);
+
+            PaintRanch(64, 64, working: false);
+            PaintRanch(96, 64, working: true);
+            Rects[RanchRect] = Rect(64, 64, RanchWidth, RanchHeight);
+            Rects[RanchRect + 1] = Rect(96, 64, RanchWidth, RanchHeight);
+
+            // Pump: an iron housing with an impeller and a spout on the right (the outlet); frame 1 turns the impeller.
+            Blit(88, 24, new[] { "KKKKKK..", "KiiiiK..", "KiIiiKu.", "KIIIiKuu", "KiIiiKuu", "KiiiiKu.", "KiiiiK..", "KKKKKK.." });
+            Blit(96, 24, new[] { "KKKKKK..", "KiiiiK..", "KIiIiKU.", "KiIiiKUU", "KIiIiKUU", "KiiiiKU.", "KiiiiK..", "KKKKKK.." });
+            Rects[PumpRect] = Rect(88, 24, Cell, Cell);
+            Rects[PumpRect + 1] = Rect(96, 24, Cell, Cell);
+            for (int f = 0; f < AnimFrames; f++)
+            {
+                PaintWheel(64 + f * WheelSize, 80, f);
+                Rects[WheelRect + f] = Rect(64 + f * WheelSize, 80, WheelSize, WheelSize);
+            }
+
+            for (int f = 0; f < 2; f++)
+            {
+                PaintResonator(80 + f * ResonatorSize, 32, f == 1);
+                Rects[ResonatorRect + f] = Rect(80 + f * ResonatorSize, 32, ResonatorSize, ResonatorSize);
+            }
+            for (int f = 0; f < EngineFrames; f++)
+            {
+                PaintEngine(f * EngineWidth, 96, f);
+                Rects[EngineRect + f] = Rect(f * EngineWidth, 96, EngineWidth, EngineHeight);
+            }
+
+            PaintThrone(0, 120);
+            Rects[ThroneRect] = Rect(0, 120, ThroneWidth, ThroneHeight);
+
+            ArtOverrides.Apply(art, Slots, _px, AtlasWidth, AtlasHeight, Rects);
+
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
                 filterMode = FilterMode.Point,
@@ -153,6 +277,236 @@ namespace Antarium.Presentation
                 Set(ox + x, oy + 2, SilkHigh);
                 Set(ox + x, oy + 1, ((x - frame) & 3) == 0 ? SilkDark : SilkMid);
                 Set(ox + x, oy + 0, SilkShadow);
+            }
+        }
+
+        /// <summary>Riveted iron band along the bottom of the cell; plates travel right one pixel per frame (twice as busy as silk).</summary>
+        void PaintIronBelt(int ox, int oy, int frame)
+        {
+            for (int x = 0; x < Cell; x++)
+            {
+                Set(ox + x, oy + 3, IronDark);
+                Set(ox + x, oy + 2, IronHigh);
+                Set(ox + x, oy + 1, ((x - frame * 2) & 3) == 0 ? Rivet : IronMid);
+                Set(ox + x, oy + 0, IronShadow);
+            }
+        }
+
+        /// <summary>Iron rails with cross bars; bars travel up one pixel per frame.</summary>
+        void PaintIronLift(int ox, int oy, int frame)
+        {
+            for (int y = 0; y < Cell; y++)
+            {
+                Set(ox + 1, oy + y, IronShadow);
+                Set(ox + 6, oy + y, IronShadow);
+                Set(ox + 2, oy + y, IronHigh);
+                Set(ox + 5, oy + y, IronDark);
+                bool bar = ((y - frame) & 3) == 0;
+                for (int x = 3; x <= 4; x++) Set(ox + x, oy + y, bar ? IronHigh : IronMid);
+            }
+        }
+
+        /// <summary>Two grinding stones on an iron frame; the working frame turns their teeth and throws dust.</summary>
+        void PaintCrusher(int ox, int oy, bool working)
+        {
+            for (int x = 0; x < CrusherWidth; x++)
+            {
+                Set(ox + x, oy, IronShadow);
+                Set(ox + x, oy + 1, x % 5 == 0 ? Rivet : IronDark);
+            }
+            for (int y = 2; y < 12; y++)
+            {
+                Set(ox, oy + y, IronDark);
+                Set(ox + CrusherWidth - 1, oy + y, IronDark);
+            }
+            for (int x = 0; x < CrusherWidth; x++) Set(ox + x, oy + 12, IronMid);
+            // Hopper on top.
+            for (int y = 13; y < 16; y++)
+            for (int x = 3 - (y - 13); x < 13 + (y - 13); x++)
+                Set(ox + x, oy + y, y == 15 ? IronHigh : IronDark);
+            void Wheel(int cx, int cy, int phase)
+            {
+                for (int y = -4; y <= 4; y++)
+                for (int x = -4; x <= 4; x++)
+                {
+                    float r = math.length(new float2(x, y));
+                    if (r > 4.3f) continue;
+                    Color32 c = r > 3.3f ? StoneDark : (x + y) < -1 ? StoneHigh : Stone;
+                    if (r > 3.3f && ((x + y * 3 + phase) & 3) == 0) c = StoneHigh; // teeth
+                    Set(ox + cx + x, oy + cy + y, c);
+                }
+                Set(ox + cx, oy + cy, Rivet);
+            }
+            int p = working ? 2 : 0;
+            Wheel(4, 7, p);
+            Wheel(11, 7, -p);
+            if (working)
+            {
+                Set(ox + 7, oy + 3, Dust);
+                Set(ox + 8, oy + 2, Dust);
+                Set(ox + 6, oy + 2, Dust);
+                Set(ox + 9, oy + 4, Dust);
+            }
+        }
+
+        static readonly Color32 CrystalHigh = Hex(0xe0fbff), CrystalMid = Hex(0x7fd8ff), CrystalDark = Hex(0x3a6a9a);
+        static readonly Color32 Ruin = Hex(0x9a8e7a), RuinDark = Hex(0x4a4238), RuinHigh = Hex(0xbab09a), Gold = Hex(0xf0c850), GoldDark = Hex(0xa07a28);
+
+        /// <summary>Fallback Crystal Resonator: two crystal prongs on an iron base; resonating, light arcs between them.</summary>
+        void PaintResonator(int ox, int oy, bool working)
+        {
+            for (int x = 1; x < 15; x++)
+            {
+                Set(ox + x, oy, IronShadow);
+                Set(ox + x, oy + 1, x % 4 == 0 ? Rivet : IronMid);
+            }
+            for (int y = 2; y < 4; y++)
+            for (int x = 6; x < 10; x++)
+                Set(ox + x, oy + y, IronDark);
+            for (int x = 3; x < 13; x++) Set(ox + x, oy + 4, IronMid);
+            foreach (int px in new[] { 3, 10 })
+            for (int y = 5; y < 15; y++)
+            {
+                Set(ox + px, oy + y, CrystalDark);
+                Set(ox + px + 1, oy + y, y > 11 ? CrystalHigh : CrystalMid);
+                Set(ox + px + 2, oy + y, CrystalDark);
+            }
+            if (!working) return;
+            for (int y = 6; y < 14; y += 2)
+            for (int x = 6; x < 10; x++)
+                if (((x + y) & 1) == 0) Set(ox + x, oy + y, CrystalHigh);
+        }
+
+        /// <summary>Fallback Ancient Engine: a ruined arch; stages add the iron gear, the crystals, then gold and light.</summary>
+        void PaintEngine(int ox, int oy, int stage)
+        {
+            for (int y = 0; y < 4; y++)
+            for (int x = 0; x < EngineWidth; x++)
+                Set(ox + x, oy + y, (x + (y % 2) * 4) % 8 == 0 ? RuinDark : y == 3 ? RuinHigh : Ruin);
+            for (int y = 4; y < 21; y++)
+            for (int x = 2; x < 30; x++)
+            {
+                float dx = (x + 0.5f - 16f) / 14f, dy = (y - 4f) / 17f;
+                if (dx * dx + dy * dy > 1f) continue;
+                if (stage == 0 && y > 12 && ((x * 7 + y * 3) % 5) == 0) continue; // fallen blocks
+                bool joint = y % 4 == 0 || (x + (y / 4 % 2) * 3) % 6 == 0;
+                Set(ox + x, oy + y, joint ? RuinDark : dx < -0.4f ? RuinHigh : Ruin);
+            }
+            for (int y = 5; y < 19; y++)
+            for (int x = 8; x < 24; x++)
+            {
+                float r = math.length(new float2(x + 0.5f - 16f, y + 0.5f - 12f));
+                if (r >= 7f) continue;
+                Color32 c = Mouth;
+                if (stage >= 1 && r > 4f && r < 6f) c = stage == 3 ? Gold : IronMid;
+                if (stage >= 1 && r <= 1.5f) c = stage == 3 ? FireHot : IronDark;
+                Set(ox + x, oy + y, c);
+            }
+            if (stage < 2) return;
+            foreach (int sx in new[] { 4, 26 })
+            for (int y = 9; y < 15; y++)
+            {
+                Set(ox + sx, oy + y, stage == 3 ? CrystalHigh : CrystalDark);
+                Set(ox + sx + 1, oy + y, CrystalMid);
+            }
+        }
+
+        /// <summary>Queen's Throne (generated fallback): a gold-trimmed dais of ruin stone between two pillars with crystal lamps.</summary>
+        void PaintThrone(int ox, int oy)
+        {
+            for (int x = 0; x < ThroneWidth; x++) Set(ox + x, oy, RuinDark);
+            for (int x = 1; x < ThroneWidth - 1; x++)
+            {
+                Set(ox + x, oy + 1, x % 6 == 0 ? RuinDark : Ruin);
+                Set(ox + x, oy + 2, x % 4 == 0 ? Gold : GoldDark);
+            }
+            for (int x = 3; x < ThroneWidth - 3; x++)
+            {
+                Set(ox + x, oy + 3, x % 5 == 0 ? RuinDark : RuinHigh);
+                Set(ox + x, oy + 4, x % 3 == 0 ? Gold : GoldDark);
+            }
+            foreach (int px in new[] { 0, ThroneWidth - 3 })
+            {
+                for (int y = 3; y < 13; y++)
+                {
+                    Set(ox + px, oy + y, Ruin);
+                    Set(ox + px + 1, oy + y, y % 4 == 0 ? RuinDark : RuinHigh);
+                    Set(ox + px + 2, oy + y, RuinDark);
+                }
+                for (int x = 0; x < 3; x++)
+                {
+                    Set(ox + px + x, oy + 13, Gold);
+                    Set(ox + px + x, oy + 12, GoldDark);
+                }
+                Set(ox + px + 1, oy + 14, CrystalMid);
+                Set(ox + px + 1, oy + 15, CrystalHigh);
+            }
+        }
+
+        /// <summary>Aphid Ranch: a leafy pasture behind a low twig fence; the working frame has honeydew drops on the leaves.</summary>
+        void PaintRanch(int ox, int oy, bool working)
+        {
+            var soil = Hex(0x5a3e24);
+            var soilHigh = Hex(0x7a5a36);
+            var leafDark = Hex(0x3e7a2a);
+            var leaf = Hex(0x6aae3e);
+            var leafHigh = Hex(0x9cd65a);
+            var stem = Hex(0x4a6a24);
+            var dew = Hex(0xf2d65a);
+            for (int x = 0; x < RanchWidth; x++)
+            {
+                Set(ox + x, oy, soil);
+                Set(ox + x, oy + 1, (x * 7 & 5) == 0 ? soilHigh : soil);
+            }
+            // Leaf plants: a stem with leaves on alternating sides.
+            int[] plants = { 5, 12, 19, 26 };
+            for (int p = 0; p < plants.Length; p++)
+            {
+                int px = plants[p], h = 7 + (p * 3 % 4);
+                for (int y = 2; y < 2 + h; y++) Set(ox + px, oy + y, stem);
+                for (int y = 4; y < 2 + h; y += 2)
+                {
+                    int side = ((y / 2) + p) % 2 == 0 ? 1 : -1;
+                    Set(ox + px + side, oy + y, leaf);
+                    Set(ox + px + side * 2, oy + y, leafDark);
+                    Set(ox + px + side, oy + y + 1, leafHigh);
+                    if (working && (y + p) % 3 == 0) Set(ox + px + side * 2, oy + y - 1, dew);
+                }
+                Set(ox + px, oy + 2 + h, leafHigh);
+            }
+            // Twig fence posts at both ends with a rail.
+            foreach (int fx in new[] { 0, RanchWidth - 1 })
+                for (int y = 2; y < 8; y++) Set(ox + fx, oy + y, Root);
+            for (int x = 0; x < RanchWidth; x++)
+                if (x % 4 != 2) Set(ox + x, oy + 6, RootHigh);
+        }
+
+        /// <summary>
+        /// Water wheel: a wooden rim on an iron hub with eight paddles; each frame turns it a quarter of the gap between
+        /// paddles, so four frames loop smoothly. Wet paddle tips catch the water.
+        /// </summary>
+        void PaintWheel(int ox, int oy, int frame)
+        {
+            float2 center = new float2(7.5f, 7.5f);
+            for (int y = 0; y < WheelSize; y++)
+            for (int x = 0; x < WheelSize; x++)
+            {
+                float2 d = new float2(x + 0.5f, y + 0.5f) - center;
+                float r = math.length(d);
+                if (r > 7.6f) continue;
+                if (r > 6.6f) Set(ox + x, oy + y, WoodDark);
+                else if (r < 1.6f) Set(ox + x, oy + y, r < 0.8f ? Rivet : IronDark);
+            }
+            for (int k = 0; k < 8; k++)
+            {
+                float a = (k + frame / 4f) * math.PI / 4f;
+                float2 dir = new float2(math.cos(a), math.sin(a));
+                for (float t = 1.6f; t <= 7.4f; t += 0.35f)
+                {
+                    float2 q = center + dir * t;
+                    var c = t > 6.2f ? (k % 2 == 0 ? WaterHigh : Water) : t > 4.5f ? WoodHigh : Wood;
+                    Set(ox + (int)math.floor(q.x), oy + (int)math.floor(q.y), c);
+                }
             }
         }
 
@@ -421,6 +775,13 @@ namespace Antarium.Presentation
                         case 'f': c = Gland; break;
                         case 'F': c = GlandHigh; break;
                         case 'v': c = Vent; break;
+                        case 'K': c = IronShadow; break;
+                        case 'I': c = IronHigh; break;
+                        case 'i': c = IronMid; break;
+                        case 'P': c = WoodHigh; break;
+                        case 'W': c = WoodDark; break;
+                        case 'u': c = Water; break;
+                        case 'U': c = WaterHigh; break;
                         default: continue;
                     }
                     Set(ox + x, y, c);

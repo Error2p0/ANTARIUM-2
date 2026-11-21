@@ -21,7 +21,7 @@ namespace Antarium.Gameplay
     /// Scene" to create a scene with this wired up.
     /// </summary>
     [DefaultExecutionOrder(-100)]
-    public sealed class GameBootstrap : MonoBehaviour
+    public sealed partial class GameBootstrap : MonoBehaviour
     {
         static readonly float[] DebugSpeeds = { 1f, 2f, 4f, 8f };
 
@@ -34,6 +34,9 @@ namespace Antarium.Gameplay
         [Header("Scene")]
         [SerializeField] Camera worldCamera;
         [SerializeField] Light2D globalLight;
+        /// <summary>Capture shots light the whole view with this instead (negative = the normal ambient, Milestone 11).</summary>
+        float _ambientOverride = -1f;
+        float _ambient = -1f;
         [SerializeField] UIDocument hudDocument;
 
         [Header("Rendering")]
@@ -50,10 +53,14 @@ namespace Antarium.Gameplay
         bool continueLastSave = true;
         [SerializeField, Tooltip("Open on the title screen. Off = straight into the colony (handy while developing).")]
         bool showTitle = true;
+        [SerializeField, Tooltip("Play the opening intro (studio logo, game logo) over the title screen on launch.")]
+        bool playIntro = true;
 
         ContentDB _content;
         IPlatformServices _platform;
+        /// <summary>The slot being played (10.6: three slots, each its own bloodline).</summary>
         SaveStore _store;
+        SaveStore[] _stores;
         SettingsStore _settingsStore;
         GameSettings _settings;
         Simulation _sim;
@@ -68,13 +75,14 @@ namespace Antarium.Gameplay
         HudController _hud;
         DebugHud _debugHud;
         ColonyView _colonyView;
+        GlowLights _glow;
         BuildingView _buildingView;
+        SurfaceView _surfaceView;
         NumberPops _pops;
         HoverInfo _hoverInfo;
         PanelSettings _panelSettings;
         string[] _targetingHints;
         Light2D _possessLight;
-        bool _overlay;
         float2 _worldSize;
         int2 _pointerCell;
         float _autosaveTimer;
@@ -103,7 +111,9 @@ namespace Antarium.Gameplay
             public float Time;
         }
 
-        void Awake()
+        // Start, not Awake: in a player the UIDocument only creates its root in OnEnable, which the -100 execution
+        // order puts after this script's Awake (the editor hides this, its UIDocument already has a root).
+        void Start()
         {
             if (content == null || config == null || inputActions == null || worldCamera == null || terrainMaterial == null || spriteMaterial == null)
             {
@@ -113,11 +123,16 @@ namespace Antarium.Gameplay
             }
 
             _content = ContentDB.Build(content);
-            _platform = PlatformServices.Create(Application.persistentDataPath);
+            var capture = CaptureRequest.Get();
+            // Media capture never touches the player's profile, saves, settings or Steam.
+            _platform = capture != null ? new LocalPlatform(capture.ScratchDirectory)
+                : PlatformServices.Create(Application.persistentDataPath, AchievementNames(), StatNames());
             _platform.OverlayChanged += open => _overlayOpen = open;
-            _store = new SaveStore(_platform.SaveDirectory);
+            _stores = new SaveStore[SaveStore.SlotCount];
+            for (int i = 0; i < _stores.Length; i++) _stores[i] = new SaveStore(_platform.SaveDirectory, i);
+            _store = _stores[SaveStore.LatestSlot(_stores)]; // Continue = the slot played last
             _settingsStore = new SettingsStore(Application.persistentDataPath);
-            _settings = _settingsStore.Load();
+            _settings = capture != null ? new GameSettings() : _settingsStore.Load();
             if (globalLight != null) globalLight.intensity = config.render.ambient;
             if (hudDocument != null && hudDocument.panelSettings != null)
             {
@@ -130,24 +145,57 @@ namespace Antarium.Gameplay
             _input = new GameInput(inputActions);
             _input.LoadOverrides(_settings.bindingOverrides);
             _cameraController = new CameraController(_camera, _input);
-            _audio = sounds != null ? new AudioDirector(sounds, _content, transform) : null;
+            _audio = sounds != null ? new AudioDirector(sounds, _content, transform) : null; // muted while capturing (CaptureSound logs it)
             _achievements = new AchievementTracker(_content, _platform);
             _achievements.Unlocked += a =>
             {
+                if (Capturing) return; // media capture: no achievement toasts in the frames
                 _hud.ShowToast($"Achievement unlocked: {a.Def.DisplayName}! {a.Def.description}");
                 _audio?.Play(SoundCue.Achievement);
             };
-            _hud = new HudController(hudDocument, _content, config.render, config.save.autosaveSeconds, _input);
+            _hud = new HudController(hudDocument, _content, config.render, config.art, config.save.autosaveSeconds, _input);
             WireHud();
+            SetUpTutorialAndHelp();
             _hoverInfo = new HoverInfo(_content, _hud);
             _debugHud = new DebugHud(_hud.DebugLabel) { Visible = Debug.isDebugBuild };
-            _targetingHints = Array.ConvertAll(_content.Abilities, a => $"Click where to use {a.DisplayName}. Right click or Esc cancels.");
+            _targetingHints = new string[_content.Abilities.Length];
             _possessLight = CreatePossessLight();
             ApplySettings(_settings);
 
+            if (capture != null)
+            {
+                BeginCapture(capture);
+                return;
+            }
             if (!(continueLastSave && TryLoad(applyOffline: !showTitle)))
                 StartNewColony(randomSeed ? (uint)Environment.TickCount | 1u : seedOverride != 0 ? seedOverride : _content.WorldGen.defaultSeed, announce: !showTitle);
-            if (showTitle) ShowTitle();
+            if (showTitle)
+            {
+                ShowTitle();
+                if (playIntro) _hud.Intro?.Play();
+            }
+            else MaybeStartTutorial();
+        }
+
+        /// <summary>Any key, mouse button or gamepad button pressed this frame (skips the intro).</summary>
+        static bool AnyPress()
+        {
+            var keys = Keyboard.current;
+            var mouse = Mouse.current;
+            var pad = Gamepad.current;
+            return keys != null && keys.anyKey.wasPressedThisFrame
+                   || mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
+                   || pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame);
+        }
+
+        string[] AchievementNames() => Array.ConvertAll(_content.Achievements, a => a.Def.apiName);
+
+        string[] StatNames()
+        {
+            var names = new System.Collections.Generic.List<string>();
+            foreach (var a in _content.Achievements)
+                if (!string.IsNullOrEmpty(a.Def.statName) && !names.Contains(a.Def.statName)) names.Add(a.Def.statName);
+            return names.ToArray();
         }
 
         void WireHud()
@@ -155,10 +203,40 @@ namespace Antarium.Gameplay
             _hud.ToolClicked += mode => _tools?.SetMode(mode);
             _hud.BuildingClicked += def => _tools?.SelectBuilding(def);
             _hud.ScentClicked += kind => _tools?.SelectScent(kind);
-            _hud.OverlayClicked += ToggleOverlay;
+            _hud.OverlayClicked += CycleOverlay;
             _hud.ResearchToggled += ToggleResearch;
             _hud.PossessClicked += () => { if (_sim != null) _tools.ClickPossess(_sim); };
             _hud.CastesClicked += () => _hud.Castes?.Toggle();
+            _hud.QueenToggled += ToggleQueen;
+            _hud.CodexToggled += ToggleCodex;
+            if (_hud.Codex != null) _hud.Codex.CloseClicked += _hud.HideModal;
+            _hud.PrioritiesClicked += () => _hud.Priorities?.Toggle();
+            if (_hud.Priorities != null)
+                _hud.Priorities.Step += (job, step) =>
+                {
+                    if (_sim != null) _sim.EnqueuePriority(job, _sim.Colony.JobPriority[(int)job] + step);
+                };
+            if (_hud.Queen != null)
+            {
+                _hud.Queen.EvolveClicked += evolution => _sim?.EnqueueEvolution(evolution);
+                _hud.Queen.LayingToggled += on =>
+                {
+                    if (_sim == null) return;
+                    _sim.EnqueueLaying(on);
+                    _hud.ShowToast(on ? "The queen lays eggs again." : "The queen stopped laying. Resume it in the queen panel.");
+                };
+            _hud.BrushSizeClicked += size => _tools?.SetBrushSize(size);
+            _hud.VeinToggleClicked += () =>
+            {
+                if (_sim != null) _sim.EnqueueAutoMark(!_sim.Colony.AutoMarkOres);
+            };
+                _hud.Queen.CloseClicked += _hud.HideModal;
+                _hud.Queen.CastesClicked += () =>
+                {
+                    _hud.HideModal();
+                    if (_sim != null && CastesPanel.HasSpecialists(_sim) && !_hud.Castes.Visible) _hud.Castes.Toggle();
+                };
+            }
             _hud.GeneticsToggled += ToggleGenetics;
             _hud.FlightToggled += ToggleFlight;
             _hud.UiClicked += () => _audio?.Play(SoundCue.UiClick);
@@ -171,6 +249,19 @@ namespace Antarium.Gameplay
                 {
                     if (_sim != null) _sim.EnqueueCasteShare(caste, _sim.Colony.CasteShare[(int)caste] + step * _sim.Colony.ShareStep);
                 };
+            if (_hud.Configure != null)
+            {
+                _hud.StockClicked += ToggleStock;
+                _hud.Configure.StorageFilterChanged += (cell, mask) => _sim?.EnqueueStorageFilter(cell, mask);
+                _hud.Configure.ItemPicked += (cell, item) => _sim?.EnqueueSetFilter(cell, item);
+                _hud.Configure.RecipePicked += (cell, choice) => _sim?.EnqueueRecipe(cell, choice);
+                _hud.Configure.StageClicked += cell => _sim?.EnqueueStage(cell);
+                _hud.Configure.SwitchClicked += (cell, on) => _sim?.EnqueueSwitch(cell, on);
+                _hud.Configure.ReserveStep += (item, step) =>
+                {
+                    if (_sim != null) _sim.EnqueueReserve(item, Math.Max(0, _sim.Colony.Inventory.Reserve[item] + step));
+                };
+            }
             if (_hud.Contracts == null) return;
             _hud.Contracts.ClaimClicked += slot => _sim?.EnqueueClaim(slot);
             _hud.EventFeed.GoClicked += cell => { if (_sim != null) LookAt(cell); };
@@ -182,6 +273,12 @@ namespace Antarium.Gameplay
             _hud.Menu.Save += () => Save(background: true, announce: true);
             _hud.Menu.Load += () => { if (!TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load."); };
             _hud.Menu.NewGame += () => StartNewColony(NewSeed(), _sim?.Legacy.Clone());
+            _hud.Menu.NewBloodline += () =>
+            {
+                _hud.HideModal();
+                StartNewColony(NewSeed(), announce: false);
+                _hud.ShowToast($"A new bloodline begins in slot {_store.Slot + 1}: no Genetic Memory, no traits. Achievements stay yours.");
+            };
             _hud.Menu.Settings += () => OpenSettings(fromMenu: true);
             _hud.Menu.Achievements += () => OpenAchievements(fromMenu: true);
             _hud.Menu.Help += () => OpenHelp(fromMenu: true);
@@ -192,6 +289,7 @@ namespace Antarium.Gameplay
             };
             _hud.Menu.Quit += Quit;
             _hud.Genetics.BuyClicked += trait => _sim?.EnqueueGenetic(trait);
+            _hud.Genetics.RespecClicked += () => _sim?.EnqueueRespec();
             _hud.Genetics.CloseClicked += _hud.HideModal;
             _hud.Flight.FlyClicked += BeginFlight;
             _hud.Flight.GeneticsClicked += () => _hud.ShowModal(_hud.Genetics.Root);
@@ -207,6 +305,9 @@ namespace Antarium.Gameplay
                 if (!_freshColony) StartNewColony(NewSeed(), _sim?.Legacy.Clone());
                 LeaveTitle();
             };
+            _hud.Title.PlaySlot += PlaySlot;
+            _hud.Title.NewBloodline += NewBloodlineIn;
+            _hud.Title.DeleteSlot += DeleteSlot;
             _hud.Title.Settings += () => OpenSettings(fromMenu: false);
             _hud.Title.Achievements += () => OpenAchievements(fromMenu: false);
             _hud.Title.Help += () => OpenHelp(fromMenu: false);
@@ -267,18 +368,27 @@ namespace Antarium.Gameplay
             EndSession();
             _sim = sim;
             _worldSize = new float2(sim.World.Width, sim.World.Height) * WorldConstants.CellSize;
-            _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform);
+            _terrain = new TerrainView(sim.World, sim.Light, sim.Pheromones, _content, config.render, terrainMaterial, transform, sim.Seed);
             _terrain.Upload();
+            SetOverlay(_overlayMode);
             _feedback = new DigFeedback(_content, config.feedback, config.render.ambient, sim.World, sim.Light, particleMaterial, transform);
-            _buildingView = new BuildingView(_content, config.render, spriteMaterial, transform, _worldSize);
-            _colonyView = new ColonyView(_content, config.render, spriteMaterial, transform, _worldSize);
+            _buildingView = new BuildingView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
+            _colonyView = new ColonyView(_content, config.render, config.art, spriteMaterial, transform, _worldSize,
+                new int3(config.growth.laneOffsetPixels, config.growth.laneUpPixels, config.growth.laneDownPixels));
+            _glow = new GlowLights(config.glow, _content, transform);
+            _surfaceView = new SurfaceView(_content, config.render, config.art, spriteMaterial, transform, _worldSize);
+            _terrain.SetSky(sim.Surface, config.light.skyLight, 1000f);
             _pops = new NumberPops(_content, config.feedback, spriteMaterial, transform, _worldSize) { Enabled = _settings.numberPops };
-            _tools = new ToolController(config, _content, _buildingView.Ghosts);
+            _brushView = new BrushCursorView(spriteMaterial, transform, _worldSize);
+            _tools = new ToolController(config, _content, _buildingView.Ghosts, _brushSizes);
+            _tools.CatchStar = p => _surfaceView != null && _surfaceView.TryCatchStar(p);
             _tools.ModeChanged += _hud.SetActiveTool;
+            _tools.BrushChanged += size => _hud.SetBrush(_tools.Mode, size);
             _tools.ModeChanged += mode => _terrain?.SetScentCover(mode == ToolMode.Pheromone);
             _tools.Build.SelectionChanged += _hud.SetSelectedBuilding;
             _tools.ScentChanged += _hud.SetSelectedScent;
             _hud.SetActiveTool(_tools.Mode);
+            _hud.SetBrush(_tools.Mode, _tools.BrushSize);
             _hud.SetSelectedBuilding(_tools.Build.Selected);
             _hud.SetSelectedScent(_tools.Scent);
             _hud.ResetSession(sim);
@@ -286,6 +396,8 @@ namespace Antarium.Gameplay
             _autosaveTimer = AutosaveSeconds;
             _speed = 0;
             _biomeReached = sim.BiomeAtDepth(sim.Colony.Stats.MaxDepth);
+            _tutorial?.Rebase();
+            SnapshotHelp();
         }
 
         void EndSession()
@@ -293,12 +405,18 @@ namespace Antarium.Gameplay
             _feedback?.Dispose();
             _pops?.Dispose();
             _colonyView?.Dispose();
+            _glow?.Dispose();
+            _surfaceView?.Dispose();
+            _brushView?.Dispose();
             _buildingView?.Dispose();
             _terrain?.Dispose();
             _sim?.Dispose();
             _feedback = null;
             _pops = null;
             _colonyView = null;
+            _glow = null;
+            _surfaceView = null;
+            _brushView = null;
             _buildingView = null;
             _terrain = null;
             _sim = null;
@@ -306,9 +424,34 @@ namespace Antarium.Gameplay
 
         float AutosaveSeconds => _settings.autosaveMinutes * 60f;
 
+        BrushCursorView _brushView;
+        /// <summary>Brush size per tool, kept across colonies for this run.</summary>
+        readonly int[] _brushSizes = ToolController.NewBrushSizes();
+
+        /// <summary>Outlines the cells the painting tool's brush covers at the cursor, in the tool's colour.</summary>
+        void RenderBrush(float2 pointerWorld, bool hidden)
+        {
+            if (_brushView == null) return;
+            var mode = _tools.Mode;
+            if (hidden || !ToolController.HasBrush(mode) || _tools.TargetingAbility >= 0 || _tools.TargetingPossess)
+            {
+                _brushView.Hide();
+                return;
+            }
+            var r = config.render;
+            Color color = mode switch
+            {
+                ToolMode.Mine => r.miningOrderColor,
+                ToolMode.Storage => r.storageColor,
+                ToolMode.Pheromone => r.pheromoneColors != null && (int)_tools.Scent < r.pheromoneColors.Length ? r.pheromoneColors[(int)_tools.Scent] : Color.white,
+                _ => _tools.Dig.Stamina.CanDig ? Color.white : new Color(0.9f, 0.3f, 0.25f),
+            };
+            _brushView.Render(WorldGrid.WorldToCellSpace(pointerWorld), _tools.BrushRadius(mode), color);
+        }
+
         void Save(bool background, bool announce)
         {
-            if (_sim == null) return;
+            if (_sim == null || Capturing) return;
             try
             {
                 var snapshot = SaveGame.Capture(_sim, DateTime.UtcNow);
@@ -337,6 +480,7 @@ namespace Antarium.Gameplay
 
         void Quit()
         {
+            if (Capturing) return;
             if (CanSave) Save(background: false, announce: false);
             _quitSaved = true;
             _settingsStore.Save(_settings);
@@ -350,6 +494,7 @@ namespace Antarium.Gameplay
 
         void OnApplicationQuit()
         {
+            if (Capturing) return;
             if (_flight != null) FinishFlight(); // the flight was confirmed: found the new colony before saving
             _platform?.Flush();
             if (_quitSaved || _sim == null || !CanSave) return;
@@ -359,23 +504,98 @@ namespace Antarium.Gameplay
 
         void OnApplicationFocus(bool focus) => _focused = focus;
 
-        /// <summary>Settings → Erase all progress: no save, no bloodline, no local achievements; a fresh colony behind the title.</summary>
+        /// <summary>Settings → Erase all progress: no saves in any slot, no bloodline, no local achievements; a fresh colony behind the title.</summary>
         void EraseProgress()
         {
             try
             {
-                _store.Delete();
+                foreach (var store in _stores) store.Delete();
+                _store = _stores[0];
             }
             catch (Exception e)
             {
                 _hud.ShowToast("Could not delete the save: " + e.Message);
                 return;
             }
-            if (_platform is LocalPlatform local) local.Reset();
+            _platform.ResetProgress();
             _achievements.Refresh();
             StartNewColony(NewSeed(), announce: false);
             ShowTitle();
             _hud.ShowToast("All progress was erased.");
+        }
+
+        // ---------------------------------------------------------------- save slots (10.6)
+
+        /// <summary>Title → a slot's Play: loads it (the colony on screen is saved already: the title never changes it).</summary>
+        void PlaySlot(int slot)
+        {
+            if (slot == _store.Slot && !_freshColony)
+            {
+                _hud.Title.ShowSlots(false);
+                LeaveTitle();
+                return;
+            }
+            var previous = _store;
+            previous.Wait();
+            _store = _stores[slot];
+            if (!TryLoad(applyOffline: false))
+            {
+                _store = previous;
+                ShowTitle();
+                return;
+            }
+            _hud.Title.ShowSlots(false);
+            LeaveTitle(); // credits the offline time of the slot just loaded
+        }
+
+        /// <summary>Title → an empty slot's New bloodline: a fresh colony with no legacy, saved to that slot from now on.</summary>
+        void NewBloodlineIn(int slot)
+        {
+            _store.Wait();
+            _store = _stores[slot];
+            StartNewColony(NewSeed(), announce: false);
+            _hud.Title.ShowSlots(false);
+            LeaveTitle();
+        }
+
+        /// <summary>Title → Delete (confirmed): the slot's save and backups go; deleting the current slot leaves a fresh colony in it.</summary>
+        void DeleteSlot(int slot)
+        {
+            try
+            {
+                _stores[slot].Delete();
+            }
+            catch (Exception e)
+            {
+                _hud.ShowToast("Could not delete the save: " + e.Message);
+                return;
+            }
+            if (slot == _store.Slot) StartNewColony(NewSeed(), announce: false);
+            ShowTitle();
+            _hud.ShowToast($"Slot {slot + 1} was deleted.");
+        }
+
+        SlotView[] SlotViews()
+        {
+            var views = new SlotView[_stores.Length];
+            var now = DateTime.UtcNow;
+            for (int i = 0; i < _stores.Length; i++)
+            {
+                var h = _stores[i].TryReadHeader();
+                if (h == null)
+                {
+                    views[i] = new SlotView { Empty = true };
+                    continue;
+                }
+                string generation = h.Generation > 0 ? $"Generation {h.Generation}, " : "";
+                views[i] = new SlotView
+                {
+                    Current = i == _store.Slot && !_freshColony,
+                    Summary = $"{generation}{NumberFormat.Format(h.Ants)} ants, {h.MaxDepth} cells deep",
+                    Detail = $"Played {HudText.Duration(h.PlayTime)}, saved {HudText.Duration((now - h.SavedUtc).TotalSeconds)} ago",
+                };
+            }
+            return views;
         }
 
         // ---------------------------------------------------------------- title screen and system dialogs
@@ -387,11 +607,12 @@ namespace Antarium.Gameplay
             string status = null;
             if (!_freshColony && _sim != null)
             {
-                string saved = _lastSaved.HasValue ? $"saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "";
-                status = $"{NumberFormat.Format(_sim.Ants.Count)} ants, {_sim.Colony.Stats.MaxDepth} cells deep, played {HudText.Duration(_sim.PlayTime)}, {saved}";
+                string saved = _lastSaved.HasValue ? $", saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "";
+                status = $"Slot {_store.Slot + 1}: {NumberFormat.Format(_sim.Ants.Count)} ants, {_sim.Colony.Stats.MaxDepth} cells deep, played {HudText.Duration(_sim.PlayTime)}{saved}";
                 if (_sim.Legacy.Flights > 0) status += $". Generation {_sim.Legacy.Flights + 1}";
             }
             _hud.Title.SetSave(status);
+            _hud.Title.SetSlots(SlotViews());
             _hud.SetTitle(true);
             _titleTime = 0f;
         }
@@ -403,6 +624,7 @@ namespace Antarium.Gameplay
             LookAt(_sim.Colony.QueenCell + new int2(0, 4));
             if (_freshColony) _hud.ShowToast("A new colony begins. Contracts on the right show what to do next.");
             else CreditOffline(announceLoad: true);
+            MaybeStartTutorial();
         }
 
         void OpenSettings(bool fromMenu)
@@ -420,10 +642,11 @@ namespace Antarium.Gameplay
             _hud.ShowModal(_hud.AchievementsPanel.Root);
         }
 
-        void OpenHelp(bool fromMenu)
+        void OpenHelp(bool fromMenu, HelpTopicDef topic = null)
         {
             _backToMenu = fromMenu;
-            _hud.Help.Refresh();
+            _probe.HelpOpened++;
+            _hud.Help.Open(_sim, topic);
             _hud.ShowModal(_hud.Help.Root);
         }
 
@@ -472,7 +695,7 @@ namespace Antarium.Gameplay
         void ApplyUiScale()
         {
             if (_panelSettings == null) return;
-            float scale = _settings.EffectiveUiScale(Screen.height);
+            float scale = _settings.EffectiveUiScale(_rig != null ? _rig.Height : Screen.height);
             if (!Mathf.Approximately(_panelSettings.scale, scale)) _panelSettings.scale = scale;
         }
 
@@ -485,6 +708,9 @@ namespace Antarium.Gameplay
             float dt = Time.deltaTime;
             double now = Time.timeAsDouble;
             ApplyUiScale();
+            _platform.SetPresence(_flight != null ? new Presence(PresenceState.Flight)
+                : _hud.TitleShowing ? new Presence(PresenceState.Title)
+                : new Presence(PresenceState.Colony, _sim.Legacy.Flights + 1, _sim.Colony.Stats.MaxDepth));
             if (_flight != null)
             {
                 UpdateFlight(dt);
@@ -492,36 +718,60 @@ namespace Antarium.Gameplay
                 return;
             }
 
-            HandleSystemKeys();
+            bool intro = _hud.Intro != null && _hud.Intro.Playing;
+            if (intro) _hud.Intro.Update(dt, !Capturing && AnyPress());
+            else if (!Capturing) HandleSystemKeys();
             bool title = _hud.TitleShowing;
-            bool paused = title || _overlayOpen || _hud.IsShowing(_hud.Menu?.Root) || SystemDialogOpen;
+            bool paused = Capturing ? _shotPaused : title || _overlayOpen || _hud.IsShowing(_hud.Menu?.Root) || SystemDialogOpen;
 
             bool possessing = _tools.Possessing;
-            if (title) DriftTitleCamera(dt);
+            if (Capturing) DriveShot(dt, paused);
+            else if (title) DriftTitleCamera(dt);
             else
             {
                 _cameraController.Update(dt, allowPan: !possessing);
                 if (possessing) FollowPossessed(dt);
             }
             _camera.Apply(dt, _worldSize);
+            TrackCamera(title);
+            UpdateAmbient(dt);
             float2 pointerWorld = _camera.ScreenToWorld(_input.Pointer);
             _pointerCell = WorldGrid.WorldToCell(pointerWorld);
 
-            bool overUi = _hud.IsPointerOverUi(_input.Pointer);
-            if (!paused) _tools.Update(_sim, _input, pointerWorld, overUi, dt, now);
-            if (!title)
+            bool overUi = !Capturing && _hud.IsPointerOverUi(_input.Pointer);
+            if (!paused && !Capturing) _tools.Update(_sim, _input, pointerWorld, overUi, dt, now);
+            // Clicking the queen (Dig or Mine tool) opens her panel.
+            if (!paused && !Capturing && !overUi && !possessing && _input.Primary.WasPressedThisFrame()
+                && (_tools.Mode == ToolMode.Dig || _tools.Mode == ToolMode.Mine) && _tools.TargetingAbility < 0 && !_tools.TargetingPossess
+                && PointerOnQueen(pointerWorld))
+                ToggleQueen();
+            // Clicking the Ancient Engine (Dig or Mine tool) opens its restoration steps.
+            else if (!paused && !Capturing && !overUi && !possessing && _input.Primary.WasPressedThisFrame()
+                     && (_tools.Mode == ToolMode.Dig || _tools.Mode == ToolMode.Mine) && _tools.TargetingAbility < 0 && !_tools.TargetingPossess
+                     && _hud.Configure != null && ConfigurePanel.TargetAt(_sim, _pointerCell, out _) == ConfigTarget.Engine
+                     && !(_hud.Configure.Visible && _hud.Configure.Target == ConfigTarget.Engine))
+                _hud.Configure.Open(_sim, _pointerCell);
+            if (!title && !Capturing)
             {
-                if (_input.Overlay.WasPressedThisFrame()) ToggleOverlay();
+                OverlayKeys();
                 if (_input.ToggleHud.WasPressedThisFrame()) _debugHud.Visible = !_debugHud.Visible;
                 if (Debug.isDebugBuild) DebugKeys();
             }
 
             if (!paused) _sim.Advance(dt * DebugSpeeds[_speed]);
             _sim.UpdateDerived();
+            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt, _surfaceView != null ? _surfaceView.Flash : 0f);
             _terrain.Upload();
+            UpdateOverlay(dt);
             float alpha = _sim.Clock.Alpha;
             _buildingView.Render(_sim, alpha, Time.time, _overlay);
             _colonyView.Render(_sim, alpha, _overlay, Time.time);
+            // Guiding Light (research): a light at the pointer while it is over the world.
+            bool cursorLight = _sim.Colony.Has(ResearchFeature.CursorLight) && !title && !possessing && (Capturing ? _shotCursorLight : !overUi);
+            _glow.Update(_sim, alpha, _camera.Position, _camera.HalfViewSize, dt, false, cursorLight, Capturing ? _shotPointer : pointerWorld);
+            _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, paused ? 0f : dt, Time.time);
+            RenderBrush(pointerWorld, title || paused || overUi || possessing || Capturing);
+            _hud.SetDigStamina(_tools.Dig.Stamina.Value, _tools.Dig.Stamina.Exhausted);
 
             var events = _sim.Events;
             _camera.AddTrauma(_feedback.Consume(events) + EventShake(events));
@@ -529,16 +779,23 @@ namespace Antarium.Gameplay
             _pops.Consume(events, _sim);
             _pops.Render(_sim, dt);
             _audio?.Consume(events);
+            PlayRuinCues(events);
             _tools.Consume(events, now);
+            _probe.PlayerDug += _tools.Dig.TakeCellsDug();
             _hud.Consume(events, _sim);
             _hud.Update(dt, _sim, _tools.TargetingAbility, _hud.IsShowing(_hud.Menu?.Root) ? MenuStatus() : null, _tools.Possessing, _tools.TargetingPossess);
             if (_hud.IsShowing(_hud.AchievementsPanel.Root)) _hud.AchievementsPanel.Refresh(_achievements, title ? null : _sim);
+            if (_hud.IsShowing(_hud.Help?.Root)) _hud.Help.Refresh();
+            UpdateTutorial(dt, title, paused);
+            if (Capturing) pointerWorld = _shotPointer;
             _hoverInfo.Update(dt, _sim, WorldGrid.WorldToCell(pointerWorld), _tools, overUi);
+            bool tip = !title && _tools.TargetingAbility < 0 && !_tools.TargetingPossess && (overUi || Capturing) && _hud.HoverTip != null;
             _hud.SetInfo(title ? null
-                : _tools.TargetingAbility >= 0 ? _targetingHints[_tools.TargetingAbility]
-                : _tools.TargetingPossess ? "Click an ant to take control of it. Right click or Esc cancels."
-                : overUi && _hud.HoverTip != null ? _hud.HoverTip
-                : _hoverInfo.Text);
+                : _tools.TargetingAbility >= 0 ? TargetingHint(_tools.TargetingAbility)
+                : _tools.TargetingPossess ? $"Click an ant to take control of it. Right click or {Keys.Menu} cancels."
+                : tip ? _hud.HoverTip
+                : _hoverInfo.Text,
+                tip ? _hud.HoverIcon : _tools.TargetingAbility >= 0 || _tools.TargetingPossess ? null : _hoverInfo.Icon);
             UpdatePossessLight(alpha);
             _debugHud.Update(dt, _sim, pointerWorld, _camera.Zoom, _tools);
             UpdateAudio(dt, title ? MusicMode.Title
@@ -546,9 +803,9 @@ namespace Antarium.Gameplay
                 : _sim.Enemies.ActiveRaid != 0 ? MusicMode.Raid
                 : MusicMode.Play);
             events.Flush();
-            if (!title) _achievements.Update(dt, _sim);
+            if (!title && !Capturing) _achievements.Update(dt, _sim);
 
-            if (!paused && AutosaveSeconds > 0f)
+            if (!paused && AutosaveSeconds > 0f && !Capturing)
             {
                 _autosaveTimer -= dt;
                 if (_autosaveTimer <= 0f) Save(background: true, announce: false);
@@ -563,7 +820,7 @@ namespace Antarium.Gameplay
             _audio.SetView(_camera.Position, _camera.HalfViewSize, _camera.StepsOut);
             int2 cell = WorldGrid.WorldToCell(_camera.Position);
             int depth = _sim.World.Depth(cell.x, cell.y);
-            _audio.Update(dt, depth < 0 ? -1 : _sim.BiomeAtDepth(depth), _settings.muteInBackground && !_focused, music);
+            _audio.Update(dt, depth < 0 ? -1 : _sim.BiomeAtDepth(depth), Capturing || _settings.muteInBackground && !_focused, music);
 
             // The first dig into a deeper biome gets the discovery cue.
             int reached = _sim.BiomeAtDepth(_sim.Colony.Stats.MaxDepth);
@@ -572,6 +829,20 @@ namespace Antarium.Gameplay
                 if (_biomeReached >= 0 && sounds != null) _audio.PlayMusicCue(sounds.music.discoveryCue);
                 _biomeReached = reached;
             }
+        }
+
+        /// <summary>The ruin-tier music cues (10.5): a lore fragment found, the Ancient Engine waking. Silent until clips are assigned.</summary>
+        void PlayRuinCues(EventBus events)
+        {
+            if (_audio == null || sounds == null) return;
+            foreach (var e in events.Read<EngineStageEvent>())
+                if (e.Phase == EngineStagePhase.Awakened)
+                {
+                    _audio.PlayMusicCue(sounds.music.engineCue);
+                    return;
+                }
+            if (events.Read<LoreFoundEvent>().Length > 0) _audio.PlayMusicCue(sounds.music.loreCue);
+            else if (events.Read<ElderTreeFoundEvent>().Length > 0) _audio.PlayMusicCue(sounds.music.discoveryCue); // the Elder Tree (batch 6)
         }
 
         void DebugKeys()
@@ -583,8 +854,20 @@ namespace Antarium.Gameplay
                 _sim.GiveResources(20, 50f);
                 _sim.Colony.Inventory.AddKnowledge(50f, studied: false);
             }
-            if (_input.TriggerEvent.WasPressedThisFrame()) _sim.EnqueueTriggerEvent(-1);
-            if (_input.TriggerRaid.WasPressedThisFrame()) _sim.EnqueueTriggerRaid();
+            if (_input.TriggerEvent.WasPressedThisFrame())
+            {
+                // F10: a random event; with Ctrl the giant worm (Milestone 11).
+                var keys = UnityEngine.InputSystem.Keyboard.current;
+                if (keys != null && keys.ctrlKey.isPressed) _sim.EnqueueTriggerWorm();
+                else _sim.EnqueueTriggerEvent(-1);
+            }
+            if (_input.TriggerRaid.WasPressedThisFrame())
+            {
+                // F11: a raid; with Shift rival ants, with Ctrl a mole cricket (10.5).
+                var keys = UnityEngine.InputSystem.Keyboard.current;
+                if (keys != null && keys.ctrlKey.isPressed) _sim.EnqueueTriggerDigger();
+                else _sim.EnqueueTriggerRaid(rival: keys != null && keys.shiftKey.isPressed);
+            }
             if (_input.GivePrestige.WasPressedThisFrame()) _sim.DebugGivePrestige(2, 10);
             if (_input.GameSpeed.WasPressedThisFrame())
             {
@@ -609,8 +892,9 @@ namespace Antarium.Gameplay
                 if (_tools.CancelTargeting()) { }
                 else if (SystemDialogOpen) CloseSystemDialog();
                 else if (_hud.ModalOpen) _hud.HideModal();
-                else if (_hud.TitleShowing) { }
+                else if (_hud.TitleShowing) { if (_hud.Title.SlotsShowing) _hud.Title.ShowSlots(false); }
                 else if (_tools.Possessing) _sim.EnqueueRelease();
+                else if (_hud.Configure != null && _hud.Configure.Visible) _hud.Configure.Hide();
                 else _hud.ShowModal(_hud.Menu?.Root);
             }
             if (_input.Help.WasPressedThisFrame())
@@ -623,6 +907,10 @@ namespace Antarium.Gameplay
             if (_input.Genetics.WasPressedThisFrame()) ToggleGenetics();
             if (_input.Flight.WasPressedThisFrame()) ToggleFlight();
             if (_input.Castes.WasPressedThisFrame() && _hud.Castes != null && CastesPanel.HasSpecialists(_sim)) _hud.Castes.Toggle();
+            if (_input.Queen.WasPressedThisFrame()) ToggleQueen();
+            if (_input.Codex.WasPressedThisFrame()) ToggleCodex();
+            if (_input.Priorities.WasPressedThisFrame()) _hud.Priorities?.Toggle();
+            if (_input.Configure.WasPressedThisFrame()) ToggleConfigure();
             if (_input.QuickSave.WasPressedThisFrame()) Save(background: true, announce: true);
             if (_input.QuickLoad.WasPressedThisFrame() && !TryLoad(applyOffline: false)) _hud.ShowToast("There is no save to load.");
         }
@@ -645,13 +933,45 @@ namespace Antarium.Gameplay
         string MenuStatus()
         {
             string saved = _lastSaved.HasValue ? $"saved {HudText.Duration((DateTime.UtcNow - _lastSaved.Value).TotalSeconds)} ago" : "not saved yet";
-            return $"Seed {_sim.Seed}   played {HudText.Duration(_sim.PlayTime)}   {saved}";
+            return $"Slot {_store.Slot + 1}   seed {_sim.Seed}   played {HudText.Duration(_sim.PlayTime)}   {saved}";
         }
 
-        void ToggleOverlay()
+        /// <summary>I: configure what is under the pointer (again on the same thing closes the panel).</summary>
+        void ToggleConfigure()
         {
-            _overlay = !_overlay;
-            _hud.SetOverlay(_overlay);
+            var panel = _hud.Configure;
+            if (panel == null || _sim == null || _hud.ModalOpen) return;
+            if (panel.Visible && panel.Target != ConfigTarget.Stock && panel.Cell.Equals(_pointerCell))
+            {
+                panel.Hide();
+                return;
+            }
+            if (panel.Open(_sim, _pointerCell)) return;
+            if (panel.Visible) panel.Hide();
+            else _hud.ShowToast("Nothing to set up there. Point at a storage zone, chest, unloader, filter, emitter, machine, pump, resonator or the Ancient Engine.");
+        }
+
+        /// <summary>The stock view (keep items for building), from the resource bar.</summary>
+        void ToggleStock()
+        {
+            var panel = _hud.Configure;
+            if (panel == null || _sim == null) return;
+            if (panel.Visible && panel.Target == ConfigTarget.Stock) panel.Hide();
+            else panel.OpenStock(_sim);
+        }
+
+        int _targetingKeys = -1;
+
+        /// <summary>"Click where to use Seismic Sense. Right click or Esc cancels." with the current Menu key (cached per bindings).</summary>
+        string TargetingHint(int ability)
+        {
+            int version = _input != null ? _input.BindingsVersion : 0;
+            if (version != _targetingKeys)
+            {
+                _targetingKeys = version;
+                System.Array.Clear(_targetingHints, 0, _targetingHints.Length);
+            }
+            return _targetingHints[ability] ??= $"Click where to use {_content.Abilities[ability].DisplayName}. Right click or {Keys.Menu} cancels.";
         }
 
         void ToggleResearch()
@@ -659,6 +979,54 @@ namespace Antarium.Gameplay
             if (_hud.Research == null) return;
             if (_hud.IsShowing(_hud.Research.Root)) _hud.HideModal();
             else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Research.Root);
+        }
+
+        void ToggleCodex()
+        {
+            if (_hud.Codex == null || _sim == null) return;
+            if (_hud.IsShowing(_hud.Codex.Root)) _hud.HideModal();
+            else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen) _hud.ShowModal(_hud.Codex.Root);
+        }
+
+        void ToggleQueen()
+        {
+            if (_hud.Queen == null || _sim == null) return;
+            if (_hud.IsShowing(_hud.Queen.Root)) _hud.HideModal();
+            else if (!_hud.IsShowing(_hud.Menu.Root) && !SystemDialogOpen)
+            {
+                _hud.ShowModal(_hud.Queen.Root);
+                _probe.QueenOpened++;
+            }
+        }
+
+        /// <summary>The pointer is on the queen's sprite (24 x 12 art pixels standing on her cell's floor).</summary>
+        /// <summary>
+        /// Milestone 11: the global light rises by <c>undergroundAmbient</c> while the camera is underground (faded in over
+        /// <c>undergroundFade</c> cells below the ground under it), so revealed tunnels and rock read better down there.
+        /// </summary>
+        void UpdateAmbient(float dt)
+        {
+            if (globalLight == null || _sim == null) return;
+            var r = config.render;
+            float target;
+            if (_ambientOverride >= 0f) target = _ambient = _ambientOverride;
+            else
+            {
+                int2 cell = WorldGrid.WorldToCell(_camera.Position);
+                float depth = _sim.World.Depth(cell.x, cell.y);
+                float under = math.smoothstep(r.undergroundFade.x, math.max(r.undergroundFade.x + 0.01f, r.undergroundFade.y), depth);
+                target = r.ambient + r.undergroundAmbient * under;
+                _ambient = _ambient < 0f ? target : math.lerp(_ambient, target, 1f - math.exp(-4f * dt));
+            }
+            globalLight.intensity = _ambient;
+        }
+
+        bool PointerOnQueen(float2 pointerWorld)
+        {
+            float2 floor = WorldGrid.CellCenterToWorld(_sim.Colony.QueenCell) - new float2(0f, WorldConstants.CellSize * 0.5f);
+            float2 d = pointerWorld - floor;
+            float px = 1f / WorldConstants.PixelsPerUnit;
+            return math.abs(d.x) <= 12f * px && d.y >= 0f && d.y <= 12f * px;
         }
 
         void ToggleGenetics()
@@ -739,9 +1107,11 @@ namespace Antarium.Gameplay
             float2 target = sum / counted * WorldConstants.CellSize;
             _camera.Position = math.lerp(_camera.Position, target, 1f - math.exp(-3f * dt));
             _camera.Apply(dt, _worldSize);
+            _terrain.SetSky(_sim.Surface, config.light.skyLight, dt, _surfaceView != null ? _surfaceView.Flash : 0f);
             _terrain.Upload();
             _buildingView.Render(_sim, 1f, Time.time, false);
             _colonyView.Render(_sim, 1f, false, Time.time);
+            _surfaceView.Render(_sim, _camera.Position, _camera.HalfViewSize, dt, Time.time);
             _hud.Update(dt, _sim, -1, null);
             _sim.Events.Flush();
             if (f.Time >= cfg.flightSeconds) FinishFlight();
@@ -755,11 +1125,15 @@ namespace Antarium.Gameplay
             _lastSaved = null;
             Save(background: false, announce: false); // the flight is final once the new colony exists
             _achievements.Update(0f, _sim, force: true);
-            _hud.ShowToast($"The princesses founded a new colony. +{f.Earned} Genetic Memory: spend it in the genetic tree (G).");
+            _hud.ShowToast($"The princesses founded a new colony. +{f.Earned} Genetic Memory: spend it in the genetic tree ({Keys.Genetics}).");
             _hud.ShowModal(_hud.Genetics?.Root);
         }
 
-        void LookAt(int2 cell) => _camera.Position = WorldGrid.CellCenterToWorld(cell);
+        void LookAt(int2 cell)
+        {
+            _camera.Position = WorldGrid.CellCenterToWorld(cell);
+            _cameraJumped = true;
+        }
 
         /// <summary>The camera eases toward the ant the player controls.</summary>
         void FollowPossessed(float dt)
@@ -802,11 +1176,13 @@ namespace Antarium.Gameplay
         void OnDestroy()
         {
             _store?.Wait();
+            _rig?.Dispose();
             _input?.Dispose();
             EndSession();
             _audio?.Dispose();
             _platform?.Dispose();
             if (_panelSettings != null) Destroy(_panelSettings);
+            _oreSurvey?.Dispose();
             _content?.Dispose();
         }
     }

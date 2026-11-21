@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14707ad79a2368a40bf87987021cdcda, type: 3}
+  m_Name: wild_lineages
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GeneticDef
+  id: wild_lineages
+  displayName: Wild Lineages
+  description: 'Unlocks three biome variants: world modifiers that turn a layer into another rock with other creatures, for more Genetic Memory.'
+  treePosition: {x: 3, y: 4}
+  cost: 6
+  costPerLevel: 0
+  maxLevel: 1
+  prerequisites:
+  - {fileID: 11400000, guid: a2fb2cfb8ae4ded43acc29a82ca10745, type: 2}
+  effects:
+  - kind: 7
+    stat: 0
+    value: 0
+    item: {fileID: 0}
+    count: 0
+    research: {fileID: 0}
+    modifier: {fileID: 11400000, guid: 82c1832931aa0184d9b23c9a5c59789d, type: 2}
+    building: {fileID: 0}
+  - kind: 7
+    stat: 0
+    value: 0
+    item: {fileID: 0}
+    count: 0
+    research: {fileID: 0}
+    modifier: {fileID: 11400000, guid: 85d62b12e80155741a69ac22f5de2600, type: 2}
+    building: {fileID: 0}
+  - kind: 7
+    stat: 0
+    value: 0
+    item: {fileID: 0}
+    count: 0
+    research: {fileID: 0}
+    modifier: {fileID: 11400000, guid: 4fd6072280fc3114488236a23203c83c, type: 2}
+    building: {fileID: 0}

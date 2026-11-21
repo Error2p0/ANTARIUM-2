@@ -25,17 +25,31 @@ namespace Antarium.Gameplay
         public readonly InputAction Possess;
         /// <summary>Space: the possessed ant picks up / delivers / drops.</summary>
         public readonly InputAction Interact;
+        /// <summary>Configure what is under the pointer: storage filters, unloader / filter item, emitter scent, machine recipe.</summary>
+        public readonly InputAction Configure;
         public readonly InputAction Castes;
         public readonly InputAction Rotate;
         public readonly InputAction NextBuilding;
         public readonly InputAction PrevBuilding;
+        /// <summary>Tab: the next brush size (1, 2, 3) of the active painting tool (Milestone 11).</summary>
+        public readonly InputAction BrushSize;
         public readonly InputAction Overlay;
+        /// <summary>J: the light overlay (10.7).</summary>
+        public readonly InputAction LightOverlay;
+        /// <summary>M: the ore overlay (10.7).</summary>
+        public readonly InputAction OreOverlay;
         public readonly InputAction Research;
         /// <summary>G: the Genetic Memory tree.</summary>
         public readonly InputAction Genetics;
         /// <summary>N: the Nuptial Flight screen.</summary>
         public readonly InputAction Flight;
-        /// <summary>Z / X / C / V: the abilities in bar order.</summary>
+        /// <summary>H: the Queen panel (stats, evolutions).</summary>
+        public readonly InputAction Queen;
+        /// <summary>P: the job priority panel.</summary>
+        public readonly InputAction Priorities;
+        /// <summary>L: the Codex (the ruins' story, 10.5).</summary>
+        public readonly InputAction Codex;
+        /// <summary>Z / X / C / V / B: the abilities in bar order.</summary>
         public readonly InputAction[] Abilities;
         public readonly InputAction Menu;
         public readonly InputAction QuickSave;
@@ -84,20 +98,28 @@ namespace Antarium.Gameplay
             ToolPheromone = asset.FindAction("Tools/ToolPheromone", true);
             Possess = asset.FindAction("Tools/Possess", true);
             Interact = asset.FindAction("Tools/Interact", true);
+            Configure = asset.FindAction("Tools/Configure", true);
             Castes = asset.FindAction("View/Castes", true);
             Rotate = asset.FindAction("Tools/Rotate", true);
             NextBuilding = asset.FindAction("Tools/NextBuilding", true);
             PrevBuilding = asset.FindAction("Tools/PrevBuilding", true);
+            BrushSize = asset.FindAction("Tools/BrushSize", true);
             Overlay = asset.FindAction("View/Overlay", true);
+            LightOverlay = asset.FindAction("View/LightOverlay", true);
+            OreOverlay = asset.FindAction("View/OreOverlay", true);
             Research = asset.FindAction("View/Research", true);
             Genetics = asset.FindAction("View/Genetics", true);
             Flight = asset.FindAction("View/Flight", true);
+            Queen = asset.FindAction("View/Queen", true);
+            Priorities = asset.FindAction("View/Priorities", true);
+            Codex = asset.FindAction("View/Codex", true);
             Abilities = new[]
             {
                 asset.FindAction("Tools/Ability1", true),
                 asset.FindAction("Tools/Ability2", true),
                 asset.FindAction("Tools/Ability3", true),
                 asset.FindAction("Tools/Ability4", true),
+                asset.FindAction("Tools/Ability5", true),
             };
             Menu = asset.FindAction("System/Menu", true);
             QuickSave = asset.FindAction("System/QuickSave", true);
@@ -142,18 +164,25 @@ namespace Antarium.Gameplay
             Add("Tools", "Build", ToolBuild);
             Add("Tools", "Scent (pheromones)", ToolPheromone);
             Add("Tools", "Rotate / pick scent", Rotate);
+            Add("Tools", "Configure (storage, unloader, machine)", Configure);
             Add("Tools", "Next building / scent", NextBuilding);
             Add("Tools", "Previous building / scent", PrevBuilding);
+            Add("Tools", "Brush size (1, 2, 3)", BrushSize);
             Add("Tools", "Possess an ant / let go", Possess);
             Add("Tools", "Possessed ant: pick up / drop", Interact);
             for (int i = 0; i < Abilities.Length; i++) Add("Abilities", $"Ability {i + 1}", Abilities[i]);
             Add("Panels", "Flow overlay", Overlay);
+            Add("Panels", "Light overlay", LightOverlay);
+            Add("Panels", "Ore overlay", OreOverlay);
             Add("Panels", "Research", Research);
             Add("Panels", "Castes", Castes);
+            Add("Panels", "Queen", Queen);
+            Add("Panels", "Job priorities", Priorities);
+            Add("Panels", "Codex", Codex);
             Add("Panels", "Genetic Memory", Genetics);
             Add("Panels", "Nuptial Flight", Flight);
             Add("Game", "Menu / back", Menu);
-            Add("Game", "Controls and help", Help);
+            Add("Game", "Help and controls", Help);
             Add("Game", "Quick save", QuickSave);
             Add("Game", "Quick load", QuickLoad);
             return list.ToArray();

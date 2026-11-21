@@ -22,7 +22,12 @@ namespace Antarium.Presentation
             public Vector4 EdgeDark;
             public Vector4 Params;
             public Vector4 BaseColor;
+            /// <summary>Colour of the find it drops for the ore overlay; w = 1 if it is a find.</summary>
+            public Vector4 OreColor;
         }
+
+        /// <summary>What the terrain shader draws over the world (10.7); the flow overlay is drawn by the building and colony views.</summary>
+        public enum Overlay { None = 0, Light = 1, Ores = 2 }
 
         static readonly int CellsId = Shader.PropertyToID("_AntCells");
         static readonly int LightId = Shader.PropertyToID("_AntLight");
@@ -31,6 +36,7 @@ namespace Antarium.Presentation
         static readonly int WorldId = Shader.PropertyToID("_AntWorld");
         static readonly int PixelId = Shader.PropertyToID("_AntPixel");
         static readonly int WallId = Shader.PropertyToID("_AntWall");
+        static readonly int TileId = Shader.PropertyToID("_AntTile");
         static readonly int SkyTopId = Shader.PropertyToID("_AntSkyTop");
         static readonly int SkyHorizonId = Shader.PropertyToID("_AntSkyHorizon");
         static readonly int SkyRangeId = Shader.PropertyToID("_AntSkyRange");
@@ -42,11 +48,34 @@ namespace Antarium.Presentation
         static readonly int WaterSurfaceId = Shader.PropertyToID("_AntWaterSurface");
         static readonly int LavaId = Shader.PropertyToID("_AntLava");
         static readonly int LavaHotId = Shader.PropertyToID("_AntLavaHot");
+        static readonly int SmokeId = Shader.PropertyToID("_AntSmoke");
+        static readonly int FireId = Shader.PropertyToID("_AntFire");
+        static readonly int FireHotId = Shader.PropertyToID("_AntFireHot");
+        static readonly int EmberId = Shader.PropertyToID("_AntEmber");
         static readonly int GasId = Shader.PropertyToID("_AntGas");
         static readonly int TimeId = Shader.PropertyToID("_AntTime");
         static readonly int ScentId = Shader.PropertyToID("_AntScent");
         static readonly int ScentColorsId = Shader.PropertyToID("_AntScentColors");
         static readonly int ScentCoverId = Shader.PropertyToID("_AntScentCover");
+        static readonly int SkyLightId = Shader.PropertyToID("_AntSkyLight");
+        static readonly int StarsId = Shader.PropertyToID("_AntStars");
+        static readonly int ViewId = Shader.PropertyToID("_AntView");
+        static readonly int LightRampId = Shader.PropertyToID("_AntLightRamp");
+        static readonly int FallId = Shader.PropertyToID("_AntFall");
+        static readonly int WaterFoamId = Shader.PropertyToID("_AntWaterFoam");
+        static readonly int SceneryId = Shader.PropertyToID("_AntScenery");
+        static readonly int SceneryColorId = Shader.PropertyToID("_AntSceneryColor");
+        static readonly int SceneryMoreId = Shader.PropertyToID("_AntSceneryMore");
+        static readonly int SceneryInfoId = Shader.PropertyToID("_AntSceneryInfo");
+        static readonly int SnowId = Shader.PropertyToID("_AntSnow");
+        static readonly int CloudId = Shader.PropertyToID("_AntCloud");
+        static readonly int CloudBandId = Shader.PropertyToID("_AntCloudBand");
+        static readonly int CloudColorId = Shader.PropertyToID("_AntCloudColor");
+        static readonly int CloudShadeId = Shader.PropertyToID("_AntCloudShade");
+        /// <summary>Most background layers the terrain shader draws.</summary>
+        public const int MaxSceneryLayers = 4;
+        float _rain;
+        readonly uint _seed;
 
         readonly WorldGrid _world;
         readonly LightSystem _light;
@@ -64,8 +93,9 @@ namespace Antarium.Presentation
         readonly Mesh _mesh;
 
         public TerrainView(WorldGrid world, LightSystem light, PheromoneSystem pheromones, ContentDB content, RenderConfig render,
-            Material terrainMaterial, Transform parent)
+            Material terrainMaterial, Transform parent, uint seed = 0u)
         {
+            _seed = seed;
             _world = world;
             _light = light;
             _pheromones = pheromones;
@@ -95,6 +125,7 @@ namespace Antarium.Presentation
                     EdgeDark = ToWorking(Color.Lerp(m.shadowColor, Color.black, 0.3f)),
                     Params = new Vector4(m.IsAir ? 1f : 0f, m.selfGlow, 0f, 0f),
                     BaseColor = ToWorking(m.baseColor),
+                    OreColor = OreColorOf(content, (ushort)i),
                 };
             }
             _materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, gpu.Length, Marshal.SizeOf<MaterialGpu>()) { name = "AntMaterials" };
@@ -129,20 +160,115 @@ namespace Antarium.Presentation
             Shader.SetGlobalColor(WaterSurfaceId, ToWorkingAlpha(render.waterSurfaceColor));
             Shader.SetGlobalColor(LavaId, ToWorkingAlpha(render.lavaColor));
             Shader.SetGlobalColor(LavaHotId, ToWorkingAlpha(render.lavaHotColor));
+            Shader.SetGlobalColor(SmokeId, ToWorkingAlpha(render.smokeColor));
+            Shader.SetGlobalColor(FireId, ToWorkingAlpha(render.fireColor));
+            Shader.SetGlobalColor(FireHotId, ToWorkingAlpha(render.fireHotColor));
+            Shader.SetGlobalColor(EmberId, ToWorkingAlpha(render.emberColor));
             Shader.SetGlobalColor(GasId, ToWorkingAlpha(render.gasColor));
+            Shader.SetGlobalColor(WaterFoamId, ToWorkingAlpha(render.waterFoamColor));
+            Shader.SetGlobalVector(FallId, new Vector4(render.fallWidth, render.fallSpeed, render.fallStreakLength, render.fallStreakShare));
+            ApplyScenery(render);
             Shader.SetGlobalBuffer(MaterialsId, _materialBuffer);
             Shader.SetGlobalTexture(MaterialTexId, _materialTextures);
             Shader.SetGlobalVector(WorldId, new Vector4(_world.Width, _world.Height, _world.ChunksX, 0f));
             Shader.SetGlobalVector(PixelId, new Vector4(WorldConstants.PixelsPerUnit, WorldConstants.PixelsPerCell, render.lightBands, render.edgeNoise));
             float gamma = IsLinear ? 2.2f : 1f;
             Shader.SetGlobalVector(WallId, new Vector4(render.wallBrightness, render.wallOcclusion, gamma, render.wallContrast));
+            Shader.SetGlobalVector(TileId, new Vector4(WorldConstants.MaterialTextureSize - 1, render.patchContrast, render.patchTint, 0f));
             Shader.SetGlobalVector(SpriteMinLightId, new Vector4(render.spriteMinLight, 0f, 0f, 0f));
             Shader.SetGlobalColor(OverlayId, render.miningOrderColor);
             Shader.SetGlobalColor(StorageColorId, render.storageColor);
             Shader.SetGlobalColor(SkyTopId, render.skyTop);
             Shader.SetGlobalColor(SkyHorizonId, render.skyHorizon);
+            Shader.SetGlobalVector(SkyLightId, Vector4.one);
+            Shader.SetGlobalVector(StarsId, Vector4.zero);
+            var ramp = new Vector4[8];
+            int bands = render.lightOverlayRamp != null ? Mathf.Min(render.lightOverlayRamp.Length, ramp.Length) : 0;
+            for (int i = 0; i < bands; i++) ramp[i] = ToWorking(render.lightOverlayRamp[i]);
+            Shader.SetGlobalVectorArray(LightRampId, ramp);
+            _rampSize = Mathf.Max(1, bands);
+            SetOverlay(Overlay.None);
             float horizon = (_world.Height - content.WorldGen.skyHeight) * WorldConstants.CellSize;
             Shader.SetGlobalVector(SkyRangeId, new Vector4(horizon, _world.Height * WorldConstants.CellSize, 0f, 0f));
+        }
+
+        /// <summary>The surface background layers, snow and clouds (Milestone 11); the cloud cover follows the rain in <see cref="SetSky"/>.</summary>
+        void ApplyScenery(RenderConfig render)
+        {
+            var shape = new Vector4[MaxSceneryLayers];
+            var color = new Vector4[MaxSceneryLayers];
+            var more = new Vector4[MaxSceneryLayers];
+            int count = render.sceneryLayers != null ? Mathf.Min(render.sceneryLayers.Length, MaxSceneryLayers) : 0;
+            for (int i = 0; i < count; i++)
+            {
+                var l = render.sceneryLayers[i];
+                shape[i] = new Vector4((int)l.shape, l.foot, l.height, l.width);
+                var c = ToWorking(l.color);
+                color[i] = new Vector4(c.r, c.g, c.b, l.haze);
+                more[i] = new Vector4(l.parallax, l.snowLine, l.mist, l.treeSpacing);
+            }
+            Shader.SetGlobalVectorArray(SceneryId, shape);
+            Shader.SetGlobalVectorArray(SceneryColorId, color);
+            Shader.SetGlobalVectorArray(SceneryMoreId, more);
+            // The seed picks where the peaks and trees stand (kept small: it offsets integer hash lattices).
+            Shader.SetGlobalVector(SceneryInfoId, new Vector4(count, _seed % 65521u, 0f, render.sceneryVertical));
+            Shader.SetGlobalColor(SnowId, ToWorking(render.snowColor));
+            Shader.SetGlobalVector(CloudBandId, new Vector4(render.cloudBand.x, render.cloudBand.y, render.cloudSize, render.starParallax));
+            Shader.SetGlobalColor(CloudColorId, ToWorking(render.cloudColor));
+            Shader.SetGlobalColor(CloudShadeId, ToWorking(render.cloudShadeColor));
+            SetCloudCover();
+        }
+
+        void SetCloudCover() => Shader.SetGlobalVector(CloudId,
+            new Vector4(Mathf.Lerp(_render.cloudCover, _render.rainCloudCover, _rain), _render.cloudHaze, _render.cloudDrift, _render.cloudParallax));
+
+        /// <summary>
+        /// Sky colours, sky light and stars for the time of day and the weather (rain greys the sky and dims the light; it
+        /// fades in and out over a few seconds); <paramref name="flash"/> (0..1, a lightning bolt) lights sky and ground up
+        /// for a moment. Also sets the light map's sky scale for particles.
+        /// </summary>
+        public void SetSky(SurfaceState surface, Color daySkyLight, float dt, float flash = 0f)
+        {
+            float d = surface.Daylight;
+            float target = surface.Weather == WeatherKind.Rain ? 1f : 0f;
+            _rain = Mathf.MoveTowards(_rain, target, dt / 4f);
+            SetCloudCover();
+            var r = _render;
+            float twilight = 1f - Mathf.Abs(2f * d - 1f); // 1 halfway through a sunrise or sunset
+            var top = Color.Lerp(r.nightSkyTop, r.skyTop, d);
+            var horizon = Color.Lerp(Color.Lerp(r.nightSkyHorizon, r.skyHorizon, d), r.duskSkyHorizon, twilight * 0.85f);
+            top = Color.Lerp(top, r.duskSkyHorizon * 0.6f, twilight * 0.25f);
+            float grey = _rain * 0.65f;
+            top = Color.Lerp(top, r.rainSky * Mathf.Lerp(0.25f, 1f, d), grey);
+            horizon = Color.Lerp(horizon, r.rainSky * Mathf.Lerp(0.3f, 1.1f, d), grey);
+            float bolt = Mathf.Clamp01(flash * r.lightningFlash);
+            top = Color.Lerp(top, r.lightningColor * 0.75f, bolt * 0.55f);
+            horizon = Color.Lerp(horizon, r.lightningColor * 0.9f, bolt * 0.65f);
+            Shader.SetGlobalColor(SkyTopId, top);
+            Shader.SetGlobalColor(SkyHorizonId, horizon);
+
+            var night = r.nightLight * r.nightLightStrength;
+            var sky = Color.Lerp(night, daySkyLight, d) * Mathf.Lerp(1f, r.rainLight, _rain);
+            sky = Color.Lerp(sky, r.lightningColor, bolt * 0.7f);
+            Shader.SetGlobalVector(SkyLightId, new Vector4(sky.r, sky.g, sky.b, 1f));
+            float stars = Mathf.Clamp01(1f - d * 2f) * (1f - _rain);
+            Shader.SetGlobalVector(StarsId, new Vector4(r.starColor.r, r.starColor.g, r.starColor.b, stars));
+            _light.SkyScale = Mathf.Lerp(Mathf.Lerp(r.nightLightStrength, 1f, d) * Mathf.Lerp(1f, r.rainLight, _rain), 1f, bolt * 0.7f);
+        }
+
+        int _rampSize = 1;
+
+        /// <summary>The light or ore overlay over the terrain, or none.</summary>
+        public void SetOverlay(Overlay overlay) =>
+            Shader.SetGlobalVector(ViewId, new Vector4((int)overlay, _render.oreOverlayDim, _rampSize, 0f));
+
+        /// <summary>The item colour of a find (a material dropping a non-food item), w = 1; zero for anything else.</summary>
+        static Vector4 OreColorOf(ContentDB content, ushort material)
+        {
+            ushort item = OreSurvey.FindItem(content, material);
+            if (item == ContentDB.NoItem) return Vector4.zero;
+            var c = ToWorking(content.Items[item].MapColor);
+            return new Vector4(c.r, c.g, c.b, 1f);
         }
 
         /// <summary>Pheromones are drawn faintly, or clearly while the Pheromone tool is active.</summary>

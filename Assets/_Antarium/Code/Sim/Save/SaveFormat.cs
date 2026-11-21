@@ -17,6 +17,8 @@ namespace Antarium.Sim
         public double PlayTime;
         public int Ants;
         public int MaxDepth;
+        /// <summary>The bloodline's generation (flights + 1; format 6, 10.6). 0 in older saves (unknown).</summary>
+        public int Generation;
     }
 
     /// <summary>
@@ -86,17 +88,23 @@ namespace Antarium.Sim
             w.Write(h.PlayTime);
             w.Write(h.Ants);
             w.Write(h.MaxDepth);
+            if (h.Version >= 6) w.Write(h.Generation);
         }
 
-        static SaveHeader ReadHeaderFields(BinaryReader r) => new()
+        static SaveHeader ReadHeaderFields(BinaryReader r)
         {
-            Version = r.ReadInt32(),
-            SavedUtc = new DateTime(r.ReadInt64(), DateTimeKind.Utc),
-            Seed = r.ReadUInt32(),
-            PlayTime = r.ReadDouble(),
-            Ants = r.ReadInt32(),
-            MaxDepth = r.ReadInt32(),
-        };
+            var h = new SaveHeader
+            {
+                Version = r.ReadInt32(),
+                SavedUtc = new DateTime(r.ReadInt64(), DateTimeKind.Utc),
+                Seed = r.ReadUInt32(),
+                PlayTime = r.ReadDouble(),
+                Ants = r.ReadInt32(),
+                MaxDepth = r.ReadInt32(),
+            };
+            if (h.Version >= 6) h.Generation = r.ReadInt32();
+            return h;
+        }
     }
 
     /// <summary>Small helpers for the section payloads.</summary>

@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Amber
   color: {r: 0.8901961, g: 0.60784316, b: 0.16862746, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 1, g: 0.8235294, b: 0.12156863, a: 1}

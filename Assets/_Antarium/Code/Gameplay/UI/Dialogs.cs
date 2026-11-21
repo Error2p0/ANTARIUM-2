@@ -8,27 +8,33 @@ using UnityEngine.UIElements;
 namespace Antarium.Gameplay
 {
     /// <summary>
-    /// Esc menu: resume, save, load, start a new colony (confirmed by a second click), settings, achievements, help,
-    /// back to the title screen, quit.
+    /// Esc menu: resume, save, load, start a new colony or a new bloodline (both confirmed by a second click), settings,
+    /// achievements, help, back to the title screen, quit.
     /// </summary>
     public sealed class MenuDialog
     {
         const float ConfirmSeconds = 3f;
 
-        readonly Button _newGame;
+        readonly Button _newGame, _newBloodline;
         readonly Label _status;
-        float _confirm;
+        float _confirm, _confirmBloodline;
 
         public VisualElement Root { get; }
-        public event Action Resume, Save, Load, NewGame, Settings, Achievements, Help, MainMenu, Quit;
+        public event Action Resume, Save, Load, NewGame, NewBloodline, Settings, Achievements, Help, MainMenu, Quit;
 
         public MenuDialog(float autosaveSeconds)
         {
             Root = Dialogs.Box("Antarium");
             _status = Dialogs.Text(Root, "", "dialog__note");
-            Dialogs.Button(Root, "Resume (Esc)", () => Resume?.Invoke());
-            Dialogs.Button(Root, "Save (F5)", () => Save?.Invoke());
-            Dialogs.Button(Root, "Load last save (F9)", () => Load?.Invoke());
+            var resume = Dialogs.Button(Root, "Resume", () => Resume?.Invoke());
+            var save = Dialogs.Button(Root, "Save", () => Save?.Invoke());
+            var load = Dialogs.Button(Root, "Load last save", () => Load?.Invoke());
+            Keys.Bind(() =>
+            {
+                resume.text = Keys.With("Resume", Keys.Menu);
+                save.text = Keys.With("Save", Keys.Save);
+                load.text = Keys.With("Load last save", Keys.Load);
+            });
             _newGame = Dialogs.Button(Root, "New colony", () =>
             {
                 if (_confirm > 0f)
@@ -38,9 +44,19 @@ namespace Antarium.Gameplay
                 }
                 else _confirm = ConfirmSeconds;
             });
+            _newBloodline = Dialogs.Button(Root, "New bloodline", () =>
+            {
+                if (_confirmBloodline > 0f)
+                {
+                    _confirmBloodline = 0f;
+                    NewBloodline?.Invoke();
+                }
+                else _confirmBloodline = ConfirmSeconds;
+            });
             Dialogs.Button(Root, "Settings", () => Settings?.Invoke());
             Dialogs.Button(Root, "Achievements", () => Achievements?.Invoke());
-            Dialogs.Button(Root, "Controls and help (F1)", () => Help?.Invoke());
+            var help = Dialogs.Button(Root, "Help and controls", () => Help?.Invoke());
+            Keys.Bind(() => help.text = Keys.With("Help and controls", Keys.Help));
             Dialogs.Button(Root, "Save and return to title", () => MainMenu?.Invoke());
             Dialogs.Button(Root, "Save and quit", () => Quit?.Invoke());
             Dialogs.Text(Root, (autosaveSeconds > 0f ? $"The game saves itself every {HudText.Duration(autosaveSeconds)} and when you quit. "
@@ -55,6 +71,10 @@ namespace Antarium.Gameplay
             bool confirming = _confirm > 0f;
             _newGame.text = confirming ? "Click again: abandon this colony?" : "New colony";
             _newGame.EnableInClassList("menu-button--warn", confirming);
+            if (_confirmBloodline > 0f) _confirmBloodline -= dt;
+            bool restart = _confirmBloodline > 0f;
+            _newBloodline.text = restart ? "Click again: start over without Genetic Memory?" : "New bloodline";
+            _newBloodline.EnableInClassList("menu-button--warn", restart);
         }
     }
 

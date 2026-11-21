@@ -25,11 +25,12 @@ namespace Antarium.Gameplay
         /// <summary>A share button: caste and -1 / +1 step.</summary>
         public event Action<AntCaste, int> ShareStep;
 
-        public CastesPanel(VisualElement root, ContentDB content)
+        public CastesPanel(VisualElement root, ContentDB content, ArtLibrary art = null, Tooltips tips = null)
         {
             _root = root;
             _content = content;
-            var title = new Label("Castes (K)");
+            var title = new Label();
+            Keys.Bind(() => title.text = Keys.With("Castes", Keys.Castes));
             title.AddToClassList("panel__title");
             root.Add(title);
             foreach (var caste in content.CasteOrder)
@@ -38,10 +39,17 @@ namespace Antarium.Gameplay
                 var def = content.Caste(caste);
                 var row = new VisualElement();
                 row.AddToClassList("caste");
-                row.tooltip = def.description;
+                string icon = "caste_" + caste.ToString().ToLowerInvariant();
+                string share = caste == AntCaste.Worker
+                    ? "Workers fill whatever share the other castes leave."
+                    : "- / +: its share of the colony. The queen lays whichever caste is furthest below its share.";
+                tips?.Add(row, () => $"{def.DisplayName}: {def.description}\n{share}", icon);
                 var swatch = new VisualElement { pickingMode = PickingMode.Ignore };
-                swatch.AddToClassList("caste__swatch");
-                swatch.style.backgroundColor = def.color;
+                if (!HudController.SetIcon(swatch, art, "caste_" + caste.ToString().ToLowerInvariant(), "caste__icon"))
+                {
+                    swatch.AddToClassList("caste__swatch");
+                    swatch.style.backgroundColor = def.color;
+                }
                 var name = new Label(def.DisplayName) { pickingMode = PickingMode.Ignore };
                 name.AddToClassList("caste__name");
                 _counts[c] = new Label { pickingMode = PickingMode.Ignore };

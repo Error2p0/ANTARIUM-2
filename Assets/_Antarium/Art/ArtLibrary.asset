@@ -1,0 +1,655 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02903f34140310549a6c5d52d9ec9191, type: 3}
+  m_Name: ArtLibrary
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ArtLibrary
+  entries:
+  - name: Buildings/ancient_engine
+    texture: {fileID: 2800000, guid: 3f78cff076c12404a9e1dc07b406578d, type: 3}
+  - name: Buildings/aphid_ranch
+    texture: {fileID: 2800000, guid: 7a399cded4f84314d890ebae0a6d8e87, type: 3}
+  - name: Buildings/archive
+    texture: {fileID: 2800000, guid: 198a7556b6924264eb9c49ae826b07d2, type: 3}
+  - name: Buildings/belt_item
+    texture: {fileID: 2800000, guid: 179731c64311f364f93cb936f3a6a305, type: 3}
+  - name: Buildings/chest
+    texture: {fileID: 2800000, guid: ce7816fde99a90c4d8424b015677819e, type: 3}
+  - name: Buildings/crusher
+    texture: {fileID: 2800000, guid: 049cac4200723984892d522ce63ff037, type: 3}
+  - name: Buildings/crystal_resonator
+    texture: {fileID: 2800000, guid: 1824e5bf59af20847be9148456d3e2c1, type: 3}
+  - name: Buildings/dot
+    texture: {fileID: 2800000, guid: 777b29bd163f46745b6a82db687d3b8b, type: 3}
+  - name: Buildings/earth_wall
+    texture: {fileID: 2800000, guid: 9756eddef7ddcdf42a94adce54624a2b, type: 3}
+  - name: Buildings/filter
+    texture: {fileID: 2800000, guid: e562de469bbac6146833159b586e69f5, type: 3}
+  - name: Buildings/fungus_garden
+    texture: {fileID: 2800000, guid: a3044ec875876f242b300b33357c9b8a, type: 3}
+  - name: Buildings/generic
+    texture: {fileID: 2800000, guid: 531f871f14322604fa7ec4f4ac90f598, type: 3}
+  - name: Buildings/guard_post
+    texture: {fileID: 2800000, guid: 49ba254ecd7a51845a67ad969390c7ac, type: 3}
+  - name: Buildings/iron_belt
+    texture: {fileID: 2800000, guid: cfc0d904d07b41d42ad45f28f3d6fa6d, type: 3}
+  - name: Buildings/iron_gate
+    texture: {fileID: 2800000, guid: f1037c35aeb996b4b9f18ffb94049909, type: 3}
+  - name: Buildings/iron_lift
+    texture: {fileID: 2800000, guid: 5ea837b3e6a70874285c62f89b78e271, type: 3}
+  - name: Buildings/nursery
+    texture: {fileID: 2800000, guid: 4ecaee451f8d50b4b93ebc77bbfce58f, type: 3}
+  - name: Buildings/pheromone_emitter
+    texture: {fileID: 2800000, guid: 47a9b753bcb575a428fb4dfd6006a79d, type: 3}
+  - name: Buildings/princess_chamber
+    texture: {fileID: 2800000, guid: ac0c15bf0b7062c4e93a882b7658bc7c, type: 3}
+  - name: Buildings/pump
+    texture: {fileID: 2800000, guid: 04fd1c2d0a5b7514183d5c404b75a7f9, type: 3}
+  - name: Buildings/queens_throne
+    texture: {fileID: 2800000, guid: dc5c7fe81ed1e854b9901bbf6e8d02c4, type: 3}
+  - name: Buildings/resin_gate
+    texture: {fileID: 2800000, guid: 50c96f00507a3da4eb6676e0df1cb96d, type: 3}
+  - name: Buildings/resin_trap
+    texture: {fileID: 2800000, guid: 202ce3a16bcc232439175f42a536d369, type: 3}
+  - name: Buildings/root_lift
+    texture: {fileID: 2800000, guid: 5e111f6ba9a818f45a028744e7d6f3ff, type: 3}
+  - name: Buildings/silk_belt
+    texture: {fileID: 2800000, guid: 5a325923c38e4b046a800f252d85c564, type: 3}
+  - name: Buildings/smelter
+    texture: {fileID: 2800000, guid: 845febede4c18594ea422549ee168535, type: 3}
+  - name: Buildings/splitter
+    texture: {fileID: 2800000, guid: 67adb71c0bdc4c84c9eb0226f23684b3, type: 3}
+  - name: Buildings/stored_item
+    texture: {fileID: 2800000, guid: 8c6ae28892df8884993af4f1cb9ca259, type: 3}
+  - name: Buildings/unloader
+    texture: {fileID: 2800000, guid: 4f953924370318d48918216b8d2d0ead, type: 3}
+  - name: Buildings/water_wheel
+    texture: {fileID: 2800000, guid: 71ee29b37d3d2bb48a126ecdecab2839, type: 3}
+  - name: Colony/ant_builder
+    texture: {fileID: 2800000, guid: 176df814974107c4b9c88eca1b39efb7, type: 3}
+  - name: Colony/ant_engineer
+    texture: {fileID: 2800000, guid: 38755752a1cbfe94eae6f1267e728551, type: 3}
+  - name: Colony/ant_fire
+    texture: {fileID: 2800000, guid: 1a6b3bc3c42710f47b613f8a00050529, type: 3}
+  - name: Colony/ant_glow
+    texture: {fileID: 2800000, guid: ea2cc3664f23c53488696e02c96b2077, type: 3}
+  - name: Colony/ant_glow_halo
+    texture: {fileID: 2800000, guid: 3c6c5bf264d95ed458ed30b357c014e3, type: 3}
+  - name: Colony/ant_hauler
+    texture: {fileID: 2800000, guid: 36b7bbd131c0d60468ab928cbf6cab65, type: 3}
+  - name: Colony/ant_miner
+    texture: {fileID: 2800000, guid: ffdf689ed05495140af269b14ee80232, type: 3}
+  - name: Colony/ant_nurse
+    texture: {fileID: 2800000, guid: 04c0fae14b4f3c7468a6e9409cc9e5f4, type: 3}
+  - name: Colony/ant_scout
+    texture: {fileID: 2800000, guid: 1099b548ae8a9f74b87fc925fd6967e5, type: 3}
+  - name: Colony/ant_soldier
+    texture: {fileID: 2800000, guid: 25dc33cf78f11b646bb4144d3627e300, type: 3}
+  - name: Colony/ant_worker
+    texture: {fileID: 2800000, guid: 77c0423eaa263a74faf99b90043274e2, type: 3}
+  - name: Colony/apple
+    texture: {fileID: 2800000, guid: 5ceb35f3901e0024d80a935f8672afb0, type: 3}
+  - name: Colony/berries
+    texture: {fileID: 2800000, guid: dfa6436f560c3a740bf4c4eaac2b0348, type: 3}
+  - name: Colony/carry
+    texture: {fileID: 2800000, guid: 8d4f69de9031d5a4da9015c7c782bbed, type: 3}
+  - name: Colony/egg
+    texture: {fileID: 2800000, guid: a4b52dd7b8964f64184132d25eb4cfe2, type: 3}
+  - name: Colony/glow_mushroom
+    texture: {fileID: 2800000, guid: 6234a6fdbefa15f4ca00661d1bcaff6b, type: 3}
+  - name: Colony/golden_aphid
+    texture: {fileID: 2800000, guid: e3bd71b680843ec4dbb06a93465f1219, type: 3}
+  - name: Colony/golden_apple
+    texture: {fileID: 2800000, guid: c9170be79fb7eec428aeb2a5c026e3e2, type: 3}
+  - name: Colony/golden_beetle
+    texture: {fileID: 2800000, guid: 130817aaf16c561478d54ce564d335af, type: 3}
+  - name: Colony/mushroom
+    texture: {fileID: 2800000, guid: 9482743052287f540be14c8ff2f2a9ae, type: 3}
+  - name: Colony/pile
+    texture: {fileID: 2800000, guid: 9749947094527004283770e1e87ea1d8, type: 3}
+  - name: Colony/princess
+    texture: {fileID: 2800000, guid: 2028d2c6fe842b54c8b6b43ee530f64a, type: 3}
+  - name: Colony/queen
+    texture: {fileID: 2800000, guid: 4ed4c0ce88ccded47a83d136f3de8da7, type: 3}
+  - name: Colony/toadstool
+    texture: {fileID: 2800000, guid: 2b6710fd9cb4cd84cb4f8474cab43fb3, type: 3}
+  - name: Enemies/centipede
+    texture: {fileID: 2800000, guid: cc8a6c440cf21184c8f92351e2051797, type: 3}
+  - name: Enemies/fire_beetle
+    texture: {fileID: 2800000, guid: 6bdedbead5dc4ed4dbba61e63c866115, type: 3}
+  - name: Enemies/guardian
+    texture: {fileID: 2800000, guid: 2cca79b173b3ec64cbabdfac5bc5e826, type: 3}
+  - name: Enemies/mite
+    texture: {fileID: 2800000, guid: b23ca6a880b45854397165dc8db53932, type: 3}
+  - name: Enemies/mole_cricket
+    texture: {fileID: 2800000, guid: bcf85b588890b7c43b1f30946374705f, type: 3}
+  - name: Enemies/mole_cricket_dig
+    texture: {fileID: 2800000, guid: 8ff2e91a4e843414f97bfc55d17504b2, type: 3}
+  - name: Enemies/rival_ant
+    texture: {fileID: 2800000, guid: ad93ca045a8b33548bfcd146534c98a6, type: 3}
+  - name: Enemies/spider
+    texture: {fileID: 2800000, guid: c397a0719e0b32e468657db557cf0a7b, type: 3}
+  - name: Enemies/termite
+    texture: {fileID: 2800000, guid: 000798fd5828d9d43a299b46deffe424, type: 3}
+  - name: Enemies/wolf_spider
+    texture: {fileID: 2800000, guid: 86e994e6217ccaf428013daf7f8732bf, type: 3}
+  - name: Surface/aphid
+    texture: {fileID: 2800000, guid: 39ae585097171094b8e874e93f83fe7d, type: 3}
+  - name: Surface/bird
+    texture: {fileID: 2800000, guid: 64e700ed9c8d1634c9fa01df0e8d686f, type: 3}
+  - name: Surface/bird_dive
+    texture: {fileID: 2800000, guid: 708f4d55377e7034bb78252866adbab7, type: 3}
+  - name: Surface/plant_berry_bush
+    texture: {fileID: 2800000, guid: bb07fc3fd6172044e804b15b9f8fa56d, type: 3}
+  - name: Surface/plant_bush
+    texture: {fileID: 2800000, guid: 2355605f6d657a64c9a5ea627571554e, type: 3}
+  - name: Surface/plant_fern
+    texture: {fileID: 2800000, guid: da1a641a1c201fd4fb4e2ee2dd0f3ccc, type: 3}
+  - name: Surface/plant_flower
+    texture: {fileID: 2800000, guid: de2f648b571644a4d80036235d1ec5e5, type: 3}
+  - name: Surface/tree_apple
+    texture: {fileID: 2800000, guid: 208fb83c98fa1d349a248f22ed822635, type: 3}
+  - name: Surface/tree_oak
+    texture: {fileID: 2800000, guid: 16f47b5acfcbe814e85155c73f85dedc, type: 3}
+  - name: Surface/tree_pine
+    texture: {fileID: 2800000, guid: eb0211f9f119b984cbf887e1301d307e, type: 3}
+  - name: Terrain/amber
+    texture: {fileID: 2800000, guid: fc4be21531c25c545b5f650a1a49e261, type: 3}
+  - name: Terrain/amethyst
+    texture: {fileID: 2800000, guid: 9e7ced599f8861b4a8d293f6526914c0, type: 3}
+  - name: Terrain/ash
+    texture: {fileID: 2800000, guid: 895111d4e008aa04d8fa540648e52870, type: 3}
+  - name: Terrain/basalt
+    texture: {fileID: 2800000, guid: 5e795554c7f8abd48afb47f1d5cb98d5, type: 3}
+  - name: Terrain/bedrock
+    texture: {fileID: 2800000, guid: f5bbd664b5f7b954092a8afb8db41690, type: 3}
+  - name: Terrain/clay
+    texture: {fileID: 2800000, guid: e9bad0ab72ee37745b64fdeaef261302, type: 3}
+  - name: Terrain/coal
+    texture: {fileID: 2800000, guid: 6773ff54015f0764a86e346f14898b40, type: 3}
+  - name: Terrain/copper_ore
+    texture: {fileID: 2800000, guid: 8ff30c567c8e7644e925c38dddfd7820, type: 3}
+  - name: Terrain/deadwood
+    texture: {fileID: 2800000, guid: 16ee334aeb404594e8857abac185918d, type: 3}
+  - name: Terrain/dirt
+    texture: {fileID: 2800000, guid: 2ca0b8133b696be439453a1e7b32c49a, type: 3}
+  - name: Terrain/elder_leaves
+    texture: {fileID: 2800000, guid: ba6c002f297f9744f859ffb04347e4ce, type: 3}
+  - name: Terrain/elderwood
+    texture: {fileID: 2800000, guid: c21c835bf8a47ca459925cd78e0ac802, type: 3}
+  - name: Terrain/ember_stone
+    texture: {fileID: 2800000, guid: c956bd60c0037ce48bef109063b67cd3, type: 3}
+  - name: Terrain/fossil
+    texture: {fileID: 2800000, guid: 965f2da78e56cc1438eafcc5750eb3ba, type: 3}
+  - name: Terrain/giant_fungus
+    texture: {fileID: 2800000, guid: b03e0a05b3370ff4ca54dbc816506218, type: 3}
+  - name: Terrain/gley_clay
+    texture: {fileID: 2800000, guid: 13a65582338e9824284eec3e492282c4, type: 3}
+  - name: Terrain/glow_crystal
+    texture: {fileID: 2800000, guid: c77a36ca4c3f52440947d1aafe736205, type: 3}
+  - name: Terrain/grass
+    texture: {fileID: 2800000, guid: 1c601b829d97a2641a671c44800d4f87, type: 3}
+  - name: Terrain/grub_nest
+    texture: {fileID: 2800000, guid: 5a6804288150c924296606be0663fd90, type: 3}
+  - name: Terrain/iron_ore
+    texture: {fileID: 2800000, guid: 0fc46325fccb9db4a94d56bed61724ff, type: 3}
+  - name: Terrain/magma_rock
+    texture: {fileID: 2800000, guid: e6e65df7933e6c3498d123dfb4662b86, type: 3}
+  - name: Terrain/meteorite
+    texture: {fileID: 2800000, guid: 08922382c847d644fa71b1cdd05e5f97, type: 3}
+  - name: Terrain/mycelium
+    texture: {fileID: 2800000, guid: 1f95b95bfa4ecf54fa41dc6debb8fa51, type: 3}
+  - name: Terrain/obsidian
+    texture: {fileID: 2800000, guid: 125c83a27aca6144a964cbf7720b8b55, type: 3}
+  - name: Terrain/packed_earth
+    texture: {fileID: 2800000, guid: 98657bd2a4b1d674592b4a988b069bc1, type: 3}
+  - name: Terrain/pebbles
+    texture: {fileID: 2800000, guid: 04447c53a7c0aca4792e9b4dd699cae9, type: 3}
+  - name: Terrain/quartzite
+    texture: {fileID: 2800000, guid: 6d1279889d0cb7a41929b1046048cdab, type: 3}
+  - name: Terrain/relic
+    texture: {fileID: 2800000, guid: a6109042268e27842b8fb9579d693526, type: 3}
+  - name: Terrain/root
+    texture: {fileID: 2800000, guid: 3daf0d3b1e7350441ae79ca090c2184d, type: 3}
+  - name: Terrain/ruin_brick
+    texture: {fileID: 2800000, guid: a2ebffd19c530d44f8d2c69d3741eb92, type: 3}
+  - name: Terrain/sand
+    texture: {fileID: 2800000, guid: 2b8b1e3208406ed4c8f4890b0d80fc60, type: 3}
+  - name: Terrain/stone
+    texture: {fileID: 2800000, guid: 8ac42b04d3326204b8873a388dcefe5e, type: 3}
+  - name: Terrain/tablet
+    texture: {fileID: 2800000, guid: c7f227d9a1d6b8b468f60627693cb85a, type: 3}
+  - name: Terrain/tree_root
+    texture: {fileID: 2800000, guid: 242372ada0c8cd54badc7e953100168f, type: 3}
+  - name: UI/Achievements/ACH_ANCIENT_ENGINE
+    texture: {fileID: 2800000, guid: dd7457472e0ee404391945a8a667f8b7, type: 3}
+  - name: UI/Achievements/ACH_ANCIENT_ENGINE_locked
+    texture: {fileID: 2800000, guid: 747fd9881a213c647b00a0a93231143b, type: 3}
+  - name: UI/Achievements/ACH_ANTS_1000
+    texture: {fileID: 2800000, guid: c8860971759a0d84ebc52acc6f39aa71, type: 3}
+  - name: UI/Achievements/ACH_ANTS_1000_locked
+    texture: {fileID: 2800000, guid: aa09a4d621898ed47bc6c8f451ebc2d9, type: 3}
+  - name: UI/Achievements/ACH_ANTS_250
+    texture: {fileID: 2800000, guid: b6494ac4e2d15b54c8c618c852bc0581, type: 3}
+  - name: UI/Achievements/ACH_ANTS_250_locked
+    texture: {fileID: 2800000, guid: 5f2296fd41fffc247b666bf4ade864ed, type: 3}
+  - name: UI/Achievements/ACH_ANTS_50
+    texture: {fileID: 2800000, guid: b9c7a0e71090baa478921235a7ee9b54, type: 3}
+  - name: UI/Achievements/ACH_ANTS_50_locked
+    texture: {fileID: 2800000, guid: 340faa90742f0444087b118cfbba795a, type: 3}
+  - name: UI/Achievements/ACH_APPLES_25
+    texture: {fileID: 2800000, guid: 9eecbda54f2d25a4792b5a1c4a859822, type: 3}
+  - name: UI/Achievements/ACH_APPLES_25_locked
+    texture: {fileID: 2800000, guid: 6d5be0471ba7ebb428e7d2338a075124, type: 3}
+  - name: UI/Achievements/ACH_BELTS_200
+    texture: {fileID: 2800000, guid: e598580b2d668c048a6f591e4f7919f0, type: 3}
+  - name: UI/Achievements/ACH_BELTS_200_locked
+    texture: {fileID: 2800000, guid: 2b5918b2ee248164c88c13038fa093d5, type: 3}
+  - name: UI/Achievements/ACH_BERRIES_50
+    texture: {fileID: 2800000, guid: 32c48e99c1f8a374e9c9b333ef5ad43e, type: 3}
+  - name: UI/Achievements/ACH_BERRIES_50_locked
+    texture: {fileID: 2800000, guid: bc3374e9cf2e14342a4733a72dbd3263, type: 3}
+  - name: UI/Achievements/ACH_BREAKING_GROUND
+    texture: {fileID: 2800000, guid: 6c084e82123a29c4fa46c56565b85d31, type: 3}
+  - name: UI/Achievements/ACH_BREAKING_GROUND_locked
+    texture: {fileID: 2800000, guid: 65305383dc1b10d4ba12188fa1f0879b, type: 3}
+  - name: UI/Achievements/ACH_CHESTS_10
+    texture: {fileID: 2800000, guid: b57cc65b0c580c54bab90c55a093f73b, type: 3}
+  - name: UI/Achievements/ACH_CHESTS_10_locked
+    texture: {fileID: 2800000, guid: 1b637d735cc261649ad65d19df07615c, type: 3}
+  - name: UI/Achievements/ACH_CODEX
+    texture: {fileID: 2800000, guid: 4214e291ff32dbf4e8efeb9ddd4bce92, type: 3}
+  - name: UI/Achievements/ACH_CODEX_locked
+    texture: {fileID: 2800000, guid: 43dcfca92ca2559489979e2683865e27, type: 3}
+  - name: UI/Achievements/ACH_CONTRACTS_10
+    texture: {fileID: 2800000, guid: 7855f8ccbb83cf34d9823f59adfab430, type: 3}
+  - name: UI/Achievements/ACH_CONTRACTS_10_locked
+    texture: {fileID: 2800000, guid: fff2d47062db13e4caa33e0fb58c265b, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_100
+    texture: {fileID: 2800000, guid: ec1d47799075b58489b4e39a153d865f, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_100_locked
+    texture: {fileID: 2800000, guid: d64ce0eaf5bf81241b366305624b6b4d, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1050
+    texture: {fileID: 2800000, guid: df2ea95b21e3d5f4cace21b7fdf7c967, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1050_locked
+    texture: {fileID: 2800000, guid: 040c410b3e6df96479162a2a78f81519, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1250
+    texture: {fileID: 2800000, guid: 586f291ab4cf18140bc2f4a9f8c00b32, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_1250_locked
+    texture: {fileID: 2800000, guid: d4b48c918e8e303469a67b13db3085e3, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_300
+    texture: {fileID: 2800000, guid: 828ff9543ef53224eb0e88007c81568d, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_300_locked
+    texture: {fileID: 2800000, guid: 18d541f6c5f991e4882064bcc65dc091, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_700
+    texture: {fileID: 2800000, guid: b8c99fcf2495c0d4caebb8e8e6cf3d98, type: 3}
+  - name: UI/Achievements/ACH_DEPTH_700_locked
+    texture: {fileID: 2800000, guid: ab1bbf65334861d499913c88736cba84, type: 3}
+  - name: UI/Achievements/ACH_ELDER_TREE
+    texture: {fileID: 2800000, guid: 04513029545747a4eb454c9a07390e03, type: 3}
+  - name: UI/Achievements/ACH_ELDER_TREE_locked
+    texture: {fileID: 2800000, guid: a07348161fbe4f1479b4c650b844aa23, type: 3}
+  - name: UI/Achievements/ACH_EVENTS_5
+    texture: {fileID: 2800000, guid: 41f8c0e4546cf9c4dbcec49f46099a7a, type: 3}
+  - name: UI/Achievements/ACH_EVENTS_5_locked
+    texture: {fileID: 2800000, guid: a029a782174e6944e90aea92283ffbfd, type: 3}
+  - name: UI/Achievements/ACH_EXCAVATOR
+    texture: {fileID: 2800000, guid: 5943465a89835fb4cbbfc39d97c5955c, type: 3}
+  - name: UI/Achievements/ACH_EXCAVATOR_locked
+    texture: {fileID: 2800000, guid: 669fa4060de98da43963bf94d171e22c, type: 3}
+  - name: UI/Achievements/ACH_FIRST_BELT
+    texture: {fileID: 2800000, guid: 45a8cab6e1807874fbb07905ecee2d91, type: 3}
+  - name: UI/Achievements/ACH_FIRST_BELT_locked
+    texture: {fileID: 2800000, guid: 09de5f86723d1e94493c5363fc576668, type: 3}
+  - name: UI/Achievements/ACH_FIRST_COPPER
+    texture: {fileID: 2800000, guid: 2cb98c7d7aa912a4596a7baa2930cba9, type: 3}
+  - name: UI/Achievements/ACH_FIRST_COPPER_locked
+    texture: {fileID: 2800000, guid: 2385ef7bbdf03154ea592775fc1a53d1, type: 3}
+  - name: UI/Achievements/ACH_FIRST_FLIGHT
+    texture: {fileID: 2800000, guid: 3eb833e9c3660a8489d969110b4fa659, type: 3}
+  - name: UI/Achievements/ACH_FIRST_FLIGHT_locked
+    texture: {fileID: 2800000, guid: 8ccd95ecfbcbecf4b99f0692aa0106bf, type: 3}
+  - name: UI/Achievements/ACH_FIRST_KILL
+    texture: {fileID: 2800000, guid: dfa221fb57419784d86a96feafb618e9, type: 3}
+  - name: UI/Achievements/ACH_FIRST_KILL_locked
+    texture: {fileID: 2800000, guid: 92f40ab22961f244b9a6d69b3e71ec5a, type: 3}
+  - name: UI/Achievements/ACH_FIRST_PRINCESS
+    texture: {fileID: 2800000, guid: 7fb458705e562764eab41d9667ee1937, type: 3}
+  - name: UI/Achievements/ACH_FIRST_PRINCESS_locked
+    texture: {fileID: 2800000, guid: 7a0b480702c5fb34ba7d7a2b9879700f, type: 3}
+  - name: UI/Achievements/ACH_FLIGHTS_5
+    texture: {fileID: 2800000, guid: 2e5f8317ca570cf48baed9dc8de4d084, type: 3}
+  - name: UI/Achievements/ACH_FLIGHTS_5_locked
+    texture: {fileID: 2800000, guid: 83642c9441f0ffd4caf93ed34d55f0ac, type: 3}
+  - name: UI/Achievements/ACH_FUNGUS_200
+    texture: {fileID: 2800000, guid: 8227dc1bc86310648a667fa50edbe291, type: 3}
+  - name: UI/Achievements/ACH_FUNGUS_200_locked
+    texture: {fileID: 2800000, guid: 20610b6a3bc31b0449876f4feb8d7617, type: 3}
+  - name: UI/Achievements/ACH_GIANT_WORM
+    texture: {fileID: 2800000, guid: f12ac81b50fbb45479c3f7d7ce2da3f9, type: 3}
+  - name: UI/Achievements/ACH_GIANT_WORM_locked
+    texture: {fileID: 2800000, guid: d2214906ff710464da94d4f6e97da2a1, type: 3}
+  - name: UI/Achievements/ACH_GLOW_MUSHROOMS_20
+    texture: {fileID: 2800000, guid: 2a87a331c31a9314ca7ea59ebc797ac8, type: 3}
+  - name: UI/Achievements/ACH_GLOW_MUSHROOMS_20_locked
+    texture: {fileID: 2800000, guid: 92f98ce33a4abcc47aaaebe74ec50657, type: 3}
+  - name: UI/Achievements/ACH_GOLDEN_APPLES_10
+    texture: {fileID: 2800000, guid: 32917608537a0e24193038736719493e, type: 3}
+  - name: UI/Achievements/ACH_GOLDEN_APPLES_10_locked
+    texture: {fileID: 2800000, guid: 4d14d2719d2a3f74c8ba11243a8b4ba8, type: 3}
+  - name: UI/Achievements/ACH_IRON_50
+    texture: {fileID: 2800000, guid: 7dd06b2441525c646be9ee6cc8821df5, type: 3}
+  - name: UI/Achievements/ACH_IRON_50_locked
+    texture: {fileID: 2800000, guid: 192ad0d4d112a9a4a94bf242fb35a711, type: 3}
+  - name: UI/Achievements/ACH_IRON_BELTS_100
+    texture: {fileID: 2800000, guid: 9801876ebc9488a42bcd9425d1c3bd5d, type: 3}
+  - name: UI/Achievements/ACH_IRON_BELTS_100_locked
+    texture: {fileID: 2800000, guid: 87817cc733f0c4545bf940e38127eb00, type: 3}
+  - name: UI/Achievements/ACH_KILLS_200
+    texture: {fileID: 2800000, guid: 458e1923c82b0c343b8f731621a8be86, type: 3}
+  - name: UI/Achievements/ACH_KILLS_200_locked
+    texture: {fileID: 2800000, guid: 09ca92b17230e8e40857808641031f30, type: 3}
+  - name: UI/Achievements/ACH_KNOWLEDGE_1000
+    texture: {fileID: 2800000, guid: 41a6318a9abde2e4092be38e15fe7817, type: 3}
+  - name: UI/Achievements/ACH_KNOWLEDGE_1000_locked
+    texture: {fileID: 2800000, guid: 22d508eb1a30eb34d9c5d33a471237a6, type: 3}
+  - name: UI/Achievements/ACH_MEMORY_500
+    texture: {fileID: 2800000, guid: 15200cd4492fe4540aad2aef220b3798, type: 3}
+  - name: UI/Achievements/ACH_MEMORY_500_locked
+    texture: {fileID: 2800000, guid: 2f194c668e7b26f458c84911a9af649b, type: 3}
+  - name: UI/Achievements/ACH_MUSHROOMS_50
+    texture: {fileID: 2800000, guid: 341b8523c8fcf5346abeb197ddd33235, type: 3}
+  - name: UI/Achievements/ACH_MUSHROOMS_50_locked
+    texture: {fileID: 2800000, guid: 18130c49b941b324691a5d763fa7c50e, type: 3}
+  - name: UI/Achievements/ACH_RAIDS_10
+    texture: {fileID: 2800000, guid: c6a53019227e0b1469e623f40d3aa274, type: 3}
+  - name: UI/Achievements/ACH_RAIDS_10_locked
+    texture: {fileID: 2800000, guid: 2fa0d576d2783d74aa34b3419a540ef1, type: 3}
+  - name: UI/Achievements/ACH_RAID_REPELLED
+    texture: {fileID: 2800000, guid: 0874d203f16018f42a0e93d8b694f034, type: 3}
+  - name: UI/Achievements/ACH_RAID_REPELLED_locked
+    texture: {fileID: 2800000, guid: 7d84bc37267045d4aae6fd19b1638138, type: 3}
+  - name: UI/Achievements/ACH_RELICS_5
+    texture: {fileID: 2800000, guid: f1284d7846e8b8b4d8e7d4dbc2540bf3, type: 3}
+  - name: UI/Achievements/ACH_RELICS_5_locked
+    texture: {fileID: 2800000, guid: 2f66273ca01c6734b94bea7e30173228, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_20
+    texture: {fileID: 2800000, guid: 5ba6dba04fde4b449a7c0af1636ccd06, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_20_locked
+    texture: {fileID: 2800000, guid: 8465f62f1a58f77498ba4633846dbde7, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_5
+    texture: {fileID: 2800000, guid: 56e6de96fc8d7694bb55e43ee82a889a, type: 3}
+  - name: UI/Achievements/ACH_RESEARCH_5_locked
+    texture: {fileID: 2800000, guid: cd9a025229e01e142b4c59e55609b693, type: 3}
+  - name: UI/Achievements/ACH_RESONATORS_5
+    texture: {fileID: 2800000, guid: 9781c09caf5b6f847a25b7ef2842473d, type: 3}
+  - name: UI/Achievements/ACH_RESONATORS_5_locked
+    texture: {fileID: 2800000, guid: cbcacdf5e72d99849ad535045992faa2, type: 3}
+  - name: UI/Achievements/ACH_RIVALS_3
+    texture: {fileID: 2800000, guid: 970c28e417b3633419bc16c41a1ac6e7, type: 3}
+  - name: UI/Achievements/ACH_RIVALS_3_locked
+    texture: {fileID: 2800000, guid: 3f88b05b4d96b9142ad3d66d35fbc906, type: 3}
+  - name: UI/Achievements/ACH_SHOOTING_STAR
+    texture: {fileID: 2800000, guid: 774ecf4ac6bfc9e40905b48ef10045f1, type: 3}
+  - name: UI/Achievements/ACH_SHOOTING_STAR_locked
+    texture: {fileID: 2800000, guid: 0062aafd97ea1514198e65346889f5bb, type: 3}
+  - name: UI/Achievements/ACH_SOLDIERS_25
+    texture: {fileID: 2800000, guid: 81f612dbdf5395549bf1dc6887986f07, type: 3}
+  - name: UI/Achievements/ACH_SOLDIERS_25_locked
+    texture: {fileID: 2800000, guid: feb478110ba5c5848ba2bd4f12008b3e, type: 3}
+  - name: UI/Achievements/ACH_STARFALL
+    texture: {fileID: 2800000, guid: d79daa0041f7ea549977c03c6fa91057, type: 3}
+  - name: UI/Achievements/ACH_STARFALL_locked
+    texture: {fileID: 2800000, guid: ce4424b4775dd6841a6abecefde3ec36, type: 3}
+  - name: UI/Achievements/ACH_STAR_FRAGMENT
+    texture: {fileID: 2800000, guid: ee6d840ee2c219d4183d5f79ebbbc41d, type: 3}
+  - name: UI/Achievements/ACH_STAR_FRAGMENT_locked
+    texture: {fileID: 2800000, guid: 578b950a822b40f458312cbe8c703ccb, type: 3}
+  - name: UI/Achievements/ACH_THRONE
+    texture: {fileID: 2800000, guid: 40a077fa0a13cec408612d4e774d90a5, type: 3}
+  - name: UI/Achievements/ACH_THRONE_locked
+    texture: {fileID: 2800000, guid: 4b058d77ae102784a8c1afd50911ee86, type: 3}
+  - name: UI/Achievements/ACH_TRAITS_10
+    texture: {fileID: 2800000, guid: 6377d4171679a2c4eb0f358d51741a1e, type: 3}
+  - name: UI/Achievements/ACH_TRAITS_10_locked
+    texture: {fileID: 2800000, guid: 81a9d571421e3364d83dc8cf7d702581, type: 3}
+  - name: UI/Achievements/ACH_WILD_FOOD_300
+    texture: {fileID: 2800000, guid: b99ce70685316db4983629d38ddd5fc3, type: 3}
+  - name: UI/Achievements/ACH_WILD_FOOD_300_locked
+    texture: {fileID: 2800000, guid: c64a2e402b66eda4186ec2c7f1e3eaae, type: 3}
+  - name: UI/Icons/ability_frenzy
+    texture: {fileID: 2800000, guid: 8dbe73bd50fd5214c9a7b3c1f3b3b793, type: 3}
+  - name: UI/Icons/ability_pheromone_burst
+    texture: {fileID: 2800000, guid: 33965117eb6cb9845a7922a5710f3b3a, type: 3}
+  - name: UI/Icons/ability_quickening
+    texture: {fileID: 2800000, guid: 1eba8f79c8d7bbd4e893eddb05b7ddb5, type: 3}
+  - name: UI/Icons/ability_royal_decree
+    texture: {fileID: 2800000, guid: 1336bbdecf236014587952481b2d7117, type: 3}
+  - name: UI/Icons/ability_seismic_sense
+    texture: {fileID: 2800000, guid: 4bcf9fc50f541524c84f063ad3dcc4a0, type: 3}
+  - name: UI/Icons/ants
+    texture: {fileID: 2800000, guid: 335832bf084941d43a0b9e294c68f7bd, type: 3}
+  - name: UI/Icons/building_ancient_engine
+    texture: {fileID: 2800000, guid: 0457879cbede1674897b3cdaff2f40fb, type: 3}
+  - name: UI/Icons/building_aphid_ranch
+    texture: {fileID: 2800000, guid: 9d4d513e8e4284c46901f913cb38ec19, type: 3}
+  - name: UI/Icons/building_archive
+    texture: {fileID: 2800000, guid: 4adff4e96a14f8840b01e7470363e5a8, type: 3}
+  - name: UI/Icons/building_chest
+    texture: {fileID: 2800000, guid: 41962468fea20444d906e0dd023d2058, type: 3}
+  - name: UI/Icons/building_crusher
+    texture: {fileID: 2800000, guid: e81bda295872a7c459887391ca57dedd, type: 3}
+  - name: UI/Icons/building_crystal_resonator
+    texture: {fileID: 2800000, guid: 295236e44d18de747afde8585ff00bfb, type: 3}
+  - name: UI/Icons/building_earth_wall
+    texture: {fileID: 2800000, guid: f1e4f9f5c9fece44f9f72f6ce03b983c, type: 3}
+  - name: UI/Icons/building_filter
+    texture: {fileID: 2800000, guid: 2145417d97056ec4b8ff3441200524a2, type: 3}
+  - name: UI/Icons/building_fungus_garden
+    texture: {fileID: 2800000, guid: 8e66d5c8603dbdd4aa9cb8d6f7713c50, type: 3}
+  - name: UI/Icons/building_guard_post
+    texture: {fileID: 2800000, guid: 2d00ac484692934438620d2e9eae0530, type: 3}
+  - name: UI/Icons/building_iron_belt
+    texture: {fileID: 2800000, guid: 64715bac44e7ae0428409c28c08b7626, type: 3}
+  - name: UI/Icons/building_iron_gate
+    texture: {fileID: 2800000, guid: 687aefb4c482cb141b70f53a6589364c, type: 3}
+  - name: UI/Icons/building_iron_lift
+    texture: {fileID: 2800000, guid: 658a1cfd4a1cc2f4b9762ad9c1c5e58a, type: 3}
+  - name: UI/Icons/building_nursery
+    texture: {fileID: 2800000, guid: 610e86e2d51392e4d846d53b2124cc83, type: 3}
+  - name: UI/Icons/building_pheromone_emitter
+    texture: {fileID: 2800000, guid: 3d5284ee67602834cac36400f478bd95, type: 3}
+  - name: UI/Icons/building_princess_chamber
+    texture: {fileID: 2800000, guid: f83d305213510ba45a0e2377ba66877e, type: 3}
+  - name: UI/Icons/building_pump
+    texture: {fileID: 2800000, guid: 545e32c8073d2514b997fc31ed0d85e1, type: 3}
+  - name: UI/Icons/building_queens_throne
+    texture: {fileID: 2800000, guid: 7f1613140b0cfe94e8f278b419095e7c, type: 3}
+  - name: UI/Icons/building_resin_gate
+    texture: {fileID: 2800000, guid: f9326d7eed69773488e11f95344a1029, type: 3}
+  - name: UI/Icons/building_resin_trap
+    texture: {fileID: 2800000, guid: 3afae51c31354044b8f0ebe493f21e6e, type: 3}
+  - name: UI/Icons/building_root_lift
+    texture: {fileID: 2800000, guid: 08064db2f4b14b34c96e87dc5032f234, type: 3}
+  - name: UI/Icons/building_silk_belt
+    texture: {fileID: 2800000, guid: eeb3561695a969548aa8106b72bc0388, type: 3}
+  - name: UI/Icons/building_smelter
+    texture: {fileID: 2800000, guid: 8d05e85aebae150458e0677d6ff1f1d2, type: 3}
+  - name: UI/Icons/building_splitter
+    texture: {fileID: 2800000, guid: 00447d78159bf23458e6f0dd52041cfd, type: 3}
+  - name: UI/Icons/building_unloader
+    texture: {fileID: 2800000, guid: aa408bee64594a541a15602a97d1bfa2, type: 3}
+  - name: UI/Icons/building_water_wheel
+    texture: {fileID: 2800000, guid: 14415a5d92b68fb40928cb45d61ef401, type: 3}
+  - name: UI/Icons/caste_builder
+    texture: {fileID: 2800000, guid: 90aec917685f0ac418ce6b7475c7084d, type: 3}
+  - name: UI/Icons/caste_engineer
+    texture: {fileID: 2800000, guid: 38643725dcc74bb4fadba9939175bd15, type: 3}
+  - name: UI/Icons/caste_fire
+    texture: {fileID: 2800000, guid: 244e79d8b66a1c5418a6c7cbd5910b2f, type: 3}
+  - name: UI/Icons/caste_glow
+    texture: {fileID: 2800000, guid: 05cada4e5ece1fe4594dd9276762b816, type: 3}
+  - name: UI/Icons/caste_hauler
+    texture: {fileID: 2800000, guid: 718fdc5b8eb66254baf9a3215c1ccc7e, type: 3}
+  - name: UI/Icons/caste_miner
+    texture: {fileID: 2800000, guid: 96d3c9df7847a5d4285c919d88fe99be, type: 3}
+  - name: UI/Icons/caste_nurse
+    texture: {fileID: 2800000, guid: ffa485ab3d081f04e9154bf0c15eb03f, type: 3}
+  - name: UI/Icons/caste_scout
+    texture: {fileID: 2800000, guid: 3ee73a28f0d5e034baa950db80e27fae, type: 3}
+  - name: UI/Icons/caste_soldier
+    texture: {fileID: 2800000, guid: f826551a6e8e5764d8c361c5ee6da8da, type: 3}
+  - name: UI/Icons/caste_worker
+    texture: {fileID: 2800000, guid: 9d2ecd365a3e8914b81e5b1eb7ec8643, type: 3}
+  - name: UI/Icons/eggs
+    texture: {fileID: 2800000, guid: 62ec88d71b40bc4448dc74364e2a352b, type: 3}
+  - name: UI/Icons/evolution_ability
+    texture: {fileID: 2800000, guid: b7ba01c10c500a34986c0623f94d5607, type: 3}
+  - name: UI/Icons/evolution_brood
+    texture: {fileID: 2800000, guid: 490a33c3cc168374581e702bfed2f82b, type: 3}
+  - name: UI/Icons/evolution_castes
+    texture: {fileID: 2800000, guid: 0f3b52735ff921d49892f483899c236b, type: 3}
+  - name: UI/Icons/evolution_egg_slots
+    texture: {fileID: 2800000, guid: 77379afdf5894ae4bad9199c27c5b4f4, type: 3}
+  - name: UI/Icons/evolution_health
+    texture: {fileID: 2800000, guid: b33584f94bfc18743a28fac1a4f7d755, type: 3}
+  - name: UI/Icons/evolution_regeneration
+    texture: {fileID: 2800000, guid: 8f176651fc8a3c34e928461a0be215cb, type: 3}
+  - name: UI/Icons/food
+    texture: {fileID: 2800000, guid: 3365556d0b0ca3647ad274fe29c2dad9, type: 3}
+  - name: UI/Icons/item_amber
+    texture: {fileID: 2800000, guid: 3c56e15d9ac78f14cafe267a8c3adf52, type: 3}
+  - name: UI/Icons/item_apple
+    texture: {fileID: 2800000, guid: aa06506fbe69ab54995a83ac57103c4e, type: 3}
+  - name: UI/Icons/item_berry
+    texture: {fileID: 2800000, guid: 5038059363089764b9801e1c391d328b, type: 3}
+  - name: UI/Icons/item_chitin
+    texture: {fileID: 2800000, guid: 080c08b0c61c46f42946ca21ebb818ca, type: 3}
+  - name: UI/Icons/item_coal
+    texture: {fileID: 2800000, guid: 59b810f802c66ac46bebe1ed2e5f9a45, type: 3}
+  - name: UI/Icons/item_copper
+    texture: {fileID: 2800000, guid: 0f4fc254057920248a86d3b876f46b75, type: 3}
+  - name: UI/Icons/item_copper_ore
+    texture: {fileID: 2800000, guid: c00aafaa3eb3a5b4e932ab546a2c6f64, type: 3}
+  - name: UI/Icons/item_crushed_copper
+    texture: {fileID: 2800000, guid: 1628823c1f72e1347ac0aae6e69b0142, type: 3}
+  - name: UI/Icons/item_crushed_iron
+    texture: {fileID: 2800000, guid: 57bec460e489ffe4b8a6dd531d1da0b2, type: 3}
+  - name: UI/Icons/item_crystal_shard
+    texture: {fileID: 2800000, guid: 352f81472206b0e42ae6cb14963452d0, type: 3}
+  - name: UI/Icons/item_fossil
+    texture: {fileID: 2800000, guid: 96bafcfe57e96af4aa069bc0dd793dd5, type: 3}
+  - name: UI/Icons/item_fungus
+    texture: {fileID: 2800000, guid: 49893d147ecfd954f8fd1689ad0661da, type: 3}
+  - name: UI/Icons/item_glow_mushroom
+    texture: {fileID: 2800000, guid: 161d7b26b3241e54fa9d2e5731dd0f24, type: 3}
+  - name: UI/Icons/item_golden_apple
+    texture: {fileID: 2800000, guid: 78a5e0ef6f74eaa4ab02e0b7e67e4188, type: 3}
+  - name: UI/Icons/item_grub
+    texture: {fileID: 2800000, guid: 6025fae83ea58794e93143e1adb61a8b, type: 3}
+  - name: UI/Icons/item_honeydew
+    texture: {fileID: 2800000, guid: d78ce7dbf9c9f354caac380cd4924c68, type: 3}
+  - name: UI/Icons/item_iron
+    texture: {fileID: 2800000, guid: 1a4bb076025d0b64c81a5a430ac640a7, type: 3}
+  - name: UI/Icons/item_iron_ore
+    texture: {fileID: 2800000, guid: 69c04a160e1ad37469ebaf5562a80941, type: 3}
+  - name: UI/Icons/item_leaf
+    texture: {fileID: 2800000, guid: 59b7cda9e30142e448b8357ede3d7ff8, type: 3}
+  - name: UI/Icons/item_mushroom
+    texture: {fileID: 2800000, guid: 99843744af82c4047b699a575a0ceaaa, type: 3}
+  - name: UI/Icons/item_obsidian
+    texture: {fileID: 2800000, guid: 211d78b403bf24340ad28ed3ac4b7c73, type: 3}
+  - name: UI/Icons/item_relic
+    texture: {fileID: 2800000, guid: 94120d839b4210e49b5d2c93b0394a3c, type: 3}
+  - name: UI/Icons/item_root_fibre
+    texture: {fileID: 2800000, guid: 000ef3aab3630db449831d0a79438f9a, type: 3}
+  - name: UI/Icons/item_seed
+    texture: {fileID: 2800000, guid: c359da180e0b17543a19b87bbd9a1376, type: 3}
+  - name: UI/Icons/item_star_fragment
+    texture: {fileID: 2800000, guid: 085e60f9f73c1694aa5b88177941e0f4, type: 3}
+  - name: UI/Icons/item_tablet
+    texture: {fileID: 2800000, guid: 3282bbf66606aa943aa484008240d6de, type: 3}
+  - name: UI/Icons/item_toadstool
+    texture: {fileID: 2800000, guid: 520a6588d038d214db685ec5909bf096, type: 3}
+  - name: UI/Icons/knowledge
+    texture: {fileID: 2800000, guid: b14ee1e3c5178c547af3716e2e4ed00b, type: 3}
+  - name: UI/Icons/level_pips
+    texture: {fileID: 2800000, guid: 71e52a8e2e2593f40822d33d188f0cda, type: 3}
+  - name: UI/Icons/lore_fragment
+    texture: {fileID: 2800000, guid: a6de6abf782c0a94fb5c40b34aa076a3, type: 3}
+  - name: UI/Icons/lore_fragment_locked
+    texture: {fileID: 2800000, guid: 64b6e971fab0cd540a7ba83992806552, type: 3}
+  - name: UI/Icons/memory
+    texture: {fileID: 2800000, guid: d29a4b5f0b224c64bb5773b1a9cc1623, type: 3}
+  - name: UI/Icons/moon
+    texture: {fileID: 2800000, guid: 47057d723c444ba478a3e20fe2b9e0df, type: 3}
+  - name: UI/Icons/princesses
+    texture: {fileID: 2800000, guid: f5f846783fa10344d8d4e8ccd99ae608, type: 3}
+  - name: UI/Icons/priority_build
+    texture: {fileID: 2800000, guid: 5c54fb8eb09c19d4bb952b16334951b8, type: 3}
+  - name: UI/Icons/priority_dig
+    texture: {fileID: 2800000, guid: 925da7bb28c2a7247ae7bbd5a3ac75ca, type: 3}
+  - name: UI/Icons/priority_haul
+    texture: {fileID: 2800000, guid: d6ae7318283746540b5bc57725815823, type: 3}
+  - name: UI/Icons/priority_nurse
+    texture: {fileID: 2800000, guid: 2f844a1fd2a0ce548ad2bc4763b23b14, type: 3}
+  - name: UI/Icons/priority_supply
+    texture: {fileID: 2800000, guid: ac27067c54aac0e43883cddb7cdb44a3, type: 3}
+  - name: UI/Icons/priority_tend
+    texture: {fileID: 2800000, guid: 951c19947eaa4f14b918584f7c9758ce, type: 3}
+  - name: UI/Icons/respec
+    texture: {fileID: 2800000, guid: 9af73cc977a5332479246433f5b84d17, type: 3}
+  - name: UI/Icons/storage
+    texture: {fileID: 2800000, guid: a917084bc2da0c74babb6eb29bf1053c, type: 3}
+  - name: UI/Icons/sun
+    texture: {fileID: 2800000, guid: 2bdb6ad4d2f585746a44fc0b42f7f650, type: 3}
+  - name: UI/Icons/tool_build
+    texture: {fileID: 2800000, guid: 0ec1802735d456b44ab4c889e817573f, type: 3}
+  - name: UI/Icons/tool_castes
+    texture: {fileID: 2800000, guid: eeb02315a15990645b7e713a4c5f2bea, type: 3}
+  - name: UI/Icons/tool_dig
+    texture: {fileID: 2800000, guid: 3921f34b9103e394c8066fbf43a87b1b, type: 3}
+  - name: UI/Icons/tool_flight
+    texture: {fileID: 2800000, guid: 0cfd1f63c7ff20c42b590e3d5ba9cb4a, type: 3}
+  - name: UI/Icons/tool_flow
+    texture: {fileID: 2800000, guid: a26b5e6a05a63f4449b044afa650d1b4, type: 3}
+  - name: UI/Icons/tool_mine
+    texture: {fileID: 2800000, guid: c4c39d5ce60ca114a8c7a00d84e8dd1f, type: 3}
+  - name: UI/Icons/tool_possess
+    texture: {fileID: 2800000, guid: 0dcf526f7665f8444996eddfe7391019, type: 3}
+  - name: UI/Icons/tool_research
+    texture: {fileID: 2800000, guid: 842dc0f77538e5340a6754cec341f882, type: 3}
+  - name: UI/Icons/tool_scent
+    texture: {fileID: 2800000, guid: 3b9d6dc16c75cbd4f8e71da50603b0f1, type: 3}
+  - name: UI/Icons/trait_lazy
+    texture: {fileID: 2800000, guid: c41bdc2df1f490a41b01db924fb08e4e, type: 3}
+  - name: UI/Icons/trait_lucky
+    texture: {fileID: 2800000, guid: 936b6ccd96f974740b8b6dbed72ecf1f, type: 3}
+  - name: UI/Icons/trait_strong
+    texture: {fileID: 2800000, guid: 53fab72e8518e7148bbea8b94241a034, type: 3}
+  - name: UI/Icons/trait_swift
+    texture: {fileID: 2800000, guid: 43bc646d7bc3542498079f9ec7a631cb, type: 3}
+  - name: UI/Skin/button
+    texture: {fileID: 2800000, guid: 7016396a4b8f496439c80023fd590cd2, type: 3}
+  - name: UI/Skin/button_down
+    texture: {fileID: 2800000, guid: b906f908b7ef1964e9a468e2ebd2ae66, type: 3}
+  - name: UI/Skin/frame
+    texture: {fileID: 2800000, guid: 717983b298113ff4e9244b2e3c90283b, type: 3}
+  - name: UI/Skin/frame_codex
+    texture: {fileID: 2800000, guid: 5ca6d64e06b067742a76f50970e7e1f3, type: 3}
+  - name: UI/Skin/frame_queen
+    texture: {fileID: 2800000, guid: d2923a3936d54f4419e17c64eafaba13, type: 3}
+  - name: UI/Skin/frame_slot
+    texture: {fileID: 2800000, guid: 137c16fd0ff4fcc49ab439544f39346e, type: 3}
+  - name: UI/Skin/inset
+    texture: {fileID: 2800000, guid: f9279a72b50aef74db485a91ae1ea0c0, type: 3}
+  - name: UI/title_emblem
+    texture: {fileID: 2800000, guid: 09b21b797694b5c41b1e642ba6d8b493, type: 3}

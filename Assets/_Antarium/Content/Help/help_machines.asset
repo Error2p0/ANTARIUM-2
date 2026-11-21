@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_machines
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_machines
+  displayName: Machines
+  order: 220
+  category: Building
+  icon: building_smelter
+  body: 'Machines turn items into better ones: the Smelter makes copper from copper ore (and iron from iron ore and coal), the Archive studies finds into knowledge, the Fungus Garden grows food, and research brings more.
+
+
+    A machine starts as soon as it has what it needs. Workers bring fresh finds straight to it and fetch its inputs from storage; belts can feed it too. Its products go onto a belt leading away, or wait on its floor for workers. With too many waiting it pauses.
+
+
+    Point at a machine to see its inputs and progress. {Configure} makes it run one recipe only, or switches it off. In the flow overlay ({Flow}) machines are green while working, yellow while waiting for inputs and red when their products pile up.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

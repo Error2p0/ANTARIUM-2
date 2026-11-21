@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_contracts
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_contracts
+  displayName: Contracts
+  order: 180
+  category: Basics
+  icon: knowledge
+  body: 'The contracts on the right are your goals: dig so many cells, bring in some ore, build a machine. The first ones walk you through the start, one at a time; later ones are drawn at random and ask for more each time.
+
+
+    When a contract is done it turns gold: click Claim reward for knowledge, food and sometimes items. A new contract takes its place.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

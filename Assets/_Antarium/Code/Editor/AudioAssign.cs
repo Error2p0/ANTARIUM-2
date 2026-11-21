@@ -52,6 +52,8 @@ namespace Antarium.Editor
             music.geneticsTracks = Collect(clips, "music_genetics", report);
             music.flightCue = Collect(clips, "music_flight", report).FirstOrDefault();
             music.discoveryCue = Collect(clips, "music_discovery", report).FirstOrDefault();
+            music.loreCue = Collect(clips, "music_lore", report).FirstOrDefault();
+            music.engineCue = Collect(clips, "music_engine", report).FirstOrDefault();
 
             // Ambience beds.
             foreach (var bed in bank.ambience)

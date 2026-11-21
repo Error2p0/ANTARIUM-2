@@ -36,6 +36,8 @@ namespace Antarium.Sim
         public readonly bool[] CasteUnlocked = new bool[Castes.Count];
         /// <summary>Per <see cref="AntCaste"/>: share of the colony (ants and eggs) the queen keeps of it. Workers fill the rest.</summary>
         public readonly float[] CasteShare = new float[Castes.Count];
+        /// <summary>Per <see cref="JobKind"/>: priority 1..5 set in the priority panel (3 = normal).</summary>
+        public readonly byte[] JobPriority = { 3, 3, 3, 3, 3, 3 };
         public readonly ItemPiles Piles;
         public readonly List<Egg> Eggs = new();
         /// <summary>Cells of the royal chamber where its share of the stock is shown, in fill order.</summary>
@@ -46,6 +48,15 @@ namespace Antarium.Sim
         public bool Starving;
         /// <summary>Raiders are in the royal chamber: the queen does not lay.</summary>
         public bool QueenDisturbed;
+        /// <summary>The player told the queen to stop laying (queen panel). Royal Decree still lays.</summary>
+        public bool LayingPaused;
+        /// <summary>Per <see cref="ResearchFeature"/>: switched on by research (Milestone 11).</summary>
+        public readonly bool[] Features = new bool[ResearchFeatures.Count];
+        /// <summary>The player lets Vein Instinct order ore for mining (Mine tool row; on by default).</summary>
+        public bool AutoMarkOres = true;
+        /// <summary>The queen is eating honeydew: she lays <see cref="FedLayingBonus"/> faster and needs no food of her own.</summary>
+        public bool QueenFed;
+        public float FedLayingBonus = 0.5f;
         /// <summary>Princesses raised in princess chambers, waiting for the Nuptial Flight.</summary>
         public int Princesses;
         /// <summary>Princesses that count toward a flight; princess chambers stop raising more at this many.</summary>
@@ -54,6 +65,8 @@ namespace Antarium.Sim
         /// <summary>World indices of cells designated for mining / painted as storage.</summary>
         public readonly HashSet<int> Designated = new();
         public readonly HashSet<int> StorageCells = new();
+
+        public bool Has(ResearchFeature feature) => Features[(int)feature];
 
         public Colony(ContentDB content, ColonyConfig config, CasteConfig castes = null)
         {
@@ -73,7 +86,7 @@ namespace Antarium.Sim
         }
 
         /// <summary>Seconds between eggs while fed.</summary>
-        public float EggInterval => _config.eggInterval / Mods.Mult(StatKind.LayingSpeed);
+        public float EggInterval => _config.eggInterval / Mods.Mult(StatKind.LayingSpeed) / (QueenFed ? 1f + FedLayingBonus : 1f);
         /// <summary>Eggs that may wait next to the queen at once (eggs in nurseries don't count).</summary>
         public int MaxEggs => _config.maxEggs + (int)Mods.Flat(StatKind.MaxEggs);
 
@@ -104,7 +117,7 @@ namespace Antarium.Sim
         /// <summary>Food eaten per minute by the ants (<paramref name="alive"/> per caste) and the queen.</summary>
         public float UpkeepPerMinute(IReadOnlyList<int> alive)
         {
-            float total = _config.queenUpkeep;
+            float total = QueenFed ? 0f : _config.queenUpkeep;
             for (int c = 0; c < alive.Count && c < Castes.Count; c++) total += alive[c] * _content.CasteDefs[c].upkeep;
             return total;
         }
@@ -149,8 +162,8 @@ namespace Antarium.Sim
             }
         }
 
-        /// <summary>True inside the royal chamber or on a storage zone cell: items delivered here go into the stock.</summary>
-        public bool IsStockCell(int2 c, int worldIndex) => IsRoyalCell(c) || StorageCells.Contains(worldIndex);
+        /// <summary>True inside the royal chamber, on a storage zone cell or on a chest: items delivered here go into the stock.</summary>
+        public bool IsStockCell(int2 c, int worldIndex) => IsRoyalCell(c) || Inventory.ContainerAt(worldIndex) != null;
 
         /// <summary>Within the royal chamber (a square of <c>royalRadius</c> around the queen).</summary>
         public bool IsRoyalCell(int2 c)
@@ -167,11 +180,16 @@ namespace Antarium.Sim
         }
 
         /// <summary>
-        /// Lays an egg when fed, undisturbed and there is room next to the queen. Its caste is the one furthest below
-        /// its share (see <see cref="NextCaste"/>). Returns true if one was laid.
+        /// Lays an egg when fed, undisturbed, not paused by the player and there is room next to the queen. Its caste is the
+        /// one furthest below its share (see <see cref="NextCaste"/>). Returns true if one was laid.
         /// </summary>
         public bool TryLayEgg(float dt, int2 eggCell, int[] alive)
         {
+            if (LayingPaused)
+            {
+                EggTimer = 0f;
+                return false;
+            }
             EggTimer += dt;
             if (Starving || QueenDisturbed || EggTimer < EggInterval) return false;
             if (LooseEggs >= MaxEggs) return false;

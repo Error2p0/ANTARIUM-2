@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b491f796b38c2b544a1f7b2a2bda34bf, type: 3}
+  m_Name: giant_worm
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.EnemyDef
+  id: giant_worm
+  displayName: Giant Earthworm
+  description: 'A huge earthworm churning through the soft soil near your tunnels, leaving a tunnel behind it. It doesn''t hunt, but thrashes at ants touching its head. Bite it anywhere along its body: soldiers, traps, a possessed ant, or click it with the Dig tool.'
+  behavior: 5
+  health: 400
+  damage: 4
+  attackInterval: 1.2
+  speed: 1.6
+  aggroRadius: 1
+  lavaImmune: 0
+  swims: 1
+  gasImmune: 0
+  foodPerSecond: 1
+  carryFood: 10
+  carryItems: 3
+  stealSeconds: 1
+  digPower: 1.5
+  maxDigHardness: 2
+  drops: []
+  knowledge: 0
+  art: 9

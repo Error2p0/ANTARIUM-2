@@ -17,6 +17,8 @@ namespace Antarium.Sim
         {
             Dig, Designate, Zone, Build, Remove, SetFilter, Research, Ability, Claim, Catch, TriggerEvent, CasteShare, TriggerRaid,
             Pheromone, Possess, Release, PossessAct, PossessInteract, Genetic,
+            ContainerFilter, Reserve, Recipe, Evolve, Priority,
+            Stage, TriggerDigger, Respec, Laying, AutoMark, StarCaught, Switch, TriggerWorm,
         }
 
         readonly struct Command
@@ -30,6 +32,8 @@ namespace Antarium.Sim
             public readonly int2 Cell;
             public readonly int2 Dir;
             public readonly ushort Item;
+            /// <summary>Storage filters: bit per allowed item.</summary>
+            public readonly ulong Mask;
 
             public Command(CommandKind kind, float2 cellPos, float radius, float power, bool set, int def = 0)
             {
@@ -42,19 +46,21 @@ namespace Antarium.Sim
                 Cell = default;
                 Dir = default;
                 Item = 0;
+                Mask = 0;
             }
 
-            public Command(CommandKind kind, int def, int2 cell, int2 dir, ushort item)
+            public Command(CommandKind kind, int def, int2 cell, int2 dir, ushort item, ulong mask = 0, bool set = true)
             {
                 Kind = kind;
                 CellPos = default;
                 Radius = 0f;
                 Power = 0f;
-                Set = true;
+                Set = set;
                 Def = def;
                 Cell = cell;
                 Dir = dir;
                 Item = item;
+                Mask = mask;
             }
         }
 
@@ -74,8 +80,16 @@ namespace Antarium.Sim
         public readonly ContractSystem Contracts;
         public readonly RandomEventSystem RandomEvents;
         public readonly FluidSystem Fluids;
+        /// <summary>Burning flammable cells (10.3).</summary>
+        public readonly FireSystem Fire;
         public readonly EnemySystem Enemies;
         public readonly PheromoneSystem Pheromones;
+        /// <summary>The queen's evolution tree (10.4).</summary>
+        public readonly EvolutionSystem Evolutions;
+        /// <summary>The ruins' story: lore fragments found by studying relics and tablets (10.5).</summary>
+        public readonly LoreSystem Lore;
+        /// <summary>Experience numbers (levels), from <see cref="AntGrowthConfig"/> (re-read every tick, so tuning applies live).</summary>
+        GrowthTick _growth;
 
         /// <summary>Soldiers alive (counted once per tick).</summary>
         public int Soldiers => _alive[(int)AntCaste.Soldier];
@@ -100,6 +114,8 @@ namespace Antarium.Sim
         bool _designationsChanged;
         bool _storageChanged;
         int _ticksSinceFieldRefresh;
+        /// <summary>No thieves were about at the last field refresh: the loot field is out of date.</summary>
+        bool _lootStale = true;
         int _digSlots;
         int _haulSlots;
 
@@ -137,9 +153,15 @@ namespace Antarium.Sim
                 Fluids.Settle(config.fluids.settleSteps);
                 Reveal.Initial(World, content.MaterialSim, config.dig.revealRadius);
             }
+            // Lava lights flammable cells only once the game runs (never while world generation settles the fluids).
+            Fluids.SetMaterials(content.MaterialSim);
+            Fluids.IgniteChance = config.fire.lavaIgniteChance;
+            Fire = new FireSystem(World, config.fire, content.MaterialSim, content.AshMaterial);
             Light = new LightSystem(World, config.light);
             var lava = config.fluids.lavaLight;
             Light.LavaEmission = new float3(lava.r, lava.g, lava.b) * config.fluids.lavaLightStrength;
+            var fire = config.fire.light;
+            Light.FireEmission = new float3(fire.r, fire.g, fire.b) * config.fire.lightStrength;
             Light.RecomputeAll(World, content.MaterialSim);
 
             _broken = new NativeList<int2>(64, Allocator.Persistent);
@@ -149,30 +171,39 @@ namespace Antarium.Sim
             Colony = new Colony(content, config.colony, config.castes);
             Colony.QueenCell = FindQueenCell();
             FindRoyalDisplayCells();
-            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat);
+            Buildings = new BuildingSystem(content, config.logistics, World, Colony, Events, config.combat, config.waterworks);
+            Buildings.SetFluids(Fluids);
             Buildings.EngineerBoost = content.Caste(AntCaste.Engineer).machineBoost;
+            Buildings.BiomeScale = Tweaks.BiomeScale > 0f ? Tweaks.BiomeScale : 1f;
             int slots = content.ConsumerSlotCount;
             Fields = new FlowFields(World, slots * 2); // consumer fields, then supply fields
             Pheromones = new PheromoneSystem(World, config.pheromones);
-            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length, content.CasteSim);
+            Ants = new AntSystem(config.worker, config.logistics, config.combat, config.fluids, content.Items.Length, content.CasteSim,
+                content.MaterialSim);
+            _growth = GrowthTick.From(config.growth);
             for (int i = 0; i < content.Items.Length; i++)
             {
                 int slot = content.ConsumerSlot[i];
                 Ants.ConsumerField[i] = slot >= 0 ? FlowFields.ConsumerField(slot) : -1;
                 Ants.SupplyField[i] = slot >= 0 ? FlowFields.SupplyField(slot, slots) : -1;
             }
-            Research = new ResearchSystem(content, Colony, Events);
+            Lore = new LoreSystem(content, Colony, Events);
+            Research = new ResearchSystem(content, Colony, Events, Lore);
+            Evolutions = new EvolutionSystem(content, Colony, Events);
             Abilities = new AbilitySystem(content, Colony);
             Contracts = new ContractSystem(content, config.progression, this, seed);
             RandomEvents = new RandomEventSystem(content, config.progression, this, seed);
             Enemies = new EnemySystem(content, config, this, seed);
+            InitSurface();
             ApplyLegacyEffects();
+            BuildHeatRows();
             if (!fresh) return;
 
             ApplyStartBonuses();
+            PlaceCaveGrowths();
             int workers = config.colony.startingWorkers + (int)Legacy.Total(GeneticEffectKind.StartWorkers);
             for (int i = 0; i < workers; i++)
-                Ants.Spawn(RandomRoyalFloorCell(), seed);
+                Ants.Spawn(RandomRoyalFloorCell(), seed, AntCaste.Worker, TraitChance);
             RefreshFields(force: true);
             Contracts.Tick();
         }
@@ -213,8 +244,14 @@ namespace Antarium.Sim
             RefreshFields(force: true);
             World.MarkAll(ChunkFlags.TerrainUpload | ChunkFlags.LightUpload | ChunkFlags.FluidUpload);
             Fluids.WakeAllWithFluid();
+            Fire.Rebuild();
+            CheckSurfaceWater(); // a save from before Milestone 11 has no lakes
+            if (!Wild.Placed) PlaceCaveGrowths(); // ... and gets mushrooms in the caves it hasn't found yet
+            else RestoreWildLights();
             Ants.CountCastes(_alive, _aliveWithEggs);
             ValidateNurseryEggs();
+            _anySheltering = true; // released on the first tick unless a bird circles
+            _shelterDirty = true;
             Contracts.Tick();
         }
 
@@ -240,6 +277,19 @@ namespace Antarium.Sim
 
         public void EnqueueSetFilter(int2 cell, ushort item) => _pending.Add(new Command(CommandKind.SetFilter, 0, cell, default, item));
 
+        /// <summary>
+        /// Limits the storage at <paramref name="cell"/> to the items in <paramref name="allow"/> (all bits = anything): a chest,
+        /// or a storage zone with every storage cell connected to it (<paramref name="wholeZone"/>).
+        /// </summary>
+        public void EnqueueStorageFilter(int2 cell, ulong allow, bool wholeZone = true) =>
+            _pending.Add(new Command(CommandKind.ContainerFilter, 0, cell, default, 0, allow, wholeZone));
+
+        /// <summary>Keeps <paramref name="count"/> of <paramref name="item"/> in the stock: machines and unloaders leave them.</summary>
+        public void EnqueueReserve(ushort item, int count) => _pending.Add(new Command(CommandKind.Reserve, count, default, default, item));
+
+        /// <summary>The machine at <paramref name="cell"/> runs only its recipe <paramref name="choice"/> (-1 = any it can).</summary>
+        public void EnqueueRecipe(int2 cell, int choice) => _pending.Add(new Command(CommandKind.Recipe, choice, cell, default, 0));
+
         /// <summary>Researches node <paramref name="research"/> (index into <c>ContentDB.Research</c>) if affordable.</summary>
         public void EnqueueResearch(int research) => _pending.Add(new Command(CommandKind.Research, research, default, default, 0));
 
@@ -259,8 +309,14 @@ namespace Antarium.Sim
         public void EnqueueCasteShare(AntCaste caste, float share) =>
             _pending.Add(new Command(CommandKind.CasteShare, default, 0f, share, true, (int)caste));
 
-        /// <summary>Debug: a raid arrives now.</summary>
-        public void EnqueueTriggerRaid() => _pending.Add(new Command(CommandKind.TriggerRaid, 0, default, default, 0));
+        /// <summary>Debug: a raid arrives now (<paramref name="rival"/>: rival ants that steal from the stock, if the content has them).</summary>
+        public void EnqueueTriggerRaid(bool rival = false) => _pending.Add(new Command(CommandKind.TriggerRaid, rival ? 1 : 0, default, default, 0));
+
+        /// <summary>Debug: a mole cricket starts tunnelling toward the nest now.</summary>
+        public void EnqueueTriggerDigger() => _pending.Add(new Command(CommandKind.TriggerDigger, 0, default, default, 0));
+
+        /// <summary>Pays and starts the next restoration step of the Ancient Engine at <paramref name="cell"/> (10.5).</summary>
+        public void EnqueueStage(int2 cell) => _pending.Add(new Command(CommandKind.Stage, 0, cell, default, 0));
 
         /// <summary>Paints (or erases) a circle of pheromone <paramref name="kind"/>.</summary>
         public void EnqueuePheromone(PheromoneKind kind, float2 cellPos, float radius, bool set) =>
@@ -298,10 +354,13 @@ namespace Antarium.Sim
             _pending.Clear();
 
             PlayTime += dt;
+            _growth = GrowthTick.From(Config.growth);
+            UpdateSurface(dt);
             UpdateColony(dt);
             Abilities.Tick(dt);
-            UpdateEngineers();
+            UpdateEngineers(dt);
             Buildings.Tick(dt);
+            Lore.Update();
             Colony.Inventory.UpdateRates(dt, Config.logistics.rateSmoothing);
             Colony.Meter.Update(dt);
             StepHazards(dt);
@@ -330,6 +389,10 @@ namespace Antarium.Sim
             tick.PossessSpeed = Config.possession.speed;
             tick.PossessDamageTaken = Config.possession.damageTaken;
             tick.PossessDir = PossessInput;
+            tick.Priority = PriorityWeights();
+            tick.RegenFactor = mods.Mult(StatKind.AntRegen);
+            tick.Growth = _growth;
+            UpdateThrone(ref tick);
             Ants.Think(World, Fields, Pheromones, tick);
             Ants.Resolve(this);
             ReinforceTrails();
@@ -367,7 +430,7 @@ namespace Antarium.Sim
         public void SpawnAnts(int count, AntCaste caste)
         {
             for (int i = 0; i < count; i++)
-                Ants.Spawn(RandomRoyalFloorCell(), Seed, caste);
+                Ants.Spawn(RandomRoyalFloorCell(), Seed, caste, TraitChance);
             Ants.CountCastes(_alive, _aliveWithEggs);
         }
 
@@ -383,12 +446,17 @@ namespace Antarium.Sim
                 case CommandKind.Build: Buildings.Place(cmd.Def, cmd.Cell, cmd.Dir, cmd.Item); break;
                 case CommandKind.Remove: Buildings.Remove(cmd.Cell); break;
                 case CommandKind.SetFilter: Buildings.SetFilter(cmd.Cell, cmd.Item); break;
+                case CommandKind.ContainerFilter: SetStorageFilter(cmd.Cell, cmd.Mask, cmd.Set); break;
+                case CommandKind.Reserve: Colony.Inventory.SetReserve(cmd.Item, cmd.Def); break;
+                case CommandKind.Recipe: Buildings.SetRecipe(cmd.Cell, cmd.Def); break;
                 case CommandKind.Research: Research.Research(cmd.Def); break;
                 case CommandKind.Ability: UseAbility(cmd.Def, cmd.Cell); break;
                 case CommandKind.Claim: Contracts.Claim(cmd.Def); break;
                 case CommandKind.Catch: RandomEvents.Catch(cmd.CellPos); break;
                 case CommandKind.CasteShare: Colony.SetCasteShare((AntCaste)cmd.Def, cmd.Power); break;
-                case CommandKind.TriggerRaid: Enemies.TriggerRaid(); break;
+                case CommandKind.TriggerRaid: Enemies.TriggerRaid(cmd.Def == 1); break;
+                case CommandKind.TriggerDigger: Enemies.TriggerDigger(); break;
+                case CommandKind.Stage: Buildings.BeginStage(cmd.Cell); break;
                 case CommandKind.Pheromone:
                     if (cmd.Def >= 0 && cmd.Def < Antarium.Content.Pheromones.Count)
                         Pheromones.Paint((PheromoneKind)cmd.Def, cmd.CellPos, cmd.Radius, cmd.Set);
@@ -398,6 +466,14 @@ namespace Antarium.Sim
                 case CommandKind.PossessAct: PossessAct(cmd.CellPos, cmd.Power); break;
                 case CommandKind.PossessInteract: PossessInteract(); break;
                 case CommandKind.Genetic: BuyGenetic(cmd.Def); break;
+                case CommandKind.Respec: Respec(); break;
+                case CommandKind.Evolve: Evolutions.Buy(cmd.Def); break;
+                case CommandKind.Priority: SetPriority((JobKind)cmd.Item, cmd.Def); break;
+                case CommandKind.Laying: Colony.LayingPaused = !cmd.Set; break;
+                case CommandKind.AutoMark: Colony.AutoMarkOres = cmd.Set; break;
+                case CommandKind.StarCaught: CatchShootingStar(cmd.CellPos); break;
+                case CommandKind.Switch: Buildings.SetSwitch(cmd.Cell, cmd.Set); break;
+                case CommandKind.TriggerWorm: RandomEvents.TriggerKind(RandomEventKind.GiantWorm); break;
                 case CommandKind.TriggerEvent:
                 {
                     int n = Content.Events.Length;
@@ -418,6 +494,7 @@ namespace Antarium.Sim
             var cmd = command;
             var dig = new DigCommand(cmd.CellPos, cmd.Radius, cmd.Power * Colony.Mods.Mult(StatKind.PlayerDig));
             int damaged = Digging.Apply(World, Content.MaterialSim, dig, Config.dig.brushEdgeFactor, Events, _broken, out bool opened);
+            if (Enemies.HitWorm(dig.CellPos, dig.Radius, dig.Power)) damaged++; // the giant worm (Milestone 11): a productive hit
             if (opened) _terrainChanged = true;
 
             int breachesBefore = _breachStarts.Length;
@@ -455,7 +532,9 @@ namespace Antarium.Sim
                 else
                 {
                     flag = CellFlags.Storage;
-                    eligible = cell.IsOpen && !Content.MaterialSim[cell.Material].IsAir;
+                    int building = Buildings.At(new int2(x, y));
+                    eligible = cell.IsOpen && !Content.MaterialSim[cell.Material].IsAir
+                               && (building < 0 || Buildings.Get(building).Kind != BuildingKind.Chest);
                 }
 
                 bool has = (cell.Flags & flag) != 0;
@@ -473,12 +552,69 @@ namespace Antarium.Sim
                     continue;
                 }
                 _storageChanged = true;
-                if (cmd.Set) Colony.Inventory.AddStorageCell(new int2(x, y), index);
+                if (cmd.Set) AddStorageCell(new int2(x, y), index);
                 else EvictStorage(new int2(x, y), index);
             }
 
             if (!designate && _storageChanged)
                 Buildings.MarkNetworkDirty(); // belts ending in a storage zone deliver to the stock
+        }
+
+        /// <summary>
+        /// Storage filter: a chest, or the storage zone at <paramref name="c"/> together with every storage cell connected to it
+        /// (<paramref name="wholeZone"/>), only takes the items in <paramref name="allow"/>.
+        /// </summary>
+        void SetStorageFilter(int2 c, ulong allow, bool wholeZone)
+        {
+            if (!World.InBounds(c.x, c.y)) return;
+            var inv = Colony.Inventory;
+            var start = inv.ContainerAt(World.Index(c.x, c.y));
+            if (start == null) return;
+            if (start.IsChest || !wholeZone)
+            {
+                inv.SetAllow(start, allow);
+                return;
+            }
+            foreach (var cell in ZoneCells(c)) inv.SetAllow(inv.ContainerAt(World.Index(cell.x, cell.y)), allow);
+        }
+
+        /// <summary>A newly painted storage cell joins the zone next to it, filter included.</summary>
+        void AddStorageCell(int2 c, int index)
+        {
+            var inv = Colony.Inventory;
+            inv.AddStorageCell(c, index);
+            for (int d = 0; d < 4; d++)
+            {
+                var n = c + (d == 0 ? new int2(1, 0) : d == 1 ? new int2(-1, 0) : d == 2 ? new int2(0, 1) : new int2(0, -1));
+                if (!World.InBounds(n.x, n.y)) continue;
+                int ni = World.Index(n.x, n.y);
+                if (!Colony.StorageCells.Contains(ni) || ni == index) continue;
+                var neighbour = inv.ContainerAt(ni);
+                if (neighbour == null) continue;
+                inv.SetAllow(inv.ContainerAt(index), neighbour.Allow);
+                return;
+            }
+        }
+
+        /// <summary>The storage zone cell <paramref name="c"/> and every storage cell connected to it (4-way).</summary>
+        public List<int2> ZoneCells(int2 c)
+        {
+            var cells = new List<int2>();
+            if (!World.InBounds(c.x, c.y) || !Colony.StorageCells.Contains(World.Index(c.x, c.y))) return cells;
+            cells.Add(c);
+            var seen = new HashSet<int> { World.Index(c.x, c.y) };
+            for (int i = 0; i < cells.Count; i++)
+            {
+                for (int d = 0; d < 4; d++)
+                {
+                    var n = cells[i] + (d == 0 ? new int2(1, 0) : d == 1 ? new int2(-1, 0) : d == 2 ? new int2(0, 1) : new int2(0, -1));
+                    if (!World.InBounds(n.x, n.y)) continue;
+                    int index = World.Index(n.x, n.y);
+                    if (!Colony.StorageCells.Contains(index) || !seen.Add(index)) continue;
+                    cells.Add(n);
+                }
+            }
+            return cells;
         }
 
         /// <summary>Items in an erased storage cell move to other storage; what does not fit drops to the floor.</summary>
@@ -506,7 +642,8 @@ namespace Antarium.Sim
             if (Colony.Designated.Remove(index)) _designationsChanged = true;
 
             Reveal.Around(World, c, Config.dig.revealRadius);
-            if (_veinInstinct) FollowVein(c);
+            if (VeinInstinctActive) FollowVein(c);
+            Fire.Remove(c);
             Fluids.Wake(c);
             CheckUnstableAbove(c);
             AddBreach(c + new int2(1, 0));
@@ -543,6 +680,9 @@ namespace Antarium.Sim
                 _breachStarts.Add(c);
         }
 
+        /// <summary>Whether the colony was starving when the Items field was last marked (it ranks surface food differently then).</summary>
+        bool _haulStarving;
+
         int FlushBreaches()
         {
             if (_breachStarts.Length == 0) return 0;
@@ -552,6 +692,7 @@ namespace Antarium.Sim
             {
                 _terrainChanged = true;
                 Enemies.OnCaveDiscovered(_discovered, _breachStarts.AsArray());
+                CheckElderFound(_discovered);
             }
             _breachStarts.Clear();
             return discovered;
@@ -568,11 +709,13 @@ namespace Antarium.Sim
                 case IntentKind.Dig:
                 {
                     var result = Digging.DamageCell(World, Content.MaterialSim, intent.Cell, intent.Amount, Events);
+                    if (result != DamageResult.None) GainXp(ref ant, JobKind.Dig, intent.Amount * Config.growth.digXp);
                     if (result == DamageResult.None) ant.State = AntState.Idle;
                     else if (result == DamageResult.Opened) _terrainChanged = true;
                     else if (result == DamageResult.Broken)
                     {
                         OnCellBroken(intent.Cell);
+                        LuckyDrop(ant, intent.Cell);
                         ant.State = AntState.Idle;
                     }
                     break;
@@ -581,7 +724,7 @@ namespace Antarium.Sim
                     if (Colony.Piles.TryTake(intent.Cell, inventory, out ushort item))
                     {
                         // Haulers take more of the same item from the pile while it still fits somewhere.
-                        int capacity = Ants.Caste(ant.Caste).Carry;
+                        int capacity = Ants.CarryCapacity(ant);
                         int count = 1;
                         while (count < capacity && Colony.Piles.TryTakeItem(intent.Cell, item, inventory)) count++;
                         ant.Carry = item;
@@ -596,7 +739,10 @@ namespace Antarium.Sim
                 {
                     // A machine that needs the item first, then the stock, then a belt that can take it.
                     int2 c = intent.Cell;
+                    bool toMachine = ant.Dest == CarryDest.Consumer;
                     int delivered = DeliverCarried(ref ant, c);
+                    if (delivered > 0)
+                        GainXp(ref ant, toMachine ? JobKind.Supply : JobKind.Haul, delivered * (toMachine ? Config.growth.supplyXp : Config.growth.haulXp));
                     if (!ant.IsCarrying) ant.State = AntState.Idle;
                     else if (delivered > 0)
                     {
@@ -611,8 +757,12 @@ namespace Antarium.Sim
                     break;
                 }
                 case IntentKind.Build:
-                    if (Buildings.Work(intent.Cell, intent.Amount) != WorkResult.Working) ant.State = AntState.Idle;
+                {
+                    var work = Buildings.Work(intent.Cell, intent.Amount);
+                    if (work != WorkResult.None) GainXp(ref ant, JobKind.Build, intent.Amount * Config.growth.buildXp);
+                    if (work != WorkResult.Working) ant.State = AntState.Idle;
                     break;
+                }
                 case IntentKind.Withdraw:
                 {
                     int2 c = intent.Cell;
@@ -621,7 +771,7 @@ namespace Antarium.Sim
                     if (!ant.IsCarrying && inventory.TryWithdraw(ant.Want, index, royal))
                     {
                         // Haulers fetch as many as machines still want (shared with the others fetching this tick).
-                        int count = 1, capacity = Ants.Caste(ant.Caste).Carry;
+                        int count = 1, capacity = Ants.CarryCapacity(ant);
                         while (count < capacity && Ants.SupplyNeed[ant.Want] > 0 && inventory.TryWithdraw(ant.Want, index, royal))
                         {
                             Ants.SupplyNeed[ant.Want]--;
@@ -651,12 +801,16 @@ namespace Antarium.Sim
         int DeliverCarried(ref Ant ant, int2 c)
         {
             var inventory = Colony.Inventory;
-            bool stockCell = Colony.IsStockCell(c, World.Index(c.x, c.y));
+            int index = World.Index(c.x, c.y);
+            bool stockCell = Colony.IsStockCell(c, index);
+            var here = inventory.ContainerAt(index);
+            var chest = here != null && here.IsChest ? here : null;
             int delivered = 0;
             while (ant.IsCarrying)
             {
                 ushort carried = ant.Carry;
-                bool ok = Buildings.TryFeed(c, carried) || (stockCell && inventory.Deliver(carried, c)) || Buildings.TryLoad(c, carried);
+                bool ok = Buildings.TryFeed(c, carried) || inventory.DeliverInto(chest, carried) || (stockCell && inventory.Deliver(carried, c))
+                          || Buildings.TryLoad(c, carried);
                 if (!ok) break;
                 Events.Publish(new ItemDeliveredEvent(c, carried));
                 delivered++;
@@ -697,6 +851,10 @@ namespace Antarium.Sim
                     case AbilityKind.PheromoneBurst:
                         amount = StartRally(cell, def);
                         if (amount == 0) result = AbilityResult.NoEffect;
+                        break;
+                    case AbilityKind.Quickening:
+                        if (Colony.Eggs.Count == 0 && !AnyCarriedEgg()) result = AbilityResult.NoEffect;
+                        else amount = HatchAllEggs();
                         break;
                 }
             }
@@ -808,9 +966,16 @@ namespace Antarium.Sim
             UpdateForage(dt);
         }
 
+        bool AnyCarriedEgg()
+        {
+            foreach (var a in Ants.Ants)
+                if (a.CarryingEgg) return true;
+            return false;
+        }
+
         void Hatch(int2 cell, AntCaste caste)
         {
-            Ants.Spawn(cell, Seed, caste);
+            Ants.Spawn(cell, Seed, caste, TraitChance);
             _alive[(int)caste]++;
             Colony.Stats.AntsHatched++;
             Colony.Stats.HatchedCaste[(int)caste]++;
@@ -820,8 +985,9 @@ namespace Antarium.Sim
         void UpdateForage(float dt)
         {
             var cfg = Config.colony;
-            if (Content.SurfaceForage.Length == 0) return;
-            float forage = Colony.Mods.Mult(StatKind.ForageRate);
+            if (Content.SurfaceForage.Length == 0 || !Surface.ForageGrows) return; // seeds appear by day and on starfall nights
+            float forage = Colony.Mods.Mult(StatKind.ForageRate) * WeatherForage;
+            if (forage <= 0f) return;
             Colony.ForageTimer += dt;
             if (Colony.ForageTimer < cfg.forageInterval / forage) return;
             Colony.ForageTimer = 0f;
@@ -840,7 +1006,7 @@ namespace Antarium.Sim
             int y = World.Height - 1;
             while (y > 0 && World.Cells[World.Index(x, y - 1)].IsOpen) y--;
             var nav = new NavGrid(World);
-            if (!nav.IsWalkable(new int2(x, y)) || y <= World.SurfaceY[x] - 2) return;
+            if (!nav.IsWalkable(new int2(x, y)) || y <= World.SurfaceY[x] - 2 || !ReachableFromNest(new int2(x, y))) return;
 
             ushort item = Content.SurfaceForage[_rng.NextInt(Content.SurfaceForage.Length)];
             DropItem(new int2(x, y), item, 1);
@@ -920,7 +1086,8 @@ namespace Antarium.Sim
             if (_terrainChanged) Fields.MarkAllDirty();
             if (_designationsChanged) Fields.MarkDirty(FieldKind.Dig);
             if (_storageChanged || Buildings.DropoffChanged) Fields.MarkDirty(FieldKind.Dropoff);
-            if (Colony.Piles.Changed || Colony.Inventory.AcceptanceChanged) Fields.MarkDirty(FieldKind.Items);
+            if (Colony.Piles.Changed || Colony.Inventory.AcceptanceChanged || Colony.Starving != _haulStarving) Fields.MarkDirty(FieldKind.Items);
+            _haulStarving = Colony.Starving; // surface food is fetched first while the colony starves
             if (Buildings.BlueprintsChanged) Fields.MarkDirty(FieldKind.Build);
             if (Buildings.GuardsChanged) Fields.MarkDirty(FieldKind.Guard);
             // Moving targets: rebuilt at the refresh rate while anyone needs them.
@@ -931,7 +1098,14 @@ namespace Antarium.Sim
             }
             if (Enemies.AnyHunting) Fields.MarkDirty(FieldKind.Ants);
             if (Enemies.AnyLeaving) Fields.MarkDirty(FieldKind.Exit);
+            // Rival ants head for the nearest store holding items: rebuilt when stores fill or empty while thieves are about.
             ulong locations = Colony.Inventory.LocationsChanged;
+            if (Enemies.AnyLooting)
+            {
+                if (_lootStale || locations != 0 || _storageChanged || Buildings.DropoffChanged) Fields.MarkDirty(FieldKind.Loot);
+                _lootStale = false;
+            }
+            else _lootStale = true;
             Colony.Inventory.LocationsChanged = 0;
             for (int i = 0; i < Content.Items.Length && locations != 0; i++)
             {
@@ -956,6 +1130,7 @@ namespace Antarium.Sim
             if ((scents & Bit(PheromoneKind.Gather)) != 0) Fields.MarkDirty(FieldKind.Items);
             if ((scents & Bit(PheromoneKind.Defend)) != 0) Fields.MarkDirty(FieldKind.Guard);
             MarkCasteFieldsDirty();
+            MarkSurfaceFieldsDirty();
 
             _terrainChanged = _designationsChanged = _storageChanged = false;
             Buildings.DropoffChanged = Buildings.BlueprintsChanged = Buildings.GuardsChanged = false;
@@ -1003,11 +1178,20 @@ namespace Antarium.Sim
                 late.Clear();
                 _haulSlots = 0;
                 bool anyScent = Pheromones.Cells[(int)PheromoneKind.Gather] > 0;
+                // Without Gather scent, piles underground (dug ore, finds) come first and forage on the surface comes
+                // forageHaulDelay cells later, so the forage refilling next to the nest doesn't keep the haulers from the
+                // mines; while the colony starves, food on the surface comes first again.
+                if (!anyScent) late = Fields.LateSources(FieldKind.Items, Config.colony.forageHaulDelay * FlowFields.StraightCost);
                 for (int i = 0; i < Colony.Piles.Count; i++)
                 {
                     var p = Colony.Piles[i];
                     if (!Colony.Inventory.CanAccept(p.Item) || Pheromones.Has(PheromoneKind.Avoid, p.Cell)) continue;
-                    bool first = !anyScent || Pheromones.Has(PheromoneKind.Gather, p.Cell);
+                    // Piles in caves nobody has found yet (wild mushrooms, golden apples) are no jobs: counted as haul slots
+                    // they drew every worker away from digging, off to whatever pile it could reach.
+                    if ((World.Cells[World.Index(p.Cell.x, p.Cell.y)].Flags & CellFlags.Explored) == 0) continue;
+                    bool first = anyScent
+                        ? Pheromones.Has(PheromoneKind.Gather, p.Cell)
+                        : World.Depth(p.Cell.x, p.Cell.y) >= ShelterDepth || Colony.Starving && Content.Items[p.Item].IsFood;
                     (first ? sources : late).Add(p.Cell);
                     _haulSlots += p.Count;
                 }
@@ -1017,8 +1201,8 @@ namespace Antarium.Sim
                 var sources = Fields.Sources(FieldKind.Dropoff);
                 sources.Clear();
                 AddRoyalCells(sources, Config.colony.royalRadius);
-                foreach (int index in Colony.StorageCells)
-                    sources.Add(GridIndex.ToCell(index, World.ChunksX));
+                foreach (var container in Colony.Inventory.Containers)
+                    if (!container.IsRoyal) sources.Add(container.Cell);
                 Buildings.AddDropoffSources(sources);
             }
             if (Fields.IsDirty(FieldKind.Build))
@@ -1028,6 +1212,7 @@ namespace Antarium.Sim
                 Buildings.AddBuildSources(sources);
                 for (int i = sources.Length - 1; i >= 0; i--)
                     if (Pheromones.Has(PheromoneKind.Avoid, sources[i])) sources.RemoveAtSwapBack(i);
+                OrderWallSources(sources);
             }
             for (int i = 0; i < Content.Items.Length; i++)
             {
@@ -1072,6 +1257,7 @@ namespace Antarium.Sim
                 Pheromones.AddCells(PheromoneKind.Defend, sources);
             }
             FillCasteSources();
+            FillSurfaceSources();
             if (Fields.IsDirty(FieldKind.Ants))
             {
                 var sources = Fields.Sources(FieldKind.Ants);
@@ -1085,10 +1271,27 @@ namespace Antarium.Sim
                 sources.Clear();
                 if (Enemies.AnyLeaving) sources.Add(Enemies.RaidCell);
             }
+            if (Fields.IsDirty(FieldKind.Loot))
+            {
+                var sources = Fields.Sources(FieldKind.Loot);
+                sources.Clear();
+                if (Enemies.AnyLooting) AddLootSources(sources);
+            }
             Fields.Rebuild(World, Pheromones);
         }
 
         static int Bit(PheromoneKind kind) => 1 << (int)kind;
+
+        /// <summary>Every store holding a non-food item: storage cells and chests, and the royal chamber's cells.</summary>
+        void AddLootSources(NativeList<int2> sources)
+        {
+            foreach (var container in Colony.Inventory.Containers)
+            {
+                if (!Enemies.HoldsLoot(container)) continue;
+                if (container.IsRoyal) AddRoyalCells(sources, Config.colony.royalRadius);
+                else sources.Add(container.Cell);
+            }
+        }
 
         void AddRoyalCells(NativeList<int2> sources, int radius)
         {

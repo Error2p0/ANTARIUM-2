@@ -1,0 +1,92 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
+
+[i]Uzun zaman önce bu derinlikler Eski Koloni'yle doluydu. Tünelleri köklerden ateşe kadar uzanırdı ve her şeyin en dibine Motor'u inşa etmişti: tüm koloninin tek bir zihin gibi düşünmesini sağlayan, demirden ve şarkı söyleyen kristalden bir makine. Sonra aşağıdaki ateş huzursuzlandı ve Motor sustu.[/i]
+
+[i]Şimdi, çimenlerin altında, yeni bir kraliçe kazmaya başlıyor.[/i]
+
+Sen bu koloninin zihnisin. Her şey bir çayırdaki küçük bir delikte, bir kraliçe ve bir avuç işçiyle başlar. Koloni yaşayan bir makineye dönüşür: tüneller, ipek bantlar ve hareketli odalar, kristal mağaralardan ve lavdan geçerek kendinden önceki koloninin kalıntılarına kadar uzanır. Sonra prenseslerin gökyüzüne havalanır ve her şey yeniden, daha güçlü başlar.
+
+[b]Antarium 2[/b], aktif bir artımlı oyunla bir koloni otomasyon simülasyonunu bir araya getirir. İstediğinde elle kaz, ustalaştığında otomatikleştir ve yüzlerce karıncanın kolonini ileriye taşımasını izle.
+
+[h2]Sen kaz, koloni ardından gelsin[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
+[list]
+[*][b]Kazmak için tıkla ve basılı tut:[/b] kaya kırmaya devam ettikçe molozlar uçuşur, ekran sarsılır ve kombo büyür. Bir fırça boyutu seç ve gücüne dikkat et.
+[*][b]Karıncaları değil, emirleri boya.[/b] Kazılacak kayaları işaretle ve depo alanları boya. İşçiler görevleri üstlenir, her buluntuyu yuvaya taşır ve oraya ulaşmak için duvarlara ve tavanlara tırmanır.
+[*]Her eşya fizikseldir: cevher düştüğü yerde yığılır, depo raflarında durur ve bantların üzerinde taşınır.
+[/list]
+
+[h2]Yaşayan bir makine inşa et[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
+[list]
+[*][b]İpek ve demir bantlar, kök asansörleri, ayırıcılar, filtreler, sandıklar ve boşaltıcılar[/b] cevheri kazı cephesinden makinelerine taşır ve eşyaların yol aldığını görürsün.
+[*][b]Ergitme fırınları, kırıcılar, mantar bahçeleri, yaprak biti çiftlikleri, arşivler, kreşler ve prenses odaları[/b] ham buluntuları bakıra, demire, yiyeceğe, bal çiğine, bilgiye ve kraliyet soyuna dönüştürür.
+[*][b]Dünyayı çalıştır:[/b] pompalar suyu taşır, su çarkları yakındaki makineleri hızlandırır, sulama daha bol hasat getirir ve magmanın üzerine kurulan bir ergitme fırını kömüre ihtiyaç duymaz.
+[*][b]Akış, ışık ve cevher görünümleri[/b] neyin hareket ettiğini, neyin tıkandığını, nerenin karanlık olduğunu ve cevherin nerede yattığını gösterir; hatlarını ayarlamak bir bulmacaya dönüşür.
+[/list]
+
+[h2]Yukarıda ve aşağıda bir dünya[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
+[list]
+[*]Kolonin [b]gerçek bir gökyüzünün[/b] altında yaşar: gece ve gündüz, inişli çıkışlı tepeler, derin köklü ağaçlar, göller ve nehirler ve ufukta dağlar.
+[*][b]Yağmurlar ve fırtınalar[/b] özensiz kazılmış tünellere su doldurur. Nadir [b]yıldız yağmuru gecelerinde[/b] gökyüzü kayan yıldızlarla dolar ve avcılar yuvalarında kalır.
+[*][b]Doğadan topla:[/b] yüzeyde tohumlar, yabani meyveler, elmalar ve zehirli mantarlar, aşağıdaki mağaralarda ise parlayan mantarlar.
+[*]Gündüz kuşlar toplayıcılarını avlar, geceleri ise kurt örümcekleri ortaya çıkar.
+[/list]
+
+[h2]Her biri bir öncekinden tuhaf yedi katman[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_depths[/img]
+[list]
+[*]Üst toprak, kil ve yeraltı suyu, taş katmanları, [b]parlayan kristal mağaralar[/b], [b]mantar derinlikleri[/b], [b]magma bölgesi[/b] ve dünyanın en dibindeki [b]kadim kalıntılar[/b].
+[*]Su basar, kum çöker, spor gazı tavanlar boyunca süzülür, lav suyla buluştuğu yerde obsidiyene dönüşür ve ateş kömür damarlarına ve köklere yayılır.
+[*]Işık önemlidir: kazdıkça güneş ışığı azalır. Karanlığı aydınlatmak için [b]ışıltı karıncaları[/b], lavın yanında çalışmak için [b]ateş karıncaları[/b] getir.
+[*]Taşların içinde bir yerde gizli bir mağara var ve orada kadim bir şey büyüyor.
+[/list]
+
+[h2]Derinlerdeki hikâye[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_ruins[/img]
+[list]
+[*]Kalıntılardaki emanetleri ve altın işlemeli tabletleri incele, Kodeks'inde saklanan on iki parçadan [b]Eski Koloni'nin hikâyesini[/b] bir araya getir.
+[*]Öğrendiklerin [b]kadim araştırmaların[/b] kilidini açar: onların taş işçiliği, kristal örgüleri ve sonunda Motor'un kendi planları.
+[*]Şarkı söyleyen kristalin üzerine [b]Kristal Rezonatörler[/b] kur, ardından [b]Kadim Motor'u[/b] adım adım onar ve Eski Koloni'nin istediği gibi uyandır.
+[/list]
+
+[h2]Yuvayı savun[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
+[list]
+[*][b]Termit baskınları[/b] yiyecek depolarına doğru yürür, [b]rakip karıncalar[/b] da ambarlarını yağmalamaya gelir.
+[*]Bir [b]danaburnu[/b] kraliçeye doğru tünel kazar, [b]dev bir solucan[/b] ise tünellerinin yanında toprağı altüst eder.
+[*]Her derin katmanda karanlıkta bekleyen kendine has bir yaratık vardır: çıyanlar, mağara örümcekleri, mantar akarları, alev böcekleri ve kalıntı muhafızları.
+[*]Askerler yetiştir, reçine ve demir kapılar, tuzaklar ve toprak duvarlar kur, dayanacak dar geçitler tasarla.
+[/list]
+
+[h2]Kontrolü ele al[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
+[list]
+[*][b]Herhangi bir karıncanın kontrolünü al[/b] ve onu kendin oyna: koş, tünel kaz, taşı ve savaş, karanlıkta sıcak bir ışıkla.
+[*][b]Feromon boya:[/b] karıncaları hızlandıran izler, onları kazmaya, toplamaya ya da savunmaya çeken kokular ve uzak durulacak alanlar.
+[*][b]On kast:[/b] işçiler, madenciler, taşıyıcılar, inşaatçılar, bakıcılar, kâşifler, mühendisler, askerler, ışıltı karıncaları ve ateş karıncaları. Oranı belirle, kraliçe yumurtaları ona göre bıraksın.
+[*][b]Kraliçeni evrimleştir[/b], iş önceliklerini belirle ve karıncaların tek tek beceri, seviye ve özellik kazanmasını izle.
+[*][b]Yetenekler ve olaylar:[/b] Çılgınlık, Sismik Sezgi, Kraliyet Fermanı, Feromon Patlaması ve Hızlanma; göktaşı düşüşleri, zengin damarlar, altın böcekler ve kurtarılmayı bekleyen mahsur karıncalar.
+[/list]
+
+[h2]Ve koloni havalanır[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_flight[/img]
+[list]
+[*][b]46 keşiften[/b] oluşan bir araştırma ağacı kastların, binaların, yeteneklerin ve geliştirmelerin kilidini açar; bir sözleşme panosu her zaman sıradaki hedefi gösterir.
+[*]Prensesler yetiştir ve onları [b]Çiftleşme Uçuşuna[/b] gönder: koloni sona erer, [b]Genetik Hafızası[/b] yaşamaya devam eder.
+[*]Onu, sonraki her koloninin oynanışını değiştiren [b]23 kalıcı genetik özelliğe[/b] harca: daha fazla yumurtadan kast soylarına ve [b]Kraliçenin Tahtı'na[/b] kadar. Fikrini mi değiştirdin? Puanları yeniden dağıt.
+[*]Sonraki dünya için [b]12 dünya değiştiricisi[/b] arasından seç: zengin damarlar ve oyuk topraktan volkanik derinliklere ve yeni biyom çeşitlerine kadar. Zorlu dünyalar daha büyük bir miras bırakır.
+[/list]
+
+[h2]Özellikler[/h2]
+[list]
+[*]Katı bir piksel ızgarasında net piksel sanatı; tünellerde sönen, mağaralarda parlayan ışık
+[*]Her biri kendi işini yapan, tünellerinin her yüzeyine tırmanan yüzlerce ayrı karınca
+[*]Çevrimdışı ilerleme: sen yokken kolonin çalışmaya devam eder (8 saate kadar)
+[*]Ulaştığın her katmanla değişen müzik
+[*]Her biri kendi soyu olan üç kayıt yuvası
+[*]49 Steam başarımı, Steam Cloud kayıtları, tamamen yeniden atanabilir kontroller
+[/list]
+
+[i]Not: Oyunun kendisi şu anda yalnızca İngilizce olarak sunulmaktadır.[/i]

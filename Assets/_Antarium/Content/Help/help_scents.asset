@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_scents
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_scents
+  displayName: Pheromones
+  order: 340
+  category: Colony
+  icon: tool_scent
+  body: 'Press {Scent} to paint scents; {Previous} / {Next} pick one, right drag erases.
+
+    - Trail: ants walk faster along it and prefer it. Lay it along busy tunnels.
+
+    - Dig here: mining orders under it are dug first.
+
+    - Gather: piles on it are picked up first.
+
+    - Defend: soldiers patrol it.
+
+    - Avoid: ants keep out of it and take no jobs inside.
+
+
+    Scents fade after a few minutes. A Pheromone Emitter (research Scent Glands) keeps one scent fresh around it: paint the area first, then place the emitter.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

@@ -57,7 +57,8 @@ namespace Antarium.Gameplay
             _page = new VisualElement();
             _page.AddToClassList("settings__page");
             Root.Add(_page);
-            Dialogs.Button(Root, "Close (Esc)", () => Closed?.Invoke());
+            var close = Dialogs.Button(Root, "Close", () => Closed?.Invoke());
+            Keys.Bind(() => close.text = Keys.With("Close", Keys.Menu));
         }
 
         /// <summary>Shows the dialog for <paramref name="settings"/> (edited in place).</summary>

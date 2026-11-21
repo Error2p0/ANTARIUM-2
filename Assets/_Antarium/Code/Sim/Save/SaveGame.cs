@@ -46,8 +46,16 @@ namespace Antarium.Sim
         /// Version 2 (Milestone 5): sections carry their own versions (IDS / COLN / ANTS / BLDG 2) and FLUD + THRT exist.
         /// Version 3 (Milestone 6): COLN 3 (caste shares, nursery eggs), ANTS 3 (carried counts and eggs) and PHER exist.
         /// Version 4 (Milestone 7): COLN 4 (princesses) and LGCY (Genetic Memory, genetic traits, world modifiers) exist.
+        /// Version 5 (Milestone 10): COLN 5 (storage filters, item reserves; chests are no longer in the container list) and
+        /// BLDG 3 (chest contents and filter, machine recipe choice, unloaders); 10.2 adds SURF (time of day, weather, the
+        /// bird, night spiders still to come, the queen's honeydew). 10.4 adds ANTS 4 (experience, skill, trait, lane) and QUEN
+        /// (queen evolutions by id, job priorities). 10.5 adds BLDG 4 (the Ancient Engine's stage), THRT 2 (rival ants' loot,
+        /// diggers, the raid kind, the digger timer) and RUIN (items studied, lore fragments found by id, rival raids beaten).
+        /// Version 6 (10.6): the header holds the bloodline's generation (save slot picker); LGCY 2 adds the colony's respecs.
+        /// Milestone 11 (same format version, older sections still load): SURF 2 adds the thunderstorm, the lightning timer
+        /// and the starfall night; QUEN 2 adds whether the player stopped the queen laying.
         /// </summary>
-        public const int Version = 4;
+        public const int Version = 6;
 
         // ---------------------------------------------------------------- save
 
@@ -65,6 +73,7 @@ namespace Antarium.Sim
                     PlayTime = sim.PlayTime,
                     Ants = sim.Ants.Count,
                     MaxDepth = sim.Colony.Stats.MaxDepth,
+                    Generation = sim.Legacy.Flights + 1,
                 },
                 ChunksX = world.ChunksX,
                 ChunksY = world.ChunksY,
@@ -75,12 +84,17 @@ namespace Antarium.Sim
             };
             snap.Sections.Add(new("IDS", Section(w => WriteIds(w, sim.Content), 2)));
             snap.Sections.Add(new("SIM", Section(w => WriteSim(w, sim))));
-            snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 4)));
-            snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 3)));
-            snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 2)));
+            snap.Sections.Add(new("COLN", Section(w => WriteColony(w, sim), 5)));
+            snap.Sections.Add(new("ANTS", Section(w => WriteAnts(w, sim), 4)));
+            snap.Sections.Add(new("BLDG", Section(w => WriteBuildings(w, sim), 5)));
             snap.Sections.Add(new("PROG", Section(w => WriteProgress(w, sim))));
-            snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim))));
-            snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim))));
+            snap.Sections.Add(new("THRT", Section(w => WriteThreats(w, sim), 3)));
+            snap.Sections.Add(new("LGCY", Section(w => WriteLegacy(w, sim), 2)));
+            snap.Sections.Add(new("SURF", Section(w => WriteSurface(w, sim), 2)));
+            snap.Sections.Add(new("QUEN", Section(w => WriteQueen(w, sim), 2)));
+            snap.Sections.Add(new("RUIN", Section(w => WriteRuins(w, sim))));
+            snap.Sections.Add(new("TWKS", Section(w => WriteTweaks(w, sim), 2)));
+            if (sim.Wild.Placed) snap.Sections.Add(new("WILD", Section(w => WriteWild(w, sim), 2))); // else the next load places them
             return snap;
         }
 
@@ -127,7 +141,7 @@ namespace Antarium.Sim
                 w.Write(n);
                 w.Write(level);
                 w.Write(kind);
-            });
+            }, 2);
         }
 
         /// <summary>Pheromone strengths, one plane per kind (mostly zeros: they compress to almost nothing).</summary>
@@ -168,6 +182,21 @@ namespace Antarium.Sim
         {
             w.Write(sim.Rng.state);
             w.Write(sim.PlayTime);
+        }
+
+        /// <summary>An item filter: -1 for "anything", else the allowed item indices.</summary>
+        static void WriteMask(BinaryWriter w, ulong mask, int items)
+        {
+            if (mask == ulong.MaxValue)
+            {
+                w.Write(-1);
+                return;
+            }
+            int n = 0;
+            for (int i = 0; i < items && i < 64; i++) if ((mask & (1ul << i)) != 0) n++;
+            w.Write(n);
+            for (int i = 0; i < items && i < 64; i++)
+                if ((mask & (1ul << i)) != 0) w.Write((ushort)i);
         }
 
         static void WriteCounts(BinaryWriter w, int[] counts)
@@ -212,10 +241,13 @@ namespace Antarium.Sim
                 w.Write(p.Count);
             }
 
-            // Containers: the royal chamber first, then each storage cell.
-            w.Write(inv.Containers.Count);
+            // Containers: the royal chamber first, then each storage cell (chests are saved with their building).
+            int containers = 0;
+            foreach (var c in inv.Containers) if (!c.IsChest) containers++;
+            w.Write(containers);
             foreach (var c in inv.Containers)
             {
+                if (c.IsChest) continue;
                 w.Write(c.Cell);
                 w.Write(c.WorldIndex);
                 WriteCounts(w, c.Counts);
@@ -276,6 +308,11 @@ namespace Antarium.Sim
             // v4: princesses waiting for the Nuptial Flight.
             w.Write(colony.Princesses);
             w.Write(stats.PrincessesRaised);
+
+            // v5: storage filters (same order as the containers above) and the reserve per item.
+            foreach (var c in inv.Containers)
+                if (!c.IsChest) WriteMask(w, c.Allow, sim.Content.Items.Length);
+            WriteCounts(w, inv.Reserve);
         }
 
         /// <summary>The legacy (kept across colonies) by id, and this colony's world modifiers by id.</summary>
@@ -298,6 +335,7 @@ namespace Antarium.Sim
             }
             w.Write(sim.WorldModifiers.Count);
             foreach (int m in sim.WorldModifiers) w.Write(sim.Content.Modifiers[m].Id);
+            w.Write(sim.Respecs); // v2
         }
 
         static void WriteLongs(BinaryWriter w, long[] values)
@@ -335,7 +373,46 @@ namespace Antarium.Sim
                 w.Write(a.CarryingEgg);
                 w.Write((byte)a.EggCaste);
                 w.Write(a.EggAge);
+                w.Write(a.Xp); // v4
+                w.Write(a.Skill);
+                w.Write((byte)a.Trait);
+                w.Write(a.Lane);
             }
+        }
+
+        /// <summary>Queen evolutions (levels by id) and the job priorities (10.4).</summary>
+        static void WriteQueen(BinaryWriter w, Simulation sim)
+        {
+            var evolutions = sim.Content.Evolutions;
+            int bought = 0;
+            foreach (int level in sim.Evolutions.Levels) if (level > 0) bought++;
+            w.Write(bought);
+            for (int i = 0; i < evolutions.Length; i++)
+            {
+                if (sim.Evolutions.Levels[i] <= 0) continue;
+                w.Write(evolutions[i].Def.Id);
+                w.Write(sim.Evolutions.Levels[i]);
+            }
+            var priorities = sim.Colony.JobPriority;
+            w.Write((byte)priorities.Length);
+            w.Write(priorities);
+            w.Write(sim.Colony.LayingPaused); // v2
+        }
+
+        static void ReadQueen(BinaryReader r, Simulation sim, byte version)
+        {
+            int bought = r.ReadInt32();
+            for (int k = 0; k < bought; k++)
+            {
+                string id = r.ReadString();
+                int level = r.ReadInt32();
+                if (sim.Content.TryGetEvolutionIndex(id, out int index) && level > 0) sim.Evolutions.SetLevel(index, level);
+            }
+            int jobs = r.ReadByte();
+            var priorities = r.ReadBytes(jobs);
+            for (int j = 0; j < priorities.Length && j < sim.Colony.JobPriority.Length; j++)
+                sim.Colony.JobPriority[j] = (byte)math.clamp((int)priorities[j], Simulation.MinPriority, Simulation.MaxPriority);
+            if (version >= 2) sim.Colony.LayingPaused = r.ReadBoolean();
         }
 
         static void WriteSlot(BinaryWriter w, in ItemSlot s)
@@ -367,6 +444,20 @@ namespace Antarium.Sim
                 w.Write(b.Rate);
                 w.Write(b.Health); // v2
                 w.Write(b.Rearm);
+                // v3: a chest's filter and contents.
+                var chest = b.Kind == BuildingKind.Chest && b.IsActive
+                    ? sim.Colony.Inventory.ContainerAt(sim.World.Index(b.Origin.x, b.Origin.y)) : null;
+                w.Write(chest != null);
+                if (chest != null)
+                {
+                    WriteMask(w, chest.Allow, sim.Content.Items.Length);
+                    WriteCounts(w, chest.Counts);
+                }
+                // v4: the Ancient Engine's restoration.
+                w.Write(b.Stage);
+                w.Write(b.Restoring);
+                w.Write(b.WorkTotal);
+                w.Write(b.Off); // v5 (Milestone 11): switched off
 
                 var m = buildings.MachineOf(id);
                 w.Write(m != null);
@@ -383,6 +474,7 @@ namespace Antarium.Sim
                 w.Write(m.Progress);
                 w.Write(m.NextRecipe);
                 w.Write(m.Crafted);
+                w.Write(m.Choice); // v3
             }
         }
 
@@ -442,6 +534,60 @@ namespace Antarium.Sim
             }
         }
 
+        static void WriteSurface(BinaryWriter w, Simulation sim)
+        {
+            var s = sim.Surface;
+            w.Write(s.Rng.state);
+            w.Write(s.Clock);
+            w.Write((byte)s.Weather);
+            w.Write(s.WeatherLeft);
+            w.Write(s.WeatherLength);
+            w.Write(s.WeatherTimer);
+            w.Write((byte)s.Bird);
+            w.Write(s.BirdTimer);
+            w.Write(s.BirdPos.x);
+            w.Write(s.BirdPos.y);
+            w.Write(s.BirdCooldown);
+            w.Write(s.SpidersToSpawn);
+            w.Write(s.SpiderTimer);
+            w.Write(s.LeafTimer);
+            w.Write(s.RoyalFeast);
+            // v2
+            w.Write(s.Thunderstorm);
+            w.Write(s.LightningTimer);
+            w.Write(s.Starfall);
+        }
+
+        static void ReadSurface(BinaryReader r, Simulation sim, byte version)
+        {
+            var s = sim.Surface;
+            uint state = r.ReadUInt32();
+            if (state != 0) s.Rng = new Unity.Mathematics.Random { state = state };
+            s.Clock = math.max(0.0, r.ReadDouble());
+            var weather = (WeatherKind)r.ReadByte();
+            s.Weather = Enum.IsDefined(typeof(WeatherKind), weather) ? weather : WeatherKind.Clear;
+            s.WeatherLeft = r.ReadSingle();
+            s.WeatherLength = r.ReadSingle();
+            s.WeatherTimer = r.ReadSingle();
+            var bird = (BirdPhase)r.ReadByte();
+            s.Bird = Enum.IsDefined(typeof(BirdPhase), bird) ? bird : BirdPhase.None;
+            s.BirdTimer = r.ReadSingle();
+            s.BirdPos = new float2(r.ReadSingle(), r.ReadSingle());
+            s.BirdCooldown = r.ReadSingle();
+            s.SpidersToSpawn = math.max(0, r.ReadInt32());
+            s.SpiderTimer = r.ReadSingle();
+            s.LeafTimer = r.ReadSingle();
+            s.RoyalFeast = math.max(0f, r.ReadSingle());
+            if (version >= 2)
+            {
+                s.Thunderstorm = r.ReadBoolean() && s.Weather == WeatherKind.Rain;
+                s.LightningTimer = r.ReadSingle();
+                s.Starfall = r.ReadBoolean();
+            }
+            sim.UpdateDaylight();
+            if (s.IsDay) s.Starfall = false;
+        }
+
         static void WriteThreats(BinaryWriter w, Simulation sim)
         {
             var t = sim.Enemies;
@@ -469,7 +615,121 @@ namespace Antarium.Sim
                 w.Write(e.Home);
                 w.Write(e.Eaten);
                 w.Write(e.Raid);
+                // v2: rival ants' loot, diggers.
+                w.Write(e.Loot);
+                w.Write(e.LootCount);
+                w.Write(e.Timer);
+                w.Write(e.Stuck);
+                w.Write(e.Trail);
+                w.Write(e.Event); // v3 (Milestone 11): the giant worm's event
             }
+            w.Write(t.RaidRival);
+            w.Write(t.RaidItemsLost);
+            w.Write(t.DiggerTimer);
+            // v3: the giant worm's body.
+            w.Write(t.WormBody.Count);
+            foreach (var c in t.WormBody) w.Write(c);
+        }
+
+        /// <summary>TWKS (Milestone 11): the Vein Instinct switch and the shooting stars the player caught; v2: giant worms slain and starfall nights (achievements).</summary>
+        static void WriteTweaks(BinaryWriter w, Simulation sim)
+        {
+            w.Write(sim.Colony.AutoMarkOres);
+            w.Write(sim.Colony.Stats.StarsCaught);
+            w.Write(sim.Colony.Stats.WormsSlain);
+            w.Write(sim.Colony.Stats.StarfallNights);
+        }
+
+        static void ReadTweaks(BinaryReader r, Simulation sim, byte version)
+        {
+            sim.Colony.AutoMarkOres = r.ReadBoolean();
+            sim.Colony.Stats.StarsCaught = math.max(0, r.ReadInt32());
+            if (version < 2) return;
+            sim.Colony.Stats.WormsSlain = math.max(0, r.ReadInt32());
+            sim.Colony.Stats.StarfallNights = math.max(0, r.ReadInt32());
+        }
+
+        /// <summary>
+        /// WILD (Milestone 11): the berry and toadstool timers and every cave growth spot (cell, item, grown, regrow time);
+        /// v2 (batch 6): the apple timer and whether the Elder Tree was found.
+        /// </summary>
+        static void WriteWild(BinaryWriter w, Simulation sim)
+        {
+            var wild = sim.Wild;
+            w.Write(wild.BerryTimer);
+            w.Write(wild.ToadstoolTimer);
+            w.Write(wild.SinceRain);
+            w.Write(wild.Growths.Count);
+            foreach (var g in wild.Growths)
+            {
+                w.Write(g.Cell.x);
+                w.Write(g.Cell.y);
+                w.Write(g.Item);
+                w.Write(g.Grown);
+                w.Write(g.Timer);
+            }
+            w.Write(wild.AppleTimer);
+            w.Write(wild.ElderFound);
+        }
+
+        static void ReadWild(BinaryReader r, Simulation sim, Remap map, byte version)
+        {
+            var wild = sim.Wild;
+            wild.Clear();
+            wild.Placed = true;
+            wild.BerryTimer = r.ReadSingle();
+            wild.ToadstoolTimer = r.ReadSingle();
+            wild.SinceRain = r.ReadSingle();
+            int n = r.ReadInt32();
+            if (n < 0 || n > 1_000_000) throw new InvalidDataException("Corrupt save: bad growth count.");
+            for (int i = 0; i < n; i++)
+            {
+                var cell = new int2(r.ReadInt32(), r.ReadInt32());
+                ushort item = map.ItemOf(r.ReadUInt16());
+                bool grown = r.ReadBoolean();
+                float timer = r.ReadSingle();
+                if (item == ContentDB.NoItem || !sim.World.InBounds(cell.x, cell.y)) continue; // an item this build doesn't have
+                wild.Add(new Growth { Cell = cell, Item = item, Grown = grown, Timer = timer });
+            }
+            if (version < 2) return;
+            wild.AppleTimer = r.ReadSingle();
+            wild.ElderFound = r.ReadBoolean();
+        }
+
+        /// <summary>RUIN: what the colony studied (by item), the lore fragments it found (by id), rival raids beaten.</summary>
+        static void WriteRuins(BinaryWriter w, Simulation sim)
+        {
+            var studied = sim.Colony.Stats.Studied;
+            int n = 0;
+            foreach (long c in studied) if (c > 0) n++;
+            w.Write(n);
+            for (int i = 0; i < studied.Length; i++)
+            {
+                if (studied[i] <= 0) continue;
+                w.Write((ushort)i);
+                w.Write(studied[i]);
+            }
+            var lore = sim.Content.Lore;
+            w.Write(sim.Lore.FoundCount);
+            for (int i = 0; i < lore.Length; i++)
+                if (sim.Lore.Found[i]) w.Write(lore[i].Def.Id);
+            w.Write(sim.Colony.Stats.RivalsRepelled);
+        }
+
+        static void ReadRuins(BinaryReader r, Simulation sim, Remap map)
+        {
+            var studied = sim.Colony.Stats.Studied;
+            int n = r.ReadInt32();
+            for (int i = 0; i < n; i++)
+            {
+                ushort item = map.ItemOf(r.ReadUInt16());
+                long count = r.ReadInt64();
+                if (item != ContentDB.NoItem && count > 0) studied[item] = count;
+            }
+            int found = r.ReadInt32();
+            for (int i = 0; i < found; i++)
+                if (sim.Content.TryGetLoreIndex(r.ReadString(), out int index)) sim.Lore.SetFound(index);
+            sim.Colony.Stats.RivalsRepelled = math.max(0, r.ReadInt32());
         }
 
         // ---------------------------------------------------------------- load
@@ -505,11 +765,16 @@ namespace Antarium.Sim
                 Read(sections, "PHER", (r, _) => ReadPheromones(r, sim));
                 Read(sections, "SIM", (r, _) => ReadSim(r, sim));
                 Read(sections, "PROG", (r, _) => ReadProgress(r, sim, map)); // research first: it sets capacities and unlocks
+                Read(sections, "QUEN", (r, v) => ReadQueen(r, sim, v));         // evolutions unlock too (before the caste shares)
                 Read(sections, "COLN", (r, v) => ReadColony(r, sim, map, v, nurseryEggs));
                 Read(sections, "ANTS", (r, v) => ReadAnts(r, sim, map, v));
                 Read(sections, "BLDG", (r, v) => ReadBuildings(r, sim, map, v));
-                Read(sections, "THRT", (r, _) => ReadThreats(r, sim, map));
-                Read(sections, "LGCY", (r, _) => ReadLegacy(r, sim));
+                Read(sections, "THRT", (r, v) => ReadThreats(r, sim, map, v));
+                Read(sections, "RUIN", (r, _) => ReadRuins(r, sim, map));
+                Read(sections, "TWKS", (r, v) => ReadTweaks(r, sim, v));
+                Read(sections, "WILD", (r, v) => ReadWild(r, sim, map, v));
+                Read(sections, "LGCY", (r, v) => ReadLegacy(r, sim, v));
+                Read(sections, "SURF", (r, v) => ReadSurface(r, sim, v));
                 PlaceNurseryEggs(sim, nurseryEggs);
                 sim.FinishLoad();
                 return sim;
@@ -523,7 +788,7 @@ namespace Antarium.Sim
         }
 
         /// <summary>
-        /// Upgrades the sections of an older save in place. 1 → 2 → 3 → 4 need nothing: every changed section carries
+        /// Upgrades the sections of an older save in place. 1 → 2 → 3 → 4 → 5 → 6 need nothing: every changed section carries
         /// its own version byte and the readers fill in defaults for older data (full health, workers, no fluid, no
         /// pheromones, the soldier share as the only caste share, one item carried, no princesses, an empty legacy).
         /// </summary>
@@ -576,7 +841,9 @@ namespace Antarium.Sim
             for (int i = 0; i < n; i++)
             {
                 var k = (FluidKind)kind[i];
-                fluid[i] = Enum.IsDefined(typeof(FluidKind), k) && world.Cells[i].IsOpen ? new FluidCell(k, level[i]) : FluidCell.Empty;
+                // Fluids live in open cells; fires (FLUD 2) on solid ones.
+                bool fits = Enum.IsDefined(typeof(FluidKind), k) && world.Cells[i].IsOpen == (k != FluidKind.Fire);
+                fluid[i] = fits ? new FluidCell(k, level[i]) : FluidCell.Empty;
             }
             world.Fluid.CopyFrom(fluid);
             fluid.Dispose();
@@ -632,7 +899,8 @@ namespace Antarium.Sim
                 {
                     int saved = materials[i * 2] | (materials[i * 2 + 1] << 8);
                     ushort material = saved < map.Material.Length ? map.Material[saved] : ContentDB.AirIndex;
-                    cells[i] = new Cell(material, density[i], (CellFlags)flags[i]);
+                    // Pumps and water wheels set their fluid block again when the buildings load.
+                    cells[i] = new Cell(material, density[i], (CellFlags)flags[i] & ~CellFlags.FluidBlock);
                 }
                 world.Cells.CopyFrom(cells);
                 cells.Dispose();
@@ -651,6 +919,20 @@ namespace Antarium.Sim
             uint state = r.ReadUInt32();
             if (state != 0) sim.Rng = new Unity.Mathematics.Random { state = state };
             sim.PlayTime = r.ReadDouble();
+        }
+
+        /// <summary>Reads a filter written by <see cref="WriteMask"/>, remapping items; items that no longer exist are dropped.</summary>
+        static ulong ReadMask(BinaryReader r, Remap map)
+        {
+            int n = r.ReadInt32();
+            if (n < 0) return ulong.MaxValue;
+            ulong mask = 0;
+            for (int i = 0; i < n; i++)
+            {
+                ushort item = map.ItemOf(r.ReadUInt16());
+                if (item != ContentDB.NoItem && item < 64) mask |= 1ul << item;
+            }
+            return mask;
         }
 
         static void ReadCounts(BinaryReader r, Remap map, Action<ushort, int> add)
@@ -694,6 +976,7 @@ namespace Antarium.Sim
 
             inv.ResetForLoad();
             int containers = r.ReadInt32();
+            var restored = new List<StockContainer>(containers);
             for (int i = 0; i < containers; i++)
             {
                 var cell = r.ReadInt2();
@@ -711,6 +994,7 @@ namespace Antarium.Sim
                     if (target != null) inv.RestoreCount(target, item, count);
                     else colony.Piles.Add(world.FloorBelow(cell), item, count); // storage cell vanished: drop
                 });
+                restored.Add(target);
             }
 
             var stats = colony.Stats;
@@ -792,10 +1076,18 @@ namespace Antarium.Sim
 
             colony.Princesses = math.max(0, r.ReadInt32());
             stats.PrincessesRaised = r.ReadInt64();
+            if (version < 5) return;
+
+            foreach (var target in restored)
+            {
+                ulong allow = ReadMask(r, map);
+                if (target != null) inv.SetAllow(target, allow);
+            }
+            ReadCounts(r, map, (item, count) => inv.SetReserve(item, count));
         }
 
         /// <summary>Traits and world modifiers that no longer exist are dropped; levels above a trait's maximum are cut.</summary>
-        static void ReadLegacy(BinaryReader r, Simulation sim)
+        static void ReadLegacy(BinaryReader r, Simulation sim, byte version)
         {
             var content = sim.Content;
             var legacy = new Legacy(content)
@@ -819,6 +1111,7 @@ namespace Antarium.Sim
             for (int i = 0; i < count; i++)
                 if (content.TryGetModifierIndex(r.ReadString(), out int m)) modifiers.Add(m);
             sim.RestoreLegacy(legacy, modifiers);
+            if (version >= 2) sim.Respecs = math.max(0, r.ReadInt32());
         }
 
         static void ReadLongs(BinaryReader r, Action<int, long> set)
@@ -871,6 +1164,21 @@ namespace Antarium.Sim
                     a.EggAge = r.ReadSingle();
                     if (!Enum.IsDefined(typeof(AntCaste), a.EggCaste)) a.CarryingEgg = false;
                 }
+                if (version >= 4)
+                {
+                    a.Xp = math.max(0f, r.ReadSingle());
+                    a.Skill = r.ReadByte();
+                    if (a.Skill >= Jobs.Count) a.Skill = Jobs.NoSkill;
+                    a.Trait = (AntTrait)r.ReadByte();
+                    if (!Enum.IsDefined(typeof(AntTrait), a.Trait)) a.Trait = AntTrait.None;
+                    a.Lane = r.ReadSByte();
+                }
+                else
+                {
+                    // Older ants: no skill or trait yet; a lane from their random state so they spread out too.
+                    a.Skill = Jobs.NoSkill;
+                    a.Lane = (sbyte)((int)(math.hash(new uint2(rng, (uint)i)) % 255u) - 127);
+                }
                 float max = ants.MaxHealth(a.Caste);
                 a.Health = version >= 2 ? math.clamp(a.Health, 1f, max) : max;
                 if (version < 2) a.SinceHurt = 1000f;
@@ -897,7 +1205,7 @@ namespace Antarium.Sim
             ushort item = map.ItemOf(saved);
             if (item == ContentDB.NoItem) return ItemSlot.Empty;
             var pos = BuildingSystem.SlotPos(b, t);
-            return new ItemSlot { Item = item, T = t, Prev = pos, Pos = pos };
+            return new ItemSlot { Item = item, T = t, Prev = pos, Pos = pos, From = -1 };
         }
 
         static void ReadBuildings(BinaryReader r, Simulation sim, Remap map, byte version)
@@ -914,9 +1222,11 @@ namespace Antarium.Sim
                 float workLeft = r.ReadSingle();
                 ushort rawFilter = r.ReadUInt16();
                 // Filters store an item (remapped by id); emitters store a pheromone kind.
+                // Unloaders store an item or "any" (no item).
                 bool emitter = def >= 0 && content.Buildings[def].Def.kind == BuildingKind.Emitter;
+                bool unloader = def >= 0 && content.Buildings[def].Def.kind == BuildingKind.Unloader;
                 ushort filter = emitter ? (rawFilter < Antarium.Content.Pheromones.Count ? rawFilter : (ushort)0) : map.ItemOf(rawFilter);
-                if (filter == ContentDB.NoItem) filter = 0;
+                if (filter == ContentDB.NoItem && !unloader) filter = 0;
                 int id = def >= 0 ? buildings.Restore(def, origin, dir, filter, state, workLeft) : BuildingSystem.None;
                 var probe = id >= 0 ? buildings.Get(id) : new Building { Origin = origin, Dir = dir };
                 var front = ReadSlot(r, map, probe);
@@ -926,6 +1236,26 @@ namespace Antarium.Sim
                 float rate = r.ReadSingle();
                 float health = version >= 2 ? r.ReadSingle() : -1f;
                 float rearm = version >= 2 ? r.ReadSingle() : 0f;
+                bool hasChest = version >= 3 && r.ReadBoolean();
+                if (hasChest)
+                {
+                    ulong allow = ReadMask(r, map);
+                    var inv = sim.Colony.Inventory;
+                    var chest = id >= 0 && buildings.Get(id).Kind == BuildingKind.Chest && buildings.Get(id).IsActive
+                        ? inv.ContainerAt(sim.World.Index(origin.x, origin.y)) : null;
+                    if (chest != null) inv.SetAllow(chest, allow);
+                    ReadCounts(r, map, (item, count) =>
+                    {
+                        if (content.Items[item].IsFood) return;
+                        if (chest != null) inv.RestoreCount(chest, item, count);
+                        else sim.Colony.Piles.Add(sim.World.FloorBelow(origin), item, count); // the chest is gone: drop
+                    });
+                }
+                byte stage = version >= 4 ? r.ReadByte() : (byte)0;
+                bool restoring = version >= 4 && r.ReadBoolean();
+                float workTotal = version >= 4 ? r.ReadSingle() : 0f;
+                bool off = version >= 5 && r.ReadBoolean();
+                if (id >= 0 && off) buildings.SetSwitch(id, false, notify: false);
                 if (id >= 0)
                 {
                     ref var b = ref buildings.Get(id);
@@ -940,6 +1270,17 @@ namespace Antarium.Sim
                     b.Rate = rate;
                     if (b.Kind == BuildingKind.Gate && b.IsActive && health > 0f) b.Health = math.min(health, buildings.GateMaxHealth(b.Def));
                     if (b.Kind == BuildingKind.Trap) b.Rearm = math.max(0f, rearm);
+                    if (b.Kind == BuildingKind.Engine)
+                    {
+                        int stages = content.Buildings[b.Def].StageCount;
+                        b.Stage = (byte)math.clamp((int)stage, 0, stages);
+                        b.Restoring = restoring && b.State == BuildingState.Blueprint && b.Stage < stages;
+                        if (b.Restoring)
+                        {
+                            b.WorkTotal = math.max(0.05f, workTotal);
+                            b.WorkLeft = math.clamp(workLeft, 0.01f, b.WorkTotal);
+                        }
+                    }
                 }
 
                 if (!r.ReadBoolean()) continue;
@@ -962,7 +1303,9 @@ namespace Antarium.Sim
                 float progress = r.ReadSingle();
                 int next = r.ReadInt32();
                 int crafted = r.ReadInt32();
+                int choice = version >= 3 ? r.ReadInt32() : -1;
                 if (m == null) continue;
+                if (choice >= 0 && choice < m.Data.Recipes.Length) m.SetChoice(choice, content);
                 m.Recipe = recipe >= 0 && Array.IndexOf(m.Data.Recipes, recipe) >= 0 ? recipe : -1;
                 m.Progress = m.Recipe >= 0 ? math.clamp(progress, 0f, content.Recipes[m.Recipe].Duration) : 0f;
                 m.NextRecipe = m.Data.Recipes.Length > 0 ? math.clamp(next, 0, m.Data.Recipes.Length - 1) : 0;
@@ -970,7 +1313,7 @@ namespace Antarium.Sim
             }
         }
 
-        static void ReadThreats(BinaryReader r, Simulation sim, Remap map)
+        static void ReadThreats(BinaryReader r, Simulation sim, Remap map, byte version)
         {
             var t = sim.Enemies;
             uint state = r.ReadUInt32();
@@ -1003,7 +1346,19 @@ namespace Antarium.Sim
                     Eaten = r.ReadSingle(),
                     Raid = r.ReadInt32(),
                     SinceHurt = 1000f,
+                    Loot = ContentDB.NoItem,
                 };
+                if (version >= 2)
+                {
+                    e.Loot = map.ItemOf(r.ReadUInt16());
+                    e.LootCount = r.ReadByte();
+                    e.Timer = r.ReadSingle();
+                    e.Stuck = r.ReadSingle();
+                    e.Trail = r.ReadInt2();
+                    if (e.Loot == ContentDB.NoItem) e.LootCount = 0;
+                }
+                else e.Trail = e.Cell;
+                if (version >= 3) e.Event = r.ReadInt32();
                 if (e.Def < 0 || !world.InBounds(e.Cell.x, e.Cell.y) || !world.InBounds(e.From.x, e.From.y) || e.Health <= 0f) continue;
                 if (!Enum.IsDefined(typeof(EnemyState), e.State)) e.State = EnemyState.Wander;
                 if (e.StepLength <= 0f) e.StepLength = 1f;
@@ -1011,6 +1366,29 @@ namespace Antarium.Sim
                 e.Pos = e.PrevPos = math.lerp(new float2(e.From), new float2(e.Cell), e.Progress) + 0.5f;
                 t.Enemies.Add(e);
             }
+            if (version >= 2)
+            {
+                t.RaidRival = r.ReadBoolean() && sim.Content.Thieves.Length > 0;
+                t.RaidItemsLost = math.max(0, r.ReadInt32());
+                t.DiggerTimer = r.ReadSingle();
+            }
+            t.WormBody.Clear();
+            if (version >= 3)
+            {
+                int body = r.ReadInt32();
+                for (int i = 0; i < body; i++)
+                {
+                    var c = r.ReadInt2();
+                    if (world.InBounds(c.x, c.y)) t.WormBody.Add(c);
+                }
+            }
+            // A worm needs its body (and only one worm); without one it is dropped (its event then ends as lost).
+            int worm = t.WormIndex();
+            if (worm >= 0 && t.WormBody.Count == 0)
+            {
+                for (int k = 0; k <= sim.Config.threats.wormSegments; k++) t.WormBody.Add(t.Enemies[worm].Cell);
+            }
+            if (worm < 0) t.WormBody.Clear();
             t.Changed = true;
         }
 

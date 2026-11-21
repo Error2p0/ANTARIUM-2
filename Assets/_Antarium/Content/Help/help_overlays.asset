@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_overlays
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_overlays
+  displayName: Overlays
+  order: 240
+  category: Building
+  icon: tool_flow
+  body: 'Overlays show what is hard to see, one at a time, with a legend above the toolbar:
+
+    - Flow ({Flow}): belts from grey (idle) to green (busy) and red where jammed, machines by what they are doing, and a blue dot over idle workers.
+
+    - Light ({Light}): how much light reaches each spot. Light is only for your eyes: ants work just as well in the dark.
+
+    - Ores ({Ores}): every find you know of in its own colour, with how many cells of each.
+
+
+    The Overlay button goes through them.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

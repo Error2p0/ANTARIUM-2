@@ -15,6 +15,8 @@ namespace Antarium.Content
         Conductive = 1 << 4,
         /// <summary>Falls when the cell below is dug out (sand): cave-ins.</summary>
         Unstable = 1 << 5,
+        /// <summary>Gives off heat (magma rock): a Smelter next to it needs no fuel and works faster.</summary>
+        Hot = 1 << 6,
     }
 
     /// <summary>Procedural pixel pattern used when no texture override is assigned.</summary>
@@ -49,6 +51,11 @@ namespace Antarium.Content
         [Min(1)] public int dropAmount = 1;
         [Range(0f, 1f)] public float dropChance = 1f;
 
+        [Header("Crystal resonance (10.5)")]
+        [Tooltip("What a cell of this (conductive) material adds to a Crystal Resonator's cluster: glow crystals 1, ores less. " +
+                 "Conductive cells with 0 still carry the resonance.")]
+        [Min(0f)] public float resonance;
+
         [Header("Light")]
         [ColorUsage(false)] public Color emissionColor = Color.black;
         [Tooltip("Light emitted, as a fraction of the maximum light level.")]
@@ -65,7 +72,7 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float accentAmount = 0.3f;
         [Tooltip("Colour of the top edge facing open space (e.g. grass). Alpha 0 = use highlight.")]
         public Color topRimColor = new(0, 0, 0, 0);
-        [Tooltip("Optional hand-drawn 32x32 tile (Read/Write enabled). Overrides the procedural pattern.")]
+        [Tooltip("Optional hand-drawn tile (64x64, tileable, Read/Write enabled): Art/Terrain/<id>.png, set by Antarium > Art > Import Overrides. Overrides the procedural pattern.")]
         public Texture2D textureOverride;
 
         public bool IsAir => (flags & MaterialFlags.Air) != 0;

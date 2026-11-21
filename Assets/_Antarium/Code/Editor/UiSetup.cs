@@ -42,6 +42,25 @@ namespace Antarium.Editor
             Debug.Log("UI skin and pixel font created.");
         }
 
+        /// <summary>
+        /// Empties the dynamic glyph atlases of the pixel fonts and rebuilds their lookup tables. The fonts fill their
+        /// atlas while the game runs; if the font assets on disk change under the open editor (a git checkout or
+        /// revert), the editor keeps glyph lookups that point into an atlas that is no longer there and most text
+        /// disappears (with domain reload off, entering play mode does not clear them). This puts both back in step.
+        /// </summary>
+        [MenuItem("Antarium/Setup/Reset Font Atlases")]
+        public static void ResetFontAtlases()
+        {
+            foreach (var name in new[] { "VT323-Regular", "Silkscreen-Regular" })
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<FontAsset>($"{FontFolder}/{name}.asset");
+                if (asset == null) continue;
+                asset.ClearFontAssetData(true);
+                asset.ReadFontAssetDefinition();
+            }
+            Debug.Log("Font atlases reset. Text drawn before this is redrawn when it next changes (restart play mode to refresh everything).");
+        }
+
         delegate Color Pixel(int x, int y, int size);
 
         /// <summary>One art pixel of edge: positive light = white highlight on top / left, dark = black shade bottom / right; negative swaps sides.</summary>

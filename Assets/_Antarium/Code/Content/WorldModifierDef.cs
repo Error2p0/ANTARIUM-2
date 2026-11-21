@@ -18,6 +18,22 @@ namespace Antarium.Content
     }
 
     /// <summary>
+    /// A biome variant (10.6): in a world with this modifier one biome is generated from another base material (a recoloured
+    /// rock with the same rules) and its caves hold other creatures.
+    /// </summary>
+    [Serializable]
+    public sealed class BiomeVariant
+    {
+        public BiomeDef biome;
+        [Tooltip("Shown instead of the biome's name (empty = keep the name).")]
+        public string displayName;
+        [Tooltip("Replaces the biome's base material (empty = keep).")]
+        public TerrainMaterialDef baseMaterial;
+        [Tooltip("Replace the creatures of the biome's caves (empty = keep).")]
+        public List<EnemyDef> creatures = new();
+    }
+
+    /// <summary>
     /// A rule for one whole colony, picked before a Nuptial Flight: it changes how the next world is generated and
     /// adds colony stats (threats, forage, Genetic Memory gain). Modifiers named by a genetic trait start locked.
     /// </summary>
@@ -40,6 +56,9 @@ namespace Antarium.Content
         [Range(-0.5f, 0.5f)] public float gasThreshold;
         [Tooltip("Every biome's thickness is multiplied by this (0.75 = the deep layers come 25% sooner).")]
         [Range(0.25f, 2f)] public float biomeThickness = 1f;
+
+        [Tooltip("Biome variants: a biome with another base material and other cave creatures.")]
+        public List<BiomeVariant> variants = new();
 
         [Header("Colony")]
         [Tooltip("Colony stats for the whole colony (forage, raids, creatures, Genetic Memory gain...).")]

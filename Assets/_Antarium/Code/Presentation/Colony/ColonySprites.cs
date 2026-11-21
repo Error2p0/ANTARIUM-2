@@ -7,9 +7,10 @@ using UnityEngine;
 namespace Antarium.Presentation
 {
     /// <summary>
-    /// Placeholder pixel-art atlas generated in code until real art exists: worker and soldier walk cycles,
-    /// queen, egg, item blobs, the golden beetle and the enemies. Item blobs are greyscale and tinted per item
-    /// through vertex colour.
+    /// The colony atlas: worker and soldier walk cycles, queen, egg, item blobs, the golden beetle and the enemies.
+    /// Every sprite is first generated in code (the fallback) and then replaced by its PNG from the
+    /// <see cref="ArtLibrary"/> when there is one (<c>Art/Colony/...</c>, see <c>docs/ART_STYLE.md</c>). Item blobs are
+    /// greyscale and tinted per item through vertex colour.
     /// </summary>
     public sealed class ColonySprites : System.IDisposable
     {
@@ -20,7 +21,7 @@ namespace Antarium.Presentation
         public const int PileWidth = 6, PileHeight = 4;
         public const int CarryWidth = 3, CarryHeight = 3;
 
-        const int AtlasWidth = 128, AtlasHeight = 96;
+        const int AtlasWidth = 128, AtlasHeight = 128;
 
         public readonly Texture2D Texture;
         /// <summary>UV rects (xMin, yMin, xMax, yMax); see the *Rect constants.</summary>
@@ -41,14 +42,39 @@ namespace Antarium.Presentation
         public const int PixelRect = SoldierRect + WorkerFrames;
         /// <summary>Enemies: 2 walk frames per <see cref="EnemyArt"/>, in enum order.</summary>
         public const int EnemyRect = PixelRect + 1;
-        public const int EnemyArtCount = 6;
-        /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer): 4 walk frames each, in caste order.</summary>
+        public const int EnemyArtCount = 10;
+        /// <summary>The specialist castes (miner, hauler, nurse, builder, scout, engineer, glow, fire): 4 walk frames each, in caste order.</summary>
         public const int SpecialistRect = EnemyRect + EnemyArtCount * 2;
-        const int SpecialistCount = 6;
+        const int SpecialistCount = 8;
         /// <summary>Winged princess: resting (wings folded), then two flight frames (wings up, wings back).</summary>
         public const int PrincessRect = SpecialistRect + SpecialistCount * WorkerFrames;
         public const int PrincessWidth = 14, PrincessHeight = 10, PrincessFrames = 3;
-        const int RectCount = PrincessRect + PrincessFrames;
+        /// <summary>Golden aphid (sits in an Aphid Ranch), 2 frames.</summary>
+        public const int AphidRect = PrincessRect + PrincessFrames;
+        public const int AphidWidth = 6, AphidHeight = 5;
+        /// <summary>The queen's second frame (her gaster swells as she breathes); the first is <see cref="QueenRect"/>.</summary>
+        public const int QueenBreathRect = AphidRect + 2;
+        /// <summary>The light a glow ant carries: a dithered disc drawn unlit around its gaster (10.4).</summary>
+        public const int HaloRect = QueenBreathRect + 1;
+        public const int HaloSize = 13;
+        /// <summary>Pixels from the sprite's left edge to the middle of the glow ant's gaster (the halo's centre).</summary>
+        public const float GasterX = 2f;
+        /// <summary>The mole cricket digging: 2 frames, same size as its walk frames (10.5).</summary>
+        public const int MoleDigRect = HaloRect + 1;
+        /// <summary>A body segment of the giant worm (Milestone 11): 2 frames (its rings shift as it crawls), drawn along its body.</summary>
+        public const int WormBodyRect = MoleDigRect + 2;
+        public const int WormBodyWidth = 8, WormBodyHeight = 7;
+        /// <summary>
+        /// Wild food lying on the ground (Milestone 11, <see cref="PileArt"/>): a cave mushroom, a glowing mushroom and a toadstool
+        /// (<see cref="MushroomSize"/> square, standing on the bottom row) and berries.
+        /// </summary>
+        public const int MushroomRect = WormBodyRect + 2, GlowMushroomRect = MushroomRect + 1, ToadstoolRect = MushroomRect + 2,
+            BerriesRect = MushroomRect + 3;
+        public const int MushroomSize = 7, BerriesWidth = 5, BerriesHeight = 4;
+        /// <summary>An apple and the Elder Tree's golden apple (batch 6), <see cref="AppleSize"/> square, lying on the bottom row.</summary>
+        public const int AppleRect = BerriesRect + 1, GoldenAppleRect = AppleRect + 1;
+        public const int AppleSize = 5;
+        const int RectCount = GoldenAppleRect + 1;
 
         /// <summary>Per <see cref="AntCaste"/>: first walk frame and sprite size.</summary>
         public NativeArray<int> CasteRect;
@@ -118,6 +144,11 @@ namespace Antarium.Presentation
         static readonly string[] Pile = { ".wwg..", "wwggg.", "ggggkk", ".kkkk." };
         static readonly string[] Carry = { "wg.", "ggk", ".k." };
         static readonly string[] Marker = { ".w.", "www", ".w." };
+        static readonly string[] Mushroom = { "..cCc..", ".cCCCc.", "cCCCCCc", ".ddddd.", "...sS..", "...sS..", "..ssSS." };
+        static readonly string[] GlowMushroom = { "...w...", "..cCc..", ".cCwCc.", "cCCCCCc", ".ddsdd.", "...s.cc", "..sss.s" };
+        static readonly string[] Toadstool = { "..RRR..", ".RwRRR.", "RRRRwRR", "rrRRRrr", ".ddddd.", "..sSs..", "..sSs.." };
+        static readonly string[] Berries = { ".gg..", "bBkbB", "bkbBk", ".kbk." };
+        static readonly string[] Apple = { "..sg.", ".RRrr", "RWRRr", "RRRrk", ".rkk." };
         static readonly string[] BeetleBody = { "...YYYY...", "..YOOOOOB.", ".OOOOOOOBB", ".oOOOOOOBB", "..oooooo.." };
         static readonly string[] BeetleLegs = { ".l.l..l.l.", "..l.ll.l.." };
 
@@ -142,6 +173,36 @@ namespace Antarium.Presentation
             new[] { ".mmmm.", "mMMMMm", "mMMMMe", ".mmmm.", "i.ii.i" },
             new[] { ".mmmm.", "mMMMMm", "mMMMMe", ".mmmm.", ".i..i." },
         };
+        // Rival ant (10.5): a worker-sized ant in cold steel blue with pale mandibles.
+        static readonly string[][] RivalAnt =
+        {
+            new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMMK", ".DMD.DD.DD..", "....L.L.L...", "...L..L..L.." },
+            new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMMK", ".DMD.DD.DD..", ".....LL.L...", "....L.L...L." },
+        };
+        // Mole cricket (10.5): a fat brown body, a shield on its back and big digging claws in front.
+        static readonly string[][] MoleCricket =
+        {
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbhhC", "bbbbbbbbbbbbbhCC", ".dddddddddddd.C.", "..l..l..l.......", ".l..l..l........" },
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbhhC", "bbbbbbbbbbbbbhCC", ".dddddddddddd.C.", ".l..l..l........", "..l..l..l......." },
+        };
+        static readonly string[][] MoleCricketDig =
+        {
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbhCC", "bBBBBBBBBBBBbhC.", "bbbbbbbbbbbbbh..", ".dddddddddddd...", "..l..l..l.......", ".l..l..l........" },
+            new[] { "......SSSS......", "..bbbSssssSb....", ".bBBBBBBBBBBbh..", "bBBBBBBBBBBBbh..", "bbbbbbbbbbbbbhC.", ".dddddddddddd.CC", "..l..l..l.....C.", ".l..l..l........" },
+        };
+        // Giant earthworm (Milestone 11): a blunt pink head with a pale snout (facing right), and ringed body segments that
+        // overlap into one long body. Frame 2 stretches the snout and shifts the rings.
+        static readonly string[][] WormHead =
+        {
+            new[] { "...dddd...", ".ddMMHHd..", "dMMHHHHHd.", "MMbMMMMMMs", "MMbMMMMMMs", "dMMMMMMMd.", ".ddddddd.." },
+            new[] { "...ddddd..", ".ddMMMHHd.", "dMMHHHHHHd", "MbMMMMMMMs", "MbMMMMMMMs", "dMMMMMMMMd", ".dddddddd." },
+        };
+        static readonly string[][] WormBody =
+        {
+            new[] { ".dddddd.", "dMHHHHMd", "MMMMMMMM", "MbMMMMbM", "MMMMMMMM", "dMMMMMMd", ".dddddd." },
+            new[] { ".dddddd.", "dMHHHHMd", "MMMMMMMM", "MMMbbMMM", "MMMMMMMM", "dMMMMMMd", ".dddddd." },
+        };
+
         static readonly string[][] FireBeetle =
         {
             new[] { "...KKKKK....", "..KOKOKOKK..", ".KKKKKKKKKHH", ".kkkkkkkkkHH", "..kkkkkkkk..", ".j.j..j.j...", "..j.jj.j...." },
@@ -161,11 +222,24 @@ namespace Antarium.Presentation
             },
         };
 
+        // Wolf spider: a hairy brown-grey hunter with pale stripes and many eyes.
+        static readonly string[][] WolfSpider =
+        {
+            new[] { "....bbbb....", "..bBsBBsBb..", ".bBBBBBBBbeE", "vbBBsBBBBbEe", "v.vbbbbbv.v.", "v.v.v.v.v.v.", "............" },
+            new[] { "....bbbb....", "..bBsBBsBb..", ".bBBBBBBBbeE", ".bBBsBBBBbEe", "vvvbbbbbvvv.", ".v.v...v.v..", "v.......v..." },
+        };
+        static readonly string[][] GoldenAphid =
+        {
+            new[] { "..a...", ".YYYa.", "YOOOOa", "OOOOOo", ".l.l.." },
+            new[] { "...a..", ".YYYa.", "YOOOOa", "OOOOOo", "..l.l." },
+        };
+
         static readonly Color32 Dark = Hex(0x5a1a0c), Mid = Hex(0xb8401e), High = Hex(0xf08048), Leg = Hex(0x4a160a);
         static readonly Color32 SoldierDark = Hex(0x3a0c06), SoldierMid = Hex(0x862612), SoldierHigh = Hex(0xc05a2a), Mandible = Hex(0xe0b050);
         static readonly Color32 EggColor = Hex(0xefe6cf), EggShade = Hex(0xc9bc9c);
 
-        public ColonySprites()
+        /// <param name="art">PNG overrides; null = generated sprites only.</param>
+        public ColonySprites(ArtLibrary art = null)
         {
             var pixels = new Color32[AtlasWidth * AtlasHeight];
             Rects = new NativeArray<float4>(RectCount, Allocator.Persistent);
@@ -199,6 +273,8 @@ namespace Antarium.Presentation
             Rects[MarkerRect] = Rect(61, 0, MarkerSize, MarkerSize);
             PaintQueen(pixels, 0, 8);
             Rects[QueenRect] = Rect(0, 8, QueenWidth, QueenHeight);
+            PaintQueen(pixels, 30, 30);
+            Rects[QueenBreathRect] = Rect(30, 30, QueenWidth, QueenHeight);
             for (int f = 0; f < 2; f++)
             {
                 var rows = new string[BeetleHeight];
@@ -236,12 +312,66 @@ namespace Antarium.Presentation
                 ['G'] = Hex(0x6a6878), ['g'] = Hex(0x8e8ca0), ['C'] = Hex(0x70f0ff),
             });
 
+            AddEnemy(pixels, EnemyArt.WolfSpider, WolfSpider, 64, 74, new Dictionary<char, Color32>
+            {
+                ['b'] = Hex(0x4a3c2e), ['B'] = Hex(0x7a6650), ['s'] = Hex(0xc8b89a), ['e'] = Hex(0x101010), ['E'] = Hex(0xffd060), ['v'] = Hex(0x2e241a),
+            });
+            var rival = new Dictionary<char, Color32>
+            {
+                ['D'] = Hex(0x2e3a5a), ['M'] = Hex(0x5a6e9a), ['H'] = Hex(0x9ab0d8), ['L'] = Hex(0x1e2638), ['K'] = Hex(0xe8e0c8),
+            };
+            AddEnemy(pixels, EnemyArt.RivalAnt, RivalAnt, 70, 112, rival);
+            var mole = new Dictionary<char, Color32>
+            {
+                ['b'] = Hex(0x6a4a2a), ['B'] = Hex(0x8a6438), ['d'] = Hex(0x4a3018), ['S'] = Hex(0xb08a58), ['s'] = Hex(0x8a6a40),
+                ['h'] = Hex(0x5a3a20), ['C'] = Hex(0xd8c090), ['l'] = Hex(0x3a2614),
+            };
+            AddEnemy(pixels, EnemyArt.MoleCricket, MoleCricket, 0, 112, mole);
+            AddFrames(pixels, MoleCricketDig, 32, 112, MoleDigRect, mole);
+            var worm = new Dictionary<char, Color32>
+            {
+                ['d'] = Hex(0x7a3a3e), ['M'] = Hex(0xc8787a), ['H'] = Hex(0xeaa8a4), ['b'] = Hex(0x9a4a50), ['s'] = Hex(0xf4c8c0),
+            };
+            AddEnemy(pixels, EnemyArt.Worm, WormHead, 0, 88, worm);
+            AddFrames(pixels, WormBody, 22, 88, WormBodyRect, worm);
+            AddFrames(pixels, GoldenAphid, 90, 82, AphidRect, new Dictionary<char, Color32>
+            {
+                ['Y'] = Hex(0xfff6b0), ['O'] = Hex(0xf0c040), ['o'] = Hex(0xb08020), ['a'] = Hex(0x8a6a20), ['l'] = Hex(0x5a3a10),
+            });
+            AddFrames(pixels, new[] { Mushroom }, 0, 120, MushroomRect, new Dictionary<char, Color32>
+            {
+                ['C'] = Hex(0xc59a62), ['c'] = Hex(0xa67848), ['d'] = Hex(0x6b432b), ['s'] = Hex(0xf2e6c4), ['S'] = Hex(0xb8a27a),
+            });
+            AddFrames(pixels, new[] { GlowMushroom }, 8, 120, GlowMushroomRect, new Dictionary<char, Color32>
+            {
+                ['w'] = Hex(0xd4fff0), ['C'] = Hex(0x8ef0d0), ['c'] = Hex(0x4cc8a4), ['d'] = Hex(0x248a78), ['s'] = Hex(0xcca4d4),
+            });
+            AddFrames(pixels, new[] { Toadstool }, 16, 120, ToadstoolRect, new Dictionary<char, Color32>
+            {
+                ['R'] = Hex(0xdc4430), ['r'] = Hex(0xa82420), ['w'] = Hex(0xfffaea), ['d'] = Hex(0xb8a27a), ['s'] = Hex(0xf2e6c4), ['S'] = Hex(0xdcc9a0),
+            });
+            AddFrames(pixels, new[] { Berries }, 24, 120, BerriesRect, new Dictionary<char, Color32>
+            {
+                ['b'] = Hex(0xdc4430), ['B'] = Hex(0xf8785a), ['k'] = Hex(0xa82420), ['g'] = Hex(0x56a038),
+            });
+            AddFrames(pixels, new[] { Apple }, 30, 120, AppleRect, new Dictionary<char, Color32>
+            {
+                ['R'] = Hex(0xdc4430), ['W'] = Hex(0xf8a080), ['r'] = Hex(0xa82420), ['k'] = Hex(0x6e1618), ['s'] = Hex(0x563820), ['g'] = Hex(0x56a038),
+            });
+            AddFrames(pixels, new[] { Apple }, 36, 120, GoldenAppleRect, new Dictionary<char, Color32>
+            {
+                ['R'] = Hex(0xffd45a), ['W'] = Hex(0xfff6c8), ['r'] = Hex(0xeaa82e), ['k'] = Hex(0xc07a1c), ['s'] = Hex(0x76502e), ['g'] = Hex(0x84c84c),
+            });
             PaintCastes(pixels);
+            PaintHalo(pixels, 112, 98);
+            Rects[HaloRect] = Rect(112, 98, HaloSize, HaloSize);
             AddFrames(pixels, Princess, 0, 74, PrincessRect, new Dictionary<char, Color32>
             {
                 ['D'] = Hex(0x7a4a10), ['M'] = Hex(0xe0a032), ['H'] = Hex(0xffe48a), ['L'] = Hex(0x5a3008), ['K'] = Hex(0xfff4c8),
                 ['w'] = Hex(0xf0f8ff), ['v'] = Hex(0x7896c8),
             });
+
+            ArtOverrides.Apply(art, Slots, pixels, AtlasWidth, AtlasHeight, Rects);
 
             Texture = new Texture2D(AtlasWidth, AtlasHeight, TextureFormat.RGBA32, false, false)
             {
@@ -251,6 +381,46 @@ namespace Antarium.Presentation
             };
             Texture.SetPixels32(pixels);
             Texture.Apply(false, false); // small; kept readable for debugging
+        }
+
+        static readonly string[] EnemyNames = { "termite", "centipede", "spider", "mite", "fire_beetle", "guardian", "wolf_spider", "rival_ant", "mole_cricket", "worm" };
+
+        /// <summary>
+        /// Every sprite a PNG can replace (<c>Art/Colony/</c>, <c>Art/Enemies/</c>): ants are <c>Colony/ant_&lt;caste&gt;</c>,
+        /// enemies <c>Enemies/&lt;name&gt;</c> in <see cref="EnemyArt"/> order. Sizes: see <c>docs/ART_STYLE.md</c>.
+        /// </summary>
+        public static ArtSlot[] Slots => _slots ??= BuildSlots();
+        static ArtSlot[] _slots;
+
+        static ArtSlot[] BuildSlots()
+        {
+            var slots = new List<ArtSlot>
+            {
+                ArtSlot.Strip("Colony/ant_worker", 0, WorkerFrames),
+                ArtSlot.Strip("Colony/ant_soldier", SoldierRect, WorkerFrames),
+                new("Colony/queen", QueenRect, QueenBreathRect),
+                ArtSlot.Strip("Colony/egg", EggRect),
+                ArtSlot.Strip("Colony/pile", PileRect),
+                ArtSlot.Strip("Colony/carry", CarryRect),
+                ArtSlot.Strip("Colony/marker", MarkerRect),
+                ArtSlot.Strip("Colony/princess", PrincessRect, PrincessFrames),
+                ArtSlot.Strip("Colony/golden_beetle", BeetleRect, 2),
+                ArtSlot.Strip("Colony/golden_aphid", AphidRect, 2),
+                ArtSlot.Strip("Colony/ant_glow_halo", HaloRect),
+            };
+            for (int s = 0; s < Specialists.Length; s++)
+                slots.Add(ArtSlot.Strip("Colony/ant_" + Specialists[s].Caste.ToString().ToLowerInvariant(), SpecialistRect + s * WorkerFrames, WorkerFrames));
+            for (int e = 0; e < EnemyArtCount; e++)
+                slots.Add(ArtSlot.Strip("Enemies/" + EnemyNames[e], EnemyRect + e * 2, 2));
+            slots.Add(ArtSlot.Strip("Enemies/mole_cricket_dig", MoleDigRect, 2));
+            slots.Add(ArtSlot.Strip("Enemies/worm_body", WormBodyRect, 2));
+            slots.Add(ArtSlot.Strip("Colony/mushroom", MushroomRect));
+            slots.Add(ArtSlot.Strip("Colony/glow_mushroom", GlowMushroomRect));
+            slots.Add(ArtSlot.Strip("Colony/toadstool", ToadstoolRect));
+            slots.Add(ArtSlot.Strip("Colony/berries", BerriesRect));
+            slots.Add(ArtSlot.Strip("Colony/apple", AppleRect));
+            slots.Add(ArtSlot.Strip("Colony/golden_apple", GoldenAppleRect));
+            return slots.ToArray();
         }
 
         /// <summary>One specialist caste: body rows (first = top), legs and palette (D dark, M mid, H high, L leg, K accent).</summary>
@@ -289,6 +459,11 @@ namespace Antarium.Presentation
                 0x8a4a10, 0xe08a28, 0xffc060, 0x5a3008, 0xffe0a0),
             new(AntCaste.Engineer, new[] { "..........L.", ".HH.....HL..", "HMMM.HH.HMK.", "MMMMLMMLMMML", ".DMD.DD.DD.." }, 0,
                 0x1e3448, 0x3e6a8e, 0x7aaad0, 0x162432, 0xa0f0ff),
+            // 10.4: the glow ant's gaster is a pale lantern; the fire ant is ember red with a bright tip.
+            new(AntCaste.Glow, new[] { "..........L.", ".KK.....HL..", "KKKK.HH.HMM.", "KKKKLMMLMMML", ".DMD.DD.DD.." }, 0,
+                0x0e3238, 0x24706e, 0x6cc8b0, 0x081c20, 0xd4fff0),
+            new(AntCaste.Fire, new[] { "K.........L.", ".HH.....HL..", "HMMM.HH.HMM.", "MMMMLMMLMMML", ".DMD.DD.DD.." }, 0,
+                0x5a180c, 0xd4501c, 0xffc860, 0x2a0c08, 0xffe6a0),
         };
 
         /// <summary>Walk cycles of the specialist castes (palette swaps and small silhouette changes of the worker).</summary>
@@ -304,7 +479,8 @@ namespace Antarium.Presentation
             {
                 var art = Specialists[s];
                 int w = art.Body[0].Length, h = art.Body.Length + 2;
-                int ox = (s % 2) * 56, oy = 44 + (s / 2) * 9;
+                // The first six fill rows 44-70; the 10.4 castes sit in the rows added below the old atlas.
+                int ox = (s % 2) * 56, oy = s < 6 ? 44 + (s / 2) * 9 : 98 + ((s - 6) / 2) * 9;
                 for (int f = 0; f < WorkerFrames; f++)
                 {
                     var rows = new string[h];
@@ -333,6 +509,23 @@ namespace Antarium.Presentation
                 }
                 CasteRect[(int)art.Caste] = SpecialistRect + s * WorkerFrames;
                 CasteSize[(int)art.Caste] = new int2(w, h);
+            }
+        }
+
+        /// <summary>The glow ant's light: a bright core, then two dithered rings (green-white, fading out).</summary>
+        static void PaintHalo(Color32[] px, int ox, int oy)
+        {
+            Color32 core = Hex(0xd8ffe8), ring = Hex(0x8ee8b0), rim = Hex(0x4aa878);
+            for (int y = 0; y < HaloSize; y++)
+            for (int x = 0; x < HaloSize; x++)
+            {
+                float r = math.length(new float2(x - 6, y - 6));
+                Color32 c;
+                if (r < 2.5f) c = core;
+                else if (r < 4.2f && (x + y) % 2 == 0) c = ring;
+                else if (r < 6.3f && x % 2 == 0 && y % 2 == 0) c = rim;
+                else continue;
+                px[(oy + y) * AtlasWidth + ox + x] = c;
             }
         }
 

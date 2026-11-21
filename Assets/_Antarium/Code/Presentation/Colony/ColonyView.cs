@@ -28,16 +28,23 @@ namespace Antarium.Presentation
     {
         /// <summary>Body, carried item / egg (or idle marker), a second carried item or the possessed marker, health bar back and front.</summary>
         const int QuadsPerAnt = 5;
-        const int QuadsPerEnemy = 3;
+        const int QuadsPerEnemy = 4;
         const float FlashSeconds = 0.15f;
+        const float QueenBreathsPerSecond = 0.7f;
 
         readonly ContentDB _content;
         readonly ColonySprites _sprites;
         readonly SpriteMesh _mesh;
         readonly NativeArray<Color32> _itemColors;
+        /// <summary>Per item: how it lies on the ground (Milestone 11: mushrooms and berries have their own sprites).</summary>
+        readonly PileArt[] _pileArt;
         readonly Color32 _idleTint;
         readonly Color32 _possessedTint;
         readonly BarColors _bars;
+        /// <summary>Per <see cref="AntCaste"/>: 1 if it carries a light (drawn with a halo).</summary>
+        readonly NativeArray<byte> _casteHalo;
+        /// <summary>Lane jitter in art pixels: along the route, away from the surface, into it.</summary>
+        readonly int3 _lanePixels;
         static readonly Color32 SparkleTint = new(255, 230, 120, 255);
         static readonly Color32 AlertTint = new(255, 150, 70, 255);
         static readonly Color32 White = new(255, 255, 255, 255);
@@ -52,12 +59,19 @@ namespace Antarium.Presentation
             public Color32 Ant, Enemy, Back, Flash;
         }
 
-        public ColonyView(ContentDB content, RenderConfig render, Material spriteMaterial, Transform parent, float2 worldSize)
+        /// <param name="lanePixels">Lane jitter in art pixels: x ahead of / behind its spot, y away from the surface it walks on, z into it.</param>
+        public ColonyView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize,
+            int3 lanePixels = default)
         {
             _content = content;
-            _sprites = new ColonySprites();
+            _lanePixels = lanePixels;
+            _casteHalo = new NativeArray<byte>(Castes.Count, Allocator.Persistent);
+            for (int c = 0; c < Castes.Count; c++) _casteHalo[c] = content.CasteDefs[c].lightRadius > 0f ? (byte)1 : (byte)0;
+            _sprites = new ColonySprites(art);
             _mesh = new SpriteMesh("Colony", spriteMaterial, _sprites.Texture, parent, worldSize, 10);
             _itemColors = ItemColors(content);
+            _pileArt = new PileArt[content.Items.Length];
+            for (int i = 0; i < _pileArt.Length; i++) _pileArt[i] = content.Items[i].pileArt;
             _idleTint = TerrainView.ToWorking(render.overlayIdleAntColor);
             _possessedTint = TerrainView.ToWorking(render.possessedColor);
             _bars = new BarColors
@@ -85,8 +99,9 @@ namespace Antarium.Presentation
             var events = sim.RandomEvents;
             var enemies = sim.Enemies.Enemies;
             int antCount = sim.Ants.Count;
-            int quads = antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count
-                        + enemies.Count * QuadsPerEnemy + colony.Princesses + Flyers.Count;
+            // Halos first (behind every ant), then the ants.
+            int quads = antCount + antCount * QuadsPerAnt + 1 + colony.Eggs.Count + colony.Piles.Count + events.Critters.Count * 2 + events.Active.Count
+                        + enemies.Count * QuadsPerEnemy + sim.Enemies.WormCells.Count + colony.Princesses + Flyers.Count;
             _mesh.EnsureCapacity(quads);
             var vertices = _mesh.Vertices;
 
@@ -97,6 +112,9 @@ namespace Antarium.Presentation
                 Rects = _sprites.Rects,
                 CasteRect = _sprites.CasteRect,
                 CasteSize = _sprites.CasteSize,
+                CasteHalo = _casteHalo,
+                AntBase = antCount,
+                LanePixels = _lanePixels,
                 Castes = _content.CasteSim,
                 HealthMultiplier = sim.Ants.HealthMultiplier,
                 ItemColors = _itemColors,
@@ -109,10 +127,22 @@ namespace Antarium.Presentation
                 Bars = _bars,
             }.Schedule(antCount, 64).Complete();
 
-            int quad = antCount * QuadsPerAnt;
+            int quad = antCount + antCount * QuadsPerAnt;
             var rects = _sprites.Rects;
 
-            WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[ColonySprites.QueenRect], White, quad++);
+            // The queen breathes: her gaster swells and settles about once a second.
+            int queenRect = ((int)(time * QueenBreathsPerSecond * 2f) & 1) == 0 ? ColonySprites.QueenRect : ColonySprites.QueenBreathRect;
+            int throne = sim.Buildings.Throne;
+            if (throne >= 0 && sim.Buildings.ThroneStanding)
+            {
+                // On the Queen's Throne (10.6): centred on the dais, raised to its top.
+                float centerX = sim.Buildings.ThroneCenter(throne).x;
+                float2 at = new float2(centerX + 0.5f, sim.Buildings.Get(throne).Origin.y + 0.5f) * WorldConstants.CellSize
+                            + new float2(0f, BuildingSprites.ThroneDais / (float)WorldConstants.PixelsPerUnit);
+                SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(at, new int2(0, 1), ColonySprites.QueenHeight),
+                    new int2(ColonySprites.QueenWidth, ColonySprites.QueenHeight), new int2(0, 1), 1, rects[queenRect], White, at);
+            }
+            else WriteOnFloor(vertices, colony.QueenCell, ColonySprites.QueenWidth, ColonySprites.QueenHeight, rects[queenRect], White, quad++);
             foreach (var egg in colony.Eggs)
             {
                 if (egg.InNursery && egg.Nursery < sim.Buildings.All.Length)
@@ -127,10 +157,50 @@ namespace Antarium.Presentation
                 }
                 WriteOnFloor(vertices, egg.Cell, ColonySprites.EggWidth, ColonySprites.EggHeight, rects[ColonySprites.EggRect], White, quad++);
             }
+            var grid = sim.World;
             for (int i = 0; i < colony.Piles.Count; i++)
             {
                 var pile = colony.Piles[i];
-                WriteOnFloor(vertices, pile.Cell, ColonySprites.PileWidth, ColonySprites.PileHeight, rects[ColonySprites.PileRect], _itemColors[pile.Item], quad++);
+                // Mushrooms grow in caves nobody has found yet: nothing is drawn in the fog.
+                if (!grid.InBounds(pile.Cell.x, pile.Cell.y) || !grid[pile.Cell.x, pile.Cell.y].IsRevealed)
+                {
+                    SpriteQuads.WriteEmpty(vertices, quad++);
+                    continue;
+                }
+                var art = pile.Item < _pileArt.Length ? _pileArt[pile.Item] : PileArt.Heap;
+                switch (art)
+                {
+                    case PileArt.Mushroom:
+                    case PileArt.Toadstool:
+                    case PileArt.GlowMushroom:
+                        int rect = art == PileArt.Mushroom ? ColonySprites.MushroomRect
+                            : art == PileArt.Toadstool ? ColonySprites.ToadstoolRect : ColonySprites.GlowMushroomRect;
+                        int s = ColonySprites.MushroomSize;
+                        float2 center = WorldGrid.CellCenterToWorld(pile.Cell);
+                        // A glowing mushroom shines at full brightness (it also lights the cave through the light map).
+                        float2 light = art == PileArt.GlowMushroom ? new float2(0f, -20000f) : center;
+                        SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(center, new int2(0, 1), s), new int2(s, s), new int2(0, 1),
+                            (pile.Cell.x & 1) == 0 ? 1 : -1, rects[rect], White, light);
+                        break;
+                    case PileArt.Berries:
+                        WriteOnFloor(vertices, pile.Cell, ColonySprites.BerriesWidth, ColonySprites.BerriesHeight, rects[ColonySprites.BerriesRect], White, quad++);
+                        break;
+                    case PileArt.Apple:
+                        WriteOnFloor(vertices, pile.Cell, ColonySprites.AppleSize, ColonySprites.AppleSize, rects[ColonySprites.AppleRect], White, quad++);
+                        break;
+                    case PileArt.GoldenApple:
+                    {
+                        // Shines at full brightness, like a glowing mushroom (it lights its cavern through the light map).
+                        float2 c = WorldGrid.CellCenterToWorld(pile.Cell);
+                        int a = ColonySprites.AppleSize;
+                        SpriteQuads.WriteQuad(vertices, quad++, SpriteQuads.OnSurface(c, new int2(0, 1), a), new int2(a, a), new int2(0, 1), 1,
+                            rects[ColonySprites.GoldenAppleRect], White, new float2(0f, -20000f));
+                        break;
+                    }
+                    default:
+                        WriteOnFloor(vertices, pile.Cell, ColonySprites.PileWidth, ColonySprites.PileHeight, rects[ColonySprites.PileRect], _itemColors[pile.Item], quad++);
+                        break;
+                }
             }
 
             // Random events: the golden beetle (with a blinking sparkle so it can be spotted) and a marker over trapped ants.
@@ -139,10 +209,12 @@ namespace Antarium.Presentation
             foreach (var c in events.Critters)
             {
                 float2 cellPos = math.lerp(c.PrevPos, c.Pos, alpha);
-                var center = Body(nav, cellPos, c.Heading, ColonySprites.BeetleHeight, out int2 up, out int facing, out float2 world);
-                int frame = c.IsMoving ? (int)(c.WalkPhase * 4f) & 1 : 0;
-                SpriteQuads.WriteQuad(vertices, quad++, center, new int2(ColonySprites.BeetleWidth, ColonySprites.BeetleHeight), up, facing,
-                    rects[ColonySprites.BeetleRect + frame], White, world);
+                bool aphid = events.TryGetActive(c.EventId, out var owner) && owner.Kind == RandomEventKind.GoldenAphid;
+                int2 size = aphid ? new int2(ColonySprites.AphidWidth, ColonySprites.AphidHeight) : new int2(ColonySprites.BeetleWidth, ColonySprites.BeetleHeight);
+                var center = Body(nav, cellPos, c.Heading, size.y, out int2 up, out int facing, out float2 world);
+                int frame = aphid ? (int)(time * 2.5f) & 1 : c.IsMoving ? (int)(c.WalkPhase * 4f) & 1 : 0;
+                SpriteQuads.WriteQuad(vertices, quad++, center, size, up, facing,
+                    rects[(aphid ? ColonySprites.AphidRect : ColonySprites.BeetleRect) + frame], White, world);
                 if (blink)
                 {
                     float2 sparkle = center + new float2(up) * (6f / WorldConstants.PixelsPerUnit);
@@ -169,10 +241,36 @@ namespace Antarium.Presentation
                 int art = math.clamp((int)def.art, 0, ColonySprites.EnemyArtCount - 1);
                 int2 size = _sprites.EnemySize[art];
                 float2 cellPos = math.lerp(e.PrevPos, e.Pos, alpha);
-                var center = Body(nav, cellPos, e.Heading, size.y, out int2 up, out int facing, out float2 world);
+                int2 up;
+                int facing;
+                float2 world;
+                float2 center;
+                if (e.State == EnemyState.Tunnel)
+                {
+                    // The giant worm lies in its tunnel along its heading (no floor to cling to); its body is drawn first, behind the head.
+                    quad = WriteWormBody(sim, vertices, quad, e, cellPos, time);
+                    up = new int2(-e.Heading.y, e.Heading.x);
+                    if (up.Equals(int2.zero)) up = new int2(0, 1);
+                    facing = 1;
+                    world = cellPos * WorldConstants.CellSize;
+                    center = world;
+                }
+                else center = Body(nav, cellPos, e.Heading, size.y, out up, out facing, out world);
                 int frame = e.IsMoving ? (int)(e.WalkPhase * 4f) & 1 : e.Attacking ? (int)(time * 6f) & 1 : 0;
                 var tint = e.SinceHurt < FlashSeconds ? _bars.Flash : White;
-                SpriteQuads.WriteQuad(vertices, quad++, center, size, up, facing, rects[ColonySprites.EnemyRect + art * 2 + frame], tint, world);
+                // A mole cricket digging uses its dig frames.
+                int rect = art == (int)EnemyArt.MoleCricket && e.State == EnemyState.Burrow && e.Attacking
+                    ? ColonySprites.MoleDigRect + frame : ColonySprites.EnemyRect + art * 2 + frame;
+                SpriteQuads.WriteQuad(vertices, quad++, center, size, up, facing, rects[rect], tint, world);
+                // A rival ant carries its loot in its jaws, like a worker.
+                if (e.LootCount > 0 && e.Loot < _itemColors.Length)
+                {
+                    float2 forward = new float2(up.y, -up.x) * facing;
+                    float2 carry = center + forward * ((size.x * 0.5f) / WorldConstants.PixelsPerUnit) + new float2(up) * (2f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(vertices, quad++, carry, new int2(ColonySprites.CarryWidth, ColonySprites.CarryHeight), up, facing,
+                        rects[ColonySprites.CarryRect], _itemColors[e.Loot], world);
+                }
+                else SpriteQuads.WriteEmpty(vertices, quad++);
                 WriteBar(vertices, quad, rects[ColonySprites.PixelRect], center + new float2(0f, (size.y * 0.5f + 2f) / WorldConstants.PixelsPerUnit),
                     e.Health / math.max(1f, def.health), _bars.Back, _bars.Enemy, world);
                 quad += 2;
@@ -209,6 +307,40 @@ namespace Antarium.Presentation
             {
                 int frame = 1 + ((int)(f.Phase * 12f) & 1);
                 SpriteQuads.WriteQuad(vertices, quad++, f.Pos, size, up, f.Facing, rects[ColonySprites.PrincessRect + frame], White, f.Pos);
+            }
+            return quad;
+        }
+
+        /// <summary>
+        /// The giant worm's body (Milestone 11): one segment per body cell, each sliding from the cell behind it toward its own
+        /// as the head moves, turned along the body and tinted red while it is hurt.
+        /// </summary>
+        int WriteWormBody(Simulation sim, NativeArray<SpriteVertex> vertices, int quad, in Enemy e, float2 headPos, float time)
+        {
+            var body = sim.Enemies.WormCells;
+            var rects = _sprites.Rects;
+            var size = new int2(ColonySprites.WormBodyWidth, ColonySprites.WormBodyHeight);
+            var tint = e.SinceHurt < FlashSeconds ? _bars.Flash : White;
+            // How far the head is along its current step, measured from where it is drawn.
+            float step = math.distance(new float2(e.From), new float2(e.Cell));
+            float t = e.IsMoving && step > 0f ? math.saturate(math.distance(headPos - 0.5f, new float2(e.From)) / step) : 1f;
+            int segments = body.Count - 1;
+            for (int k = 0; k < body.Count; k++)
+            {
+                if (k >= segments)
+                {
+                    SpriteQuads.WriteEmpty(vertices, quad++);
+                    continue;
+                }
+                float2 from = new float2(body[k + 1]) + 0.5f, to = new float2(body[k]) + 0.5f;
+                float2 at = math.lerp(from, to, t) * WorldConstants.CellSize;
+                int2 dir = body[k] - body[k + 1];
+                if (dir.Equals(int2.zero)) dir = k > 0 ? body[k - 1] - body[k] : e.Cell - body[k];
+                dir = math.clamp(dir, -1, 1);
+                int2 up = dir.Equals(int2.zero) ? new int2(0, 1) : new int2(-dir.y, dir.x);
+                if (math.abs(up.x) + math.abs(up.y) > 1) up = new int2(0, 1);
+                int frame = ((int)(time * 3f) + k) & 1;
+                SpriteQuads.WriteQuad(vertices, quad++, at, size, up, 1, rects[ColonySprites.WormBodyRect + frame], tint, at);
             }
             return quad;
         }
@@ -252,6 +384,7 @@ namespace Antarium.Presentation
         {
             _mesh.Dispose();
             if (_itemColors.IsCreated) _itemColors.Dispose();
+            if (_casteHalo.IsCreated) _casteHalo.Dispose();
             _sprites.Dispose();
         }
 
@@ -263,6 +396,10 @@ namespace Antarium.Presentation
             [ReadOnly] public NativeArray<float4> Rects;
             [ReadOnly] public NativeArray<int> CasteRect;
             [ReadOnly] public NativeArray<int2> CasteSize;
+            [ReadOnly] public NativeArray<byte> CasteHalo;
+            /// <summary>First ant quad (the halos come before, one per ant).</summary>
+            public int AntBase;
+            public int3 LanePixels;
             [ReadOnly] public NativeArray<CasteSim> Castes;
             public float HealthMultiplier;
             [ReadOnly] public NativeArray<Color32> ItemColors;
@@ -277,7 +414,7 @@ namespace Antarium.Presentation
             public void Execute(int index)
             {
                 var a = Ants[index];
-                int quad = index * QuadsPerAnt;
+                int quad = AntBase + index * QuadsPerAnt;
                 float2 cellPos = math.lerp(a.PrevPos, a.Pos, Alpha);
                 int2 cell = (int2)math.floor(cellPos);
                 int2 up;
@@ -301,9 +438,25 @@ namespace Antarium.Presentation
                 int2 size = CasteSize[caste];
                 int rect = CasteRect[caste] + frame;
                 float2 world = cellPos * WorldConstants.CellSize;
-                float2 center = SpriteQuads.OnSurface(world, up, size.y);
+                // Lane jitter: each ant is drawn a few whole art pixels ahead of or behind its spot, and above or below the
+                // surface it walks on (the second offset comes from a hash of its lane, so the two vary independently).
+                int ahead = (int)math.round(a.Lane / 127f * LanePixels.x);
+                uint h = math.hash(new int2(a.Lane, 0x51ed));
+                int side = LanePixels.y + LanePixels.z;
+                int across = side > 0 ? (int)(h % (uint)(side + 1)) - LanePixels.z : 0;
+                float2 laneShift = (new float2(forwardAxis) * ahead + new float2(up) * across) / WorldConstants.PixelsPerUnit;
+                float2 center = SpriteQuads.OnSurface(world, up, size.y) + laneShift;
                 var tint = a.SinceHurt < FlashSeconds ? Bars.Flash : new Color32(255, 255, 255, 255);
                 SpriteQuads.WriteQuad(Vertices, quad, center, size, up, facing, Rects[rect], tint, world);
+
+                // A glow ant's light: the halo, unlit, centred on its gaster.
+                if (CasteHalo[caste] != 0)
+                {
+                    float2 back = new float2(forwardAxis) * facing * ((ColonySprites.GasterX - size.x * 0.5f) / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(Vertices, index, center + back, new int2(ColonySprites.HaloSize), new int2(0, 1), 1,
+                        Rects[ColonySprites.HaloRect], new Color32(255, 255, 255, 255), new float2(0f, -20000f)); // unlit
+                }
+                else SpriteQuads.WriteEmpty(Vertices, index);
 
                 float max = Castes[caste].Health * HealthMultiplier;
                 WriteBar(Vertices, quad + 3, Rects[ColonySprites.PixelRect], center + new float2(0f, (size.y * 0.5f + 2f) / WorldConstants.PixelsPerUnit),

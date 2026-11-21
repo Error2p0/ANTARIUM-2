@@ -12,7 +12,8 @@ namespace Antarium.Gameplay
     [Serializable]
     public sealed class GameSettings
     {
-        public const int CurrentVersion = 1;
+        /// <summary>2: the tutorial (settings written before it count as a player who knows the game).</summary>
+        public const int CurrentVersion = 2;
         public const int MaxUiScale = 4;
 
         public int version = CurrentVersion;
@@ -46,6 +47,12 @@ namespace Antarium.Gameplay
         /// <summary>Show the number pops over deliveries and crafts.</summary>
         public bool numberPops = true;
 
+        [Header("Tutorial")]
+        /// <summary>The tutorial was finished or ended; it doesn't start by itself again (Help → Restart tutorial does).</summary>
+        public bool tutorialDone;
+        /// <summary>Id of the tutorial step in progress ("" = none), so it carries on after a restart of the game.</summary>
+        public string tutorialStep = "";
+
         [Header("Controls")]
         /// <summary>Input System binding overrides (<c>SaveBindingOverridesAsJson</c>).</summary>
         public string bindingOverrides = "";
@@ -66,6 +73,9 @@ namespace Antarium.Gameplay
             screenShake = Mathf.Clamp01(screenShake);
             autosaveMinutes = Mathf.Clamp(autosaveMinutes, 0, 60);
             bindingOverrides ??= "";
+            tutorialStep ??= "";
+            // Settings from before the tutorial belong to someone who has played already: don't start it by itself.
+            if (version < 2) tutorialDone = true;
             version = CurrentVersion;
         }
 

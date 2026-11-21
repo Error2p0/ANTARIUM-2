@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e233917afcdc9340b87a427b777937f, type: 3}
+  m_Name: ember_strata
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.WorldModifierDef
+  id: ember_strata
+  displayName: Ember Strata
+  description: the stone strata are rust-red ember stone, and fire beetles live in their caves instead of centipedes. +20% Genetic Memory.
+  order: 9
+  color: {r: 0.7529412, g: 0.3137255, b: 0.16470589, a: 1}
+  oreThreshold: 0
+  caveThreshold: 0
+  waterThreshold: 0
+  lavaThreshold: 0
+  gasThreshold: 0
+  biomeThickness: 1
+  variants:
+  - biome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+    displayName: Ember Strata
+    baseMaterial: {fileID: 11400000, guid: 52486e0b60682ce44b9d54d283606e96, type: 2}
+    creatures:
+    - {fileID: 11400000, guid: f6821cc51c3c81f4495c1c52eebfd05f, type: 2}
+  stats:
+  - stat: 20
+    value: 0.2

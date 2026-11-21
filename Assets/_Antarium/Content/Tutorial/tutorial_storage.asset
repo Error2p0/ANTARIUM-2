@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f796b96acc2d2ef42bae9ebd78a5593f, type: 3}
+  m_Name: tutorial_storage
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TutorialStepDef
+  id: tutorial_storage
+  displayName: Make room
+  order: 50
+  body: 'What your workers dig up is carried to the royal chamber, and it fills up fast. Press {Storage} and paint a storage zone on dug-out cells underground: in the chamber or along a tunnel.'
+  goal: 4
+  amount: 4
+  building: {fileID: 0}
+  highlight: 3
+  helpTopic: {fileID: 11400000, guid: 56e81e73a94b5b344823c502bf47ed4e, type: 2}

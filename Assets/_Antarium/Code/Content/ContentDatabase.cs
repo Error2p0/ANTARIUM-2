@@ -23,10 +23,28 @@ namespace Antarium.Content
         public List<GeneticDef> genetics = new();
         public List<WorldModifierDef> worldModifiers = new();
         public List<AchievementDef> achievements = new();
+        public List<EvolutionDef> evolutions = new();
+        public List<LoreDef> lore = new();
+        [Tooltip("Pages of the in-game help (F1).")]
+        public List<HelpTopicDef> helpTopics = new();
+        [Tooltip("Steps of the first-colony tutorial.")]
+        public List<TutorialStepDef> tutorialSteps = new();
         [Tooltip("Creatures that come from the surface in raids (picked at random).")]
         public List<EnemyDef> raiders = new();
         public WorldGenSettings worldGen;
         [Tooltip("Food items that appear on the surface over time for workers to forage.")]
         public List<ItemDef> surfaceForage = new();
+        [Tooltip("Items that fall from surface plants by day (leaves).")]
+        public List<ItemDef> plantForage = new();
+        [Tooltip("Items that fall from berry bushes by day (berries, Milestone 11).")]
+        public List<ItemDef> bushForage = new();
+        [Tooltip("Items that fall from apple trees by day (apples, Milestone 11 batch 6).")]
+        public List<ItemDef> treeForage = new();
+        [Tooltip("Mushrooms that pop up on the surface, more after rain (toadstools, Milestone 11).")]
+        public List<ItemDef> surfaceMushrooms = new();
+        [Tooltip("Item the queen eats from the stock to lay faster (honeydew).")]
+        public ItemDef royalTreat;
+        [Tooltip("Creatures that hunt on the surface at night.")]
+        public List<EnemyDef> nightHunters = new();
     }
 }

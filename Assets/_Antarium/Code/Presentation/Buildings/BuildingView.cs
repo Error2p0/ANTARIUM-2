@@ -61,11 +61,11 @@ namespace Antarium.Presentation
             public byte GhostAlpha;
         }
 
-        public BuildingView(ContentDB content, RenderConfig render, Material spriteMaterial, Transform parent, float2 worldSize)
+        public BuildingView(ContentDB content, RenderConfig render, ArtLibrary art, Material spriteMaterial, Transform parent, float2 worldSize)
         {
             _content = content;
             _render = render;
-            _sprites = new BuildingSprites();
+            _sprites = new BuildingSprites(art);
             _mesh = new SpriteMesh("Buildings", spriteMaterial, _sprites.Texture, parent, worldSize, 5);
             _stockMesh = new SpriteMesh("Stock", spriteMaterial, _sprites.Texture, parent, worldSize, 3);
             _itemColors = ColonyView.ItemColors(content);
@@ -111,16 +111,29 @@ namespace Antarium.Presentation
             };
             switch (def.kind)
             {
-                case BuildingKind.Belt: v.Rect = BuildingSprites.BeltRect; v.Frames = BuildingSprites.AnimFrames; break;
-                case BuildingKind.Lift: v.Rect = BuildingSprites.LiftRect; v.Frames = BuildingSprites.AnimFrames; break;
+                case BuildingKind.Belt:
+                    v.Rect = def.tier > 0 ? BuildingSprites.IronBeltRect : BuildingSprites.BeltRect;
+                    v.Frames = BuildingSprites.AnimFrames;
+                    break;
+                case BuildingKind.Lift:
+                    v.Rect = def.tier > 0 ? BuildingSprites.IronLiftRect : BuildingSprites.LiftRect;
+                    v.Frames = BuildingSprites.AnimFrames;
+                    break;
                 case BuildingKind.Splitter: v.Rect = BuildingSprites.SplitterRect; break;
                 case BuildingKind.Filter: v.Rect = BuildingSprites.FilterRect; break;
-                case BuildingKind.Gate: v.Rect = BuildingSprites.GateRect; break;
+                case BuildingKind.Gate: v.Rect = def.tier > 0 ? BuildingSprites.IronGateRect : BuildingSprites.GateRect; break;
+                case BuildingKind.Chest: v.Rect = BuildingSprites.ChestRect; v.Frames = 2; break;
+                case BuildingKind.Unloader: v.Rect = BuildingSprites.UnloaderRect; break;
                 case BuildingKind.Trap: v.Rect = BuildingSprites.TrapRect; v.Frames = 2; break;
                 case BuildingKind.GuardPost: v.Rect = BuildingSprites.GuardPostRect; break;
                 case BuildingKind.Wall: v.Rect = BuildingSprites.WallRect; break;
                 case BuildingKind.Nursery: v.Rect = BuildingSprites.NurseryRect; break;
                 case BuildingKind.Emitter: v.Rect = BuildingSprites.EmitterRect; break;
+                case BuildingKind.Pump: v.Rect = BuildingSprites.PumpRect; v.Frames = 2; break;
+                case BuildingKind.WaterWheel: v.Rect = BuildingSprites.WheelRect; v.Frames = BuildingSprites.AnimFrames; break;
+                case BuildingKind.Resonator: v.Rect = BuildingSprites.ResonatorRect; v.Frames = 2; break;
+                case BuildingKind.Engine: v.Rect = BuildingSprites.EngineRect; v.Frames = BuildingSprites.EngineFrames; break;
+                case BuildingKind.Throne: v.Rect = BuildingSprites.ThroneRect; break;
                 default:
                     v.Rect = def.art switch
                     {
@@ -128,6 +141,8 @@ namespace Antarium.Presentation
                         PlaceholderArt.Garden => BuildingSprites.GardenRect,
                         PlaceholderArt.Archive => BuildingSprites.ArchiveRect,
                         PlaceholderArt.PrincessChamber => BuildingSprites.PrincessChamberRect,
+                        PlaceholderArt.Crusher => BuildingSprites.CrusherRect,
+                        PlaceholderArt.Ranch => BuildingSprites.RanchRect,
                         _ => BuildingSprites.GenericRect,
                     };
                     v.Frames = def.art == PlaceholderArt.Block ? 1 : 2;
@@ -210,6 +225,7 @@ namespace Antarium.Presentation
                             if (cellIndex >= royalCells.Count) continue;
                             cell = royalCells[cellIndex];
                         }
+                        else if (container.IsChest) continue; // the chest sprite shows it
                         else
                         {
                             if (cellIndex > 0) continue; // a cell holding more than 8 shows 8
@@ -268,6 +284,44 @@ namespace Antarium.Presentation
                     SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.DotSize), new int2(0, 1), 1, rects[BuildingSprites.DotRect], dot, light);
                     break;
                 }
+                case BuildingKind.Chest:
+                {
+                    // Craft = how full it is; Filter = the item it holds most of (set by the building system).
+                    bool goods = b.Craft > 0f;
+                    SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect + (goods ? 1 : 0)], color, light);
+                    if (!goods || b.Filter >= itemColors.Length) break;
+                    var dot = itemColors[b.Filter];
+                    dot.a = color.a;
+                    float2 dotCenter = cellCenter + new float2(0f, 2f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.ItemSize), new int2(0, 1), 1, rects[BuildingSprites.ItemRect], dot, light);
+                    break;
+                }
+                case BuildingKind.Unloader:
+                {
+                    var up = new int2(-b.Dir.y, b.Dir.x);
+                    SpriteQuads.WriteQuad(v, quad, cellCenter, cell, up, 1, rects[vis.Rect], color, light);
+                    if (b.Filter >= itemColors.Length) break; // takes any item
+                    var dot = itemColors[b.Filter];
+                    dot.a = color.a;
+                    float2 dotCenter = cellCenter - new float2(b.Dir) * (1f / WorldConstants.PixelsPerUnit);
+                    SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.ItemSize), new int2(0, 1), 1, rects[BuildingSprites.ItemRect], dot, light);
+                    break;
+                }
+                case BuildingKind.Pump:
+                {
+                    // Turned like the filter: the spout points along Dir. The impeller turns while it pumps.
+                    var up = new int2(-b.Dir.y, b.Dir.x);
+                    int frame = b.State == BuildingState.Active && b.Status == MachineStatus.Working ? (int)(time * 8f) & 1 : 0;
+                    SpriteQuads.WriteQuad(v, quad, cellCenter, cell, up, 1, rects[vis.Rect + frame], color, light);
+                    break;
+                }
+                case BuildingKind.WaterWheel:
+                {
+                    // Craft = power: the wheel turns as fast as water pours through it (backwards: water falls on its left side).
+                    int frame = (int)(time * 10f * b.Craft) & (BuildingSprites.AnimFrames - 1);
+                    SpriteQuads.WriteUpright(v, quad, origin, vis.SizePx, rects[vis.Rect + ((BuildingSprites.AnimFrames - frame) & (BuildingSprites.AnimFrames - 1))], color, light);
+                    break;
+                }
                 case BuildingKind.Emitter:
                 {
                     SpriteQuads.WriteUpright(v, quad, origin, cell, rects[vis.Rect], color, light);
@@ -277,6 +331,13 @@ namespace Antarium.Presentation
                     float pulse = ((int)(time * 2f) & 1) == 0 ? 0f : 1f / WorldConstants.PixelsPerUnit;
                     float2 dotCenter = cellCenter + new float2(0f, pulse);
                     SpriteQuads.WriteQuad(v, dotQuad, dotCenter, new int2(BuildingSprites.DotSize), new int2(0, 1), 1, rects[BuildingSprites.DotRect], dot, light);
+                    break;
+                }
+                case BuildingKind.Engine:
+                {
+                    // One frame per restoration stage; a step in progress still shows the stage before it (as a blueprint).
+                    int frame = math.clamp((int)b.Stage, 0, vis.Frames - 1);
+                    SpriteQuads.WriteUpright(v, quad, origin, vis.SizePx, rects[vis.Rect + frame], color, light);
                     break;
                 }
                 default:
@@ -335,12 +396,16 @@ namespace Antarium.Presentation
                     float progress = b.WorkTotal > 0f ? 1f - b.WorkLeft / b.WorkTotal : 0f;
                     return new Color32(255, 255, 255, (byte)math.round(math.lerp(0.3f, 0.85f, progress) * 255f));
                 }
+                // Switched off by the player (Milestone 11): dim grey, in the flow overlay too.
+                if (b.Off) return new Color32(118, 118, 128, 255);
                 if (b.Kind == BuildingKind.Gate)
                 {
                     // A battered gate darkens toward red.
                     float hurt = 1f - math.saturate(b.Health / math.max(1f, Defs[b.Def].MaxHealth));
                     return Lerp(new Color32(255, 255, 255, 255), new Color32(255, 110, 90, 255), hurt);
                 }
+                if ((b.Kind == BuildingKind.Unloader || b.Kind == BuildingKind.Pump || b.Kind == BuildingKind.WaterWheel) && Overlay)
+                    return b.Status == MachineStatus.Working ? Colors.Working : b.Status == MachineStatus.OutputBlocked ? Colors.Jam : Colors.Idle;
                 if (b.Kind > BuildingKind.Processor) return new Color32(255, 255, 255, 255);
                 if (!Overlay) return new Color32(255, 255, 255, 255);
                 if (b.Kind == BuildingKind.Processor)

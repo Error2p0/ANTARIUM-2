@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Crystal Shard
   color: {r: 0.49803922, g: 0.84705883, b: 1, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 0.36862746, g: 0.9411765, b: 1, a: 1}

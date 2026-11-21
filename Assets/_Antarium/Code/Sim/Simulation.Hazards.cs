@@ -29,8 +29,13 @@ namespace Antarium.Sim
             if (++_fluidTick >= Config.fluids.ticksPerStep)
             {
                 _fluidTick = 0;
+                if (Surface.Weather == WeatherKind.Rain) RainStep();
+                Buildings.ApplyFluidBlocks(Fluids);
                 var result = Fluids.Step();
                 if (result.NavChanged) _fluidNavDirty = true;
+                float stepSeconds = dt * Config.fluids.ticksPerStep;
+                if (Buildings.StepFluids(Fluids, stepSeconds)) _fluidNavDirty = true;
+                StepFire(stepSeconds);
                 var reactions = Fluids.Reactions;
                 for (int i = 0; i < reactions.Length; i++)
                 {

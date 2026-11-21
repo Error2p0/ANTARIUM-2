@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_light
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_light
+  displayName: Light and darkness
+  order: 460
+  category: World
+  icon: item_glow_mushroom
+  body: 'Sunlight reaches into tunnels near the surface and fades deeper down. Glowing crystals, mushrooms, magma and lava light their surroundings, and glow ants carry light with them.
+
+
+    Light only matters for your eyes: ants work just as well in the dark. Unexplored rock is black; explored tunnels without light are dim. The research Guiding Light puts a light at your pointer.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_food
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_food
+  displayName: Food
+  order: 160
+  category: Basics
+  icon: food
+  body: 'Every ant eats, and the queen most of all. Food in the top bar shows what you have, how much fits, and what you gain or lose per minute.
+
+
+    Food comes from:
+
+    - seeds, berries, apples and toadstools on the surface, which workers forage by themselves (seeds, berries and apples only by day);
+
+    - grub nests in the topsoil: pale speckled soil that drops grubs when it is dug;
+
+    - mushrooms in caves, which grow back after they are picked;
+
+    - the Fungus Garden (research Fungiculture), which turns seeds or leaves into much more food.
+
+
+    When food runs out the colony starves: everyone works at half speed and the queen stops laying. No ant starves to death, and it ends as soon as food comes in.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

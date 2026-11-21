@@ -98,10 +98,12 @@ namespace Antarium.Sim
 
         /// <summary>
         /// Paints (full strength) or erases a circle of <paramref name="kind"/>. Painting only reaches cells the player
-        /// can see; erasing clears everything. Returns the number of cells changed.
+        /// can see, and for kinds that need it (<see cref="Pheromones.OpenCellsOnly"/>) only open cells, not walls;
+        /// erasing clears everything. Returns the number of cells changed.
         /// </summary>
         public int Paint(PheromoneKind kind, float2 center, float radius, bool set)
         {
+            bool openOnly = set && Pheromones.OpenCellsOnly(kind);
             int2 min = (int2)math.floor(center - radius), max = (int2)math.ceil(center + radius);
             int changed = 0;
             for (int y = min.y; y <= max.y; y++)
@@ -111,6 +113,7 @@ namespace Antarium.Sim
                 if (math.distance(new float2(x + 0.5f, y + 0.5f), center) > radius) continue;
                 int i = _world.Index(x, y);
                 if (set && !_world.Cells[i].IsRevealed) continue;
+                if (openOnly && !_world.Cells[i].IsOpen) continue;
                 byte target = set ? Full : (byte)0;
                 if (Strength[(int)kind * CellCount + i] == target) continue;
                 Set(kind, i, target);

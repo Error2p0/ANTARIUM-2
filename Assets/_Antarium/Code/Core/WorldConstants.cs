@@ -17,6 +17,6 @@ namespace Antarium.Core
         public const float CellSize = (float)PixelsPerCell / PixelsPerUnit; // 0.5 world units
 
         /// <summary>Edge length in pixels of each terrain material texture slice.</summary>
-        public const int MaterialTextureSize = 32;
+        public const int MaterialTextureSize = 64;
     }
 }

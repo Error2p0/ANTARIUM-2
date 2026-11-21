@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_fire
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_fire
+  displayName: Fire
+  order: 450
+  category: World
+  icon: item_coal
+  body: 'Coal, roots, mycelium and giant fungus burn. Lava flowing next to them, or a meteorite, can set them alight. Fire spreads to whatever burns next to it, gives off smoke and burns ants close by; burnt cells turn to ash, which falls like sand.
+
+
+    Water next to a fire puts it out at once, and digging a burning cell out ends it. A Fire card shows how much is burning.'
+  reveal: 1
+  revealBiome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+  revealResearch: {fileID: 0}

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_abilities
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_abilities
+  displayName: Abilities
+  order: 310
+  category: Colony
+  icon: ability_frenzy
+  body: 'Your abilities sit at the bottom right with their keys, and recharge after each use.
+
+    - Frenzy ({Ability1}): every worker is faster for a short while. You have it from the start.
+
+    - Seismic Sense ({Ability2}): reveals the ore and other finds hidden in the dark around a spot.
+
+    - Royal Decree ({Ability3}): the queen lays a batch of eggs at once, for free.
+
+    - Pheromone Burst ({Ability4}): every ant nearby rushes to a spot.
+
+    - Quickening ({Ability5}): every egg hatches at once (a queen evolution).
+
+
+    Abilities that need a place wait for a click in the world; right click or {Menu} cancels.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

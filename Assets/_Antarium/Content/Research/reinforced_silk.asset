@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: reinforced_silk
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: reinforced_silk
+  displayName: Reinforced Silk
+  description: 'Unlocks Iron Belts and Iron Lifts: twice as fast, laid over silk ones to upgrade them.'
+  treePosition: {x: 3, y: 7}
+  knowledgeCost: 45
+  cost:
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 6
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: aeee0e638c140d845acad8bb4d878697, type: 2}
+  - {fileID: 11400000, guid: d5c22373178240c4f860ef05c27882dd, type: 2}
+  effects:
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: 01a24b48b8b88a746a3e3c1fa49e65a7, type: 2}
+    ability: {fileID: 0}
+    caste: 0
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: 46ccad331cd0d3a40ae62f0a99edff52, type: 2}
+    ability: {fileID: 0}
+    caste: 0

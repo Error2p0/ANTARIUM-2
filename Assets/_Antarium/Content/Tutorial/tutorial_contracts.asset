@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f796b96acc2d2ef42bae9ebd78a5593f, type: 3}
+  m_Name: tutorial_contracts
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TutorialStepDef
+  id: tutorial_contracts
+  displayName: Goals
+  order: 80
+  body: 'The contracts on the right always show a next goal. When one is done, click Claim reward for knowledge, food or items.
+
+
+    The first ones walk you through the start of a colony.'
+  goal: 7
+  amount: 1
+  building: {fileID: 0}
+  highlight: 7
+  helpTopic: {fileID: 11400000, guid: 785f5d1c72f216d47a626af1b801f01b, type: 2}

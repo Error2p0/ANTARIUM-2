@@ -1,8 +1,8 @@
 # How to play Antarium 2
 
-This covers everything that exists in the current build (Milestones 1–8). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
+This covers everything that exists in the current build (Milestones 1–8 and 10.1–10.6). Numbers quoted here are the defaults in `Assets/_Antarium/Content/GameConfig.asset` and the content assets in `Assets/_Antarium/Content` (Biomes, Buildings, Recipes, Research, Abilities, Contracts, Events, Enemies, Castes, Genetics, WorldModifiers), so they change if those assets are tuned.
 
-To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene is missing, run **Antarium → Setup → Create Main Scene** in the editor menu. The game opens on the **title screen** over your saved colony (see *Title screen, settings and achievements*). To always start fresh, untick **Continue Last Save** on the `GameBootstrap` object; to skip the title screen while developing, untick **Show Title**.
+To start, open `Assets/_Antarium/Scenes/Main.unity` and press Play. If the scene is missing, run **Antarium → Setup → Create Main Scene** in the editor menu. The game opens on the **title screen** over your saved colony (see *Title screen, settings and achievements*). To always start fresh, untick **Continue Last Save** on the `GameBootstrap` object; to skip the title screen while developing, untick **Show Title**. To skip the opening intro (studio logo, game logo), untick **Play Intro**.
 
 The keys below are the **defaults**. Every keyboard and mouse key can be changed in **Settings → Controls**. The buttons on screen always show your current keys, written the way your keyboard layout labels them (on a Czech layout the number row reads + ě š č ř, for example).
 
@@ -32,7 +32,15 @@ With **Pan at the screen edge** turned on in the settings, touching the edge of 
 
 You can also click the tool buttons at the bottom of the screen. On a gamepad, the **right trigger** acts as the left mouse button and the **left trigger** as the right mouse button. Clicks that start on the HUD never reach the world.
 
-Clicking a **golden beetle** catches it, whatever tool is active (see *Random events*).
+**Brush size:** Dig, Mine, Storage and Scent paint with a round brush in three sizes: **1** (small: one to four cells, for precise work), **2** (medium, the usual size) and **3** (large). **Tab** goes through the sizes, or click **1 / 2 / 3** in the *Brush* row above the toolbar. Each tool keeps its own size (also when you start a new colony). An outline in the tool's colour shows at the cursor exactly which cells the brush covers: white for Dig (red while the Dig tool rests), orange for Mine, cyan for Storage, the scent's colour for Scent.
+
+**Digging strength:** the Dig tool has a **Strength** bar next to the brush sizes. Every hit that digs something uses a little (about 12 seconds of non-stop digging at size 2; size 1 uses a quarter as much per hit, size 3 three times as much). Hits into open air cost nothing. A second after you stop digging it comes back slowly (empty to full in about 20 seconds). When it runs out the bar turns red and the Dig tool rests until a quarter is back. Your ants dig without limit: give them mining orders. Controlling an ant (biting with it) doesn't use the strength.
+
+Clicking a **golden beetle** catches it, whatever tool is active (see *Random events*). Clicking a **shooting star** in the night sky catches it too: it bursts into sparkles with a chime (it gives nothing, but you might like what happens the first time).
+
+**Auto-mark ores:** once the colony knows **Vein Instinct** (research, or the genetic trait), the Mine tool's row above the toolbar has an **Auto-mark ores: On / Off** switch. On (the default), ore and other finds next to every cell your colony digs out are ordered for mining by themselves; off, only what you paint is mined.
+
+**Guiding Light:** after the research *Guiding Light* a soft light follows your pointer over the world (radius 9 cells; a glow ant's is 6) and rock casts shadows from it, so you can see what you are digging in the dark. It only shines from open ground: with the pointer inside rock it sits at the nearest tunnel or cave cell within 3 cells (never lighting the rock from inside), and with no open ground that close it goes out. It also goes out while the pointer is over the HUD or while you control an ant.
 
 ### Abilities
 
@@ -42,6 +50,7 @@ Clicking a **golden beetle** catches it, whatever tool is active (see *Random ev
 | **X** | **Seismic Sense** | Used **at the cursor**: reveals every ore cell, grub nest and crystal within 24 cells, even in unexplored darkness. Revealed finds glow faintly so you can spot them. Recharges in 90 seconds. Unlocked by research. |
 | **C** | **Royal Decree** | Used right away: the queen lays 4 eggs at once, free of food (beyond the usual egg limit). Recharges in 4 minutes. Unlocked by research. |
 | **V** | **Pheromone Burst** | Used **at the cursor**: every ant within 20 cells drops what it is doing and rushes to that spot, 50% faster, for 15 seconds. Good for swarming raiders or crowding a new dig site. Recharges in 2.5 minutes (no ants in range: nothing happens and it doesn't recharge). Unlocked by research. |
+| **B** | **Quickening** | Used right away: every egg hatches at once (next to the queen, in nurseries and carried by nurses). Recharges in 5 minutes (no eggs: nothing happens). Unlocked by the queen's *Quickening* evolution. |
 
 The ability buttons sit at the bottom right (only unlocked ones are shown) with the time left to recharge. Clicking **Seismic Sense** or **Pheromone Burst** there waits for you to click a spot in the world; right click or **Esc** cancels.
 
@@ -72,13 +81,32 @@ Gamepad **Y** possesses the ant under the pointer / lets go.
 |---|---|
 | Click a building in the **palette** (above the toolbar) | Select it (also switches to the Build tool) |
 | **Q** / **E** | Previous / next building |
-| **R** | Rotate: belts flip left/right, lifts flip up/down, filters turn a quarter clockwise; with the Pheromone Emitter selected: the next scent for new emitters |
-| **Left drag** with Silk Belt or Root Lift | Lay a line. It stays on the row (belt) or column (lift) where you started, and **flows in the direction you drag**. Dragging over an existing belt or lift turns it to the new direction. |
-| **Left drag** with Earth Wall or Resin Gate | Paint them on every cell you drag over |
+| **R** | Rotate: belts flip left/right, lifts flip up/down, filters, unloaders and pumps turn a quarter clockwise; with the Pheromone Emitter selected: the next scent for new emitters |
+| **Left drag** with a belt or lift (silk or iron) | Lay a line. It stays on the row (belt) or column (lift) where you started, and **flows in the direction you drag**. Dragging over an existing belt or lift of the same kind turns it to the new direction. |
+| **Left drag** with Iron Belt / Iron Lift **over silk belts / root lifts** | **Upgrades them in place**: the old one is refunded, the iron one is paid and workers build it. Items riding the belt stay on it. (Works the other way round too.) |
+| **Left drag** with Earth Wall, Resin Gate or Iron Gate | Paint them on every cell you drag over. An Iron Gate over a Resin Gate upgrades it. |
 | **Left click** with any other building | Place it (machines: the cursor marks the bottom middle) |
-| **Left click on a placed filter** with the Filter selected | Change the filter's item (cycles through all items) |
-| **Left click on a placed emitter** with the Pheromone Emitter selected | Change its scent (cycles through the five) |
+| **Left click on a placed filter** with the Filter selected | Change the filter's item (cycles through all items; **I** picks it from a list) |
+| **Left click on a placed emitter** with the Pheromone Emitter selected | Change its scent (cycles through the five; **I** picks it from a list) |
 | **Right mouse** (hold) | Remove whatever building is under the cursor |
+
+### Configure (I)
+Point at something and press **I** (rebindable) to open the **configure panel** (right side). **I** again on the same spot, the **x** or **Esc** closes it.
+
+| Pointing at | What you set |
+|---|---|
+| A **storage zone** cell | Which items the whole zone (every storage cell connected to it) takes: click items on / off, **All**, **None**. Items already inside stay. |
+| A **chest** | Which items it takes (same as a zone, for this chest alone) |
+| An **unloader** | The item it takes out, or **Any item** |
+| A **filter** | The item it sends out of its arrow side |
+| A **pheromone emitter** | Its scent |
+| A **machine with several recipes** (e.g. the Smelter) | **Any recipe it can** (the default) or **one recipe only**: it then only takes in what that recipe needs |
+| The **Ancient Engine** (or click it with the Dig or Mine tool) | Its restoration steps with their costs: click the next one to pay it; workers then build it |
+| Any other **machine**, a **pump** or a **Crystal Resonator** | Only its switch (below) |
+
+**On / Off switch:** machines (Smelter, Crusher, Archive, Fungus Garden, Aphid Ranch, Princess Chamber...), unloaders, pheromone emitters, pumps and Crystal Resonators have an **On / Off** button in the panel's header (green *On*, red *Off*). Switched off, a building does no work and takes nothing in: workers stop bringing it inputs, engineers leave it, an unloader stops unloading, an emitter stops keeping its scent, a pump stops pumping, a resonator stops making knowledge and speeding up machines. A machine keeps what it holds and finishes a started batch once it is switched on again; products already made still leave. Switched-off buildings are drawn dim grey and their hover text says *switched off*. The switch is saved. Belts, lifts, splitters, filters, chests and defence buildings have no switch.
+
+Click any item in the **resource bar** (or *Storage*) to open the **stock view**: how many of each item you have and how many to **keep for building** (**-** / **+** in steps of 5). Machines (workers fetching for them) and unloaders never take the stock below that number, so a busy smelter can't eat the copper ore you are saving. Building costs can still use it.
 
 A preview follows the cursor: **green** = can be built there, **red** = can't. The info panel says why.
 
@@ -86,9 +114,15 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
-| **O** (or the **O Flow** button) | Toggle the flow overlay (see *The screen*) |
+| **O** | Toggle the flow overlay (see *The screen*) |
+| **J** | Toggle the light overlay |
+| **M** | Toggle the ore overlay |
+| **O Overlay** button | Go through the overlays: flow, light, ores, off. Only one overlay is on at a time; a legend above the toolbar explains the one that is on. |
 | **T** (or the **T Research** button) | Open / close the research tree |
 | **K** (or the **K Castes** button) | Open / close the castes panel (once the queen can lay anything but workers) |
+| **P** (or the **P Jobs** button) | Open / close the job priority panel |
+| **H** (or the **H Queen** button, or click the queen with the Dig or Mine tool) | Open / close the Queen panel (her stats and evolutions) |
+| **L** (or the **L Codex** button, once a fragment is found) | Open / close the Codex: the story of the lost colony in the ruins |
 | **N** (or the **N Flight** button) | Open / close the Nuptial Flight screen (once *Nuptial Flight* is researched, or after your first flight) |
 | **G** (or the **G Genes** button) | Open / close the Genetic Memory tree (once you have had Genetic Memory, or from the flight screen) |
 
@@ -96,8 +130,8 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 
 | Key | Action |
 |---|---|
-| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, Settings, Achievements, Controls and help, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements or the help are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
-| **F1** | Controls and help: every key as it is bound now, the mouse controls and a few tips |
+| **Esc** (gamepad **Start**) | Cancel an ability or possess target, close the open panel, let go of the ant you control, or open the menu (Resume, Save, Load last save, New colony, New bloodline, Settings, Achievements, Help and controls, Save and return to title, Save and quit). The game is **paused** while the menu, the settings, the achievements, the help or the **Steam overlay** (Shift+Tab) are open. Closing settings, achievements or help that you opened from the menu brings the menu back. |
+| **F1** | Help: the **Guide** (how every part of the game works) and **Controls** (every key as it is bound now, the mouse and a few tips); see *Tutorial and help* |
 | **F5** | Save now |
 | **F9** | Load the last save (no offline progress) |
 
@@ -110,8 +144,8 @@ A preview follows the cursor: **green** = can be built there, **red** = can't. T
 | **F6** | Spawn 50 workers in the royal chamber |
 | **F7** | Finish every blueprint immediately |
 | **F8** | Add up to 20 of every resource (as far as storage has room), 50 food and 50 knowledge |
-| **F10** | Start a random event now |
-| **F11** | A raid arrives right now (no warning) |
+| **F10** | Start a random event now. **Ctrl+F10**: the giant earthworm |
+| **F11** | A raid arrives right now (no warning). **Shift+F11**: a raid of rival ants. **Ctrl+F11**: a mole cricket starts digging toward the nest |
 | **F12** | Add 2 princesses (up to the limit) and 10 Genetic Memory |
 
 The F3 readout also shows soldiers, enemies, the time to the next raid and its size, how many fluid chunks are moving, ants lost, ants per caste (worker / soldier / miner / hauler / nurse / builder / scout / engineer), scented cells per pheromone, cells scouted, the possessed ant, princesses, what a flight would earn now, unspent Genetic Memory, flights so far and the colony's world modifiers.
@@ -120,24 +154,37 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 
 ## The screen
 
-- **Resource bar (top):**
+- **Resource bar (top):** every entry has a small **icon** (a sun or a moon for the time of day, then food, ants, eggs, storage, knowledge, a crown for princesses, a gold helix for Genetic Memory, and one per item). The same item icons are used in the stock view and in the configure panel; buildings have theirs in the build palette, castes in the castes panel, and the toolbar and ability buttons carry an icon next to their key and name.
+  - **Day and time**, e.g. *Day 3  14:20*, with a sun (day) or moon (night) icon; next to it *Rain*, *Storm* (a thunderstorm), *Drought*, *Night* or *Starfall*. Point at it for what day, night and weather do.
   - **Food** current / capacity, with the **net food rate** per minute (food delivered minus what the colony eats; red when negative). **Ants** (with how many of them are workers once you have other castes), **Eggs**.
   - **Storage** used / total: how many items (of any type) the royal chamber and your storage cells hold. Turns orange when full.
   - **Knowledge** (violet): the research currency, with the knowledge your Archives study per minute.
   - **Princesses** waiting / how many count (once the Nuptial Flight is known) and **Memory** (gold): your unspent Genetic Memory (once you have had any).
   - One entry per resource you own, e.g. *Copper Ore 4 +12/min*. Entries appear once you have that item. The green number is how many arrived in the stock per minute recently.
-- **Alert (under the bar):** shows in red while the colony is starving, and while raiders are in the royal chamber.
+- **Alert (under the bar):** shows in red while the colony is starving, while raiders are in the royal chamber, and while a bird circles over your ants.
+- **Tutorial card (top left, while the tutorial runs):** the step (*Tutorial 3/12*), what to do, how far you are, and Continue / Skip step, More help, End tutorial. See *Tutorial and help*.
 - **Contracts (right):** your current goals with a progress bar and the reward. A finished contract turns gold with a **Claim reward** button.
 - **Event cards (left):** random events with the time left to act, a **Go** button that moves the camera there and **x** to dismiss the card. When an event ends, its card says how it went and fades after a few seconds.
   - **Raid** cards are red: first a warning with the time until the raiders arrive, then how many are left. **Go** jumps to the raiders. The card turns green if the raid is repelled.
   - A card also appears when you break into a cave where **creatures** live (which kind and how many).
-- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **T Research**, **O Flow** for the overlay, **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
+  - **Weather** cards: *Rain*, *Thunderstorm* or *Drought* with the time left.
+  - A **Starfall** card on a starfall night (*Until dawn*).
+  - A red **bird** card while a bird circles (*Strikes in 6s*), then whether it took any ants; a red **Night hunters** card while spiders prowl (*Until dawn*). **Go** jumps to the bird or a spider.
+  - A red **Fire!** card while anything burns (*12 cells burning*); **Go** jumps to the fire.
+  - **Rival ants** get their own red raid card (*Rival ants incoming!*): they come for your stock, not your food. At the end it says how many items they carried off.
+  - A red **Mole Cricket digging!** card while one tunnels toward the nest (*27 cells from the queen*), then *broke in!* once it reaches your tunnels. **Go** jumps to it.
+- **Toolbar (bottom):** every button starts with its key in a muted colour. Point at a button to see what it does in the info panel. **Everything on the HUD has such a tip**: resource bar entries, palette buildings and scents, abilities, caste and priority rows, configure options. Hints and messages always name the keys you have bound. Dig / Mine / Storage / Build / Scent, **F Possess** (gold **F Let go** while you control an ant), **K Castes** (once you have more than workers), **P Jobs**, **H Queen**, **L Codex** (once you have found a lore fragment), **T Research**, **O Overlay** (click to go through the overlays), **G Genes** (once you have had Genetic Memory) and **N Flight** (once the Nuptial Flight is known; outlined in gold while princesses are waiting). The active tool is outlined in gold; the toggle buttons turn green while open / on.
 - **Castes panel** (bottom left, **K**): one row per caste the queen can lay: how many there are (and eggs), its **share** of the colony with **-** / **+** (5% steps), and *rest* for workers, who fill whatever the others leave. See *Castes*.
+- **Job priority panel** (next to the castes panel, **P**): one row per job (Dig, Haul, Build, Supply, Tend, Nurse) with its priority from **1 lowest** to **5 highest** and **-** / **+**. See *Job priorities*.
+- **Queen panel** (middle of the screen, **H** or click the queen): how often she lays, a **Stop laying** / **Resume laying** button, her eggs, the colony's food upkeep, how many ants are skilled or masters and their traits, a **Caste mix** button that opens the castes panel, and her **evolution tree**. See *The queen's evolutions*.
+- **Codex** (middle of the screen, **L**): the lore fragments of the ruins on the left (*???* until found), the one you pick on the right; a fragment not found yet says how many more relics or tablets to study. See *The ruins: lore, the Codex and the Ancient Engine*.
 - **Abilities (bottom right):** one button per unlocked ability with its hotkey; orange while running, greyed with a timer while recharging, blue while waiting for you to pick a spot.
-- **Build palette** (above the toolbar, Build tool only): every building with its cost. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
+- **Build palette** (above the toolbar, Build tool only): every building with its cost, in up to three rows. The cost turns red while you can't afford it. Buildings still locked behind research are faded and say which research unlocks them.
+- **Configure panel** (right, **I**) and **stock view** (click an item in the resource bar): see *Configure (I)*.
 - **Scent palette** (above the toolbar, Scent tool only): the five pheromones with what each does. *Defend* is faded until you have soldiers.
-- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent, a princess chamber's princesses), an **ant** under the cursor (caste, hit points, what it is doing, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor, what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls.
-- **Messages** (above the info panel): short notes, e.g. a refused placement (*Not enough Copper Ore (3/12)*), finished research, an ability that is still recharging, a claimed contract, a random event, an ant lost (*A worker drowned.*), a cave-in, a broken gate, or taking / losing control of an ant.
+- **Brush row** (just above the toolbar, with Dig, Mine, Storage and Scent): the brush sizes **1 / 2 / 3** (the active one outlined in gold) and, with the Dig tool, the **Strength** bar (gold; orange when low; red while the tool rests).
+- **Info panel** (above the palette): details of the building under the cursor (flow per minute, what it carries, why it is jammed, a machine's inputs, progress and recipes, whether an engineer tends it, a gate's hit points, whether a trap is armed, a nursery's eggs, an emitter's scent, a princess chamber's princesses), an **ant** under the cursor (caste, hit points, what it is doing, e.g. *hiding from the bird*, its skill and level, e.g. *Level 3 digger (+10% at it), 60/110 XP*, its trait, *F: take control*), an **enemy** under the cursor (hit points, what it is doing), **water, lava or gas** under the cursor (a **lake** or **river** says so), **wild food** (berries, apples, golden apples, toadstools, mushrooms: their food and where they come from; a **picked mushroom spot** says when it grows back), what a storage cell or the royal chamber holds, the **scents** on the cell (*Scent: Trail 80%*), or, in the Build tool, the selected building's cost, what it does and why it can't go where the cursor is. With the Scent tool it explains the selected scent. While you control an ant it shows its hit points and the controls. A **find** in the rock (ore, coal, amber...) says what it gives. An **icon** at the left shows what the panel is about: the ant's caste, the building, the item a find gives, or the storage. Over the HUD it shows the tip of what you point at.
+- **Messages** (above the info panel): short notes, e.g. a refused placement (*Not enough Copper Ore (3/12)*), finished research, an ability that is still recharging, a claimed contract, a random event, an ant lost (*A worker drowned.*, *2 workers were taken by a bird.*, *A worker died of the heat.*), a queen evolution, an ant that became a master (level 5), a cave-in, a broken gate, dawn and nightfall, the weather, or taking / losing control of an ant.
 - **Research tree (T):** see *Research*.
 - **Nuptial Flight screen (N)** and **Genetic Memory tree (G):** see *Nuptial Flight and Genetic Memory*.
 - **Welcome back** (after the game was closed): what the colony did while you were away.
@@ -151,24 +198,38 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
   - **White ovals** next to the queen are eggs.
   - **Cream silk bands** along a tunnel floor are belts; **brown root rails** in a shaft are lifts. Small coloured dots riding them are items.
   - A **knot** is a splitter; a **framed square with a coloured dot** is a filter (the dot is its item, the bright edge is its arrow side).
-  - The **clay kiln** is a smelter (its mouth glows while it works); the **mushroom bed** is a fungus garden; the **wooden shelves** with bones and books are an Archive (its candle burns while it studies).
-  - A **golden beetle** with a blinking sparkle wanders the tunnels during its event. A blinking **orange dot** marks ants trapped in the rock.
+  - **Grey riveted bands** and **grey rails** are iron belts and iron lifts (twice as fast); an **iron lattice** is an iron gate.
+  - A **wooden chest** holds stock; once it has goods, they heap on its lid with a dot in the colour of what it holds most of. A **grey hopper with an arrow** is an unloader (a coloured dot shows its item; none = any item).
+  - **Two grinding stones** under a hopper are a crusher (they turn and throw dust while it works).
+  - The **clay kiln** is a smelter (its mouth glows while it works); the **mushroom bed** is a fungus garden; the **wooden shelves** with bones and books are an Archive (its candle burns while it studies). Two **crystal prongs** on an iron base are a Crystal Resonator (light arcs between them while it resonates); the stone **arch** in the ruins is the Ancient Engine: a mossy ruin at first, then with an iron gear, crystals set at its sides, and finally a golden gear with a glowing core once it runs. **Ancient tablets** are gold slabs glowing in ruin floors.
+  - **Plants** (ferns, bushes, tall flowers, **berry bushes** with red berries) sway along the surface; leaves fall under them by day, berries under the berry bushes. **Trees** stand among them: **apple trees** (round crowns hung with red apples), broad **oaks** and dark **pines**. **Roots** are dark winding strands in the soil below the plants; trees have **big roots**, thick dark wood spreading wide under them. **Lakes and rivers** are blue basins in the ground with sandy beds.
+  - The ground rolls in **hills**, with flat **terraces** and **cliffs** here and there (the ground around the nest is flat). Rare **structures** stand on it: grey **boulders**, a **rock overhang** (a crag with a ledge over open ground), **hollow logs**, an **abandoned anthill** (a brown earth mound with old tunnels) and **standing stones**.
+  - **Wild food** has its own look on the ground: a little bunch of **berries**, a red **apple**, a shining **golden apple** (on the Elder Tree), a red-and-white **toadstool**, a pale brown **cave mushroom**, a spore-green **glowing mushroom** (bright, with a teal glow around it). Other items lie as small heaps in their colour.
+  - The **sky** follows the time of day: blue by day, orange at sunrise and sunset, dark blue with stars at night, grey while it rains (with falling drops). Behind the surface stand **snowy mountains, green hills and a line of trees** that drift slowly as you pan (the farther, the slower) and take on the sky's colours (pink at sunset, dark at night); **clouds** drift across the sky, many more of them while it rains. They are only scenery. At night the surface is dim. Now and then a **shooting star** streaks across a clear night sky; on a **starfall night** they fill the sky, all flying the same way. In a **thunderstorm**, jagged white **lightning bolts** strike the ground and light up the sky and the surface for a moment.
+  - A **bird** circles high above while its **dark dithered shadow** follows an ant on the ground; when it strikes it dives onto the shadow.
+  - A **fenced leaf pasture** with little green aphids walking about is an Aphid Ranch (yellow honeydew drops on the leaves while it works).
+  - A **golden beetle** with a blinking sparkle wanders the tunnels during its event; a **golden aphid** sits in an Aphid Ranch during its event. A blinking **orange dot** marks ants trapped in the rock.
   - A **purple crystalline lump** in a crater on the surface is a meteorite.
   - **See-through (dithered) buildings** are blueprints still being built; they fill in as workers work on them.
-  - **Water** is blue with a pale surface line; **lava** is bright churning orange and lights its surroundings; **spore gas** is a speckled green haze. **Sand** is pale and grainy.
+  - **Water** is blue with a pale surface line; water running down a sloping tunnel has a sloped surface, and **falling water** is a streaked stream with foam where it lands (falling lava a bright stream too); **lava** is bright churning orange and lights its surroundings; **spore gas** is a speckled green haze, **smoke** a speckled grey one. **Sand** is pale and grainy, **ash** dark grey and grainy. A **burning** cell has flickering orange flames on its edges and glowing embers inside.
+  - A **grey box with a blue spout** is a pump (the spout is where the fluid goes). A **wooden wheel** with wet paddles in a shaft is a water wheel; it turns as fast as water pours through it.
   - **Soldiers** are darker and bigger than workers, with a heavy head and golden mandibles. **Miners** are grey with a heavy head and pale jaws, **haulers** tan with a big rear (a second lump on top when they carry more than one), **nurses** pale cream, **builders** olive green, **scouts** bright orange with long antennae, **engineers** steel blue with a cyan eye.
   - A **nurse carrying an egg** holds a little white oval. The ant you control has a **blinking gold diamond** over it and a warm light around it.
   - A **clay ledge with three silk cradles** is a nursery; the eggs lie in the cradles. A **pale pod** with a coloured dot is a pheromone emitter (the dot is its scent).
   - An **amber arch** over three silk beds is a princess chamber: royal jelly glows and drips under the arch while a princess is being raised, and **golden winged princesses** rest on the beds (two on the floor, one on a raised ledge).
-  - **Pheromones** are scattered speckles in the scent's colour: yellow **Trail**, orange **Dig here**, green **Gather**, red **Defend**, violet **Avoid**. They thin out as they fade and show more clearly while the Scent tool is active. **Enemies**: pale termites with brown heads (raiders), long red-brown centipedes, purple cave spiders, small pink fungal mites, black fire beetles with glowing stripes, grey stone ruin guardians with a cyan eye.
+  - **Pheromones** are scattered speckles in the scent's colour: yellow **Trail**, orange **Dig here**, green **Gather**, red **Defend**, violet **Avoid**. They thin out as they fade and show more clearly while the Scent tool is active. **Enemies**: pale termites with brown heads (raiders), long red-brown centipedes, purple cave spiders, small pink fungal mites, black fire beetles with glowing stripes, grey stone ruin guardians with a cyan eye, and at night on the surface hairy grey-brown **wolf spiders** with yellow eyes. **Rival ants** look like your workers but steel-blue, with pale jaws (a thief carries a lump of what it stole); the **mole cricket** is a fat brown digger with big pale claws; the **giant earthworm** is a long pink ringed body with a blunt head, lying in its own tunnel.
   - A short **bar** above an ant (green) or enemy (red) shows its health once it is hurt; a sprite **flashes red** when it is hit.
   - **Number pops** float up where things arrive: *+3* in the item's colour where items are stored (deliveries close together merge into one growing number), green food points where food is delivered, the product over a machine when it finishes, and violet knowledge over a studying Archive. Turn them off in **Settings → Gameplay**.
   - Working machines **puff**: grey smoke (and the odd spark) from smelters, drifting spores from fungus gardens, pale sparkles from Archives and golden ones from princess chambers.
   - A **resin lattice** across a tunnel is a gate (it turns redder as it is damaged); **resin with bone teeth** on the floor is a trap (jaws open = armed); a **red banner** is a guard post; a **packed earth block** is a wall blueprint.
+- **Overlays**: one at a time, each with a **legend** above the toolbar. **O** flow, **J** light, **M** ores; the **Overlay** button goes through them.
 - **Flow overlay (O):**
   - Belts and lifts go from **grey** (nothing moving) to **green** (busy). **Red** = jammed: full and not moving.
   - Machines are **green** while working, **yellow** while waiting for input, **red** when their products are not being taken away.
+  - Unloaders are **green** while unloading, **grey** with nothing to take, **red** when what they feed is full. Pumps likewise (red: no room in front); water wheels are green while turning.
   - Idle workers get a **blue dot** above them.
+- **Light overlay (J):** the light that reaches each spot, in flat colour bands from **dark blue** (dark) through purple, red, orange and yellow to **white** (bright). Light comes from the sky (less at night and in rain), glowing rock and crystals, glowing mushrooms, lava, fire and glow ants. Light is only for seeing: ants work the same in the dark.
+- **Ore overlay (M):** every find you know of in its own bright colour, everything else grey: **copper ore** orange, **iron ore** red, **coal** blue, **amber** gold, **fossils** cream, **crystal shards** cyan, **obsidian** violet, **relics** green, **tablets** pink, **star fragments** lime, **roots** tan. Finds hidden in the dark that **Seismic Sense** found show at half strength. The legend lists every find you have seen with how many cells of it you know (counted about once a second).
 
 ---
 
@@ -176,6 +237,17 @@ The F3 readout also shows soldiers, enemies, the time to the next raid and its s
 
 ### Your start
 You begin with a **queen** in a small chamber under the grass, connected to the surface by a shaft. She has **6 workers** and **40 food**. Everything outside the area around the nest is dark: unexplored.
+
+### Tutorial and help
+- **Tutorial:** the first time you play, a **tutorial card** appears at the top left when you start your first colony. It walks you through the first minutes in 12 steps: look around, dig yourself, give mining orders, paint storage, watch workers carry things home, meet the queen, claim a contract, buy a research, build a Smelter, open the help. Each step ends when you **do** what it asks (a line like *Cells dug: 4 / 6* shows how far you are); it turns green with *Done!* and a chime, and the next one starts. The button or panel the step is about **blinks gold**.
+  - **Continue** goes on from a message, **Skip step** skips a step, **More help** opens the help page about it, **End tutorial** (click twice) stops it.
+  - It remembers where you were if you quit, and carries on next time. Once finished or ended it doesn't come back by itself: **Restart tutorial** in the help starts it again from the first step.
+  - It starts by itself for a new player in a young first colony (played less than 5 minutes); if you played before the tutorial existed, start it from the help.
+- **Help (F1)**, also on the title screen and in the Esc menu (*Help and controls*). The game pauses while it is open.
+  - **Guide:** topics in six groups (Basics, Building, Colony, World, Dangers, Late game) on the left; click one to read it on the right. Keys in the text are the ones you have bound, highlighted.
+  - Topics about things your colony hasn't found yet are listed as **???**; their page says what reveals them (*Dig down to the Clay & Groundwater to learn about it*, or a research). When your colony reveals one, a message says *New in the help: ...* and the topic is **green** in the list until you read it.
+  - **Controls:** every key as it is bound now, the mouse and a few tips.
+  - **Restart tutorial** and **Close** at the bottom.
 
 ### Digging yourself (Dig tool)
 - Hold the left mouse button to dig at the cursor (about 10 hits per second, in a small round brush).
@@ -189,6 +261,7 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 - Paint over solid ground to **order it dug out**. Workers come and mine it for you.
 - Orders can reach into the darkness, so you can plan a tunnel ahead. Workers dig from the edge of what's already open and reveal the rest as they go.
 - Right-click to erase orders.
+- With **Vein Instinct** (research or trait) and *Auto-mark ores* on, ore next to every dug-out cell is ordered automatically (see *Tools*).
 - Workers dig the cells they can reach. A few workers share each spot at the digging front; the rest haul or wait, so a narrow tunnel doesn't jam.
 
 ### Hauling and storage (automatic)
@@ -200,20 +273,35 @@ You begin with a **queen** in a small chamber under the grass, connected to the 
 - **Capacity** (items of any type):
   - The royal chamber holds **40 items** and **100 food**.
   - **Each storage cell holds 8 items and adds +6 food.**
+  - A **chest** (Build tool) holds **16 items** in one cell (no food).
   - Food is kept as food points, not as items.
   - Workers only pick up what still fits in the stock or in a machine that needs it. When storage is full, piles stay where they are until you add storage (or a machine wants them).
-- **Erasing** a storage cell moves its items to other storage with room; whatever doesn't fit drops to the floor as piles.
+  - **Leaves** fill at most **10** places in the stock, so leaves nobody uses yet don't crowd out ore. Fungus Gardens and Aphid Ranches still get all the leaves they want.
+- **What workers fetch first:** piles **underground** (ore and finds from digging) come before **forage on the surface** (seeds, leaves, berries, apples, toadstools). A surface pile is only fetched first when it is **30 cells closer**. While the colony is **starving**, food on the surface comes first. If you paint **Gather** scent, scented piles come first instead, as before.
+- Piles in caves your colony hasn't found yet (mushrooms, golden apples) are left alone until your tunnels break in.
+- **Storage filters** (**I** on a zone or chest): a zone or chest with a filter only takes those items; everything else goes to the next place with room. If nothing takes an item any more, workers leave its piles alone.
+- A worker standing on a **chest** puts its load into that chest if the chest takes it.
+- **Erasing** a storage cell (or removing a chest) moves its items to other storage with room; whatever doesn't fit drops to the floor as piles. Chests can't be built on a storage zone.
 
 ### Food and the queen
 - **Food sources right now:**
-  - **Seeds** appear on the grass near the nest every few seconds (up to 12 lying around). Workers walk out and bring them in: 2 food each.
+  - **Seeds** appear on the grass near the nest every few seconds **by day** and on a **starfall night** (up to 12 lying around). Workers walk out and bring them in: 2 food each.
+  - **Leaves** fall from the plants on the surface by day (and on a starfall night), one every 6 seconds or so (up to 10 lying around). They are not food themselves: they feed a Fungus Garden or an Aphid Ranch.
+  - **Berries** fall under the **berry bushes** (bushes hung with red berries, about a quarter of all plants) within 120 cells of the nest, by day and on a starfall night: one every 10 seconds or so (up to 8 lying around; *Foraging Trails* and droughts change it like seeds). **3 food** each.
+  - **Apples** fall under the **apple trees** (round trees hung with red apples, about half of all trees) within 120 cells of the nest, by day and on a starfall night: one every 20 seconds or so, up to 3 cells either side of the trunk (up to 6 lying around; *Foraging Trails* and droughts change it like seeds). **5 food** each.
+  - **Golden apples** grow on the **Elder Tree** deep in the stone strata (see *The deep layers*): **12 food** each, they glow, and a picked one grows back after 4 to 8 minutes like a cave mushroom. Workers climb the tree to pick them once your tunnels reach its cavern.
+  - **Toadstools** (red caps with white spots) pop up on open ground within 120 cells of the nest, day and night: one every 45 seconds or so, **four times as often while it rains and for 1.5 minutes after** (up to 4 at a time). **4 food** each.
+  - **Cave mushrooms** grow on the floors of natural caves, in patches: pale brown **mushrooms** in the topsoil, clay, stone and ruins (**4 food**), and **glowing mushrooms** (spore-green, **6 food**, half again as much) in the stone strata, the crystal caverns and, most of all, the fungal depths. Workers pick them up like any pile **once your tunnels reach the cave**. A picked mushroom **grows back after 4 to 8 minutes** (also while the game is closed), unless something was built, painted or flooded (half a cell of water or more) on its spot. A glowing mushroom **lights its cave** while it stands; picked, its light goes out until it grows back.
   - **Grub nests** are pale-speckled soil in the topsoil. Dig them out and they drop **grubs**: 5 food each.
-  - **Fungus Garden** (Build tool): turns 2 seeds into 3 fungus worth 3 food each, so seeds are worth more than twice as much. Workers bring seeds to a garden before the queen.
+  - **Fungus Garden** (Build tool): turns 2 seeds into 3 fungus, or **2 leaves into 4 fungus**, worth 3 food each, so seeds are worth more than twice as much. Workers bring seeds and leaves to a garden before the queen.
   - **Giant fungus** deep down in the fungal depths: every cell dug out drops 2 fungus.
 - **Eating:** every worker eats 0.25 food per minute, every soldier 0.6, the other castes 0.2–0.35 (see *Castes*) and the queen 1.5 per minute.
 - **Eggs:** when there is enough food, the queen lays an **egg** every 6 seconds (6 food for a worker egg, other castes cost more; at most 6 eggs waiting next to her). After 20 seconds an egg hatches into an ant of its caste. Eggs that nurses carry to a **Nursery** don't count toward the 6 and hatch faster.
+- **Honeydew** (from an **Aphid Ranch**) is kept in the stock like an item. The queen eats one from the stock every **20 seconds** while there is any (leaving what you keep for building): meanwhile she lays **50% faster** and needs no food of her own.
 - **Starving:** if food runs out, the colony is starving. Workers move and dig at half speed and the queen stops laying until food comes in again. Nobody starves to death.
 - While **raiders are in the royal chamber** the queen doesn't lay either.
+- **Stop laying:** the **Stop laying** button in the Queen panel tells her to rest, for instance when the colony has as many ants as your food can carry. She lays nothing (not while the game is closed either) until you click **Resume laying**. Royal Decree still lays its eggs. The panel shows *Not laying: you told her to rest.*
+- The **Queen panel** (**H**, or click her) shows all of this at a glance and holds her evolutions.
 
 ### What workers do on their own
 Each idle worker picks the best job it can reach (nearer jobs first; jobs inside **Dig here** / **Gather** scent come first, jobs inside **Avoid** scent are never taken):
@@ -227,6 +315,12 @@ Workers crawl on floors, walls, ceilings and the back wall of dug tunnels, so th
 
 Other castes only do their own kind of work (see *Castes*); soldiers never take jobs.
 
+### Job priorities (P)
+Every job has a priority from **1 (lowest)** to **5 (highest)**, **3** at the start. A higher priority makes ants pick that job over others nearby: the distance to a job counts ×4 at 1, ×2 at 2, ×1 at 3, ×0.5 at 4 and ×0.25 at 5. Each caste still only does the jobs it does.
+- **Dig** (mining orders), **Haul** (loose items to storage or machines), **Build** (blueprints), **Supply** (fetching machine inputs from storage).
+- **Tend** and **Nurse** are the engineers' and nurses' own jobs. They normally come first; lower them and engineers supply machines, nurses haul, when that is much closer.
+- Scents still work on top: jobs inside **Dig here** / **Gather** scent come before the rest.
+
 ### Castes
 The queen lays **workers** at first. Research unlocks more castes (see *Research*); each one you unlock starts at a **10% share** of the colony (soldiers 20%). Open the **castes panel (K)** to change the shares with **-** / **+** in 5% steps: one caste can be at most 50%, all of them together at most 80%, and **workers fill the rest**. The queen always lays whichever caste is furthest below its share.
 
@@ -236,14 +330,37 @@ The queen lays **workers** at first. Research unlocks more castes (see *Research
 | **Soldier** | 15 | 0.6 | 150 | Fights (bites hard), guards posts and Defend scent; never takes jobs |
 | **Miner** | 9 | 0.35 | 50 | Digs **3 times as fast**, but only digs |
 | **Hauler** | 8 | 0.3 | 45 | Carries **3 items** of a kind at once and walks 20% faster; only hauls and fetches for machines |
-| **Nurse** | 6 | 0.2 | 30 | Carries eggs from the queen to a **Nursery** |
+| **Nurse** | 6 | 0.2 | 30 | Carries eggs from the queen to a **Nursery**. With no eggs to carry it hauls |
 | **Builder** | 8 | 0.3 | 45 | Builds **3 times as fast**, but only builds |
 | **Scout** | 8 | 0.3 | 35 | Walks 50% faster to the edge of your tunnels and **senses the rock up to 10 cells around**: hidden cells there are revealed and ore found glows. Chases and catches **golden beetles** |
-| **Engineer** | 10 | 0.35 | 40 | Walks to a machine nobody tends and stands by it: the machine works **50% faster** |
+| **Engineer** | 10 | 0.35 | 40 | Walks to a machine nobody tends and stands by it: the machine works **50% faster**. With no machine to tend it carries machine inputs from storage |
+| **Glow Ant** | 10 | 0.35 | 35 | A worker whose gaster glows: digs, hauls, builds and fetches (digs and builds at 80%) and **lights the tunnels around it** |
+| **Fire Ant** | 12 | 0.4 | 60 | A worker for the magma zone: **no harm from fire or heat**, a quarter of the damage from lava; digs 20% faster than a worker |
 
-- Specialists stand idle when there is none of their work (miners without mining orders, nurses without a nursery). Keep their shares to what you need.
+- Specialists stand idle when there is none of their work (miners without mining orders, builders without blueprints). Keep their shares to what you need.
+- **Glow ants** come from the research *Glow Ants* or the queen's *Deep Lineage* evolution, **fire ants** from *Fire Ants* or *Deep Lineage* level 2.
 - **Nursery** (Build tool, unlocked with *Nurse Caste*): nurses bring eggs here. Eggs in a nursery hatch **50% faster** and free the queen's egg slots, so she keeps laying. A nursery holds 6 eggs. Without nurses or a nursery, eggs simply hatch next to the queen as before.
 - One engineer per machine; it stays until the machine is removed.
+
+### Experience and traits
+- An ant's **first job becomes its skill** (digging, hauling, building, supplying, tending or nursing). Only work in that job gives it experience: digging and building by the work done, hauling and supplying per item delivered, tending per second by a working machine, nursing per egg brought to a nursery.
+- **Levels 1–5** (at 15, 45, 110 and 240 XP): every level above 1 makes it **5% faster** at its skill (dig and build power, walking while it carries for that job, an engineer's boost to its machine), and it picks its skill a little more often. Point at an ant to see its level and XP. A message tells you when an ant becomes a **master** (level 5).
+- About one ant in three hatches with a **trait**: **Strong** (carries one more item), **Swift** (walks 20% faster), **Lucky** (a quarter of the cells it breaks drop one more item), **Lazy** (works and walks 20% slower).
+- Ants on the same route walk at slightly different speeds (±7%) and are drawn a few pixels apart (ahead, behind, higher, lower), so a column reads as a stream.
+
+### The queen's evolutions (H)
+The queen evolves with **rare finds from the stock**. Evolutions belong to this colony (a Nuptial Flight starts the next colony without them). Open the **Queen panel** (**H** or click her), point at an evolution for what it does and what the next level costs, click to buy it. Each column needs at least one level of the evolution to its left.
+
+| Evolution | Levels | Per level | Cost (level 1 / 2 / 3) |
+|---|---|---|---|
+| **Bigger Broods** | 3 | Lays 15% faster | 4 Honeydew + 20 Food / 8 Honeydew, 2 Amber + 40 Food / 12 Honeydew, 4 Amber, 1 Star Fragment + 60 Food |
+| **Royal Cradles** | 3 | 2 more eggs can wait by her | 2 Amber + 15 Food / 6 Honeydew, 3 Fossils + 30 Food / 2 Star Fragments, 1 Relic + 45 Food |
+| **Hardy Brood** (needs Bigger Broods) | 3 | Every ant has 15% more hit points | 2 Amber, 2 Chitin / 4 Amber, 4 Chitin, 1 Fossil / 3 Fossils, 1 Relic |
+| **Quick Mending** (needs Royal Cradles) | 2 | Ants heal 50% faster | 4 Honeydew, 3 Chitin / 2 Star Fragments, 4 Chitin |
+| **Deep Lineage** (needs Hardy Brood) | 2 | Level 1: she lays **glow ants**, level 2: **fire ants** (no research needed) | 6 Crystal Shards, 4 Honeydew / 4 Obsidian, 2 Relics |
+| **Quickening** (needs Quick Mending) | 1 | Unlocks the **Quickening** ability (B) | 3 Star Fragments, 2 Relics, 6 Honeydew |
+
+The items she takes are the same ones the Archive studies for knowledge, so you choose what each find is for. Keep a reserve (stock view) for anything you want to save.
 
 ### Pheromones (Scent tool, 5)
 Paint scents onto the map to steer the colony. Each scent is shown as coloured speckles.
@@ -256,7 +373,7 @@ Paint scents onto the map to steer the colony. Each scent is shown as coloured s
 | **Defend** (red) | Idle soldiers patrol here, like at a guard post. Available once you have soldiers. |
 | **Avoid** (violet) | Ants route around it (crossing it counts as 4 times the distance), take **no jobs inside** and never wander in. Enemies ignore it. |
 
-- You can only paint where you can see. Right mouse erases the selected scent.
+- You can only paint where you can see. **Trail**, **Gather** and **Defend** only go on open cells (tunnels, chambers, the surface), never into walls or rock; **Dig here** and **Avoid** also cover solid ground. Right mouse erases the selected scent.
 - Scents **fade in about 4 minutes**. A **Pheromone Emitter** (unlocked by *Scent Glands*) keeps its scent fresh within 10 cells: paint the area first, then place the emitter in it. Press **R** before placing to choose its scent, or click a placed emitter (with the emitter selected) to change it.
 - Scents don't fade while the game is closed.
 
@@ -271,7 +388,7 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 ### Building (Build tool)
 - Choose a building in the palette and place it. The **cost is paid from your stock right away** and a see-through **blueprint** appears. Workers walk over and build it (up to 2 workers per building). You can't place what you can't afford.
 - **Removing** a building (right mouse) gives back its full cost. Items riding a removed belt, and a removed machine's stored inputs, drop to the floor as piles.
-- You can only build on cells you can see, and not in deep water, thick gas or lava. Belts, lifts, splitters, filters, walls, gates and guard posts need open space ants can walk on (dug-out space or the ground surface outside). Traps also need a solid floor under them. Machines need dug-out space underground **and a flat, solid floor under their whole width**.
+- You can only build on cells you can see, and not in deep water, thick gas or lava. Belts, lifts, splitters, filters, walls, gates and guard posts need open space ants can walk on (dug-out space or the ground surface outside). Traps also need a solid floor under them. Machines need dug-out space underground **and a flat, solid floor under their whole width**. A Water Wheel needs dug-out space underground but no floor.
 
 | Building | Cost | Size | Build time (1 worker) | What it does |
 |---|---|---|---|---|
@@ -279,10 +396,22 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Root Lift** | 2 Copper Ore | 1 cell | 0.5 s | Carries items **up or down**, 3 cells per second |
 | **Splitter** | 3 Copper Ore | 1 cell | 1 s | Hands items in turn to every belt, lift or machine around it |
 | **Filter** | 2 Copper | 1 cell | 1.5 s | Its item leaves through the arrow side; everything else through the other sides |
-| **Smelter** | 12 Copper Ore | 3 × 3 | 8 s | 2 Copper Ore → 1 Copper (4 s); 2 Iron Ore + 1 Coal → 1 Iron (6 s) |
-| **Fungus Garden** | 8 Copper Ore | 4 × 2 | 6 s | 2 Seeds → 3 Fungus (10 s). Fungus is food worth 3 each. |
-| **Archive** | 10 Copper Ore | 3 × 2 | 10 s | Studies finds into **Knowledge**: 1 Copper → 1 (8 s), 1 Crystal Shard → 4 (6 s), 1 Amber → 5 (8 s), 1 Fossil → 6 (8 s), 1 Star Fragment → 12 (10 s), 1 Relic → 25 (12 s) |
-| **Earth Wall** | Free | 1 cell | 1.5 s | When finished the cell becomes **solid packed earth** (soft, easy to mine again). Seals off water, gas, lava and caves. Not in the royal chamber or a storage zone. |
+| **Smelter** | 12 Copper Ore | 3 × 3 | 8 s | 2 Copper Ore → 1 Copper (4 s); 2 Iron Ore + 1 Coal → 1 Iron (6 s); 2 Crushed Copper → 1 Copper (3 s); 2 Crushed Iron + 1 Coal → 1 Iron (5 s). **Heated** (lava, magma rock or fire touching it): twice as fast and **no coal needed**. |
+| **Crusher** | 10 Copper Ore, 4 Copper | 2 × 2 | 6 s | 2 Copper Ore → 3 Crushed Copper (3 s); 2 Iron Ore → 3 Crushed Iron (4 s). Crushed ore smelts into **75% more metal** per ore. Needs a flat floor. |
+| **Chest** | 4 Copper Ore | 1 cell | 1.5 s | Holds **16 items**. **I** chooses which. A belt that ends at a chest fills it. |
+| **Unloader** | 3 Copper | 1 cell | 1.5 s | Takes items (**I**: one item or any) out of the storage cell, chest or royal chamber **behind** it and puts them onto the belt, lift, splitter or machine its **arrow** points at, 1.5 per second. Leaves what you keep for building. |
+| **Pump** | 3 Copper, 2 Root Fibre | 1 cell | 3 s | Moves **water or gas/smoke** (not lava) from behind it to where its **spout** points, 2 cells of fluid per second. See *Pumps, water wheels and farms*. |
+| **Water Wheel** | 4 Copper, 2 Iron, 4 Root Fibre | 2 × 2, no floor needed | 6 s | Water pouring onto it falls through and turns it; machines within **8 cells** work up to **50% faster**. |
+| **Iron Belt** | 1 Iron | 1 cell | 0.4 s | Like a silk belt, **5 cells per second**. Drag over silk belts to upgrade them. |
+| **Iron Lift** | 1 Iron, 1 Copper Ore | 1 cell | 0.6 s | Like a root lift, **6 cells per second**. |
+| **Iron Gate** | 3 Iron, 2 Copper | 1 cell | 4 s | Like a resin gate with **450 hit points**. Place over a resin gate to upgrade it. |
+| **Fungus Garden** | 8 Copper Ore | 4 × 2 | 6 s | 2 Seeds → 3 Fungus (10 s); 2 Leaves → 4 Fungus (10 s). Fungus is food worth 3 each. **Irrigated** (water in or next to it): +50% output. |
+| **Aphid Ranch** | 8 Copper Ore, 4 Root Fibre | 4 × 2 | 7 s | 2 Leaves → 1 **Honeydew** (8 s): the queen's treat (see *Food and the queen*). Needs a flat floor. **Irrigated**: +50% output. |
+| **Archive** | 10 Copper Ore | 3 × 2 | 10 s | Studies finds into **Knowledge**: 1 Copper → 1 (8 s), 1 Crystal Shard → 4 (6 s), 1 Amber → 5 (8 s), 1 Fossil → 6 (8 s), 1 Star Fragment → 12 (10 s), 1 Relic → 25 (12 s), 1 Ancient Tablet → 60 (20 s). Relics and tablets studied also find **lore fragments** (Codex). |
+| **Crystal Resonator** | 8 Crystal Shards, 4 Copper, 2 Iron | 2 × 2, on a floor, **touching glow crystals** (or copper / iron ore leading to them) | 8 s | Makes up to **15 knowledge a minute** and speeds up machines within **8 cells** by up to **30%**, by how many glow crystals it reaches (24 for full power). See *Crystal resonance*. |
+| **Ancient Engine** | 4 Relics, 10 Copper | 4 × 3, on a floor, **only in the Ancient Ruins**, one per colony | 30 s | Then **restored in three steps** (I or click it). Running: **60 knowledge a minute** and this colony's Nuptial Flight earns **twice the Genetic Memory**. Can't be taken down. |
+| **Queen's Throne** | 8 Amber, 10 Copper, 4 Iron | 4 × 2, **around the queen** (her cell in its bottom row; no floor needed, even where the floor under her was dug away), one per colony | 25 s | Only with the genetic trait **Royal Throne** (hidden from the palette until then). While it stands: the queen lays **30% faster**, **+2 waiting eggs**, and ants within **12 cells** dig and build **15% faster**. The queen rests on its dais. |
+| **Earth Wall** | Free | 1 cell | 1.5 s | When finished the cell becomes **solid packed earth** (soft, easy to mine again). Seals off water, gas, lava and caves. Not in the royal chamber or a storage zone. Touching walls are built **from the one farthest from the nest inward**, so a finished wall never cuts the builders off from the rest. |
 | **Resin Gate** | 4 Copper | 1 cell | 3 s | Ants walk through; **enemies must break it** (150 hit points, mends 1 per second). A broken gate becomes a blueprint again and workers rebuild it for free. |
 | **Resin Trap** | 2 Copper, 2 Chitin | 1 cell, on a floor | 2 s | The first enemy that steps on it takes **30 damage** and is **stuck for 4 seconds**. Re-arms after 8 seconds. |
 | **Guard Post** | 2 Copper Ore | 1 cell | 1 s | Idle soldiers wait at the nearest guard post and defend the area around it. |
@@ -290,24 +419,26 @@ Point at any ant and press **F** (or click **F Possess** and then the ant). It s
 | **Pheromone Emitter** | 3 Copper, 1 Iron | 1 cell | 2 s | Keeps one scent from fading within 10 cells. |
 | **Princess Chamber** | 10 Copper, 4 Iron | 4 × 3 | 12 s | 12 Fungus + 2 Amber → **1 princess** (60 s). Stops while the colony has as many princesses as count (5). Needs a flat floor. |
 
-The **Splitter** and **Filter** are locked until you research *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands* and the **Princess Chamber** until *Nuptial Flight*. Locked buildings are faded in the palette.
+The **Pump** is locked until you research *Hydraulics*, the **Water Wheel** until *Water Mills*, the **Unloader** until *Stockkeeping*, the **Crusher** until *Ore Crushing*, **Iron Belts** and **Iron Lifts** until *Reinforced Silk*, the **Iron Gate** until *Iron Bulwark*, the **Splitter** and **Filter** until *Silk Routing*, the **Fungus Garden** until *Fungiculture*, the **Aphid Ranch** until *Aphid Herding*, the **Resin Gate** and **Resin Trap** until *Fortification*, the **Guard Post** until *Soldier Caste*, the **Nursery** until *Nurse Caste*, the **Pheromone Emitter** until *Scent Glands*, the **Princess Chamber** until *Nuptial Flight*, the **Crystal Resonator** until *Crystal Resonance* and the **Ancient Engine** until *The Ancient Engine*. Locked buildings are faded in the palette.
 
 ### Belts and lifts
 - Each belt or lift cell holds **2 items**. Items pass from cell to cell; if the next cell is full they wait, so a blocked line **backs up**.
 - Lines **merge** when one belt or lift points into another. Two belts pointing straight at each other don't connect.
 - **Where a line ends** (the last cell has no belt or lift after it):
   - into a **machine** → the machine takes the items it uses;
+  - into a **chest** → the chest takes them (if its filter allows; otherwise they go to the nearest storage with room);
   - in or next to the **royal chamber** or a **storage zone** → items go into the stock;
   - anywhere else → the line **leads nowhere** and items stop at its end. The info panel warns about this.
 - Belts only take items they can deliver. A line that ends in a smelter only takes smelter ingredients.
-- **Splitter:** passes items in turn to every neighbouring belt, lift or machine that isn't feeding into it, skipping outputs that can't use the item. **Filter:** the chosen item only leaves through its arrow side; everything else goes to the other sides. Put at least one belt cell between two splitters or filters, since they don't connect directly.
+- **Splitter:** passes items in turn to every neighbouring belt, lift, splitter, filter or machine that isn't feeding into it, skipping outputs that can't use the item. **Filter:** the chosen item only leaves through its arrow side; everything else goes to the other sides. Splitters and filters next to each other pass items along, but never hand an item back to the one it came from.
+- **Unloader:** puts stock back onto a line. It takes from the storage, chest or royal chamber cell behind it (opposite its arrow) only what the belt or machine in front can use, so a chest of ore next to an unloader pointing into a smelter feeds the smelter directly.
 - A line that is **full and has not moved for 2 seconds** counts as jammed: it shows red in the overlay and workers stop loading it until it moves again.
 
 ### Machines
-- A machine stores up to **two crafts' worth** of each ingredient (a smelter holds 4 Copper Ore, 4 Iron Ore and 2 Coal) and starts a recipe as soon as it has the ingredients, taking turns between recipes.
+- A machine stores up to **two crafts' worth** of each ingredient (a smelter holds 4 Copper Ore, 4 Iron Ore and 2 Coal) and starts a recipe as soon as it has the ingredients, taking turns between recipes. With **I** you can make a machine run **one recipe only**: it then only takes in that recipe's ingredients (what it already holds stays).
 - **Products** go onto a belt or lift next to the machine that leads away from it. With no such belt, products are left as a pile on the machine floor for workers to haul; at **6 waiting products** the machine pauses.
 - Machines get their ingredients from **belts**, from **workers bringing fresh piles**, and from **storage**: when a machine has room for an ingredient that is in stock, a worker walks to the storage cell (or royal chamber) holding it, takes it out and carries it over. Keep ingredients in storage near your machines to keep them busy.
-- Taking items out for machines and paying for buildings use the same stock, so a busy smelter can eat the copper ore you were saving for a building.
+- Taking items out for machines and paying for buildings use the same stock. To keep some for building, set a number to **keep** in the stock view (click an item in the resource bar): machines and unloaders leave that many.
 
 ### How workers use belts and machines
 - A worker carrying an item takes it to a **machine that needs it** rather than the stock, unless the machine is more than about **10 times farther** away.
@@ -330,6 +461,8 @@ The **Splitter** and **Filter** are locked until you research *Silk Routing*, th
 | 1 | **Strong Mandibles** | 10 Knowledge, 6 Copper Ore | — | Workers and you dig 25% faster |
 | 1 | **Silk Routing** | 12 Knowledge, 4 Copper | — | Unlocks the Splitter and the Filter |
 | 1 | **Seismic Sense** | 12 Knowledge | — | Unlocks the Seismic Sense ability (X) |
+| 1 | **Guiding Light** | 15 Knowledge | Seismic Sense | A light follows your pointer and lights up the rock around it (radius 9 cells, with rock shadows) |
+| 1 | **Vein Instinct** | 25 Knowledge, 10 Copper Ore | Seismic Sense | Ore and other finds within 2 cells of every dug-out cell are ordered for mining automatically; switch it off and on in the Mine tool's row |
 | 2 | **Royal Jelly** | 20 Knowledge, 20 Food | Fungiculture | The queen lays 25% faster; 2 more eggs can wait at once |
 | 2 | **Quick Legs** | 20 Knowledge | Strong Mandibles | Workers walk 15% faster |
 | 2 | **Silk Weaving** | 20 Knowledge, 6 Copper | Silk Routing | Belts and lifts 35% faster |
@@ -337,7 +470,7 @@ The **Splitter** and **Filter** are locked until you research *Silk Routing*, th
 | 3 | **Royal Decree** | 35 Knowledge, 40 Food | Royal Jelly | Unlocks the Royal Decree ability (C) |
 | 3 | **Iron Mandibles** | 40 Knowledge, 8 Iron | Quick Legs | Workers dig 40% and build 30% faster |
 | 3 | **Hot Kilns** | 35 Knowledge, 6 Iron, 6 Coal | Silk Weaving | Machines work 30% faster |
-| 3 | **Foraging Trails** | 25 Knowledge | Royal Vault | Seeds appear on the surface 50% more often (and more may lie around) |
+| 3 | **Foraging Trails** | 25 Knowledge | Royal Vault | Seeds and leaves appear on the surface 50% more often (and more seeds may lie around) |
 | 4 | **Dormancy** | 50 Knowledge | Royal Decree | Offline efficiency 75% instead of 50%, and 4 more offline hours |
 | 4 | **Ancient Script** | 40 Knowledge, 2 Fossils | Iron Mandibles | The Archive gives 50% more knowledge |
 | 4 | **Contract Network** | 45 Knowledge, 10 Copper | Hot Kilns | One more contract slot |
@@ -357,15 +490,30 @@ The **Splitter** and **Filter** are locked until you research *Silk Routing*, th
 | 3 | **Pheromone Burst** | 30 Knowledge, 20 Food | Scent Glands | Unlocks the Pheromone Burst ability (V) |
 | 4 | **Scout Caste** | 35 Knowledge | Seismic Sense, Miner Caste | The queen can lay **scouts** |
 | 4 | **Engineer Caste** | 40 Knowledge, 6 Iron | Hot Kilns, Hauler Caste | The queen can lay **engineers** |
+| 2 | **Stockkeeping** | 15 Knowledge, 2 Copper | Silk Routing | Unlocks the **Unloader** |
+| 3 | **Ore Crushing** | 30 Knowledge, 4 Copper | Stockkeeping | Unlocks the **Crusher** |
+| 4 | **Reinforced Silk** | 45 Knowledge, 6 Iron | Ore Crushing, Silk Weaving | Unlocks **Iron Belts** and **Iron Lifts** |
+| 5 | **Iron Bulwark** | 55 Knowledge, 8 Iron | Reinforced Silk, Fortification | Unlocks the **Iron Gate** |
+| 2 | **Aphid Herding** | 18 Knowledge, 3 Root Fibre | Fungiculture | Unlocks the **Aphid Ranch** |
+| 3 | **Hydraulics** | 25 Knowledge, 2 Copper, 3 Root Fibre | Aphid Herding | Unlocks the **Pump** |
+| 4 | **Water Mills** | 40 Knowledge, 4 Iron | Hydraulics | Unlocks the **Water Wheel** |
+| 5 | **Glow Ants** | 50 Knowledge, 6 Crystal Shards | Scout Caste | The queen can lay **glow ants** |
+| 5 | **Fire Ants** | 60 Knowledge, 4 Obsidian, 2 Iron | Engineer Caste | The queen can lay **fire ants** |
+| 6 | **Crystal Resonance** | 70 Knowledge, 10 Crystal Shards, 4 Copper | Glow Ants | Unlocks the **Crystal Resonator** |
+| 7 | **Ancient Masonry** | 120 Knowledge, 4 Relics; **3 lore fragments** | Hardened Carapace | Ants build **30% faster**; gates and traps **25% stronger** |
+| 7 | **Resonant Lattice** | 150 Knowledge, 6 Relics, 12 Crystal Shards; **5 lore fragments** | Crystal Resonance | Every machine works **25% faster** |
+| 7 | **The Ancient Engine** | 200 Knowledge, 8 Relics; **8 lore fragments** | Ancient Masonry, Resonant Lattice | Unlocks the **Ancient Engine** |
+
+Tier 7 is the **ancient tier**: besides knowledge and items each node needs a number of **lore fragments** found (see *The ruins*). Until then the node shows *Lore 3/5*.
 
 ### Contracts
 - The board on the right always shows **3 contracts** (4 with *Contract Network*). Progress counts from the moment a contract appears.
 - The first ones are a short **introduction** (one at a time, in order): dig 40 cells, bring in 10 copper ore, dig 40 deep, build a Smelter, hatch 10 workers, build an Archive.
-- The others are drawn at random: deliver items into the stock (copper ore, grubs, seeds; iron ore once you are 110 deep, coal, fossils and chitin at 290, crystal shards at 690, obsidian at 1050, relics at 1250), make copper or iron, dig out cells, dig deeper, hatch workers, **defeat enemies** (from 290 deep), **hatch miners, haulers or nurses** (once that caste is researched). Each time you finish one, the next of that kind asks for about **30% more** and pays more (defeating enemies and hatching castes: 35–40%).
+- The others are drawn at random: deliver items into the stock (copper ore, grubs, seeds; iron ore once you are 110 deep, coal, fossils and chitin at 290, crystal shards at 690, obsidian at 1050, relics at 1250), make copper or iron, dig out cells, dig deeper, hatch workers, **defeat enemies** (from 290 deep), **hatch miners, haulers or nurses** (once that caste is researched), build chests, make crushed copper (with *Ore Crushing*), lay iron belts (with *Reinforced Silk*), bring in leaves or root fibre, make honeydew (with *Aphid Herding*), build pumps (with *Hydraulics*) or a water wheel (with *Water Mills*), build Crystal Resonators (with *Crystal Resonance*). Each time you finish one, the next of that kind asks for about **30% more** and pays more (defeating enemies and hatching castes: 35–40%).
 - When a contract is done, click **Claim reward** to collect it: knowledge, food and sometimes items (items that don't fit drop next to the queen). A new contract takes its place.
 
 ### Random events
-Every **3 to 6 minutes** (the first after about 2.5 minutes) something happens. At most 2 events wait for you at once.
+Every **4.5 to 9 minutes** (the first after about 3.75 minutes) something happens. At most 2 events wait for you at once. Meteorites are the rarest: about 1 event in 6 early on, 1 in 10 once trapped ants and golden aphids can happen too.
 
 | Event | What happens | What to do |
 |---|---|---|
@@ -373,21 +521,68 @@ Every **3 to 6 minutes** (the first after about 2.5 minutes) something happens. 
 | **Rich Vein** | A blob of ore next to your tunnels is revealed: copper in the topsoil, iron in the clay, coal deeper down. It glows faintly. | Order it mined. |
 | **Golden Beetle** | A golden beetle wanders your tunnels for **45 seconds**. | Click it (it sparkles) to catch it: +8 Knowledge, +20 Food, +2 Amber. If you don't, it gets away. |
 | **Trapped Ants** | A cave-in traps **5 ants** in a pocket in the rock near your tunnels (only once you are 10 deep). | Dig a tunnel to them within **2.5 minutes** and they join your colony. Otherwise they are lost. |
+| **Golden Aphid** | A golden aphid grazes in one of your **Aphid Ranches** for **40 seconds** (only once you have one). | Click it to catch it: +10 Knowledge, +10 Food, +3 Honeydew. Scouts catch it too. |
+| **Giant Earthworm** | A giant pink earthworm (a head and 7 body segments, **400 HP**) churns through the soft soil 9–18 cells from your ants for **3 minutes** (only once you are 15 deep). It digs a winding one-cell tunnel through dirt, pebbles, clay, sand and ash (about one cell a second), crosses your tunnels but never natural caves, water, lava, buildings or the royal chamber, never comes within 3 cells of the surface, and stays within about 22 cells of where it started. Its tunnel shows through the dark and joins your tunnels. It doesn't hunt; it thrashes (4 damage every 1.2 s) at ants touching its head. | **Kill it**: every ant next to any part of its body bites it, soldiers hunt it, traps work, a possessed ant can bite it, and **the Dig tool hurts it** (click or hold on its body: each hit does 2.5 × your dig power, with the combo). Killed: **+80 Food and +25 Knowledge**, and its tunnels stay. If time runs out it burrows away into the deep (its tunnels stay anyway). |
+
+### The surface: day, night and weather
+- A full **day and night** takes **12 minutes** of play: about 7.8 minutes of day (sunrise around 04:12, sunset around 19:48 on the clock) and 4.2 of night. A new colony starts in the morning (07:12).
+- **Seeds, leaves and berries only appear by day** (except on a starfall night); toadstools come day and night. At night the surface is dim (moonlight) and the stars come out, with a shooting star now and then; underground nothing changes.
+- **Starfall nights:** from minute 15 on, each night has a **15%** chance to be a starfall (never while it rains). Shooting stars fill the sky all night, **no wolf spiders come out**, and **seeds and leaves keep appearing** until dawn. The weather waits until morning. A card and a chime announce it.
+- **Weather** starts after the first 10 minutes, every **6 to 10 minutes**: **rain** (60%) or a **drought** (40%), each announced by a card.
+  - **Rain** (1 to 1.7 minutes): water falls on the ground within 150 cells of the nest. It runs downhill, fills dips and craters and pours into open shafts and tunnels near the surface; deep water blocks and drowns ants as usual. Water **within 40 cells of the surface soaks into the ground** over a minute or two after the rain, so the flood is temporary. Entrances on high ground stay drier; an **Earth Wall** closes a shaft for the duration.
+  - **Thunderstorm:** about a third of all rains (35%). It rains **50% harder** (more water runs into the tunnels), and every **3 to 9 seconds** lightning strikes the ground somewhere within the rain's reach, with a flash and a rumble of thunder. The lightning itself harms nothing.
+  - **Drought** (3 to 5 minutes): seeds, leaves and berries appear **half as often**.
+  - After rain, **toadstools** come up four times as often (during the rain and for 1.5 minutes after).
+- **Lakes and rivers:** every world has 2–3 **lakes** (deep round basins, 4–7 cells deep) and 1–2 **rivers** (wider, shallow channels, 2–3 cells deep, seen end-on) on the surface, never within **110 cells of the nest**. Their beds and level banks are sand. Their water is too deep to walk: **ants can't cross them on the surface**, so the ground on the far side is cut off until you dig a tunnel under the water. Seeds, leaves, berries and toadstools only appear where ants can walk to from the nest. Lake and river water **never soaks away** (rain tops it up; what spills over the bank soaks in as usual). **Dig into a lake bed and the lake pours into your tunnels**, sand and all: leave rock between, or wall the tunnel off.
+- **Hills and structures:** the surface rolls in hills, with terraces and cliffs (ants crawl up any slope or cliff). The ground is flat for 16 cells either side of the nest, and level under lakes and rivers. Rare structures stand on it, at least 30 cells from the nest:
+  - **Boulders** (3–6 per world): half-buried stone.
+  - **Rock overhang** (sometimes one): a crag with a ledge reaching out over open ground.
+  - **Hollow logs** (1–2): fallen trunks of soft **deadwood**, open at both ends, with **grub nests** in their bark.
+  - **Abandoned anthill** (sometimes one): a mound of packed earth with an old winding tunnel down to a chamber under the ground, **3 amber** set in its walls.
+  - **Standing stones** (sometimes one): ancient slabs with a **relic** buried under the middle one.
+  - Ants **under the overhang's ledge or inside a hollow log** are under cover: birds can't take them there.
+- **Trees:** a tree every 26–60 cells (none within 10 of the nest): **apple trees** (apples fall under them, see *Food and the queen*), **oaks** and **pines**. Leaves fall from trees like from the other plants. Under every tree grow **big roots**: **Tree Root** is tough (hardness 6), but each cell dug out gives **2 Root Fibre**.
+- **Birds** hunt by day, from minute 8 on, every **2.5 to 5 minutes**, but only while some ant is out in the open (on the surface or less than 2 cells below it). The bird's shadow follows the ant farthest from cover. **Every ant in the open drops what it does and runs for the nearest way underground**; **8 seconds** later the bird strikes and takes the ants still in the open within 3 cells of its shadow (at most 4). Ants nearby make it in time; foragers far from an entrance don't, so **dig entrances near where your ants forage**. The ants come out again 4 seconds after the strike. The ant you control is not told to run: take it under ground yourself.
+- **Wolf spiders** come out at night, except on a starfall night (from minute 15 on, once you have 15 ants): 1, plus one more for every 50 ants (at most 4), on the surface 12–40 cells from the nest. They lurk until an ant comes within 12 cells, then hunt it, also into your tunnels near the entrance; soldiers go after them. At dawn they slink off.
+- Nothing of this happens while the game is closed: the clock simply runs on.
 
 ### The deep layers
 The world gets stranger the deeper you dig. Depths are cells below the surface; the borders between layers are wavy.
 
 | Layer | Depth | Rock | Finds | Dangers |
 |---|---|---|---|---|
-| **Topsoil** | 0–110 | dirt, pebbles | copper ore, grub nests | **sand** pockets |
+| **Topsoil** | 0–110 | dirt, pebbles, **roots** under every plant (tough; half of them drop **Root Fibre**) | copper ore, grub nests | **sand** pockets |
 | **Clay** | 110–290 | clay | iron ore, copper ore | sand, **underground lakes** |
 | **Stone strata** | 290–690 | stone | coal, iron, amber, fossils, glow crystals | lakes, **centipedes** |
 | **Crystal Caverns** | 690–870 | quartzite (hard) | lots of glow crystals, iron, amber | big caves, lakes, **cave spiders** |
-| **Fungal Depths** | 870–1050 | mycelium (soft) | **giant fungus** (food, glows), coal | **spore gas**, lakes, swarms of **fungal mites** |
-| **Magma Zone** | 1050–1250 | basalt (very hard) | **obsidian**, iron, coal, glowing magma rock | **lava lakes**, gas, **fire beetles** |
-| **Ancient Ruins** | 1250–bottom | ruin brick (very hard) | **relics** (25 knowledge each in the Archive), glow crystals | rooms guarded by **ruin guardians** |
+| **Fungal Depths** | 870–1050 | mycelium (soft, **burns**) | **giant fungus** (food, glows, burns), coal | **spore gas**, lakes, swarms of **fungal mites** |
+| **Magma Zone** | 1050–1250 | basalt (very hard) | **obsidian**, iron, coal, glowing **magma rock** (hot: heats a Smelter) | **heat** everywhere, **lava lakes** (they set coal alight), gas, **fire beetles** |
+| **Ancient Ruins** | 1250–bottom | ruin brick (very hard) | **relics** (25 knowledge each in the Archive), **ancient tablets** set into a few room floors, glow crystals | rooms guarded by **ruin guardians** |
 
 The ruins are a grid of rectangular rooms joined by doors and hatches, built by a lost ant civilization.
+
+**The Elder Tree.** Every world has one great cavern about 410 cells down in the stone strata, at least 110 cells to the side of the nest, where an ancient tree grows: a trunk of **elderwood** (very tough; half its cells drop Root Fibre), branches, a canopy of **elder leaves** that glow and light the cavern (soft; half the cells drop a leaf) and big roots along the floor. **Golden apples** (12 food, glowing) grow on top of the canopy and branches and grow back 4 to 8 minutes after they are picked. When your tunnels first break into the cavern, the whole cavern and the tree are revealed and a message tells you. Its cave creatures (centipedes) wake as in any cave.
+
+### Crystal resonance
+Glow crystals that grow together hum, and a **Crystal Resonator** (research *Crystal Resonance*) turns the hum into use.
+- Build it (2 × 2) on a floor so that it **touches** glow crystals, or copper or iron ore that leads to them: crystals and these ores are **conductive**. It follows the conductive rock it touches; every **glow crystal** in that cluster adds to its power (the ores only carry it). **24 crystals** give full power.
+- At full power it makes **15 knowledge a minute** (knowledge gain from research applies) and machines within **8 cells** work **30% faster** (less at lower power). Like water wheels, only the best resonator near a machine counts; a wheel and a resonator do add up.
+- **Mining the crystals weakens it** (it measures twice a second). Leave a crystal cluster standing and build around it. Point at a resonator to see its cluster and power.
+
+### The ruins: lore, the Codex and the Ancient Engine
+- **Lore**: the ruins tell the story of the colony that built them, in **12 fragments**. Studying **relics** in an Archive finds the first nine (after 1, 2, 3, 5, 7, 9, 12, 15 and 18 relics studied), studying **ancient tablets** the last three (1, 2, 3 tablets). Each new fragment gets a toast; read them in the **Codex** (**L**).
+- **Ancient tablets**: four lie in every world, set into the floors of ruin rooms. They glow gold; dig one out and a worker carries the tablet to storage like any find. An Archive studies it for **60 knowledge** and a fragment.
+- **The ancient research tier** (tier 7) needs lore fragments: *Ancient Masonry* 3, *Resonant Lattice* 5, *The Ancient Engine* 8.
+- **The Ancient Engine**: build it in the **Ancient Ruins** (4 × 3 on a flat floor; only one). When workers have cleared it, press **I** over it (or click it) and pay its **restoration steps** one after the other; workers build each step like a blueprint:
+
+| Step | Cost | Work |
+|---|---|---|
+| 1. **Iron Gears** | 30 Iron, 10 Copper | 40 s |
+| 2. **Crystal Heart** | 30 Crystal Shards, 6 Amber | 40 s |
+| 3. **The Waking** | 8 Relics, 12 Obsidian, 150 Food | 60 s |
+
+- Removing the engine while a step is being built **cancels the step** (refunded in full). A standing engine can't be taken down.
+- After the last step the engine **runs**: it makes **60 knowledge a minute**, and this colony's **Nuptial Flight earns twice the Genetic Memory**. That is the colony's goal.
 
 ### Water, lava, gas and cave-ins
 - Some caves hold **water**, **lava** or **spore gas**. They stay put until you dig into them, then they flow into your tunnels:
@@ -398,8 +593,22 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
 - **Sand** collapses: when you dig out the cell under sand, the sand falls into the gap (and slides off to the side of piles), one cell at a time. An ant it lands on takes 25 damage and is pushed out. Fallen sand is automatically **ordered for mining**, so workers clear it. Sand never falls into buildings, blueprints, storage zones or the royal chamber; they hold it up.
 - *Air Sacs* research halves all of this damage.
 
+### Pumps, water wheels and farms
+- Fluids have no pressure: water never rises by itself. **Pumps** do that. A pump takes water or gas (also smoke) from the cell **behind** it and pushes it out of its **spout** (R turns it before you place it). It **reaches up to 8 cells back** for fluid and pushes up to **8 cells ahead** past cells that are already full, so a pump placed just above a flooded shaft, spout up, drains it and stacks the water above itself. Chain pumps every 8 cells to lift water higher. Fluid never flows through a pump; ants walk through it. Lava is too thick to pump.
+- Uses: drain a flooded tunnel, **fill a moat** in front of the nest, blow smoke or spore gas out of your tunnels, water a farm, keep a water wheel turning.
+- **Water Wheel** (2 × 2): water resting on top of it falls through it, up to 2 cells per second per column, into the cells below (which need room for it). The more passes, the faster it turns: at full flow every machine within **8 cells** works **50% faster** (the best wheel counts; wheels don't add up). Put it under a waterfall, or under a pump's outlet so the water lands right on it: water creeps only slowly along long flat channels. A pump lifting the water back up keeps it going.
+- **Irrigation:** a Fungus Garden or Aphid Ranch with water **in or next to it** (at least about a tenth of a cell) makes **50% more**: every second batch comes out doubled. Each batch drinks a little water (about a fifth of a cell), so a pump feeding the puddle keeps it going.
+- **Magma heat:** a Smelter with **lava, glowing magma rock or a fire** in or next to it is heated: it works **twice as fast** and needs **no coal** (it stops taking coal; what it already holds stays). The info panel says whether a machine is heated, irrigated or sped up by a wheel.
+
+### Fire
+- **Coal, roots, mycelium and giant fungus burn.** Lava flowing next to them can set them alight, and a **meteorite** sets roots and anything else that burns around its crater on fire.
+- A burning cell glows with flickering flames for **15 seconds**, then turns into **ash**. Meanwhile it lights up its surroundings, gives off **grey smoke** (it rises, hurts ants when thick like spore gas and clears away by itself) and **burns ants next to it** (10 per second; *Air Sacs* halves it). Fire spreads cell by cell to what burns next to it, but only to cells you have seen that **touch open air**: a seam buried in rock does not catch.
+- **Ash** is soft and falls like sand when you dig out the cell under it (then it is ordered for mining). Burnt coal is lost.
+- **Putting fires out:** water next to a burning cell puts it out at once (pump some in, or let a flood do it); digging the burning cell out ends it too. A red **Fire!** card shows how many cells are burning; **Go** jumps to one.
+
 ### Health
 - Workers have **40 hit points**, soldiers **150**. Ants heal **2 per second** after 6 seconds without damage.
+- **Heat:** an ant next to lava, glowing magma rock or a fire loses **3 hit points per second**, and anywhere in the **magma zone** it loses **0.8 per second**, so ants working there long enough die of the heat. **Fire ants** don't mind it. *Air Sacs* halves it.
 - An ant that dies drops whatever it carried. A message says what happened. Losing ants is a setback, not the end.
 
 ### Enemies and raids
@@ -407,11 +616,18 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
 - **Raids**: once the colony is **12 minutes** old and has **20 ants**, a rival termite mound raids you every **7 to 10 minutes**. A red card warns you **30 seconds** before they arrive on the surface, 60–100 cells from the nest. Each raid brings 3 termites, +1 for every 12 ants, +2 for every layer you have reached below the topsoil (at most 40).
 - Raiders head for the **royal chamber**. There each one eats **1 food per second** and the queen stops laying; when a raider has eaten 8 food (or the food is gone) it leaves the way it came. Kill every raider before they eat anything and the raid is **repelled**: +10 knowledge.
 - Enemies bite any ant next to them. **Every ant next to an enemy bites back**: workers weakly (3 damage per second), soldiers hard (14).
+- **Rival ants**: from **25 minutes** into a colony, **4 raids in 10** are a rival ant colony instead of termites (same size and warning). Rival ants **steal items** (food is safe): each heads for the **nearest store that holds items**, by the way it has to walk: a storage zone cell, a chest or the royal chamber. There it grabs the item that store holds most of, one every 1.2 seconds, up to **3** of that one kind; when the store runs dry it goes on to the next nearest. Then it carries its loot home. Storage near the surface is robbed first, so keep valuables deep or guarded. The queen only stops laying while thieves are in the royal chamber. **Kill a thief and it drops what it carried** for your workers to haul back. A rival raid that gets away with even one item is not repelled.
+- **Mole crickets**: from **18 minutes** into a colony (with **15 ants**), every **8 to 14 minutes** a mole cricket starts in the ground **26–42 cells** from the queen (at least 8 cells from your tunnels) and **tunnels toward her**. It digs through **soft ground**: dirt, pebbles, clay, sand, ash and **earth walls** (so walls alone don't stop it); it goes around anything harder (stone, roots, ore). Its tunnel **shows through the dark** as it comes. Once it breaks into your tunnels it hunts ants; a mole cricket that can't get any closer for 30 seconds gives up and digs off. Its tunnel stays: ants can use it.
+- **Birds** and **wolf spiders** hunt on the surface by day and by night: see *The surface: day, night and weather*.
 - Killed enemies drop **chitin** (fire beetles also obsidian, ruin guardians a relic) and give a little knowledge.
 
 | Enemy | Lives in | Hit points | Bite | Notes |
 |---|---|---|---|---|
 | **Termite Raider** | raids from the surface | 22 | 5 every second | eats your food |
+| **Rival Ant** | rival raids from the surface | 28 | 5 every second | steals up to 3 items; drops them when killed |
+| **Mole Cricket** | digs in from the soft ground near the nest | 140 | 12 every 1.2 s | tunnels toward the queen; drops 3 chitin |
+| **Giant Earthworm** | the *Giant Earthworm* event, in soft ground | 400 | 4 every 1.2 s | never hunts; bitten anywhere along its body; the Dig tool hurts it |
+| **Wolf Spider** | the surface, at night | 45 | 7 every 0.9 s | near the nest entrance; gone at dawn |
 | **Centipede** | stone strata | 60 | 8 every second | up to 3 per cave |
 | **Cave Spider** | crystal caverns | 55 | 10 every 0.8 s | fast, notices ants from far away |
 | **Fungal Mite** | fungal depths | 14 | 3 every 0.7 s | swarms of up to 8; gas doesn't hurt it |
@@ -425,16 +641,26 @@ The ruins are a grid of rectangular rooms joined by doors and hatches, built by 
 - Make **chokepoints**: a few gates across a tunnel stop raiders while soldiers and traps work on them.
 
 ### Saving and offline progress
-- The game **saves automatically every 2 minutes** (change it in **Settings → Gameplay**: off, 1, 2, 5 or 10 minutes), when you quit, and when you press **F5** or use *Save* in the menu. Nothing is saved while the title screen is up. There is one save slot; the previous save is kept as a backup and used if the main file is damaged. Saves live in the game's data folder (`%USERPROFILE%/AppData/LocalLow/<company>/ANTARIUM 2/Saves` on Windows).
+- The game **saves automatically every 2 minutes** (change it in **Settings → Gameplay**: off, 1, 2, 5 or 10 minutes), when you quit, and when you press **F5** or use *Save* in the menu. Nothing is saved while the title screen is up. There are **three save slots**, each its own bloodline (see *Save slots and bloodlines*); every slot keeps the previous save as a backup and an older copy (at most 30 minutes old), used if the newer file is damaged. Saves live in the game's data folder (`%USERPROFILE%/AppData/LocalLow/Elevate Studios/ANTARIUM 2/Saves` on Windows). On Steam the saves (and the achievements kept on this computer) are synced with **Steam Cloud**; settings stay on each computer. The first start after the 0.9 update copies saves from the old `DefaultCompany` folder once.
 - When you start the game, the saved colony waits (paused) behind the title screen. When you press **Continue**, and it has been closed for **at least a minute** (the time on the title screen counts too), the colony gets **offline progress**:
   - It runs at **50% of its recent pace** (75% with *Dormancy*) for up to **8 hours** (12 with *Dormancy*).
   - "Recent pace" is what the stock gained over the last 5 minutes you played: items delivered minus items taken out for machines, food brought in, and knowledge studied. Items only arrive while storage has room.
   - The colony also eats at that pace. The queen keeps laying while there is food to spare (she keeps 10 minutes of upkeep in reserve), and the eggs hatch into workers.
   - Waiting eggs (also those nurses carry) hatch, abilities recharge, and timed events (beetle, trapped ants) run out. New eggs follow your caste shares.
-  - No raids, creatures or hazards happen while the game is closed.
+  - No raids, creatures, hazards, weather, birds or spiders happen while the game is closed; the time of day runs on, and picked cave mushrooms keep growing back.
   - A **Welcome back** panel lists what changed.
-- Saves keep castes, eggs in nurseries, what haulers and nurses carry, every painted scent, princesses, your Genetic Memory and traits, and the colony's world modifiers. The ant you control is let go when you load. Saves from earlier versions load (with no Genetic Memory yet).
+- Saves keep castes, eggs in nurseries, what haulers and nurses carry, every painted scent, princesses, your Genetic Memory and traits, the colony's world modifiers, the time of day, the weather, a circling bird, the queen's honeydew and every cave mushroom and golden apple spot (picked or not, and when it grows back) and whether you found the Elder Tree. A colony saved before the mushrooms existed gets them in the caves it hasn't found yet when it loads (its world has no lakes or rivers). The ant you control is let go when you load. Saves from earlier versions load (with no Genetic Memory yet).
 - **Load last save** (menu or **F9**) goes back to the last save without offline progress. **New colony** (click twice to confirm) abandons the current colony and starts on a new random world without world modifiers; you **keep your Genetic Memory and traits** but earn nothing for the abandoned colony. The next save overwrites the old colony.
+
+### Save slots and bloodlines
+- There are **3 save slots**. Each holds **its own bloodline**: one colony and the Genetic Memory, traits and flights of every colony before it. Achievements are shared by all slots (they are yours).
+- **Continue** on the title screen opens the slot you played last. **Save slots** opens the slot picker: each slot shows its generation, ants, depth, play time and when it was saved.
+  - **Play** loads a slot (with its offline progress); the slot you are playing says *playing* and has **Continue**.
+  - **Delete** (click twice) deletes a slot's save and backups for good.
+  - An **empty** slot has **New bloodline**: a fresh colony with no Genetic Memory, saved to that slot from then on.
+  - **Esc** or **Back** returns to the menu.
+- **New bloodline** in the Esc menu (click twice) starts over in the current slot: a new world, no Genetic Memory, no traits, no flights. The next save overwrites that slot's old bloodline. Achievements stay.
+- Saves made before slots existed are slot 1.
 
 ### Nuptial Flight and Genetic Memory
 When a colony slows down, the queen can send winged **princesses** to found a new one. The colony ends, but its **Genetic Memory** lives on: you spend it on **genetic traits** that are kept forever, in every colony after.
@@ -444,6 +670,7 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
   - **Colony score** = deepest dig × 0.1 + knowledge earned × 0.1 + research nodes done × 2 + contracts completed × 1 (starting knowledge from traits doesn't count as earned).
   - **Genetic Memory** = √(score ÷ 4) × **princess factor** × **gain**, rounded down. The princess factor is 1 for one princess and +0.25 for each one after it (2 with five). Gain comes from traits and world modifiers.
   - You need at least **1 princess** and at least 1 Genetic Memory to fly.
+  - A colony whose **Ancient Engine runs** earns **twice** as much (the screen shows *× Ancient Engine 2.00*).
 - **World modifiers** for the next colony are picked on the same screen: click one to choose it (1 slot; the trait *Wanderlust* adds more). Harder worlds raise the next flight's Genetic Memory.
 
 | Modifier | Effect | Unlocked |
@@ -457,10 +684,16 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 | **Volcanic** | More lava lakes and gas pockets in the deep; +30% Genetic Memory | *Strange Worlds* |
 | **Famine** | Seeds appear half as often; +35% Genetic Memory | *Strange Worlds* |
 | **Swarming** | Raids 50% bigger and 30% more often, twice the cave creatures; +50% Genetic Memory | *Strange Worlds* |
+| **Ember Strata** | The stone strata are rust-red **ember stone** (same hardness and finds) and **fire beetles** live in their caves instead of centipedes; +20% Genetic Memory | *Wild Lineages* |
+| **Drowned Clay** | The clay layer is blue-grey **gley clay** and **centipedes** hunt in its caves; +15% Genetic Memory | *Wild Lineages* |
+| **Amethyst Caverns** | The crystal caverns are purple **amethyst** and swarms of **fungal mites** live there instead of cave spiders; +15% Genetic Memory | *Wild Lineages* |
+
+The last three are **biome variants**: the layer looks different, has its own name and other creatures, but digs and drops like the original.
 
 - **Take flight** (click twice to confirm): the princesses fly up out of the nest into the sky, then the new colony is founded on a new random world with your modifiers, and the game saves at once. The genetic tree opens so you can spend what you earned.
 - **What carries over**: unspent Genetic Memory, every trait, the number of flights and your records (deepest colony, best flight). Everything else (ants, buildings, research, items, princesses) starts over.
 - **The genetic tree (G)**: click a trait to buy its next level. Colony bonuses and inherited research work **right away**; starting bonuses (workers, food, knowledge, items, revealed map) from the **next colony** on. Node colours: **gold** = you can buy it now; **dim gold** = available but not enough memory; **grey** = needs another trait first; a **green edge** = some levels bought; **green** = fully bought. Hover a trait for details.
+- **Respec** (button at the top of the tree, click twice): every trait is unlearned and the Genetic Memory spent on it comes back. The **first respec in each colony is free**; after that a respec loses **25%** of the refund (rounded up, at least 1). The button shows the price: *Respec (free)* or *Respec (−3)*; hover it for details. Colony bonuses stop at once, world modifiers and buildings the traits unlocked lock again (a throne already built stays), research a trait passed on stays done **in this colony** (the next colony has it only if you buy the trait again), and starting bonuses already received stay.
 
 | Tier | Trait | Cost (memory) | Levels | Needs | Effect (per level) |
 |---|---|---|---|---|---|
@@ -476,39 +709,48 @@ When a colony slows down, the queen can send winged **princesses** to found a ne
 | 2 | **Wanderlust** | 3, +3 | 2 | Ancestral Map | +1 world modifier slot |
 | 3 | **Born Miners** | 5 | 1 | Fertile Queen | Every colony knows *Miner Caste* |
 | 3 | **Born Soldiers** | 5 | 1 | Fertile Queen | Every colony knows *Soldier Caste* |
-| 3 | **Vein Instinct** | 6 | 1 | Inherited Silk | Ore within 2 cells of every dug-out cell is ordered for mining automatically, so ants follow veins on their own |
+| 3 | **Vein Instinct** | 6 | 1 | Inherited Silk | Every colony knows the research *Vein Instinct* from the start: ore within 2 cells of every dug-out cell is ordered for mining automatically (switch: Mine tool row) |
 | 3 | **Royal Lineage** | 4, +2 | 3 | Inherited Gardens | +1 princess counts toward a flight |
 | 3 | **Strange Worlds** | 5 | 1 | Wanderlust | Unlocks Flooded Depths, Volcanic, Famine and Swarming |
 | 4 | **Ancient Knowledge** | 4, +2 | 3 | Born Miners | +25 starting knowledge |
 | 4 | **Deep Memory** | 5, +3 | 5 | Royal Lineage | +10% Genetic Memory from flights |
 | 4 | **Dormant Wisdom** | 4, +2 | 3 | Vein Instinct | +10 percentage points offline efficiency |
 | 4 | **Silk Mastery** | 4, +2 | 3 | Vein Instinct | Belts 15% and machines 10% faster |
+| 4 | **Wild Lineages** | 6 | 1 | Strange Worlds | Unlocks the biome variants Ember Strata, Drowned Clay and Amethyst Caverns |
+| 5 | **Glow Lineage** | 8 | 1 | Ancient Knowledge | Every colony knows *Glow Ants* (lay glow ants from the start) |
+| 5 | **Royal Throne** | 8 | 1 | Deep Memory | Unlocks the **Queen's Throne** in every colony |
+| 5 | **Fire Lineage** | 10 | 1 | Dormant Wisdom | Every colony knows *Fire Ants* (lay fire ants from the start) |
 
 ### Light and darkness
-- Sunlight reaches into shafts and tunnels near the surface and fades deeper down.
+- Sunlight reaches into shafts and tunnels near the surface and fades deeper down. It follows the time of day: dim bluish moonlight at night, a little darker while it rains.
 - **Glow crystals**, **giant fungi**, **magma rock** and **lava** light their surroundings, and a small warm light goes with the ant you control.
+- **Glow ants** carry a green light. The ones nearest the middle of the screen (up to 24) light the tunnel around them, and rock casts shadows from their light; the others show only their glowing gaster.
+- With the research **Guiding Light**, a pale green light (radius 9 cells, rock shadows too) follows your pointer while it is over the world.
+- **Glowing mushrooms** light their caves in teal while they stand.
+- When the **camera is underground** (more than about 3 cells below the ground under the middle of the view), everything gets a little brighter (fully from about 16 cells down), so dug-out tunnels and the rock around them are easier to see. Back at the surface it fades again.
 - Explored but unlit areas stay dim. Unexplored areas are black.
 - Ants, the queen and items always stay visible enough to follow.
 
 ---
 
 ### Title screen, settings and achievements
-- **Title screen:** the colony drifts paused in the background. **Continue** (with the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world, keeping your Genetic Memory; if a save exists it asks for a second click. **Settings**, **Achievements**, **Controls and help** and **Quit**. The version is in the bottom right corner. *Save and return to title* in the Esc menu brings you back here.
+- **Opening intro:** when the game starts, the Elevate Studios logo and then the Antarium 2 logo with the first lines of the story fade in on black (about 7 seconds), then the black lifts off the title screen. **Any key, mouse button or gamepad button** skips straight to the title screen.
+- **Title screen:** the game logo over the colony, which drifts paused in the background. **Continue** (with the slot, the saved colony's ants, depth, play time, when it was saved and its generation) credits offline progress and starts playing. **New colony** starts a new world in the same slot, keeping your Genetic Memory; if a save exists it asks for a second click. **Save slots** opens the slot picker (see *Save slots and bloodlines*). **Settings**, **Achievements**, **Help and controls** and **Quit**. The version is in the bottom right corner. On Steam, friends see what you are doing (*In the main menu*, *Generation 3, 420 cells deep*, *Watching a Nuptial Flight*). *Save and return to title* in the Esc menu brings you back here.
 - **Settings** (title screen or Esc menu). Every change applies at once and is saved when you close the dialog, in `settings.json` next to the saves (settings are not part of the colony save).
   - **Audio:** master, music, effects, ambience and interface volume (off to 100% in steps of 10%), *Mute when in the background*.
   - **Display:** window (borderless fullscreen, exclusive fullscreen, windowed), resolution (*Native* or any your display offers), v-sync, frame limit without v-sync (30 to 240 fps or unlimited), interface size (*Auto*: 1× below 1440 lines, 2× from 1440, 3× from 3240; or 1× to 4×). Window and resolution changes only take effect in a built game, not in the editor.
-  - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes the colony save and its backup, your Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
+  - **Gameplay:** screen shake (off to 100%), pan at the screen edge, number pops, big numbers (short *1.23K* or scientific *1.23e3*), autosave interval. **Erase all progress** (click twice) deletes every save slot and its backups, every Genetic Memory bloodline and the achievements kept on this computer, then starts a fresh colony behind the title screen. Settings stay.
   - **Controls:** every keyboard / mouse action with its key. Click a key, then press the new key or mouse button (**Esc** cancels). **Reset to defaults** restores them all. The gamepad keeps its own fixed layout.
-- **Achievements** (title screen or Esc menu): 32 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and the hidden *Lost Civilization* and *Ancestral Memory*. Each row shows how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer for now and go to Steam once the game is on Steam.
+- **Achievements** (title screen or Esc menu): 49 goals, from *Breaking Ground* (dig 25 cells) to *Dynasty* (found 5 colonies) and *Long Live the Queen* (build the Queen's Throne), the wild ones (*Berry Season*: 50 berries, *An Apple a Day*: 25 apples, *Mushroom Hunter*: 50 cave mushrooms, *Glow in the Dark*: 20 glowing mushrooms, *Living off the Land*: 300 wild foods of any kind, *Starfall*: see a starfall night, *Worm Hunter*: slay a giant earthworm) and the hidden *Lost Civilization*, *The Engine Wakes*, *Ancestral Memory*, one you'll find by looking up at night and two waiting deep in the stone. Each row shows the achievement's icon (the same as on Steam; grey until unlocked), how far this colony is (*120 / 250*) or *Unlocked*; hidden ones show *???* and a plain square until you get them. Achievements belong to you, not to a colony: once unlocked they stay, whatever happens to the colony. Most count within one colony (dig, hatch, build, deliver, research, contracts, kills, raids, events, wild food); *Nuptial Flight*, *Dynasty*, *Bloodline* and *Ancestral Memory* count over your whole bloodline. They are kept on this computer and, when the game runs through Steam, on Steam too: achievements earned before (or while Steam was not running) reach Steam the next time you play through Steam, and achievements already on your Steam account show as unlocked in the game. *Erase all progress* cannot take back Steam achievements.
 
 ### Sound
-- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. Research, contracts, events, abilities, traits, princesses, the flight and achievements each have their own chime.
+- Every sound is generated by the game (no recordings yet). **Effects** sit in the world: you only hear what is on screen, panned left / right, quieter toward the edges and when zoomed far out. Digging crunches (yours louder than the workers'), cave-ins rumble, lava hisses on water, deliveries tick, machines chime when they finish, eggs and hatchlings chirp, kills and deaths crack. Raids sound a horn when they are announced and drums when they arrive; a repelled raid gets a fanfare. A circling bird cries and its strike whooshes; rain starts with a rumble of thunder; dusk and dawn each have a soft chime. A fire starting crackles; water putting one out hisses. An ant reaching a new level gives a tiny blip; raiders getting away with food a mocking falling one. A giant earthworm digging gives a soft wet churn; a caught shooting star a quick rising twinkle. Research, contracts, events, abilities (the Quickening its own fast arpeggio), traits, a respec (a falling shimmer), queen evolutions (a warm swell), lore, the Ancient Engine, princesses, the flight and achievements each have their own chime.
 - **Ambience** follows the camera: wind and the odd bird above ground, then drips in the topsoil and clay, a low hum in the stone, ringing crystals in the caverns, bubbling spores in the fungal depths, a rumbling bubbling magma zone and a hollow drone in the ruins. It crossfades as you move between layers.
-- **Music** is generated too: a soft pad and sparse plucked notes that play for a few minutes, then rest for a minute or two. Its key drops the deeper the camera is, and from the crystal caverns down it turns minor. When recorded tracks are added, they replace it: a track for the layer the camera is in, then a rest, then the next; the title screen, raids and the genetic tree get their own music, and the Nuptial Flight and the first dig into each deeper layer get a short cue.
+- **Music** is generated too: a soft pad and sparse plucked notes that play for a few minutes, then rest for a minute or two. Its key drops the deeper the camera is, and from the crystal caverns down it turns minor. When recorded tracks are added, they replace it: a track for the layer the camera is in, then a rest, then the next; the title screen, raids and the genetic tree get their own music, and the Nuptial Flight, the first dig into each deeper layer, a lore fragment found and the Ancient Engine waking get a short cue.
 
 ## A first session
 
-The **contracts** on the right walk you through the first steps; this is the same path with a little more detail.
+The **tutorial** (top left, see *Tutorial and help*) and then the **contracts** on the right walk you through the first steps; this is the same path with a little more detail.
 
 1. Press **3** and paint a small **storage zone** in the starting chamber. That raises your capacity.
 2. Press **2** and paint a **tunnel** sideways or downward from the chamber. Watch the workers walk over and dig it out. Copper ore, grubs and other drops get carried back automatically.
@@ -522,14 +764,17 @@ The **contracts** on the right walk you through the first steps; this is the sam
 10. Press **Z** (Frenzy) when there's a lot to dig or build. Watch the left side for **random events**: catch the golden beetle, dig out trapped ants and meteorites.
 11. Press **O** to see where belts are jammed and which workers are idle.
 12. Before the first **raid** (around minute 12, once you have 20 ants), research **Soldier Caste** (after *Fungiculture* and *Royal Jelly*) and put a **Guard Post** near the nest shaft. Later *Fortification* gives you gates and traps for the entrance.
-13. Dig carefully near **lakes** and **sand** in the clay layer: flooded tunnels block your workers. **Earth Walls** seal off what you don't want.
-14. Press **5** and paint a **Trail** along your busiest tunnel: haulers go faster and keep it fresh. Paint **Dig here** over the mining orders you want first and **Avoid** over a dangerous cave.
-15. Research **Miner Caste** and **Hauler Caste**, then open the castes panel (**K**) and give them a share. Later **Nurses** with a **Nursery** keep the queen laying, **Scouts** find ore in the dark, **Engineers** speed up your machines.
-16. Point at an ant and press **F** to play it yourself: dig a shortcut, carry a find home, or bite a raider. **F** again lets go.
-17. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
+13. Watch the sky: **birds** take foragers far from an entrance (dig a second shaft near where seeds and leaves fall), **rain** pours into your shafts for a minute or two, and **wolf spiders** prowl at night. Research **Aphid Herding** (root fibre from roots) and build an **Aphid Ranch**: leaves become honeydew, and the queen lays faster while she eats it.
+14. Dig carefully near **lakes** and **sand** in the clay layer: flooded tunnels block your workers. **Earth Walls** seal off what you don't want.
+15. Press **5** and paint a **Trail** along your busiest tunnel: haulers go faster and keep it fresh. Paint **Dig here** over the mining orders you want first and **Avoid** over a dangerous cave.
+16. Research **Miner Caste** and **Hauler Caste**, then open the castes panel (**K**) and give them a share. Later **Nurses** with a **Nursery** keep the queen laying, **Scouts** find ore in the dark, **Engineers** speed up your machines.
+17. Point at an ant and press **F** to play it yourself: dig a shortcut, carry a find home, or bite a raider. **F** again lets go.
+18. Once the factory grows: **chests** (4) next to your machines, **I** on a chest or storage zone to sort what goes where, an **Unloader** (*Stockkeeping*) to feed a smelter straight from a chest, a **Crusher** (*Ore Crushing*) for 75% more metal per ore, and **Iron Belts** (*Reinforced Silk*) dragged over your busiest silk lines.
+19. Open the **Queen panel** (**H**) once you have honeydew and amber: *Bigger Broods* and *Royal Cradles* grow the colony faster. Set **job priorities** (**P**) when ants dig while items pile up (or the other way round). Deeper down, **glow ants** light the dark layers and **fire ants** work the magma zone, where heat slowly kills everyone else.
+20. When progress slows, research **Nuptial Flight**, build a **Princess Chamber** and feed it fungus and amber. Press **N** to see what a flight would earn, pick a world modifier and **take flight**. Spend the Genetic Memory in the tree (**G**): *Big Brood* and *Inherited Gardens* make the next start much faster.
 
 ---
 
 ## Not in the game yet
 
-Glow ants and heat-resistant ants, a queen evolution tree, uses for water and lava (pumps, magma heat), day/night and weather, surface threats other than raids, several save slots, a way to put stored items onto belts, recorded sounds and music, and Steam (achievements, cloud saves; Milestone 9). See `docs/TODO.md` for the full list of what's missing.
+A Steam Deck / gamepad pass (Milestone 9). See `docs/TODO.md` for the full list of what's missing.

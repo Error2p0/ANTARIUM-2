@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a2850b07b67d94a92f6d0f69720788, type: 3}
+  m_Name: crusher
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.BuildingDef
+  id: crusher
+  displayName: Crusher
+  kind: 4
+  paletteOrder: 15
+  description: 2 copper ore -> 3 crushed copper. 2 iron ore -> 3 crushed iron. Crushed ore smelts into more metal.
+  size: {x: 2, y: 2}
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 10
+  - item: {fileID: 11400000, guid: 69c36e31f161e5f4b8db95dcc9cc3f09, type: 2}
+    count: 4
+  foodCost: 0
+  buildWork: 6
+  speed: 2
+  tier: 0
+  capacity: 16
+  recipes:
+  - {fileID: 11400000, guid: e8cb644d1464fe342a24557e945bc4c2, type: 2}
+  - {fileID: 11400000, guid: 35619421e35528f4f82950db7c90c0cd, type: 2}
+  inputBatches: 2
+  outputLimit: 6
+  maxHealth: 120
+  trapDamage: 25
+  trapHold: 4
+  trapRearm: 8
+  fillMaterial: {fileID: 0}
+  eggCapacity: 6
+  hatchBonus: 0.5
+  emitterRadius: 10
+  princessSlots: 0
+  color: {r: 0.54509807, g: 0.56078434, b: 0.6, a: 1}
+  art: 11

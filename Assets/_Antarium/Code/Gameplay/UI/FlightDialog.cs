@@ -74,8 +74,13 @@ namespace Antarium.Gameplay
             _modifierHint = Dialogs.Text(Root, "", "dialog__note");
 
             _fly = Dialogs.Button(Root, "Take flight", OnFly);
-            Dialogs.Button(Root, "Genetic tree (G)", () => GeneticsClicked?.Invoke());
-            Dialogs.Button(Root, "Close (N)", () => CloseClicked?.Invoke());
+            var genetics = Dialogs.Button(Root, "Genetic tree", () => GeneticsClicked?.Invoke());
+            var close = Dialogs.Button(Root, "Close", () => CloseClicked?.Invoke());
+            Keys.Bind(() =>
+            {
+                genetics.text = Keys.With("Genetic tree", Keys.Genetics);
+                close.text = Keys.With("Close", Keys.Flight);
+            });
         }
 
         /// <summary>Opening the screen: forget an unfinished confirmation and choices that are no longer allowed.</summary>
@@ -126,6 +131,7 @@ namespace Antarium.Gameplay
                 .Append(" (").Append(NumberFormat.Format(e.ContractScore)).Append(")\n");
             _sb.Append("Genetic Memory: ").Append(e.Base.ToString("0.0")).Append(" x princesses ").Append(e.PrincessFactor.ToString("0.00"));
             if (Math.Abs(e.Gain - 1f) > 1e-3f) _sb.Append(" x gain ").Append(e.Gain.ToString("0.00"));
+            if (Math.Abs(e.EngineFactor - 1f) > 1e-3f) _sb.Append(" x Ancient Engine ").Append(e.EngineFactor.ToString("0.00"));
             _sb.Append(" = ").Append(e.Memory).Append('\n');
             _sb.Append("You have ").Append(legacy.Memory).Append(" unspent, ").Append(legacy.Flights).Append(legacy.Flights == 1 ? " flight so far." : " flights so far.");
             if (legacy.BestDepth > 0) _sb.Append(" Deepest colony: ").Append(legacy.BestDepth).Append('.');

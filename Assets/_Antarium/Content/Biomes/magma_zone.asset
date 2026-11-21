@@ -49,6 +49,7 @@ MonoBehaviour:
   - kind: 3
     scale: 0.05
     threshold: 0.6
+  heat: 0.8
   creatures:
   - {fileID: 11400000, guid: f6821cc51c3c81f4495c1c52eebfd05f, type: 2}
   caveCellsPerCreature: 220

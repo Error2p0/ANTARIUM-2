@@ -34,6 +34,21 @@ namespace Antarium.Sim
                     return levels;
                 }
                 case AchievementKind.MemoryEarned: return legacy.MemoryEarned;
+                case AchievementKind.LoreFound: return sim.Lore.FoundCount;
+                case AchievementKind.EngineRestored: return sim.Buildings.EngineRunning ? 1 : 0;
+                case AchievementKind.RivalsRepelled: return stats.RivalsRepelled;
+                case AchievementKind.ShootingStars: return stats.StarsCaught;
+                case AchievementKind.ElderTreeFound: return sim.Wild.ElderFound ? 1 : 0;
+                case AchievementKind.WormsSlain: return stats.WormsSlain;
+                case AchievementKind.StarfallNights: return stats.StarfallNights;
+                case AchievementKind.WildFood:
+                {
+                    long n = 0;
+                    var items = sim.Content.Items;
+                    for (int i = 0; i < items.Length; i++)
+                        if (items[i].IsFood && items[i].pileArt != PileArt.Heap) n += stats.Delivered[i];
+                    return n;
+                }
                 default: return 0;
             }
         }

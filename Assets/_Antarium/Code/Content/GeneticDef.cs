@@ -28,6 +28,8 @@ namespace Antarium.Content
         RevealRadius,
         /// <summary>Ore next to a cell that was dug out is ordered for mining automatically.</summary>
         VeinInstinct,
+        /// <summary>The building can be built in every colony (and right away when bought). Buildings named here start locked (10.6).</summary>
+        UnlockBuilding,
     }
 
     [Serializable]
@@ -41,12 +43,14 @@ namespace Antarium.Content
         [Min(0)] public int count;
         public ResearchDef research;
         public WorldModifierDef modifier;
+        public BuildingDef building;
 
         public static GeneticEffect Add(StatKind stat, float value) => new() { kind = GeneticEffectKind.Stat, stat = stat, value = value };
         public static GeneticEffect Of(GeneticEffectKind kind, float value = 1f) => new() { kind = kind, value = value };
         public static GeneticEffect Items(ItemDef item, int count) => new() { kind = GeneticEffectKind.StartItems, item = item, count = count };
         public static GeneticEffect Inherit(ResearchDef research) => new() { kind = GeneticEffectKind.InheritResearch, research = research };
         public static GeneticEffect Unlock(WorldModifierDef modifier) => new() { kind = GeneticEffectKind.UnlockModifier, modifier = modifier };
+        public static GeneticEffect Unlock(BuildingDef building) => new() { kind = GeneticEffectKind.UnlockBuilding, building = building };
     }
 
     /// <summary>

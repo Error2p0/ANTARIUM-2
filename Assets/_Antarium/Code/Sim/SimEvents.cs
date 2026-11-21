@@ -47,6 +47,13 @@ namespace Antarium.Sim
         public ItemDroppedEvent(int2 cell, ushort item) { Cell = cell; Item = item; }
     }
 
+    /// <summary>The colony broke into the Elder Tree's cavern for the first time (Milestone 11 batch 6).</summary>
+    public readonly struct ElderTreeFoundEvent
+    {
+        public readonly int2 Cell;
+        public ElderTreeFoundEvent(int2 cell) { Cell = cell; }
+    }
+
     /// <summary>A worker delivered an item to the royal chamber or a storage zone.</summary>
     public readonly struct ItemDeliveredEvent
     {
@@ -225,7 +232,91 @@ namespace Antarium.Sim
         public readonly int2 Cell;
         public readonly int Size;
         public readonly float FoodLost;
-        public RaidEvent(RaidPhase phase, int id, int2 cell, int size, float foodLost) { Phase = phase; Id = id; Cell = cell; Size = size; FoodLost = foodLost; }
+        /// <summary>Rival ants (thieves) instead of termites (10.5).</summary>
+        public readonly bool Rival;
+        /// <summary>Items rival ants carried off.</summary>
+        public readonly int ItemsLost;
+        public RaidEvent(RaidPhase phase, int id, int2 cell, int size, float foodLost, bool rival = false, int itemsLost = 0)
+        {
+            Phase = phase;
+            Id = id;
+            Cell = cell;
+            Size = size;
+            FoodLost = foodLost;
+            Rival = rival;
+            ItemsLost = itemsLost;
+        }
+    }
+
+    // ---------------------------------------------------------------- 10.5 deep endgame
+
+    /// <summary>A rival ant grabbed an item from the stock.</summary>
+    public readonly struct ItemStolenEvent
+    {
+        public readonly int2 Cell;
+        public readonly ushort Item;
+        public ItemStolenEvent(int2 cell, ushort item) { Cell = cell; Item = item; }
+    }
+
+    public enum DiggerPhase : byte
+    {
+        /// <summary>A digger started tunnelling toward the nest (Cell = where it is).</summary>
+        Appeared,
+        /// <summary>It broke into the colony's tunnels.</summary>
+        BrokeIn,
+        /// <summary>It found no way on and dug off.</summary>
+        GaveUp,
+        /// <summary>It dug out a cell (Cell).</summary>
+        Dug,
+    }
+
+    /// <summary>A creature that digs (the mole cricket).</summary>
+    public readonly struct DiggerEvent
+    {
+        public readonly DiggerPhase Phase;
+        public readonly int Enemy;
+        public readonly int2 Cell;
+        public DiggerEvent(DiggerPhase phase, int enemy, int2 cell) { Phase = phase; Enemy = enemy; Cell = cell; }
+    }
+
+    /// <summary>A lore fragment was found (index into <c>ContentDB.Lore</c>).</summary>
+    public readonly struct LoreFoundEvent
+    {
+        public readonly int Lore;
+        public readonly int Found;
+        public readonly int Total;
+        public LoreFoundEvent(int lore, int found, int total) { Lore = lore; Found = found; Total = total; }
+    }
+
+    public enum EngineStagePhase : byte
+    {
+        /// <summary>A restoration step was paid; workers build it now.</summary>
+        Started,
+        /// <summary>A restoration step is built.</summary>
+        Finished,
+        /// <summary>The last step is built: the engine runs.</summary>
+        Awakened,
+        /// <summary>A step in progress was cancelled (refunded).</summary>
+        Cancelled,
+    }
+
+    /// <summary>The Ancient Engine changed. <see cref="Stage"/> is the index of the step concerned.</summary>
+    public readonly struct EngineStageEvent
+    {
+        public readonly int Building;
+        public readonly int Stage;
+        public readonly EngineStagePhase Phase;
+        public readonly int2 Origin;
+        public EngineStageEvent(int building, int stage, EngineStagePhase phase, int2 origin) { Building = building; Stage = stage; Phase = phase; Origin = origin; }
+    }
+
+    /// <summary>A restoration step could not be started.</summary>
+    public readonly struct StageFailedEvent
+    {
+        public readonly int Building;
+        public readonly int Def;
+        public readonly StageResult Result;
+        public StageFailedEvent(int building, int def, StageResult result) { Building = building; Def = def; Result = result; }
     }
 
     public readonly struct TrapTriggeredEvent
@@ -263,16 +354,66 @@ namespace Antarium.Sim
         public readonly int2 Cell;
         public WallBuiltEvent(int2 cell) { Cell = cell; }
     }
+
+    public enum FireEventKind : byte
+    {
+        /// <summary>A new fire (lava or a meteorite lit a flammable cell; spreading fires don't count).</summary>
+        Started,
+        /// <summary>Water put a burning cell out.</summary>
+        Doused,
+    }
+
+    /// <summary>A fire started or was put out at <see cref="Cell"/> (<see cref="Material"/>: what burns there).</summary>
+    public readonly struct FireEvent
+    {
+        public readonly FireEventKind Kind;
+        public readonly int2 Cell;
+        public readonly ushort Material;
+        public FireEvent(FireEventKind kind, int2 cell, ushort material) { Kind = kind; Cell = cell; Material = material; }
+    }
 }
 
 namespace Antarium.Sim
 {
+    /// <summary>The genetic traits were unlearned (10.6): <see cref="Refund"/> memory came back, <see cref="Fee"/> was lost.</summary>
+    public readonly struct RespecEvent
+    {
+        public readonly int Refund;
+        public readonly int Fee;
+        public RespecEvent(int refund, int fee) { Refund = refund; Fee = fee; }
+    }
+
     /// <summary>A level of a genetic trait was bought.</summary>
     public readonly struct GeneticBoughtEvent
     {
         public readonly int Trait;
         public readonly int Level;
         public GeneticBoughtEvent(int trait, int level) { Trait = trait; Level = level; }
+    }
+
+    /// <summary>A level of a queen evolution was bought (10.4).</summary>
+    public readonly struct EvolutionBoughtEvent
+    {
+        public readonly int Evolution;
+        public readonly int Level;
+        public EvolutionBoughtEvent(int evolution, int level) { Evolution = evolution; Level = level; }
+    }
+
+    /// <summary>Buying a queen evolution was refused.</summary>
+    public readonly struct EvolutionFailedEvent
+    {
+        public readonly int Evolution;
+        public readonly EvolutionResult Result;
+        public EvolutionFailedEvent(int evolution, EvolutionResult result) { Evolution = evolution; Result = result; }
+    }
+
+    /// <summary>An ant reached a new level in its skill (10.4).</summary>
+    public readonly struct AntLevelUpEvent
+    {
+        public readonly Unity.Mathematics.int2 Cell;
+        public readonly JobKind Skill;
+        public readonly int Level;
+        public AntLevelUpEvent(Unity.Mathematics.int2 cell, JobKind skill, int level) { Cell = cell; Skill = skill; Level = level; }
     }
 
     /// <summary>Buying a genetic trait was refused.</summary>
@@ -289,5 +430,43 @@ namespace Antarium.Sim
         public readonly int2 Cell;
         public readonly int Total;
         public PrincessRaisedEvent(int2 cell, int total) { Cell = cell; Total = total; }
+    }
+}
+
+namespace Antarium.Sim
+{
+    // ---------------------------------------------------------------- Milestone 11 batch 3
+
+    /// <summary>The player switched a building on or off (configure panel).</summary>
+    public readonly struct BuildingSwitchedEvent
+    {
+        public readonly int Building;
+        public readonly int2 Origin;
+        public readonly bool On;
+        public BuildingSwitchedEvent(int building, int2 origin, bool on) { Building = building; Origin = origin; On = on; }
+    }
+
+    /// <summary>The player clicked a shooting star (Pos in cell space).</summary>
+    public readonly struct ShootingStarCaughtEvent
+    {
+        public readonly float2 Pos;
+        public readonly int Total;
+        public ShootingStarCaughtEvent(float2 pos, int total) { Pos = pos; Total = total; }
+    }
+
+    public enum WormPhase : byte
+    {
+        /// <summary>It dug out a cell (Cell).</summary>
+        Dug,
+        /// <summary>Its time was up and it burrowed away (the event is lost).</summary>
+        Left,
+    }
+
+    /// <summary>The giant earthworm of the random event (Milestone 11).</summary>
+    public readonly struct WormEvent
+    {
+        public readonly WormPhase Phase;
+        public readonly int2 Cell;
+        public WormEvent(WormPhase phase, int2 cell) { Phase = phase; Cell = cell; }
     }
 }

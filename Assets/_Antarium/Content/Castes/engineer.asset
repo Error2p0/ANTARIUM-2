@@ -15,7 +15,7 @@ MonoBehaviour:
   id: engineer
   displayName: Engineer
   caste: 7
-  description: 'Tends a working machine: it works 50% faster while an engineer stands by it.'
+  description: 'Tends a working machine: it works 50% faster while an engineer stands by it. With no machine to tend it carries machine inputs from storage.'
   order: 7
   eggFoodCost: 10
   upkeep: 0.35
@@ -29,7 +29,10 @@ MonoBehaviour:
   digJob: 0
   haulJob: 0
   buildJob: 0
-  supplyJob: 0
+  supplyJob: 2
   senseRadius: 10
   machineBoost: 0.5
+  heatProof: 0
+  lavaDamageTaken: 1
+  lightRadius: 0
   color: {r: 0.47843137, g: 0.6666667, b: 0.8156863, a: 1}

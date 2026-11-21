@@ -9,6 +9,8 @@ namespace Antarium.Sim
         Ok,
         AlreadyDone,
         NeedsPrerequisites,
+        /// <summary>The ancient tier: not enough lore fragments found yet (10.5).</summary>
+        NeedsLore,
         CantAfford,
         Unknown,
     }
@@ -22,13 +24,15 @@ namespace Antarium.Sim
         readonly ContentDB _content;
         readonly Colony _colony;
         readonly EventBus _events;
+        readonly LoreSystem _lore;
 
         /// <summary>Per research node (index into <see cref="ContentDB.Research"/>).</summary>
         public readonly bool[] Done;
 
-        public ResearchSystem(ContentDB content, Colony colony, EventBus events)
+        public ResearchSystem(ContentDB content, Colony colony, EventBus events, LoreSystem lore = null)
         {
             _content = content;
+            _lore = lore;
             _colony = colony;
             _events = events;
             Done = new bool[content.Research.Length];
@@ -50,6 +54,7 @@ namespace Antarium.Sim
             if (Done[index]) return ResearchResult.AlreadyDone;
             foreach (int p in _content.Research[index].Prerequisites)
                 if (!Done[p]) return ResearchResult.NeedsPrerequisites;
+            if (!HasLore(index)) return ResearchResult.NeedsLore;
             return CanAfford(index) ? ResearchResult.Ok : ResearchResult.CantAfford;
         }
 
@@ -60,6 +65,20 @@ namespace Antarium.Sim
                 if (!Done[p]) return false;
             return true;
         }
+
+        /// <summary>Lore fragments the node asks for (0 = none).</summary>
+        /// <summary>Some research done in this colony unlocks building <paramref name="building"/>.</summary>
+        public bool UnlocksBuilding(int building)
+        {
+            for (int r = 0; r < Done.Length; r++)
+                if (Done[r] && Array.IndexOf(_content.Research[r].UnlockBuildings, building) >= 0) return true;
+            return false;
+        }
+
+        public int LoreRequired(int index) => _content.Research[index].Def.loreRequired;
+
+        /// <summary>Enough lore fragments are found for the node.</summary>
+        public bool HasLore(int index) => LoreRequired(index) <= (_lore?.FoundCount ?? 0);
 
         public bool CanAfford(int index)
         {
@@ -102,6 +121,7 @@ namespace Antarium.Sim
             foreach (int b in data.UnlockBuildings) _colony.BuildingUnlocked[b] = true;
             foreach (int a in data.UnlockAbilities) _colony.AbilityUnlocked[a] = true;
             foreach (var caste in data.UnlockCastes) _colony.UnlockCaste(caste);
+            foreach (var feature in data.Features) _colony.Features[(int)feature] = true;
             _colony.Inventory.RefreshCapacity();
         }
     }

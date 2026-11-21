@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: water_mills
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: water_mills
+  displayName: Water Mills
+  description: 'Unlocks the Water Wheel: falling water speeds up the machines around it.'
+  treePosition: {x: 3, y: 8}
+  knowledgeCost: 40
+  cost:
+  - item: {fileID: 11400000, guid: 36a8187329457f74c954349e1b2ddea2, type: 2}
+    count: 4
+  foodCost: 0
+  prerequisites:
+  - {fileID: 11400000, guid: b210b69a701da4947851cbcad9f670cf, type: 2}
+  effects:
+  - kind: 1
+    stat: 0
+    value: 0
+    building: {fileID: 11400000, guid: 62c35962b8cbbbc4daf30f18e78850c9, type: 2}
+    ability: {fileID: 0}
+    caste: 0

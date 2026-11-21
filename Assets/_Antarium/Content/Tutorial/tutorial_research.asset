@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f796b96acc2d2ef42bae9ebd78a5593f, type: 3}
+  m_Name: tutorial_research
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TutorialStepDef
+  id: tutorial_research
+  displayName: Research
+  order: 90
+  body: 'Knowledge (violet, in the top bar) buys research. Press {Research}, then click a node that glows. Fungiculture is a good first one: its Fungus Garden makes much more food out of seeds.
+
+
+    More knowledge comes from contracts and from an Archive studying your finds.'
+  goal: 8
+  amount: 1
+  building: {fileID: 0}
+  highlight: 6
+  helpTopic: {fileID: 11400000, guid: a769568bda5f6a1408886ec05e6c0854, type: 2}

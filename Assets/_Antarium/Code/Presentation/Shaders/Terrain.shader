@@ -51,10 +51,15 @@ Shader "Antarium/Terrain"
             half4 Frag(Varyings input) : SV_Target
             {
                 TerrainSurface s = EvaluateTerrain(input.positionWS);
+                int overlay = (int)_AntView.x;
+                if (overlay == 2) return OreOverlay(s, input.positionWS);
                 if (s.hidden)
                     return s.fogOrder ? half4(_AntOverlay.rgb * 0.35, 1) : half4(0, 0, 0, 1);
                 if (s.unlit)
+                {
+                    if (overlay == 1) return half4(LightOverlay(s, 1, input.positionWS), 1);
                     return half4(s.albedo, 1);
+                }
 
                 // Light2D contribution (global ambient + dynamic lights), evaluated for a white surface.
                 SurfaceData2D surface;
@@ -64,6 +69,7 @@ Shader "Antarium/Terrain"
                 half3 light2D = CombinedShapeLightShared(surface, inputData).rgb;
 
                 float3 light = light2D + QuantizedGridLight(input.positionWS) + s.glow;
+                if (overlay == 1) return half4(LightOverlay(s, light, input.positionWS), 1);
                 return half4(s.albedo * light, 1);
             }
             ENDHLSL

@@ -20,5 +20,12 @@ namespace Antarium.Content
     public static class Pheromones
     {
         public const int Count = 5;
+
+        /// <summary>
+        /// Trail, Gather and Defend only mean something where ants walk, so they are painted on open cells only (not into
+        /// walls); Dig and Avoid also cover solid ground (mining orders, keeping ants from digging there).
+        /// </summary>
+        public static bool OpenCellsOnly(PheromoneKind kind) =>
+            kind == PheromoneKind.Trail || kind == PheromoneKind.Gather || kind == PheromoneKind.Defend;
     }
 }

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_possession
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_possession
+  displayName: Controlling an ant
+  order: 350
+  category: Colony
+  icon: tool_possess
+  body: 'Point at an ant and press {Possess} to take control of it. {Pan} moves it; it climbs walls and ceilings like any ant.
+
+
+    Hold the left mouse to bite toward the pointer: an enemy there gets bitten, rock gets dug. Right mouse or {Interact} picks up a pile, and delivers or puts down what the ant carries.
+
+
+    The ant you control is faster and tougher than the others, and the view follows it. {Possess} or {Menu} lets go.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

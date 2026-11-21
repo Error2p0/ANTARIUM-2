@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_surface
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_surface
+  displayName: Day, night and weather
+  order: 400
+  category: World
+  icon: sun
+  body: 'A day passes in a few minutes of play. Seeds, berries and leaves only appear by day.
+
+
+    Birds hunt by day: when one circles, every ant in the open runs for the nearest way underground, and the bird takes the ones still outside when it strikes. Dig entrances close to where your ants forage. At night wolf spiders prowl near the nest.
+
+
+    Rain pours into shafts and tunnels near the surface and soaks away afterwards; a thunderstorm brings more. A drought halves forage. An Earth Wall closes a shaft while it rains.
+
+
+    Lakes and rivers can''t be crossed on the surface: tunnel under them, and don''t dig into their beds.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

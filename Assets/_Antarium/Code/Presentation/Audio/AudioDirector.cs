@@ -48,6 +48,18 @@ namespace Antarium.Presentation
         int _ambienceSlot, _ambienceKey = int.MinValue;
         float _fade = 1f;
 
+        /// <summary>Clock of the voice limiter (default real time). Media capture uses game time, which runs at a fixed rate there.</summary>
+        public Func<double> Clock = () => Time.unscaledTimeAsDouble;
+
+        /// <summary>
+        /// Every sound started: clip, volume (buses applied), pitch, pan; music cues too (pitch 1, pan 0). Media capture
+        /// logs these per frame so the clips' sound can be mixed in sync (<c>tools/media/make_shorts.py</c>).
+        /// </summary>
+        public event Action<AudioClip, float, float, float> Started;
+
+        /// <summary>The ambience bed fading in (clip or null) and its bus volume.</summary>
+        public event Action<AudioClip, float> AmbienceChanged;
+
         public AudioDirector(SoundBank bank, ContentDB content, Transform parent)
         {
             _bank = bank;
@@ -258,7 +270,7 @@ namespace Antarium.Presentation
             if (v <= 0.001f) return;
             var clip = clips[_rng.NextInt(clips.Length)];
             float pitch = _rng.NextFloat(math.min(e.pitch.x, e.pitch.y), math.max(e.pitch.x, e.pitch.y) + 1e-4f);
-            if (!_limiter.TryStart(cue, Time.unscaledTimeAsDouble, clip.length / math.max(0.1f, pitch))) return;
+            if (!_limiter.TryStart(cue, Clock(), clip.length / math.max(0.1f, pitch))) return;
 
             // Take a free voice, else the oldest one in turn.
             AudioSource source = null;
@@ -274,6 +286,7 @@ namespace Antarium.Presentation
             source.pitch = pitch;
             source.panStereo = pan;
             source.Play();
+            Started?.Invoke(clip, source.volume, pitch, pan);
         }
 
         // ---------------------------------------------------------------- simulation events
@@ -319,6 +332,7 @@ namespace Antarium.Presentation
                     if (e.Broken) Queue(SoundCue.AntDig, e.Cell);
             foreach (var e in events.Read<CaveInEvent>()) Queue(SoundCue.CaveIn, e.Cell);
             foreach (var e in events.Read<FluidReactionEvent>()) Queue(SoundCue.Sizzle, e.Cell);
+            foreach (var e in events.Read<FireEvent>()) Queue(e.Kind == FireEventKind.Started ? SoundCue.FireIgnite : SoundCue.Sizzle, e.Cell);
             foreach (var e in events.Read<WallBuiltEvent>()) Queue(SoundCue.WallBuilt, e.Cell);
 
             foreach (var e in events.Read<ItemDeliveredEvent>()) Queue(SoundCue.Deliver, e.Cell);
@@ -341,6 +355,20 @@ namespace Antarium.Presentation
 
             foreach (var e in events.Read<EnemyKilledEvent>()) Queue(SoundCue.EnemyKilled, e.Cell);
             foreach (var e in events.Read<CreaturesFoundEvent>()) QueueUi(SoundCue.CreaturesFound);
+            foreach (var e in events.Read<SurfaceEvent>())
+            {
+                switch (e.Kind)
+                {
+                    case SurfaceEventKind.BirdCircling: QueueUi(SoundCue.BirdCry); break;
+                    case SurfaceEventKind.BirdStruck: Queue(SoundCue.BirdStrike, e.Cell); break;
+                    case SurfaceEventKind.RainStarted: QueueUi(SoundCue.Rain); break;
+                    case SurfaceEventKind.Lightning: QueueUi(SoundCue.Thunder); break;
+                    case SurfaceEventKind.StarfallStarted: QueueUi(SoundCue.Starfall); break;
+                    case SurfaceEventKind.Dusk: QueueUi(SoundCue.Dusk); break;
+                    case SurfaceEventKind.Dawn: QueueUi(SoundCue.Dawn); break;
+                    case SurfaceEventKind.SpidersOut: QueueUi(SoundCue.CreaturesFound); break;
+                }
+            }
             foreach (var e in events.Read<RaidEvent>())
             {
                 switch (e.Phase)
@@ -350,6 +378,24 @@ namespace Antarium.Presentation
                     case RaidPhase.Repelled: QueueUi(SoundCue.RaidRepelled); break;
                 }
             }
+            foreach (var e in events.Read<ItemStolenEvent>()) Queue(SoundCue.ItemStolen, e.Cell);
+            foreach (var e in events.Read<EnemyEscapedEvent>()) Queue(SoundCue.Escaped, e.Cell);
+            foreach (var e in events.Read<DiggerEvent>())
+            {
+                if (e.Phase == DiggerPhase.Dug) Queue(SoundCue.Burrow, e.Cell);
+                else if (e.Phase != DiggerPhase.GaveUp) QueueUi(SoundCue.CreaturesFound);
+            }
+            // Milestone 11 batch 3: the giant worm churning the soil, a caught shooting star.
+            foreach (var e in events.Read<WormEvent>())
+                if (e.Phase == WormPhase.Dug) Queue(SoundCue.WormBurrow, e.Cell);
+            if (events.Read<ShootingStarCaughtEvent>().Length > 0) QueueUi(SoundCue.StarCaught);
+            if (events.Read<LoreFoundEvent>().Length > 0) QueueUi(SoundCue.LoreFound);
+            foreach (var e in events.Read<EngineStageEvent>())
+            {
+                if (e.Phase == EngineStagePhase.Awakened) QueueUi(SoundCue.EngineAwakened);
+                else if (e.Phase != EngineStagePhase.Cancelled) Queue(SoundCue.EngineStage, e.Origin);
+            }
+            if (events.Read<StageFailedEvent>().Length > 0) QueueUi(SoundCue.Refused);
             foreach (var e in events.Read<TrapTriggeredEvent>()) Queue(SoundCue.TrapSnap, e.Cell);
             foreach (var e in events.Read<GateBrokenEvent>()) Queue(SoundCue.GateBroken, e.Cell);
 
@@ -358,6 +404,10 @@ namespace Antarium.Presentation
                 || events.Read<GeneticFailedEvent>().Length > 0) QueueUi(SoundCue.Refused);
             if (events.Read<ContractClaimedEvent>().Length > 0) QueueUi(SoundCue.ContractClaim);
             if (events.Read<GeneticBoughtEvent>().Length > 0) QueueUi(SoundCue.GeneticBought);
+            if (events.Read<RespecEvent>().Length > 0) QueueUi(SoundCue.Respec);
+            if (events.Read<EvolutionBoughtEvent>().Length > 0) QueueUi(SoundCue.Evolution);
+            if (events.Read<EvolutionFailedEvent>().Length > 0) QueueUi(SoundCue.Refused);
+            foreach (var e in events.Read<AntLevelUpEvent>()) Queue(SoundCue.LevelUp, e.Cell);
             foreach (var e in events.Read<AbilityUsedEvent>())
             {
                 var kind = e.Ability >= 0 && e.Ability < _content.Abilities.Length ? _content.Abilities[e.Ability].kind : AbilityKind.Frenzy;
@@ -366,6 +416,7 @@ namespace Antarium.Presentation
                     AbilityKind.SeismicSense => SoundCue.Seismic,
                     AbilityKind.RoyalDecree => SoundCue.Decree,
                     AbilityKind.PheromoneBurst => SoundCue.PheromoneBurst,
+                    AbilityKind.Quickening => SoundCue.Quickening,
                     _ => SoundCue.Frenzy,
                 });
             }
@@ -399,7 +450,12 @@ namespace Antarium.Presentation
         // ---------------------------------------------------------------- ambience and music
 
         /// <summary>Plays a recorded music cue over the music (the Nuptial Flight, a new biome reached).</summary>
-        public void PlayMusicCue(AudioClip clip) => _music?.PlayCue(clip, Bus(SoundBus.Music));
+        public void PlayMusicCue(AudioClip clip)
+        {
+            if (_music == null || clip == null) return;
+            _music.PlayCue(clip, Bus(SoundBus.Music));
+            Started?.Invoke(clip, Bus(SoundBus.Music) * _bank.music.cueVolume, 1f, 0f);
+        }
 
         /// <param name="biome">Biome index under the camera, -1 above the surface.</param>
         /// <param name="muted">Silence everything (the game is in the background and the player asked for that).</param>
@@ -424,6 +480,7 @@ namespace Antarium.Presentation
                     next.Play();
                 }
                 _fade = 0f;
+                AmbienceChanged?.Invoke(next.clip, Bus(SoundBus.Ambience));
             }
             _fade = math.min(1f, _fade + dt / math.max(0.1f, _bank.ambienceFade));
             float bed = Bus(SoundBus.Ambience);

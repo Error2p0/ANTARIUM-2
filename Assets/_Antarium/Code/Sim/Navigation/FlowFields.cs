@@ -39,6 +39,10 @@ namespace Antarium.Sim
         Critters,
         /// <summary>Where a Pheromone Burst calls the ants.</summary>
         Rally,
+        /// <summary>The way underground (cells a little below the surface): ants run here when a bird circles.</summary>
+        Shelter,
+        /// <summary>Stores holding items (storage cells, chests, the royal chamber): rival ants go to the nearest (Milestone 11).</summary>
+        Loot,
     }
 
     /// <summary>
@@ -56,7 +60,7 @@ namespace Antarium.Sim
     {
         public const ushort Unreachable = ushort.MaxValue;
         /// <summary>Number of <see cref="FieldKind"/> fields; consumer fields follow them.</summary>
-        public const int KindCount = 15;
+        public const int KindCount = 17;
         /// <summary>Distance units per straight step; a diagonal step costs <see cref="DiagonalCost"/> (≈ √2 ratio).</summary>
         public const int StraightCost = 2;
         public const int DiagonalCost = 3;
@@ -100,6 +104,7 @@ namespace Antarium.Sim
             _usePheromones[(int)FieldKind.Enemies] = false;
             _usePheromones[(int)FieldKind.Ants] = false;
             _usePheromones[(int)FieldKind.Exit] = false;
+            _usePheromones[(int)FieldKind.Loot] = false;
             _noScent = new NativeArray<byte>(1, Allocator.Persistent);
             Fill(_all, Unreachable);
         }

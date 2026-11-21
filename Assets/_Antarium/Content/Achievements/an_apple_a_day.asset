@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 342fb1d62877af54a865c762aecac089, type: 3}
+  m_Name: an_apple_a_day
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.AchievementDef
+  id: an_apple_a_day
+  displayName: An Apple a Day
+  apiName: ACH_APPLES_25
+  description: Bring 25 apples home in one colony.
+  kind: 6
+  item: {fileID: 11400000, guid: eed9ad6591332624f96d277248cd9833, type: 2}
+  building: {fileID: 0}
+  caste: 0
+  amount: 25
+  hidden: 0
+  statName: 
+  order: 41

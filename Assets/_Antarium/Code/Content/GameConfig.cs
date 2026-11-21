@@ -25,6 +25,261 @@ namespace Antarium.Content
         public PheromoneConfig pheromones = new();
         public PossessionConfig possession = new();
         public PrestigeConfig prestige = new();
+        public SurfaceConfig surface = new();
+        public WaterworksConfig waterworks = new();
+        public FireConfig fire = new();
+        /// <summary>10.4: job priorities, ant XP and traits, lane jitter.</summary>
+        public AntGrowthConfig growth = new();
+        /// <summary>10.4: the lights glow ants carry and the shadows near them.</summary>
+        public GlowConfig glow = new();
+        /// <summary>Milestone 11: berries, mushrooms and their regrowth.</summary>
+        public WildConfig wild = new();
+        [Tooltip("PNG art that replaces the sprites generated in code (Antarium > Art > Import Overrides fills it).")]
+        public ArtLibrary art;
+    }
+
+    /// <summary>Pumps, water wheels, irrigation and magma heat (10.3). Per-building numbers are on the building assets.</summary>
+    [Serializable]
+    public sealed class AntGrowthConfig
+    {
+        [Header("Job priorities (priority panel)")]
+        [Tooltip("Distance multiplier per priority 1..5 (lower = preferred). Priority 3 is normal.")]
+        public float[] priorityWeights = { 4f, 2f, 1f, 0.5f, 0.25f };
+        [Tooltip("Tend and Nurse: distance multiplier of a specialist's own job against the shared jobs at priority 3 (low = it nearly always comes first).")]
+        [Min(0.01f)] public float roleWeight = 0.1f;
+
+        [Header("Experience")]
+        [Tooltip("XP for levels 2, 3, 4, 5 (the last entry is the top level).")]
+        public float[] levelXp = { 15f, 45f, 110f, 240f };
+        [Tooltip("Faster at its skill per level above 1 (0.05 = +5% per level).")]
+        [Range(0f, 0.5f)] public float levelBonus = 0.05f;
+        [Tooltip("Prefers its skill: the job's distance is multiplied by 1 - this per level above 1.")]
+        [Range(0f, 0.2f)] public float levelPreference = 0.05f;
+        [Tooltip("XP per hardness unit dug / per unit of build work.")]
+        [Min(0f)] public float digXp = 1f;
+        [Min(0f)] public float buildXp = 1f;
+        [Tooltip("XP per item delivered to the stock / to a machine.")]
+        [Min(0f)] public float haulXp = 1f;
+        [Min(0f)] public float supplyXp = 1f;
+        [Tooltip("XP per second an engineer tends a working machine.")]
+        [Min(0f)] public float tendXp = 0.1f;
+        [Tooltip("XP per egg a nurse lays into a nursery.")]
+        [Min(0f)] public float nurseXp = 2f;
+
+        [Header("Traits at hatch")]
+        [Tooltip("Chance a new ant hatches with a trait (Strong, Swift, Lucky or Lazy, equally likely).")]
+        [Range(0f, 1f)] public float traitChance = 0.3f;
+        [Tooltip("Swift: walking speed multiplier.")]
+        [Min(1f)] public float swiftSpeed = 1.2f;
+        [Tooltip("Lucky: chance that a cell it breaks drops one more item (if the cell drops anything).")]
+        [Range(0f, 1f)] public float luckyChance = 0.25f;
+        [Tooltip("Lazy: work speed multiplier (dig, build, walking).")]
+        [Range(0.1f, 1f)] public float lazyWork = 0.8f;
+
+        [Header("Lane jitter")]
+        [Tooltip("Walking speed varies per ant by up to this share (0.07 = 93%..107%), so ants on one route spread out.")]
+        [Range(0f, 0.3f)] public float speedJitter = 0.07f;
+        [Tooltip("Ants are drawn up to this many art pixels ahead of / behind their spot on the route.")]
+        [Range(0, 6)] public int laneOffsetPixels = 3;
+        [Tooltip("...and up to this many art pixels away from the surface they walk on (up from a floor, out from a wall).")]
+        [Range(0, 6)] public int laneUpPixels = 3;
+        [Tooltip("...or up to this many into it (down into a floor).")]
+        [Range(0, 6)] public int laneDownPixels = 2;
+    }
+
+    [Serializable]
+    public sealed class GlowConfig
+    {
+        [Tooltip("Most glow ants that get a real light (the ones nearest the view centre). The others only show their halo.")]
+        [Range(0, 128)] public int maxLights = 24;
+        public Color color = new(0.62f, 1f, 0.55f);
+        [Range(0f, 2f)] public float intensity = 0.9f;
+        [Tooltip("Inner radius as a share of the outer radius (full brightness inside).")]
+        [Range(0f, 1f)] public float innerShare = 0.25f;
+        [Tooltip("Rock blocks the glow ants' light: shadow casters are made from rock edges near the lights.")]
+        public bool shadows = true;
+        [Range(0f, 1f)] public float shadowIntensity = 0.85f;
+        [Tooltip("Most shadow caster rectangles at once (pooled).")]
+        [Range(0, 4096)] public int maxCasters = 768;
+        [Tooltip("Seconds between rebuilding the shadow casters (also rebuilt when the terrain changes).")]
+        [Min(0.02f)] public float casterRefresh = 0.25f;
+
+        [Header("Guiding Light (research, Milestone 11)")]
+        [Tooltip("Radius in cells of the light at the pointer (a glow ant's is 6).")]
+        [Min(1f)] public float cursorRadius = 9f;
+        public Color cursorColor = new(0.78f, 1f, 0.72f);
+        [Range(0f, 2f)] public float cursorIntensity = 1f;
+        [Tooltip("The pointer light's rock shadows are rebuilt once it has moved this many cells (or on the usual refresh).")]
+        [Min(1)] public int cursorCasterStep = 2;
+        [Tooltip("With the pointer inside rock the light moves to the nearest open cell within this many cells (none: it goes out).")]
+        [Range(0, 8)] public int cursorSnapCells = 3;
+    }
+
+    [Serializable]
+    public sealed class WaterworksConfig
+    {
+        [Tooltip("A pump draws from the first cell holding fluid up to this many cells behind it (a hose), so a pump above a flooded " +
+                 "shaft drains it.")]
+        [Min(1)] public int pumpReach = 8;
+        [Tooltip("Seconds between checks of which machines are irrigated, heated or near a turning water wheel.")]
+        [Min(0.05f)] public float checkSeconds = 0.5f;
+        [Tooltip("Share of the new value a water wheel's power takes each fluid step (smooths it over about a second).")]
+        [Range(0.01f, 1f)] public float wheelSmoothing = 0.1f;
+        [Tooltip("Water (of 255) a cell in or next to a machine needs for the machine to count as irrigated.")]
+        [Range(1, 255)] public int irrigationMinLevel = 24;
+        [Tooltip("Water (of 255) an irrigated machine drinks per craft.")]
+        [Range(0, 255)] public int irrigationWater = 48;
+    }
+
+    /// <summary>Burning flammable cells (10.3).</summary>
+    [Serializable]
+    public sealed class FireConfig
+    {
+        [Tooltip("Seconds a cell burns before it turns to ash.")]
+        [Min(0.5f)] public float burnSeconds = 15f;
+        [Tooltip("Chance per second that a burning cell lights each flammable neighbour (if it touches open air).")]
+        [Range(0f, 1f)] public float spreadPerSecond = 0.25f;
+        [Tooltip("Chance per lava step that moving lava lights a flammable cell next to it.")]
+        [Range(0f, 1f)] public float lavaIgniteChance = 0.05f;
+        [Tooltip("Smoke (gas, of 255) a burning cell gives off per fluid step into the open cell above or beside it.")]
+        [Range(0, 255)] public int smokePerStep = 4;
+        [Tooltip("Water (of 255) next to a burning cell that puts it out.")]
+        [Range(1, 255)] public int extinguishLevel = 32;
+        [Tooltip("Water lost as steam when it puts out a fire.")]
+        [Range(0, 255)] public int extinguishWater = 16;
+        [Tooltip("At most this many cells burn at once (new fires wait).")]
+        [Min(1)] public int maxBurning = 2000;
+        [Tooltip("Meteorite impacts light flammable cells this many cells around the crater.")]
+        [Min(0f)] public float meteoriteIgniteRadius = 3f;
+        [Tooltip("Colour of the light fire gives off.")]
+        [ColorUsage(false)] public Color light = new(1f, 0.55f, 0.2f);
+        [Tooltip("Light emitted by a burning cell, as a fraction of the maximum light level.")]
+        [Range(0f, 1f)] public float lightStrength = 0.6f;
+    }
+
+    /// <summary>Wild food (Milestone 11): berries from berry bushes, toadstools on the surface, mushrooms growing back in caves.</summary>
+    [Serializable]
+    public sealed class WildConfig
+    {
+        [Header("Berries")]
+        [Tooltip("Seconds between berries falling from a berry bush (by day and on starfall nights; forage rate and weather apply).")]
+        [Min(0.1f)] public float berryInterval = 10f;
+        [Tooltip("No more berries fall while this many lie on the surface.")]
+        [Min(0)] public int maxSurfaceBerries = 8;
+
+        [Header("Apples (batch 6)")]
+        [Tooltip("Seconds between apples falling from an apple tree near the nest (by day and on starfall nights; forage rate and weather apply).")]
+        [Min(0.1f)] public float appleInterval = 20f;
+        [Tooltip("No more apples fall while this many lie on the surface.")]
+        [Min(0)] public int maxSurfaceApples = 6;
+        [Tooltip("Apples land up to this many columns either side of the trunk (under the crown).")]
+        [Min(0)] public int appleSpread = 3;
+
+        [Header("Toadstools (surface mushrooms)")]
+        [Tooltip("Seconds between toadstools popping up on the surface near the nest (day and night; forage rate applies).")]
+        [Min(1f)] public float toadstoolInterval = 45f;
+        [Tooltip("They come this many times as often while it rains and for a while after.")]
+        [Min(1f)] public float rainToadstoolFactor = 4f;
+        [Tooltip("Seconds after a rain that toadstools still come faster.")]
+        [Min(0f)] public float afterRainSeconds = 90f;
+        [Tooltip("No more pop up while this many stand on the surface.")]
+        [Min(0)] public int maxSurfaceToadstools = 4;
+
+        [Header("Cave mushrooms")]
+        [Tooltip("Seconds a picked cave mushroom takes to grow back (random in this range).")]
+        public Vector2 regrowSeconds = new(240f, 480f);
+        [Tooltip("Seconds between checks of the growth spots (picked, ready to grow).")]
+        [Min(0.1f)] public float checkInterval = 1f;
+        [Tooltip("A spot under water at least this deep (of 255) waits to grow.")]
+        [Range(1, 255)] public int maxWater = 64;
+    }
+
+    [Serializable]
+    public sealed class SurfaceConfig
+    {
+        [Header("Day and night (time of day: 0 = midnight, 0.5 = noon)")]
+        [Tooltip("Seconds of game time for a full day and night.")]
+        [Min(10f)] public float dayLengthSeconds = 720f;
+        [Tooltip("Share of the cycle from sunrise to sunset.")]
+        [Range(0.2f, 0.95f)] public float dayShare = 0.65f;
+        [Tooltip("Share of the cycle a sunrise or sunset takes.")]
+        [Range(0.005f, 0.2f)] public float twilight = 0.06f;
+        [Tooltip("Time of day a new colony starts at.")]
+        [Range(0f, 1f)] public float startTime = 0.3f;
+
+        [Header("Weather")]
+        [Tooltip("No weather before this many seconds into a colony.")]
+        [Min(0f)] public float firstWeatherSeconds = 600f;
+        [Min(1f)] public float weatherIntervalMin = 360f;
+        [Min(1f)] public float weatherIntervalMax = 600f;
+        [Tooltip("Chance that the next weather is rain (else a drought).")]
+        [Range(0f, 1f)] public float rainChance = 0.6f;
+        [Tooltip("Chance that a rain is a thunderstorm: heavier rain and lightning.")]
+        [Range(0f, 1f)] public float thunderstormChance = 0.35f;
+        [Tooltip("A thunderstorm drops this many times as much rain.")]
+        [Min(1f)] public float stormRainFactor = 1.5f;
+        [Tooltip("Seconds between lightning strikes in a thunderstorm (random in this range).")]
+        public Vector2 lightningInterval = new(3f, 9f);
+        public Vector2 rainSeconds = new(60f, 100f);
+        public Vector2 droughtSeconds = new(180f, 300f);
+        [Tooltip("Forage spawns this much as often during a drought.")]
+        [Range(0f, 1f)] public float droughtForage = 0.5f;
+        [Tooltip("Rain falls this many cells either side of the nest.")]
+        [Min(8)] public int rainRange = 150;
+        [Tooltip("Columns that get a raindrop per fluid step.")]
+        [Min(0)] public int rainDropsPerStep = 10;
+        [Tooltip("Water (of 255) one raindrop adds.")]
+        [Range(1, 255)] public int rainDropLevel = 24;
+        [Tooltip("Water this close to the surface (cells) slowly soaks into the ground, so rain floods drain again.")]
+        [Min(0)] public int soakDepth = 40;
+        [Tooltip("Chance per fluid step that a wet cell near the surface loses one level.")]
+        [Range(0f, 1f)] public float soakChance = 0.3f;
+
+        [Header("Leaves")]
+        [Tooltip("Seconds between leaves falling from a surface plant (by day; forage research and droughts change it).")]
+        [Min(0.1f)] public float leafInterval = 6f;
+        [Tooltip("No new leaves while this many lie on the surface.")]
+        [Min(0)] public int maxSurfaceLeaves = 10;
+
+        [Header("Honeydew")]
+        [Tooltip("The queen eats one honeydew from the stock every this many seconds (while there is any).")]
+        [Min(1f)] public float honeydewSeconds = 20f;
+        [Tooltip("While fed honeydew she lays this much faster (0.5 = +50%) and her own upkeep is free.")]
+        [Min(0f)] public float honeydewLaying = 0.5f;
+
+        [Header("Birds (by day)")]
+        [Min(0f)] public float firstBirdSeconds = 480f;
+        [Min(1f)] public float birdIntervalMin = 150f;
+        [Min(1f)] public float birdIntervalMax = 300f;
+        [Tooltip("Seconds between the bird's shadow appearing and its strike: ants on the surface run for cover.")]
+        [Min(1f)] public float birdWarningSeconds = 8f;
+        [Tooltip("The strike kills exposed ants within this many cells of the bird.")]
+        [Min(0.5f)] public float birdStrikeRadius = 3f;
+        [Min(1)] public int birdMaxKills = 4;
+        [Tooltip("Cells per second the bird's shadow follows its prey.")]
+        [Min(0.5f)] public float birdSpeed = 6f;
+        [Tooltip("Sheltering ants stay inside this many seconds after the strike.")]
+        [Min(0f)] public float birdShelterSeconds = 4f;
+
+        [Header("Surface spiders (at night)")]
+        [Tooltip("No spiders before this many seconds into a colony (the first night is quiet).")]
+        [Min(0f)] public float firstSpiderSeconds = 900f;
+        [Tooltip("No spiders while the colony has fewer ants than this.")]
+        [Min(0)] public int spiderMinAnts = 15;
+        [Min(0f)] public float spidersBase = 1f;
+        [Tooltip("Extra spiders per ant in the colony.")]
+        [Min(0f)] public float spidersPerAnt = 0.02f;
+        [Min(0)] public int spidersMax = 4;
+        [Tooltip("Spiders appear on the surface this far (cells) from the nest.")]
+        public Vector2Int spiderDistance = new(12, 40);
+        [Tooltip("Spiders come out over this many seconds after nightfall.")]
+        [Min(0f)] public float spiderSpawnWindow = 60f;
+
+        [Header("Starfall nights")]
+        [Tooltip("Chance at dusk that the night is a starfall: shooting stars all night, no night hunters, and seeds and leaves keep coming.")]
+        [Range(0f, 1f)] public float starfallChance = 0.15f;
+        [Tooltip("No starfall before this many seconds into a colony.")]
+        [Min(0f)] public float firstStarfallSeconds = 900f;
     }
 
     [Serializable]
@@ -61,6 +316,16 @@ namespace Antarium.Content
         [Min(0.5f)] public float flightSeconds = 4.5f;
         [Tooltip("Princesses climb this many cells per second.")]
         [Min(0.5f)] public float flightSpeed = 9f;
+
+        [Header("Ancient Engine (10.5)")]
+        [Tooltip("A colony whose Ancient Engine runs earns this much more Genetic Memory from its flight (1 = twice as much).")]
+        [Min(0f)] public float engineMemoryBonus = 1f;
+
+        [Header("Respec (10.6)")]
+        [Tooltip("Respecs per colony that refund every spent point of Genetic Memory.")]
+        [Min(0)] public int freeRespecs = 1;
+        [Tooltip("Share of the refund lost by every respec after the free ones (rounded up, at least 1).")]
+        [Range(0f, 1f)] public float respecFee = 0.25f;
     }
 
     [Serializable]
@@ -161,6 +426,10 @@ namespace Antarium.Content
         [Min(0f)] public float drownDamage = 6f;
         [Min(0f)] public float lavaDamage = 40f;
         [Min(0f)] public float gasDamage = 4f;
+        [Tooltip("Damage per second to an ant next to a burning cell.")]
+        [Min(0f)] public float fireDamage = 10f;
+        [Tooltip("Heat: damage per second to an ant next to lava, magma rock or a fire, unless heat-proof (fire ants). Biomes add their own heat.")]
+        [Min(0f)] public float heatDamage = 3f;
         [Tooltip("Damage (once) to an ant buried by falling sand.")]
         [Min(0f)] public float caveInDamage = 25f;
         [Tooltip("Ants swim at this share of their walking speed.")]
@@ -205,6 +474,42 @@ namespace Antarium.Content
         public Vector2Int raidDistance = new(60, 100);
         [Tooltip("Knowledge for beating a raid (every raider killed or chased off).")]
         [Min(0f)] public float raidKnowledge = 10f;
+
+        [Header("Rival ants (10.5)")]
+        [Tooltip("No rival ant raids before this many seconds into a colony (before that every raid is termites).")]
+        [Min(0f)] public float rivalFirstSeconds = 1500f;
+        [Tooltip("Chance that a raid is rival ants (thieves) instead of termites, once they come.")]
+        [Range(0f, 1f)] public float rivalRaidChance = 0.4f;
+
+        [Header("Mole crickets (10.5)")]
+        [Tooltip("No mole crickets before this many seconds into a colony.")]
+        [Min(0f)] public float moleFirstSeconds = 1080f;
+        [Min(1f)] public float moleIntervalMin = 480f;
+        [Min(1f)] public float moleIntervalMax = 840f;
+        [Tooltip("No mole crickets while the colony has fewer ants than this.")]
+        [Min(0)] public int moleMinAnts = 15;
+        [Tooltip("A mole cricket starts this far (cells) from the queen, in soft ground.")]
+        public Vector2Int moleDistance = new(26, 42);
+        [Tooltip("A mole cricket starts at least this many cells from the colony's tunnels.")]
+        [Min(1)] public int moleClearance = 8;
+        [Tooltip("A mole cricket that can't get closer for this many seconds gives up and digs away (it is removed).")]
+        [Min(1f)] public float moleGiveUpSeconds = 30f;
+
+        [Header("Giant worm (Milestone 11 random event)")]
+        [Tooltip("Body segments behind the head.")]
+        [Range(1, 24)] public int wormSegments = 7;
+        [Tooltip("The worm starts this far (cells) from a random ant underground, in soft ground.")]
+        public Vector2Int wormDistance = new(9, 18);
+        [Tooltip("It starts at least this many cells from the colony's tunnels.")]
+        [Min(1)] public int wormClearance = 3;
+        [Tooltip("It wanders within this many cells of where it started (past that it turns back).")]
+        [Min(4f)] public float wormLeash = 22f;
+        [Tooltip("Chance per cell that it turns when it could go on straight.")]
+        [Range(0f, 1f)] public float wormTurnChance = 0.3f;
+        [Tooltip("It never digs closer to the surface than this many cells below the ground.")]
+        [Min(1)] public int wormMinDepth = 3;
+        [Tooltip("Damage to the worm per Dig tool hit on its body, times the hit's dig power (power x combo x Player Dig).")]
+        [Min(0f)] public float wormDigDamage = 2.5f;
     }
 
     [Serializable]
@@ -215,9 +520,9 @@ namespace Antarium.Content
 
         [Header("Random events")]
         [Tooltip("Seconds into a new colony before the first random event.")]
-        [Min(0f)] public float firstEventDelay = 150f;
-        [Min(1f)] public float eventIntervalMin = 180f;
-        [Min(1f)] public float eventIntervalMax = 360f;
+        [Min(0f)] public float firstEventDelay = 225f;
+        [Min(1f)] public float eventIntervalMin = 270f;
+        [Min(1f)] public float eventIntervalMax = 540f;
         [Tooltip("No new event starts while this many are waiting for the player.")]
         [Min(1)] public int maxActiveEvents = 2;
         [Tooltip("Golden beetle walking speed, cells per second.")]
@@ -274,6 +579,8 @@ namespace Antarium.Content
     [Serializable]
     public sealed class ColonyConfig
     {
+        [Tooltip("Wall blueprints that touch are built from the one farthest from the nest (home distance) inward, so finished walls never cut the ants off from the rest. Cells at most this many field units (2 = one straight step) closer than the farthest are built at the same time.")]
+        [Min(0)] public int wallOrderSlack = 1;
         [Min(0)] public int startingWorkers = 6;
         [Min(0f)] public float startingFood = 40f;
 
@@ -301,6 +608,10 @@ namespace Antarium.Content
         [Min(0)] public int maxSurfaceFood = 12;
         [Tooltip("Max horizontal distance from the nest (cells) where forage spawns.")]
         [Min(4)] public int forageRange = 120;
+        [Tooltip("Workers fetch piles underground (dug ore, finds) first: a pile on the surface (forage) is only fetched first when it is this many cells closer. Not while the colony starves (food on the surface then comes first) or while Gather scent is painted.")]
+        [Min(0)] public int forageHaulDelay = 30;
+        [Tooltip("At most this many of each plant forage item (leaves) are kept in the stock, so leaves nobody uses yet don't fill it up; machines that use them still get theirs. 0 = no limit.")]
+        [Min(0)] public int plantForageStockLimit = 10;
 
         [Header("Navigation")]
         [Tooltip("Flow fields are rebuilt at most once every N ticks when something changed.")]
@@ -342,6 +653,18 @@ namespace Antarium.Content
         [Min(0.5f)] public float hitsPerSecond = 10f;
         [Tooltip("Brush radius (cells) for painting mining orders and storage zones.")]
         [Min(0.5f)] public float orderBrushRadius = 1.6f;
+        [Tooltip("Radius multiplier of brush sizes 1, 2 and 3 (dig, mine orders, storage, scents). Size 2 is the base radius.")]
+        public float[] brushSizeScales = { 0.5f, 1f, 1.75f };
+
+        [Header("Digging strength (Milestone 11)")]
+        [Tooltip("Strength (of 1) a productive Dig tool hit costs at brush size 2; other sizes cost by the brush's area.")]
+        [Range(0f, 1f)] public float staminaPerHit = 0.0085f;
+        [Tooltip("Strength regained per second while not digging.")]
+        [Min(0f)] public float staminaRegen = 0.05f;
+        [Tooltip("Seconds after the last productive hit before the strength starts coming back.")]
+        [Min(0f)] public float staminaRegenDelay = 1f;
+        [Tooltip("After running dry, the Dig tool works again once the strength is back to this.")]
+        [Range(0f, 1f)] public float staminaResume = 0.25f;
 
         [Header("Combo")]
         [Min(0.05f)] public float comboWindow = 0.45f;
@@ -375,10 +698,69 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float wallOcclusion = 0.55f;
         [Tooltip("Texture contrast of dug-out background walls (0 = flat base colour, 1 = full texture).")]
         [Range(0f, 1f)] public float wallContrast = 0.35f;
+        [Tooltip("Ground runs in large flat patches that are lighter or darker than the tile: the strongest step (0 = none). They are placed in the world, so they never repeat like the tile does.")]
+        [Range(0f, 0.6f)] public float patchContrast = 0.26f;
+        [Tooltip("The same patches lean warmer or cooler by this much (0 = none).")]
+        [Range(0f, 0.3f)] public float patchTint = 0.07f;
         [Tooltip("Intensity of the global Light2D: the minimum brightness of revealed, unlit areas.")]
         [Range(0f, 1f)] public float ambient = 0.025f;
+        [Tooltip("Milestone 11: added to the global light while the camera is underground, so revealed tunnels and rock read better there.")]
+        [Range(0f, 1f)] public float undergroundAmbient = 0.06f;
+        [Tooltip("Camera depth in cells (below the ground under it) where the underground light starts and where it is full.")]
+        public Vector2 undergroundFade = new(3f, 16f);
         public Color skyTop = new(0.36f, 0.62f, 0.86f);
         public Color skyHorizon = new(0.72f, 0.86f, 0.93f);
+        [Header("Day, night and weather")]
+        public Color nightSkyTop = new(0.03f, 0.04f, 0.12f);
+        public Color nightSkyHorizon = new(0.1f, 0.12f, 0.26f);
+        [Tooltip("Horizon at sunrise and sunset.")]
+        public Color duskSkyHorizon = new(0.95f, 0.55f, 0.35f);
+        [Tooltip("Sky colour mixed in while it rains.")]
+        public Color rainSky = new(0.42f, 0.46f, 0.52f);
+        [Tooltip("Colour and strength of the sky light at night (moonlight).")]
+        [ColorUsage(false)] public Color nightLight = new(0.55f, 0.65f, 1f);
+        [Range(0f, 1f)] public float nightLightStrength = 0.3f;
+        [Tooltip("Sky light while it rains (fraction of daylight).")]
+        [Range(0f, 1f)] public float rainLight = 0.7f;
+        public Color starColor = new(0.9f, 0.92f, 1f);
+        public Color rainColor = new(0.65f, 0.75f, 0.95f, 0.7f);
+        [Tooltip("Seconds between shooting stars on a clear night (random in this range).")]
+        public Vector2 shootingStarInterval = new(6f, 20f);
+        [Tooltip("Seconds between shooting stars on a starfall night.")]
+        public Vector2 starfallInterval = new(0.04f, 0.18f);
+        [Tooltip("Lightning bolts and the flash they light the sky with.")]
+        public Color lightningColor = new(0.92f, 0.95f, 1f);
+        [Tooltip("How much a lightning flash brightens the sky and the sky light (0 = none).")]
+        [Range(0f, 2f)] public float lightningFlash = 0.9f;
+
+        [Header("Surface background (Milestone 11)")]
+        [Tooltip("Layers drawn behind the sky above the surface, farthest first (at most 4). Lit by the sky light and hazed into the horizon colour, so they follow the time of day and the weather.")]
+        public SceneryLayer[] sceneryLayers =
+        {
+            new() { shape = SceneryShape.Peaks, color = new Color(0.5f, 0.55f, 0.72f), haze = 0.25f, mist = 0.35f, parallax = 0.1f, foot = 5f, height = 30f, width = 30f, snowLine = 17f },
+            new() { shape = SceneryShape.Hills, color = new Color(0.36f, 0.53f, 0.5f), haze = 0.2f, mist = 0.3f, parallax = 0.25f, foot = 1f, height = 12f, width = 20f },
+            new() { shape = SceneryShape.Trees, color = new Color(0.19f, 0.36f, 0.26f), haze = 0.1f, mist = 0f, parallax = 0.45f, foot = 0f, height = 4f, width = 26f, treeSpacing = 6f },
+        };
+        [Tooltip("How much the background follows the camera up and down (0 = it stays on the horizon, 1 = as much as it does sideways).")]
+        [Range(0f, 1f)] public float sceneryVertical = 0.5f;
+        public Color snowColor = new(0.9f, 0.93f, 1f);
+        [Tooltip("Clouds: share of the sky band they cover in clear weather and while it rains.")]
+        [Range(0f, 1f)] public float cloudCover = 0.35f;
+        [Range(0f, 1f)] public float rainCloudCover = 0.9f;
+        [Tooltip("Lowest and highest cloud, in cells above the horizon (the average surface).")]
+        public Vector2 cloudBand = new(17f, 40f);
+        [Tooltip("Size of a cloud's puffs (cells).")]
+        [Min(0.5f)] public float cloudSize = 4f;
+        [Tooltip("How fast the clouds drift (art pixels per second).")]
+        public float cloudDrift = 2f;
+        [Range(0f, 1f)] public float cloudParallax = 0.05f;
+        [Tooltip("How much the stars (and shooting stars) move with the world: the farthest layer, behind the clouds and mountains (0 = fixed to the sky).")]
+        [Range(0f, 1f)] public float starParallax = 0.01f;
+        [Tooltip("How much the clouds fade into the horizon colour.")]
+        [Range(0f, 1f)] public float cloudHaze = 0.15f;
+        public Color cloudColor = new(0.97f, 0.97f, 1f);
+        public Color cloudShadeColor = new(0.78f, 0.82f, 0.9f);
+
         [Tooltip("Ants, queen and items never render darker than this, so the colony stays watchable in dark tunnels.")]
         [Range(0f, 1f)] public float spriteMinLight = 0.85f;
         [Tooltip("Stripes on cells ordered for mining.")]
@@ -403,14 +785,40 @@ namespace Antarium.Content
         [Tooltip("Brightness of items kept in storage relative to loose items (they sit on the back wall).")]
         [Range(0.3f, 1f)] public float stockBrightness = 0.8f;
 
+        [Header("Light and ore overlays (10.7)")]
+        [Tooltip("Light overlay: one flat colour per band of light, darkest first (at most 8).")]
+        public Color[] lightOverlayRamp =
+        {
+            new(0.07f, 0.07f, 0.2f), new(0.2f, 0.13f, 0.45f), new(0.47f, 0.16f, 0.5f), new(0.75f, 0.24f, 0.24f),
+            new(0.9f, 0.55f, 0.2f), new(0.98f, 0.86f, 0.35f), new(1f, 0.98f, 0.9f),
+        };
+        [Tooltip("Ore overlay: brightness of everything that is not a find (greyscale).")]
+        [Range(0f, 1f)] public float oreOverlayDim = 0.45f;
+        [Tooltip("Seconds between counts of the known finds for the ore overlay's legend.")]
+        [Min(0.1f)] public float oreSurveySeconds = 1f;
+
         [Header("Fluids")]
         [Tooltip("Water tint; alpha = how strongly it covers the wall behind it.")]
         public Color waterColor = new(0.22f, 0.48f, 0.9f, 0.62f);
         public Color waterSurfaceColor = new(0.62f, 0.85f, 1f, 1f);
+        [Tooltip("Foam where falling water lands (Milestone 11).")]
+        public Color waterFoamColor = new(0.88f, 0.96f, 1f, 1f);
+        [Tooltip("Falling water and lava are drawn as a stream: its width in cells per full cell of liquid (at least 2 art pixels, at most a cell).")]
+        [Min(0.1f)] public float fallWidth = 1.4f;
+        [Tooltip("Light streaks running down a stream: speed (art pixels per second), length (art pixels) and the share of it that is light.")]
+        public float fallSpeed = 30f;
+        [Min(1f)] public float fallStreakLength = 9f;
+        [Range(0f, 1f)] public float fallStreakShare = 0.3f;
         public Color lavaColor = new(0.95f, 0.36f, 0.08f, 1f);
         public Color lavaHotColor = new(1f, 0.85f, 0.35f, 1f);
         [Tooltip("Gas tint; alpha = cover at full density.")]
         public Color gasColor = new(0.62f, 0.85f, 0.3f, 0.55f);
+        [Tooltip("Smoke tint; alpha = cover at full density.")]
+        public Color smokeColor = new(0.42f, 0.4f, 0.4f, 0.6f);
+        [Tooltip("Burning cells: flames on their edge (and the hot flicker), embers inside.")]
+        public Color fireColor = new(1f, 0.5f, 0.12f, 1f);
+        public Color fireHotColor = new(1f, 0.9f, 0.45f, 1f);
+        public Color emberColor = new(0.55f, 0.12f, 0.04f, 1f);
 
         [Header("Combat")]
         public Color healthBarColor = new(0.45f, 0.95f, 0.4f);
@@ -429,6 +837,42 @@ namespace Antarium.Content
         [Range(0f, 1f)] public float pheromoneToolCover = 0.35f;
         [Tooltip("Marker over the ant you control.")]
         public Color possessedColor = new(1f, 0.85f, 0.3f);
+    }
+
+    /// <summary>Outline of a <see cref="SceneryLayer"/>.</summary>
+    public enum SceneryShape
+    {
+        Off = 0,
+        /// <summary>Jagged mountains with straight slopes, snow above <see cref="SceneryLayer.snowLine"/>.</summary>
+        Peaks = 1,
+        /// <summary>Rolling hills.</summary>
+        Hills = 2,
+        /// <summary>A treeline of spruces and round broadleaves on low hills.</summary>
+        Trees = 3,
+    }
+
+    /// <summary>One layer of the surface background (Milestone 11), drawn by the terrain shader in the sky pixels.</summary>
+    [Serializable]
+    public sealed class SceneryLayer
+    {
+        public SceneryShape shape = SceneryShape.Hills;
+        [ColorUsage(false)] public Color color = Color.grey;
+        [Tooltip("How much it fades into the horizon colour (distance).")]
+        [Range(0f, 1f)] public float haze = 0.3f;
+        [Tooltip("Extra haze toward its foot (mist in the valleys).")]
+        [Range(0f, 1f)] public float mist = 0.2f;
+        [Tooltip("How much it moves with the world when the camera pans (0 = fixed like the sky, 1 = like the ground).")]
+        [Range(0f, 1f)] public float parallax = 0.3f;
+        [Tooltip("Its lowest outline, in cells above the horizon (the average surface).")]
+        public float foot;
+        [Tooltip("How far its outline rises above the foot (cells).")]
+        [Min(0f)] public float height = 8f;
+        [Tooltip("Width of its peaks or hills (cells).")]
+        [Min(1f)] public float width = 20f;
+        [Tooltip("Peaks: snow above this many cells over the horizon (0 = none).")]
+        [Min(0f)] public float snowLine;
+        [Tooltip("Trees: art pixels between trees.")]
+        [Min(3f)] public float treeSpacing = 6f;
     }
 
     [Serializable]

@@ -16,6 +16,8 @@ namespace Antarium.Sim
         public float PrincessFactor;
         /// <summary>Genetic Memory gain multiplier (traits, world modifiers).</summary>
         public float Gain;
+        /// <summary>1, or 1 + the engine bonus when the colony's Ancient Engine runs (10.5).</summary>
+        public float EngineFactor;
         /// <summary>Genetic Memory the flight earns.</summary>
         public int Memory;
 
@@ -37,13 +39,91 @@ namespace Antarium.Sim
         /// <summary>How this colony's world modifiers changed world generation.</summary>
         public WorldTweaks Tweaks { get; private set; }
         int[] _worldModifiers = Array.Empty<int>();
-        bool _veinInstinct;
+        /// <summary>The bloodline has the Vein Instinct trait: every colony knows it as if researched (Milestone 11).</summary>
+        bool _veinTrait;
+
+        /// <summary>Vein Instinct is known (research, or the genetic trait) in this colony.</summary>
+        public bool VeinInstinctKnown => _veinTrait || Colony.Has(ResearchFeature.VeinInstinct);
+
+        /// <summary>Vein Instinct is known and the player lets it order ore (Mine tool row).</summary>
+        public bool VeinInstinctActive => VeinInstinctKnown && Colony.AutoMarkOres;
+
+        /// <summary>Respecs done in this colony (the first <see cref="PrestigeConfig.freeRespecs"/> are free; saved).</summary>
+        public int Respecs { get; internal set; }
+
+        /// <summary>Name of a biome in this world (a biome variant renames it).</summary>
+        public string BiomeName(int biome) =>
+            Tweaks.VariantOf(biome)?.Name ?? (biome >= 0 && biome < Content.Biomes.Length ? Content.Biomes[biome].Def.DisplayName : "");
 
         /// <summary>Biome index at a depth in this world (biome thickness follows the world modifiers).</summary>
         public int BiomeAtDepth(int depth) => Content.BiomeAtDepth(depth, Tweaks.BiomeScale);
 
         /// <summary>Buys a level of genetic trait <paramref name="trait"/> (index into <see cref="ContentDB.Genetics"/>).</summary>
         public void EnqueueGenetic(int trait) => _pending.Add(new Command(CommandKind.Genetic, trait, default, default, 0));
+
+        /// <summary>Unlearns every genetic trait for a refund (<see cref="RespecPrice"/>).</summary>
+        public void EnqueueRespec() => _pending.Add(new Command(CommandKind.Respec, 0, default, default, 0));
+
+        /// <summary>
+        /// What a respec would give back now: every point spent, less the fee once this colony's free respecs are used up
+        /// (rounded up, at least 1). Nothing spent = (0, 0).
+        /// </summary>
+        public (int refund, int fee) RespecPrice()
+        {
+            int spent = Legacy.Spent;
+            if (spent <= 0) return (0, 0);
+            var cfg = Config.prestige;
+            if (Respecs < cfg.freeRespecs) return (spent, 0);
+            int fee = math.clamp((int)math.ceil(spent * cfg.respecFee - 1e-4f), 1, spent);
+            return (spent - fee, fee);
+        }
+
+        /// <summary>
+        /// Every trait is unlearned: its colony stats stop at once, the world modifiers and buildings it unlocked lock again (the
+        /// ones already built stay), research it inherited stays done in this colony (later colonies have it only if it is bought
+        /// again), starting bonuses already given stay. The memory comes back less the fee.
+        /// </summary>
+        void Respec()
+        {
+            var (refund, fee) = RespecPrice();
+            if (refund <= 0 && fee <= 0) return;
+            var mods = Colony.Mods;
+            for (int g = 0; g < Legacy.Levels.Length; g++)
+            {
+                int level = Legacy.Levels[g];
+                if (level == 0) continue;
+                foreach (var e in Content.Genetics[g].Effects)
+                    if (e.kind == GeneticEffectKind.Stat) mods.Add(e.stat, -e.value * level);
+            }
+            Legacy.Reset(refund);
+            Respecs++;
+            RelockLegacyBuildings();
+            RefreshLegacyFlags();
+            Colony.Inventory.RefreshCapacity();
+            Colony.Inventory.AcceptanceChanged = true;
+            Events.Publish(new RespecEvent(refund, fee));
+        }
+
+        /// <summary>Buildings only a genetic trait unlocks: unlocked while some bought trait names them.</summary>
+        void ApplyLegacyBuildings()
+        {
+            for (int g = 0; g < Legacy.Levels.Length; g++)
+            {
+                if (Legacy.Levels[g] == 0) continue;
+                var data = Content.Genetics[g];
+                for (int k = 0; k < data.Effects.Length; k++)
+                    if (data.Effects[k].kind == GeneticEffectKind.UnlockBuilding) Colony.BuildingUnlocked[data.Targets[k]] = true;
+            }
+        }
+
+        void RelockLegacyBuildings()
+        {
+            foreach (var data in Content.Genetics)
+                for (int k = 0; k < data.Effects.Length; k++)
+                    if (data.Effects[k].kind == GeneticEffectKind.UnlockBuilding && !Research.UnlocksBuilding(data.Targets[k]))
+                        Colony.BuildingUnlocked[data.Targets[k]] = false;
+            ApplyLegacyBuildings();
+        }
 
         void InitPrestige(Legacy legacy, IReadOnlyList<int> modifiers)
         {
@@ -70,13 +150,14 @@ namespace Antarium.Sim
             foreach (int m in _worldModifiers)
                 foreach (var s in Content.Modifiers[m].stats)
                     mods.Add(s.stat, s.value);
+            ApplyLegacyBuildings();
             RefreshLegacyFlags();
             Colony.Inventory.RefreshCapacity();
         }
 
         void RefreshLegacyFlags()
         {
-            _veinInstinct = Legacy.Has(GeneticEffectKind.VeinInstinct);
+            _veinTrait = Legacy.Has(GeneticEffectKind.VeinInstinct);
             Colony.PrincessCap = Legacy.MaxPrincesses(Config.prestige);
         }
 
@@ -128,6 +209,7 @@ namespace Antarium.Sim
                     Research.Apply(data.Targets[k]);
                     Events.Publish(new ResearchCompletedEvent(data.Targets[k]));
                 }
+                else if (e.kind == GeneticEffectKind.UnlockBuilding) Colony.BuildingUnlocked[data.Targets[k]] = true;
             }
             RefreshLegacyFlags();
             Colony.Inventory.RefreshCapacity();
@@ -150,11 +232,12 @@ namespace Antarium.Sim
                 MaxPrincesses = Colony.PrincessCap,
                 MinPrincesses = math.max(1, cfg.minPrincesses),
                 Gain = Colony.Mods.Mult(StatKind.GeneticGain),
+                EngineFactor = Buildings.EngineRunning ? 1f + math.max(0f, cfg.engineMemoryBonus) : 1f,
             };
             e.Base = math.pow(math.max(0f, e.Score) / math.max(0.01f, cfg.scoreDivisor), math.clamp(cfg.scoreExponent, 0.1f, 1f));
             int counted = math.min(e.Princesses, e.MaxPrincesses);
             e.PrincessFactor = counted <= 0 ? 0f : 1f + cfg.princessBonus * (counted - 1);
-            e.Memory = e.EnoughPrincesses ? (int)math.floor(e.Base * e.PrincessFactor * math.max(0f, e.Gain) + 1e-4f) : 0;
+            e.Memory = e.EnoughPrincesses ? (int)math.floor(e.Base * e.PrincessFactor * math.max(0f, e.Gain) * e.EngineFactor + 1e-4f) : 0;
             return e;
         }
 
@@ -179,6 +262,53 @@ namespace Antarium.Sim
             next.BestDepth = math.max(next.BestDepth, Colony.Stats.MaxDepth);
             next.BestFlight = math.max(next.BestFlight, earned);
             return true;
+        }
+
+        /// <summary>The Queen's Throne aura this tick (tests, the hover text): <see cref="AntTick.AuraFactor"/> of a cell.</summary>
+        public float ThroneWorkFactor(int2 cell)
+        {
+            var tick = new AntTick();
+            ThroneAura(ref tick);
+            return AntTick.AuraFactor(tick, cell);
+        }
+
+        /// <summary>Puts the standing throne's aura into <paramref name="tick"/> (nothing without a standing throne).</summary>
+        void ThroneAura(ref AntTick tick)
+        {
+            int id = Buildings.Throne;
+            if (id < 0 || !Buildings.Get(id).IsActive) return;
+            var throne = Content.Buildings[Buildings.Get(id).Def].Def;
+            if (throne.auraRadius <= 0f || throne.auraWork <= 0f) return;
+            tick.AuraCenter = Buildings.ThroneCenter(id);
+            tick.AuraRadiusSq = throne.auraRadius * throne.auraRadius;
+            tick.AuraWork = throne.auraWork;
+        }
+
+        /// <summary>The throne's colony stats are in <see cref="Colony.Mods"/> (it stood at the last check).</summary>
+        bool _throneApplied;
+        int _throneStatsDef = -1;
+
+        /// <summary>
+        /// The Queen's Throne: its colony stats count while it stands (added or taken away when that changes), and ants within its
+        /// aura work faster.
+        /// </summary>
+        void UpdateThrone(ref AntTick tick)
+        {
+            int id = Buildings.Throne;
+            bool standing = id >= 0 && Buildings.Get(id).IsActive;
+            if (standing != _throneApplied)
+            {
+                int def = standing ? Buildings.Get(id).Def : _throneStatsDef;
+                if (def >= 0)
+                {
+                    float sign = standing ? 1f : -1f;
+                    foreach (var s in Content.Buildings[def].Def.stats) Colony.Mods.Add(s.stat, s.value * sign);
+                    Colony.Inventory.RefreshCapacity();
+                }
+                _throneApplied = standing;
+                _throneStatsDef = standing ? def : -1;
+            }
+            ThroneAura(ref tick);
         }
 
         /// <summary>Loading: the saved legacy and world modifiers replace the empty ones and their effects apply.</summary>

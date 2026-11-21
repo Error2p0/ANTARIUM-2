@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: ancient_masonry
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: ancient_masonry
+  displayName: Ancient Masonry
+  description: 'What the old builders knew: ants build 30% faster, gates and traps are 25% stronger. Needs 3 lore fragments.'
+  treePosition: {x: 6, y: 0}
+  knowledgeCost: 120
+  cost:
+  - item: {fileID: 11400000, guid: ba4f6f875c8090c4fb77f24247e2a242, type: 2}
+    count: 4
+  foodCost: 0
+  loreRequired: 3
+  prerequisites:
+  - {fileID: 11400000, guid: 0f5ae983bbe13ce45b4a7eaa82f78298, type: 2}
+  effects:
+  - kind: 0
+    stat: 3
+    value: 0.3
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 0
+  - kind: 0
+    stat: 19
+    value: 0.25
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 0

@@ -80,6 +80,8 @@ These play in waves while you play (a few minutes of music, then quiet), so they
 | **Nuptial Flight** (princesses take off) | `instrumental emotional game cue, soaring strings, kalimba arpeggios, warm wordless choir pad, triumphant and bittersweet, rising, 80 bpm, A major` | The flight lasts ~4.5 s, then the genetic tree opens: keep the first 15–30 s and let it ring out under the tree. |
 | **Genetic Memory tree** | `instrumental contemplative game menu music, music box, soft synth pad, gentle harp arpeggios, nostalgic, timeless, 68 bpm, D major` | Loops quietly while the panel is open. |
 | **Deep discovery** (first time in a new biome) | `instrumental short game discovery cue, swelling pad, glass bells, single low gong, sense of awe, 70 bpm, minor` | Trim to 6–10 s. |
+| **Lore found** (a fragment of the ruins' story, 10.5) | `instrumental short mysterious game cue, ancient lyre, soft glass harmonica, distant wordless choir, reverent, 66 bpm, D minor` | Trim to 4–8 s; it plays over the music. |
+| **The Engine wakes** (the Ancient Engine restored, 10.5) | `instrumental epic short game cue, deep resonant machine hum rising into a choir and crystal bells, ancient power awakening, awe, 72 bpm, D minor to D major` | Trim to 10–20 s; plays once. |
 
 **Structure (raid and Genetic Memory, loopable):**
 ```
@@ -140,6 +142,9 @@ Suno makes songs, not sound effects, so generate a short cue and **cut out the b
 | `EventStart` | `instrumental short alert jingle, glass bells, friendly, attention` |
 | `EventLost` | `instrumental short sad cue, descending felt piano notes, soft` |
 | `Flight` | `instrumental short soaring cue, rising strings and wing-like flutter, hopeful` |
+| `LoreFound` | `instrumental short ancient chime, glass bells, soft lyre pluck, mysterious` |
+| `EngineStage` | `instrumental short heavy mechanical clank, iron gear turning, low gong` |
+| `EngineAwakened` | `instrumental short rising machine hum into a bright crystal chord, awe` |
 
 **Structure:**
 ```
@@ -172,6 +177,8 @@ Suno makes songs, not sound effects, so generate a short cue and **cut out the b
 | `music_genetics` | While the genetic tree is open (loops) |
 | `music_flight` | One cue when the princesses take off |
 | `music_discovery` | One cue the first time the colony digs into a deeper biome |
+| `music_lore` | One cue when a lore fragment of the ruins is found (10.5) |
+| `music_engine` | One cue when the Ancient Engine wakes (10.5) |
 | `amb_<biome id>` / `amb_surface` | The ambience bed of that biome (loops) |
 | `sting_<SoundCue>` | Replaces that sound, e.g. `sting_RaidWarning`, `sting_Achievement` (names as in the stinger table) |
 

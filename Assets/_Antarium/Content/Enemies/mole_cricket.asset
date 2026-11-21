@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b491f796b38c2b544a1f7b2a2bda34bf, type: 3}
+  m_Name: mole_cricket
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.EnemyDef
+  id: mole_cricket
+  displayName: Mole Cricket
+  description: A big burrower that tunnels toward the nest through soft ground (dirt, clay, sand, earth walls); it goes around rock. Once it breaks into your tunnels it hunts ants.
+  behavior: 4
+  health: 140
+  damage: 12
+  attackInterval: 1.2
+  speed: 2
+  aggroRadius: 18
+  lavaImmune: 0
+  swims: 0
+  gasImmune: 0
+  foodPerSecond: 1
+  carryFood: 10
+  carryItems: 3
+  stealSeconds: 1
+  digPower: 1
+  maxDigHardness: 2
+  drops:
+  - item: {fileID: 11400000, guid: 46e585dd1cd0c7f488b78039ca242271, type: 2}
+    count: 3
+  knowledge: 12
+  art: 8

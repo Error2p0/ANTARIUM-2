@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_waterworks
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_waterworks
+  displayName: Pumps, wheels and farms
+  order: 440
+  category: World
+  icon: building_water_wheel
+  body: 'Water never rises by itself: a Pump moves water or gas from behind it out of its spout. Chain pumps to lift water higher, drain a flooded shaft or blow gas out.
+
+
+    A Water Wheel turns while water pours through it and speeds up the machines around it. Put it under a waterfall or a pump''s outlet.
+
+
+    Fungus Gardens and Aphid Ranches with water next to them make more. A Smelter touching lava, magma rock or fire works faster and needs no coal.'
+  reveal: 2
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 11400000, guid: b210b69a701da4947851cbcad9f670cf, type: 2}

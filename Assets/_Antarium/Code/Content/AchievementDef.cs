@@ -35,6 +35,22 @@ namespace Antarium.Content
         TraitLevels,
         /// <summary>Genetic Memory earned over the whole bloodline.</summary>
         MemoryEarned,
+        /// <summary>Lore fragments found in one colony (10.5).</summary>
+        LoreFound,
+        /// <summary>The Ancient Engine restored and running in one colony (amount 1).</summary>
+        EngineRestored,
+        /// <summary>Raids of rival ants beaten without losing an item, in one colony.</summary>
+        RivalsRepelled,
+        /// <summary>Shooting stars the player clicked in one colony (Milestone 11).</summary>
+        ShootingStars,
+        /// <summary>The Elder Tree found in one colony (amount 1; Milestone 11).</summary>
+        ElderTreeFound,
+        /// <summary>Giant earthworms slain in one colony (Milestone 11).</summary>
+        WormsSlain,
+        /// <summary>Starfall nights in one colony (Milestone 11).</summary>
+        StarfallNights,
+        /// <summary>Wild food brought into the stock in one colony: every food item with its own look on the ground (berries, apples, toadstools, mushrooms; Milestone 11).</summary>
+        WildFood,
     }
 
     /// <summary>

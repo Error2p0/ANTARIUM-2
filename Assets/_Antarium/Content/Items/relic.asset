@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Relic
   color: {r: 0.8862745, g: 0.7764706, b: 0.41568628, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 0.23921569, g: 0.8627451, b: 0.5176471, a: 1}

@@ -304,6 +304,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "BrushSize",
+                    "type": "Button",
+                    "id": "b7e2c1d4-5a3f-4e8b-9c61-2f0d8a4e7b13",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "PrevBuilding",
                     "type": "Button",
                     "id": "2869050a-dac8-4bf6-8232-670333b90632",
@@ -349,6 +358,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Ability5",
+                    "type": "Button",
+                    "id": "6ed5617f-b206-42aa-9bf4-45d6870768ad",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "ToolPheromone",
                     "type": "Button",
                     "id": "c4a19e2f-6b7d-4e83-a5f1-90d2c3b4e5a6",
@@ -370,6 +388,15 @@
                     "name": "Interact",
                     "type": "Button",
                     "id": "3f8d2b61-9c4e-4a7f-b2d5-6e1a8c0f4b97",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Configure",
+                    "type": "Button",
+                    "id": "5efac6ed-0ee3-49cf-a52a-2374ec09b142",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -489,6 +516,17 @@
                 },
                 {
                     "name": "",
+                    "id": "4c9d2e7a-1b6f-4a35-8e02-7d5b3f9c6a28",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BrushSize",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "689b89c5-6bc0-4a67-9f36-e45bbb7f6fa0",
                     "path": "<Keyboard>/q",
                     "interactions": "",
@@ -544,6 +582,17 @@
                 },
                 {
                     "name": "",
+                    "id": "0e1ab0d4-d089-4cc6-8aa2-602397716b89",
+                    "path": "<Keyboard>/b",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Ability5",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "8d1f3b5a-7c9e-4d2b-a4f6-1e3c5a7b9d20",
                     "path": "<Keyboard>/5",
                     "interactions": "",
@@ -594,6 +643,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5409e7c4-b1cc-4277-82bb-8274f69a5faa",
+                    "path": "<Keyboard>/i",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Configure",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -781,6 +841,24 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "LightOverlay",
+                    "type": "Button",
+                    "id": "80353870-e8db-442e-9c21-190caa30bf28",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "OreOverlay",
+                    "type": "Button",
+                    "id": "c7f0637b-3c69-4ef7-9cf2-e0ed55e02dd1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Research",
                     "type": "Button",
                     "id": "17940a86-bfb3-4d6e-8e98-6436f0de7011",
@@ -811,6 +889,33 @@
                     "name": "Flight",
                     "type": "Button",
                     "id": "a4e7c2d9-8b3f-4c16-b2a5-5e9d1f6c3a87",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Queen",
+                    "type": "Button",
+                    "id": "6e8b0e3c-379f-4a71-9fc0-769259df63e1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Codex",
+                    "type": "Button",
+                    "id": "762c68b1-f531-4b1a-aa51-921a719f4745",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Priorities",
+                    "type": "Button",
+                    "id": "bb1c5ea9-de0b-445e-8f18-79d50779e40c",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -870,6 +975,61 @@
                     "processors": "",
                     "groups": "",
                     "action": "Flight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7770ca8b-f2f3-48d4-b2bf-1f9bb4d31633",
+                    "path": "<Keyboard>/h",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Queen",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "208d88df-5767-4fce-beec-9f6067e555ab",
+                    "path": "<Keyboard>/p",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Priorities",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7c47dfab-5f1c-49a7-96b1-5f8384d8dd6a",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Codex",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bb606549-efcf-4fb3-9af5-c1ce4def4562",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LightOverlay",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7f4e58e3-515c-4660-beb2-c9f847b9b313",
+                    "path": "<Keyboard>/m",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OreOverlay",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -26,8 +26,8 @@ namespace Antarium.Tests
         [Test]
         public void Content_BakesTraitsAndModifiers()
         {
-            Assert.AreEqual(8, C.DB.Genetics.Length);
-            Assert.AreEqual(3, C.DB.Modifiers.Length);
+            Assert.AreEqual(9, C.DB.Genetics.Length);
+            Assert.AreEqual(4, C.DB.Modifiers.Length);
             Assert.AreEqual(C.ModRich, C.DB.Modifiers[0], "modifiers are in flight-screen order");
             Assert.IsTrue(C.DB.ModifierStartsLocked[Mod(C.ModHard)], "a modifier named by a trait starts locked");
             Assert.IsFalse(C.DB.ModifierStartsLocked[Mod(C.ModRich)]);

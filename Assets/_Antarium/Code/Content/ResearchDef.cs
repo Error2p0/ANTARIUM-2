@@ -58,6 +58,8 @@ namespace Antarium.Content
         RaidFrequency,
         /// <summary>Multiplier: creatures living in each cave.</summary>
         CreatureCount,
+        /// <summary>Multiplier: hit points ants regain per second (10.4).</summary>
+        AntRegen,
     }
 
     public enum ResearchEffectKind : byte
@@ -68,6 +70,22 @@ namespace Antarium.Content
         UnlockAbility,
         /// <summary>The queen may lay eggs of <see cref="ResearchEffect.caste"/>.</summary>
         UnlockCaste,
+        /// <summary>Turns on <see cref="ResearchEffect.feature"/> for the colony (Milestone 11).</summary>
+        Feature,
+    }
+
+    /// <summary>Colony abilities research switches on that are neither a stat nor an unlock (Milestone 11).</summary>
+    public enum ResearchFeature : byte
+    {
+        /// <summary>A light follows the pointer and lights the rock around it, like a glow ant's but wider.</summary>
+        CursorLight,
+        /// <summary>Ore next to every dug-out cell is ordered for mining (the player can switch it off).</summary>
+        VeinInstinct,
+    }
+
+    public static class ResearchFeatures
+    {
+        public const int Count = 2;
     }
 
     [Serializable]
@@ -79,11 +97,13 @@ namespace Antarium.Content
         public BuildingDef building;
         public AbilityDef ability;
         public AntCaste caste;
+        public ResearchFeature feature;
 
         public static ResearchEffect Add(StatKind stat, float value) => new() { kind = ResearchEffectKind.Stat, stat = stat, value = value };
         public static ResearchEffect Unlock(BuildingDef building) => new() { kind = ResearchEffectKind.UnlockBuilding, building = building };
         public static ResearchEffect Unlock(AbilityDef ability) => new() { kind = ResearchEffectKind.UnlockAbility, ability = ability };
         public static ResearchEffect Unlock(AntCaste caste) => new() { kind = ResearchEffectKind.UnlockCaste, caste = caste };
+        public static ResearchEffect Enable(ResearchFeature feature) => new() { kind = ResearchEffectKind.Feature, feature = feature };
     }
 
     /// <summary>
@@ -103,6 +123,8 @@ namespace Antarium.Content
         [Min(0f)] public float foodCost;
 
         [Header("Tree")]
+        [Tooltip("Lore fragments (Codex) the colony must have found first (10.5: the ancient tier). 0 = none.")]
+        [Min(0)] public int loreRequired;
         [Tooltip("All of these must be researched first.")]
         public List<ResearchDef> prerequisites = new();
         public List<ResearchEffect> effects = new();

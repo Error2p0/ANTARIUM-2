@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_layers
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_layers
+  displayName: The deep layers
+  order: 420
+  category: World
+  icon: item_iron_ore
+  body: 'The world changes layer by layer as you dig down, starting with the topsoil, the clay and the stone. Every layer has its own rock, finds and dangers, and its rock is harder to dig.
+
+
+    Point at a cell to see what it is; the ore overlay ({Ores}) shows every find you know of.
+
+
+    Hauling from deep down means long walks. Lifts and belts bring finds up a shaft, and storage near the digging saves trips.'
+  reveal: 1
+  revealBiome: {fileID: 11400000, guid: 6dd87aa3e609aa848bd80e10513cee77, type: 2}
+  revealResearch: {fileID: 0}

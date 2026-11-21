@@ -21,9 +21,14 @@ namespace Antarium.Gameplay
         readonly UIDocument _document;
         readonly ContentDB _content;
         readonly RenderConfig _render;
+        readonly ArtLibrary _art;
         readonly VisualElement _resources;
         readonly VisualElement _palette;
         readonly Label _alert, _info, _toast;
+        readonly VisualElement _infoBox, _infoIcon;
+        string _infoIconName;
+        /// <summary>The simulation of the last <see cref="Update"/>, for tooltips that show its state.</summary>
+        Simulation _sim;
         readonly Button[] _toolButtons = new Button[5];
         readonly VisualElement _hudRoot;
         readonly GameInput _input;
@@ -32,10 +37,24 @@ namespace Antarium.Gameplay
         int _keysVersion = -1;
         Button _hovered;
         readonly VisualElement _scentPalette;
+        /// <summary>Above the toolbar for the painting tools: brush size 1 / 2 / 3, and the Dig tool's strength (Milestone 11).</summary>
+        readonly VisualElement _toolOptions, _staminaBox, _staminaFill;
+        /// <summary>Mine tool row: Vein Instinct on / off (Milestone 11; shown once it is known).</summary>
+        readonly Button _veinToggle;
+        ToolMode _brushMode;
+        int _veinShown = -1;
+        readonly Button[] _brushButtons = new Button[BrushSizes.Max];
+        int _shownStamina = -1;
+        bool _shownExhausted;
         readonly Button[] _scentButtons = new Button[Pheromones.Count];
-        readonly Button _possessButton, _castesButton;
+        readonly Button _possessButton, _castesButton, _queenButton, _jobsButton, _codexButton;
+        float _masterToastCooldown;
         readonly Button _overlayButton;
         readonly Label _food, _foodRate, _ants, _eggs, _storage;
+        readonly Label _clock, _weather;
+        readonly VisualElement _clockEntry, _clockSwatch, _clockIcon;
+        readonly Texture2D _sunIcon, _moonIcon;
+        bool _clockShowsDay = true;
         readonly VisualElement _storageEntry;
         readonly VisualElement[] _itemEntries;
         readonly Label[] _itemLabels, _itemRates;
@@ -52,9 +71,24 @@ namespace Antarium.Gameplay
         readonly bool[] _raisesPrincesses;
         /// <summary>Per building: name of the research that unlocks it (null if it starts unlocked).</summary>
         readonly string[] _unlockedBy;
+        /// <summary>Per building: name of the genetic trait that unlocks it when no research does (10.6: the Queen's Throne), else null.</summary>
+        readonly string[] _unlockedByTrait;
         float _caveInToastCooldown;
+        readonly VisualElement _contracts;
+        /// <summary>The HUD element the tutorial points at (blinks), or null.</summary>
+        VisualElement _glow;
+        float _glowTimer;
 
         public CastesPanel Castes { get; }
+        /// <summary>The Queen panel (H): stats and evolutions (10.4).</summary>
+        public QueenPanel Queen { get; }
+        /// <summary>Job priorities (P, 10.4); null if the layout has no "priorities" element.</summary>
+        public PrioritiesPanel Priorities { get; }
+        /// <summary>The Codex (L): the ruins' story (10.5).</summary>
+        public CodexPanel Codex { get; }
+        public ConfigurePanel Configure { get; }
+        /// <summary>An item in the resource bar was clicked (opens the stock view).</summary>
+        public event Action StockClicked;
         public ContractsPanel Contracts { get; }
         public EventFeed EventFeed { get; }
         public AbilityBar Abilities { get; }
@@ -66,11 +100,19 @@ namespace Antarium.Gameplay
         public SettingsDialog Settings { get; }
         public AchievementsDialog AchievementsPanel { get; }
         public HelpDialog Help { get; }
+        /// <summary>The first-colony tutorial's card (top left); null if the layout has no "tutorial" element.</summary>
+        public TutorialPanel TutorialCard { get; }
         public TitleScreen Title { get; }
+        /// <summary>The opening intro over the title screen when the game is launched.</summary>
+        public IntroScreen Intro { get; }
         /// <summary>A button was clicked / hovered, a dialog opened or closed, a toast appeared (for interface sounds).</summary>
         public event Action UiClicked, UiHovered, ModalOpened, ModalClosed, ToastShown;
+        /// <summary>Hover help of HUD elements (10.7).</summary>
+        public Tooltips Tips { get; } = new();
         /// <summary>Help text of the HUD element under the pointer, or null.</summary>
-        public string HoverTip { get; private set; }
+        public string HoverTip => Tips.Text;
+        /// <summary>Icon of <see cref="HoverTip"/> (art name under <c>UI/Icons/</c>), or null.</summary>
+        public string HoverIcon => Tips.Icon;
         public event Action ResearchToggled;
         public event Action GeneticsToggled;
         public event Action FlightToggled;
@@ -84,24 +126,34 @@ namespace Antarium.Gameplay
         public event Action<PheromoneKind> ScentClicked;
         public event Action PossessClicked;
         public event Action CastesClicked;
+        public event Action QueenToggled;
+        public event Action CodexToggled;
+        public event Action PrioritiesClicked;
 
-        public HudController(UIDocument document, ContentDB content, RenderConfig render, float autosaveSeconds, GameInput input)
+        public HudController(UIDocument document, ContentDB content, RenderConfig render, ArtLibrary art, float autosaveSeconds, GameInput input)
         {
             _document = document;
             _content = content;
             _render = render;
+            _art = art;
             _input = input;
+            Keys.Use(input);
             if (document == null || document.rootVisualElement == null) return;
 
             var root = document.rootVisualElement;
             root.pickingMode = PickingMode.Ignore;
             _resources = root.Q<VisualElement>("resources");
             _alert = root.Q<Label>("alert");
-            _info = root.Q<Label>("info");
+            _infoBox = root.Q<VisualElement>("info");
+            _infoIcon = root.Q<VisualElement>("info-icon");
+            _info = root.Q<Label>("info-text");
             _toast = root.Q<Label>("toast");
             _palette = root.Q<VisualElement>("build-palette");
             _scentPalette = root.Q<VisualElement>("scent-palette");
             var castes = root.Q<VisualElement>("castes");
+            var priorities = root.Q<VisualElement>("priorities");
+            var configure = root.Q<VisualElement>("configure");
+            var tutorial = root.Q<VisualElement>("tutorial");
             DebugLabel = root.Q<Label>("debug");
             var toolbar = root.Q<VisualElement>("toolbar");
             var contracts = root.Q<VisualElement>("contracts");
@@ -110,21 +162,44 @@ namespace Antarium.Gameplay
             _modal = root.Q<VisualElement>("modal");
             _hudRoot = root.Q<VisualElement>("hud");
             if (_resources == null || toolbar == null || _palette == null || _info == null || _toast == null
-                || contracts == null || events == null || abilities == null || _modal == null || _scentPalette == null || castes == null)
+                || contracts == null || events == null || abilities == null || _modal == null || _scentPalette == null || castes == null
+                || configure == null)
             {
                 Debug.LogError("HUD layout is missing elements; assign Hud.uxml to the UIDocument.");
                 return;
             }
 
-            _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out _, out _foodRate);
-            _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out _, out _);
-            _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out _, out _);
-            _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _);
-            _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate);
+            _clock = AddEntry(new Color(1f, 0.85f, 0.35f), out _clockEntry, out _weather, "sun");
+            _clockSwatch = _clockEntry.Q(className: "resource__swatch");
+            _clockIcon = _clockEntry.Q(className: "resource__icon");
+            if (art != null)
+            {
+                art.TryGet("UI/Icons/sun", out _sunIcon);
+                art.TryGet("UI/Icons/moon", out _moonIcon);
+            }
+            Tip(_clockEntry, "Day and night: seeds and leaves only grow by day, birds hunt by day and spiders come out at night. " +
+                             "Rain floods the tunnels near the surface for a while; a drought halves forage.");
+            _food = AddEntry(new Color(0.55f, 0.85f, 0.35f), out var foodEntry, out _foodRate, "food");
+            Tip(foodEntry, FoodTip, "food");
+            _ants = AddEntry(new Color(0.65f, 0.3f, 0.2f), out var antsEntry, out _, "ants");
+            Tip(antsEntry, AntsTip, "ants");
+            _eggs = AddEntry(new Color(0.94f, 0.9f, 0.8f), out var eggsEntry, out _, "eggs");
+            Tip(eggsEntry, "Eggs: the queen lays them while there is food and room (egg slots), and each hatches into an ant. " +
+                           "Nurses carry eggs to a Nursery, where they hatch faster.", "eggs");
+            _storage = AddEntry(new Color(0.3f, 0.75f, 0.85f), out _storageEntry, out _, "storage");
+            Tip(_storageEntry, () => $"Storage: items stored / room for them. Paint storage zones (Storage tool, {Keys.Storage}) or build chests for more room. " +
+                                     "Click to choose how much of each item the colony keeps for building.", "storage");
+            _knowledge = AddEntry(new Color(0.8f, 0.74f, 1f), out var knowledgeEntry, out _knowledgeRate, "knowledge");
+            Tip(knowledgeEntry, () => $"Knowledge: spend it on research ({Keys.Research}). It comes from studying finds in an Archive, " +
+                                      "from contracts and events, and from a Crystal Resonator or the Ancient Engine.", "knowledge");
             knowledgeEntry.AddToClassList("resource--knowledge");
-            _princesses = AddEntry(new Color(1f, 0.75f, 0.4f), out _princessEntry, out _);
+            _princesses = AddEntry(new Color(1f, 0.75f, 0.4f), out _princessEntry, out _, "princesses");
             _princessEntry.AddToClassList("hidden");
-            _memory = AddEntry(new Color(1f, 0.85f, 0.45f), out _memoryEntry, out _);
+            Tip(_princessEntry, () => $"Princesses: raised in a Princess Chamber. Each one that flies raises the Genetic Memory of the Nuptial Flight ({Keys.Flight}).",
+                "princesses");
+            _memory = AddEntry(new Color(1f, 0.85f, 0.45f), out _memoryEntry, out _, "memory");
+            Tip(_memoryEntry, () => $"Genetic Memory: your bloodline's own currency, earned by Nuptial Flights. Spend it on traits in the genetic tree ({Keys.Genetics}).",
+                "memory");
             _memoryEntry.AddToClassList("resource--memory");
             _memoryEntry.AddToClassList("hidden");
             _itemEntries = new VisualElement[content.Items.Length];
@@ -133,35 +208,103 @@ namespace Antarium.Gameplay
             for (int i = 0; i < content.Items.Length; i++)
             {
                 if (content.Items[i].IsFood) continue;
-                _itemLabels[i] = AddEntry(content.Items[i].color, out _itemEntries[i], out _itemRates[i]);
+                _itemLabels[i] = AddEntry(content.Items[i].color, out _itemEntries[i], out _itemRates[i], "item_" + content.Items[i].Id);
                 _itemEntries[i].AddToClassList("hidden");
+                _itemEntries[i].AddToClassList("resource--clickable");
+                _itemEntries[i].RegisterCallback<ClickEvent>(_ => StockClicked?.Invoke());
+                ushort item = (ushort)i;
+                Tip(_itemEntries[i], () => ItemTip(item), "item_" + content.Items[i].Id);
             }
+            _storageEntry.AddToClassList("resource--clickable");
+            _storageEntry.RegisterCallback<ClickEvent>(_ => StockClicked?.Invoke());
 
-            AddTool(toolbar, ToolMode.Dig, "Dig", input.ToolDig, "Dig: hold the mouse on rock to dig it out yourself. Combos dig faster.");
-            AddTool(toolbar, ToolMode.Mine, "Mine", input.ToolMine, "Mine orders: paint rock for workers to dig. Right drag erases.");
-            AddTool(toolbar, ToolMode.Storage, "Storage", input.ToolStorage, "Storage zones: paint dug-out cells where workers store items.");
-            AddTool(toolbar, ToolMode.Build, "Build", input.ToolBuild, "Build: belts, lifts, machines and defenses. Q / E pick, R rotates.");
-            AddTool(toolbar, ToolMode.Pheromone, "Scent", input.ToolPheromone, "Scent: paint pheromones that steer the ants. They fade unless an emitter keeps them.");
-            _possessButton = Toggle(toolbar, "Possess", () => PossessClicked?.Invoke(), input.Possess, "Possess: take control of an ant and dig, carry and fight yourself.");
-            _castesButton = Toggle(toolbar, "Castes", () => CastesClicked?.Invoke(), input.Castes, "Castes: choose which kinds of ants the queen lays.");
+            AddTool(toolbar, ToolMode.Dig, "Dig", input.ToolDig, "tool_dig", "Dig: hold the mouse on rock to dig it out yourself. Combos dig faster.");
+            AddTool(toolbar, ToolMode.Mine, "Mine", input.ToolMine, "tool_mine", "Mine orders: paint rock for workers to dig. Right drag erases.");
+            AddTool(toolbar, ToolMode.Storage, "Storage", input.ToolStorage, "storage", "Storage zones: paint dug-out cells where workers store items.");
+            AddTool(toolbar, ToolMode.Build, "Build", input.ToolBuild, "tool_build", null);
+            Tip(_toolButtons[(int)ToolMode.Build], () => $"Build: belts, lifts, machines and defenses. {Keys.Previous} / {Keys.Next} pick, {Keys.Rotate} rotates.", "tool_build");
+            AddTool(toolbar, ToolMode.Pheromone, "Scent", input.ToolPheromone, "tool_scent", "Scent: paint pheromones that steer the ants. They fade unless an emitter keeps them.");
+            _possessButton = Toggle(toolbar, "Possess", () => PossessClicked?.Invoke(), input.Possess, "tool_possess", "Possess: take control of an ant and dig, carry and fight yourself.");
+            _castesButton = Toggle(toolbar, "Castes", () => CastesClicked?.Invoke(), input.Castes, "tool_castes", "Castes: choose which kinds of ants the queen lays.");
             _castesButton.AddToClassList("hidden");
-            _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
-            _overlayButton = Toggle(toolbar, "Flow", () => OverlayClicked?.Invoke(), input.Overlay, "Flow overlay: belt traffic, jams, machine status and idle workers.");
-            _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "Genetic Memory: permanent traits for every colony of your bloodline.");
+            _jobsButton = Toggle(toolbar, "Jobs", () => PrioritiesClicked?.Invoke(), input.Priorities, "priority_dig",
+                "Job priorities: which jobs the ants pick first.");
+            _queenButton = Toggle(toolbar, "Queen", () => QueenToggled?.Invoke(), input.Queen, "evolution_brood",
+                "The Queen: how she lays, and her evolutions (paid with rare finds).");
+            _codexButton = Toggle(toolbar, "Codex", () => CodexToggled?.Invoke(), input.Codex, "lore_fragment",
+                "Codex: the story of the lost colony, found by studying relics and tablets in an Archive.");
+            _codexButton.AddToClassList("hidden");
+            _researchButton = Toggle(toolbar, "Research", () => ResearchToggled?.Invoke(), input.Research, "tool_research", "Research: spend knowledge on new buildings, castes, abilities and upgrades.");
+            _overlayButton = Toggle(toolbar, "Overlay", () => OverlayClicked?.Invoke(), input.Overlay, "tool_flow",
+                "Overlays, one at a time (click to go through them): flow (belt traffic, jams, machine status, idle workers), light, and the ores you know of.");
+            var legend = root.Q<VisualElement>("legend");
+            if (legend != null) Legend = new OverlayLegend(legend, content, render, art, input);
+            _geneticsButton = Toggle(toolbar, "Genes", () => GeneticsToggled?.Invoke(), input.Genetics, "memory", "Genetic Memory: permanent traits for every colony of your bloodline.");
             _geneticsButton.AddToClassList("hidden");
-            _flightButton = Toggle(toolbar, "Flight", () => FlightToggled?.Invoke(), input.Flight, "Nuptial Flight: send princesses to found a new colony and earn Genetic Memory.");
+            _flightButton = Toggle(toolbar, "Flight", () => FlightToggled?.Invoke(), input.Flight, "tool_flight", "Nuptial Flight: send princesses to found a new colony and earn Genetic Memory.");
             _flightButton.AddToClassList("hidden");
             _raisesPrincesses = new bool[content.Buildings.Length];
             for (int i = 0; i < content.Buildings.Length; i++)
                 foreach (int r in content.Buildings[i].Recipes)
                     if (content.Recipes[r].Princesses > 0) _raisesPrincesses[i] = true;
-            Abilities = new AbilityBar(abilities, content, input.Abilities);
+            Abilities = new AbilityBar(abilities, content, art, input.Abilities, Tips);
             for (int k = 0; k < Pheromones.Count; k++) _scentButtons[k] = AddScent((PheromoneKind)k);
-            Castes = new CastesPanel(castes, content);
+
+            _toolOptions = new VisualElement();
+            _toolOptions.AddToClassList("palette");
+            _toolOptions.AddToClassList("tool-options");
+            var brushLabel = new Label("Brush") { pickingMode = PickingMode.Ignore };
+            brushLabel.AddToClassList("tool-options__label");
+            _toolOptions.Add(brushLabel);
+            for (int size = BrushSizes.Min; size <= BrushSizes.Max; size++)
+            {
+                int s = size;
+                var button = new Button(() => BrushSizeClicked?.Invoke(s)) { text = s.ToString(), focusable = false };
+                button.AddToClassList("small-button");
+                button.AddToClassList("brush-size");
+                _toolOptions.Add(button);
+                _brushButtons[size - 1] = button;
+                string what = s == 1 ? "small: a few cells, for precise work" : s == 2 ? "medium (the usual size)" : "large: covers a wide area";
+                Tip(button, () => $"Brush size {s}, {what}. Each tool (Dig, Mine, Storage, Scent) keeps its own size. {Keys.Brush} goes through the sizes." +
+                                  (s == 3 ? " Digging with a big brush uses up digging strength faster." : ""));
+            }
+            _staminaBox = new VisualElement();
+            _staminaBox.AddToClassList("tool-options__stamina");
+            var staminaLabel = new Label("Strength") { pickingMode = PickingMode.Ignore };
+            staminaLabel.AddToClassList("tool-options__label");
+            _staminaBox.Add(staminaLabel);
+            var bar = new VisualElement { pickingMode = PickingMode.Ignore };
+            bar.AddToClassList("stamina");
+            _staminaFill = new VisualElement { pickingMode = PickingMode.Ignore };
+            _staminaFill.AddToClassList("stamina__fill");
+            bar.Add(_staminaFill);
+            _staminaBox.Add(bar);
+            Tip(_staminaBox, () => "Digging strength: every hit that digs uses some up (more with a bigger brush). " +
+                                   "It slowly comes back while you are not digging. When it runs out, the Dig tool rests until a quarter is back. " +
+                                   "Your ants dig without limit: give them mining orders.");
+            _toolOptions.Add(_staminaBox);
+            _veinToggle = new Button(() => VeinToggleClicked?.Invoke()) { text = "Auto-mark ores: On", focusable = false };
+            _veinToggle.AddToClassList("small-button");
+            _veinToggle.AddToClassList("vein-toggle");
+            _veinToggle.AddToClassList("hidden");
+            Tip(_veinToggle, () => "Vein Instinct: ore and other finds next to every cell your colony digs out are ordered for mining " +
+                                   "automatically. Switch it off to mine only what you paint.");
+            _toolOptions.Add(_veinToggle);
+            toolbar.parent.Insert(toolbar.parent.IndexOf(toolbar), _toolOptions);
+            Castes = new CastesPanel(castes, content, art, Tips);
+            if (priorities != null) Priorities = new PrioritiesPanel(priorities, art, Tips);
+            Queen = new QueenPanel(content, art);
+            Codex = new CodexPanel(content, art);
+            Configure = new ConfigurePanel(configure, content, art, Tips);
 
             _unlockedBy = new string[content.Buildings.Length];
             foreach (var r in content.Research)
                 foreach (int b in r.UnlockBuildings) _unlockedBy[b] = r.Def.DisplayName;
+            _unlockedByTrait = new string[content.Buildings.Length];
+            foreach (var g in content.Genetics)
+                for (int k = 0; k < g.Effects.Length; k++)
+                    if (g.Effects[k].kind == GeneticEffectKind.UnlockBuilding && _unlockedBy[g.Targets[k]] == null)
+                        _unlockedByTrait[g.Targets[k]] = g.Def.DisplayName;
             _buildingButtons = new Button[content.Buildings.Length];
             _buildingCosts = new Label[content.Buildings.Length];
             _buildingLockShown = new bool[content.Buildings.Length];
@@ -173,14 +316,19 @@ namespace Antarium.Gameplay
             Research = new ResearchPanel(content);
             Menu = new MenuDialog(autosaveSeconds);
             WelcomeBack = new WelcomeBackDialog(content);
-            Genetics = new GeneticPanel(content);
+            Genetics = new GeneticPanel(content, art);
             Flight = new FlightDialog(content);
             Settings = new SettingsDialog(input);
-            AchievementsPanel = new AchievementsDialog(content);
-            Help = new HelpDialog(input);
+            AchievementsPanel = new AchievementsDialog(content, art);
+            Help = new HelpDialog(input, art);
+            if (tutorial != null)
+                TutorialCard = new TutorialPanel(tutorial, def => content.TryGetBuildingIndex(def.Id, out int b) ? CostText(content.Buildings[b]) : "");
+            _contracts = contracts;
             Title = new TitleScreen();
             Title.Root.AddToClassList("hidden");
             _hudRoot?.Insert(_hudRoot.IndexOf(_modal), Title.Root);
+            Intro = new IntroScreen();
+            _hudRoot?.Add(Intro.Root); // over everything, toasts and dialogs included
 
             // Interface sounds: every button click and hover, wherever it is.
             root.RegisterCallback<ClickEvent>(e =>
@@ -198,13 +346,20 @@ namespace Antarium.Gameplay
             SetSelectedBuilding(0);
         }
 
-        Label AddEntry(Color swatchColor, out VisualElement entry, out Label rate)
+        /// <summary>
+        /// A resource bar entry. With an icon called <paramref name="icon"/> in the art library (<c>Art/UI/Icons/</c>) it
+        /// shows that; otherwise a colour swatch.
+        /// </summary>
+        Label AddEntry(Color swatchColor, out VisualElement entry, out Label rate, string icon = null)
         {
             entry = new VisualElement();
             entry.AddToClassList("resource");
             var swatch = new VisualElement();
-            swatch.AddToClassList("resource__swatch");
-            swatch.style.backgroundColor = swatchColor;
+            if (!SetIcon(swatch, _art, icon, "resource__icon"))
+            {
+                swatch.AddToClassList("resource__swatch");
+                swatch.style.backgroundColor = swatchColor;
+            }
             var label = new Label();
             label.AddToClassList("resource__label");
             rate = new Label();
@@ -216,35 +371,151 @@ namespace Antarium.Gameplay
             return label;
         }
 
-        void AddTool(VisualElement toolbar, ToolMode mode, string name, InputAction action, string tip)
+        /// <summary>
+        /// Shows the 10×10 icon <c>UI/Icons/<paramref name="icon"/></c> on <paramref name="element"/> (class
+        /// <paramref name="className"/> sizes it). False if there is no such icon: the caller keeps its fallback.
+        /// </summary>
+        public static bool SetIcon(VisualElement element, ArtLibrary art, string icon, string className)
+        {
+            if (art == null || string.IsNullOrEmpty(icon) || !art.TryGet("UI/Icons/" + icon, out var texture)) return false;
+            element.AddToClassList(className);
+            element.style.backgroundImage = new StyleBackground(texture);
+            return true;
+        }
+
+        /// <summary>
+        /// Puts the icon <c>UI/Icons/<paramref name="icon"/></c> in front of a button's text. A button with children is
+        /// no longer sized by its own text, so the text moves into a label next to the icon: set it with
+        /// <see cref="SetButtonText"/> from then on. Nothing happens without that icon.
+        /// </summary>
+        public static void AddButtonIcon(Button button, ArtLibrary art, string icon)
+        {
+            var element = new VisualElement { pickingMode = PickingMode.Ignore };
+            if (!SetIcon(element, art, icon, "tool__icon")) return;
+            var label = new Label(button.text) { pickingMode = PickingMode.Ignore };
+            label.AddToClassList("tool__label");
+            button.text = "";
+            button.AddToClassList("tool--icon");
+            button.Add(element);
+            button.Add(label);
+        }
+
+        /// <summary>Sets a button's text, in its label when it has an icon (see <see cref="AddButtonIcon"/>).</summary>
+        public static void SetButtonText(Button button, string text)
+        {
+            var label = button.Q<Label>(className: "tool__label");
+            if (label != null) label.text = text;
+            else button.text = text;
+        }
+
+        static string ButtonText(Button button)
+        {
+            var label = button.Q<Label>(className: "tool__label");
+            return label != null ? label.text : button.text;
+        }
+
+        void AddTool(VisualElement toolbar, ToolMode mode, string name, InputAction action, string icon, string tip)
         {
             var button = new Button(() => ToolClicked?.Invoke(mode)) { focusable = false };
             button.AddToClassList("tool");
             button.AddToClassList("tool--narrow");
+            AddButtonIcon(button, _art, icon);
             toolbar.Add(button);
             _toolButtons[(int)mode] = button;
             _keyed.Add((button, action, name));
-            Tip(button, tip);
+            if (tip != null) Tip(button, tip, icon);
         }
 
-        Button Toggle(VisualElement toolbar, string name, Action clicked, InputAction action, string tip)
+        Button Toggle(VisualElement toolbar, string name, Action clicked, InputAction action, string icon, string tip)
         {
             var button = new Button(clicked) { focusable = false };
             button.AddToClassList("tool");
             button.AddToClassList("tool--narrow");
             button.AddToClassList("tool--toggle");
+            AddButtonIcon(button, _art, icon);
             toolbar.Add(button);
             _keyed.Add((button, action, name));
-            Tip(button, tip);
+            Tip(button, tip, icon);
             return button;
         }
 
         /// <summary>Shows <paramref name="tip"/> in the info panel while the pointer is over <paramref name="element"/>.</summary>
-        public void Tip(VisualElement element, string tip)
+        public void Tip(VisualElement element, string tip, string icon = null) => Tips.Add(element, tip, icon);
+
+        /// <summary>Like <see cref="Tip(VisualElement, string, string)"/>, with text built when shown (counts, costs, keys).</summary>
+        public void Tip(VisualElement element, Func<string> tip, string icon = null) => Tips.Add(element, tip, icon);
+
+        /// <summary>The key currently bound to Configure (for hints).</summary>
+        public string ConfigureKey => Keys.Configure;
+
+        /// <summary>The key currently bound to the Codex (for hints).</summary>
+        public string CodexKey => Keys.Codex;
+
+        /// <summary>The key currently bound to the Queen panel (for hints).</summary>
+        public string QueenKey => Keys.Queen;
+
+        string FoodTip()
         {
-            element.RegisterCallback<PointerEnterEvent>(_ => HoverTip = tip);
-            element.RegisterCallback<PointerLeaveEvent>(_ => { if (HoverTip == tip) HoverTip = null; });
+            const string text = "Food: stored / room for it, and what it gains or loses per minute. Every ant and the queen eat. " +
+                                "Foragers bring seeds from the surface by day; grubs, fungus gardens and giant fungus add more.";
+            return _sim != null && _sim.Colony.Inventory.Food <= 0f ? text + "\nOut of food: the queen stops laying." : text;
         }
+
+        string AntsTip()
+        {
+            const string text = "Ants in the colony (and how many are workers). The queen lays more while there is food and room for eggs.";
+            if (_sim == null || !CastesPanel.HasSpecialists(_sim)) return text;
+            return text + $" Choose the caste mix in the castes panel ({Keys.Castes}).";
+        }
+
+        string ItemTip(ushort item)
+        {
+            var def = _content.Items[item];
+            _sb.Clear().Append(def.DisplayName);
+            if (_sim != null)
+            {
+                var inv = _sim.Colony.Inventory;
+                _sb.Append(": ").Append(NumberFormat.Format(inv.Items[item])).Append(" in stock");
+                int reserve = inv.Reserve[item];
+                if (reserve > 0) _sb.Append(", ").Append(reserve).Append(" kept for building");
+                _sb.Append('.');
+            }
+            if (def.fuel) _sb.Append(" Fuel for the Smelter (a heated one needs none).");
+            _sb.Append("\nClick to choose how much of each item the colony keeps for building.");
+            return _sb.ToString();
+        }
+
+        string BuildingTip(int index)
+        {
+            var data = _content.Buildings[index];
+            var def = data.Def;
+            string cost = CostText(data); // uses _sb itself: before building the tip
+            _sb.Clear().Append(def.DisplayName);
+            var size = def.Footprint;
+            if (size.x > 1 || size.y > 1) _sb.Append("  (").Append(size.x).Append(" x ").Append(size.y).Append(')');
+            _sb.Append("  -  ").Append(cost);
+            if (!string.IsNullOrEmpty(def.description)) _sb.Append('\n').Append(def.description);
+            if (_sim != null && !_sim.Colony.BuildingUnlocked[index])
+            {
+                _sb.Append('\n');
+                if (_unlockedByTrait[index] != null)
+                    _sb.Append("Known only to your bloodline: buy ").Append(_unlockedByTrait[index]).Append(" in the genetic tree (").Append(Keys.Genetics).Append(").");
+                else _sb.Append("Locked: research ").Append(_unlockedBy[index] ?? "it").Append(" first (").Append(Keys.Research).Append(").");
+            }
+            else if (_sim != null && !_sim.Colony.Inventory.CanAfford(data)) _sb.Append("\nNot enough in the stock yet.");
+            _sb.Append("\nClick to pick it. ").Append(Keys.Previous).Append(" / ").Append(Keys.Next).Append(": other building   ")
+                .Append(Keys.Rotate).Append(": rotate");
+            return _sb.ToString();
+        }
+
+        static readonly string[] ScentTips =
+        {
+            "Trail: ants walk faster on it and prefer it. Lay it along busy routes.",
+            "Dig here: mining orders under it are dug first.",
+            "Gather: piles of items on it are picked up first.",
+            "Defend: soldiers patrol it and stay near it.",
+            "Avoid: ants keep out of it.",
+        };
 
         /// <summary>"[key] Name" labels follow the current key bindings.</summary>
         void RefreshKeyLabels()
@@ -252,7 +523,7 @@ namespace Antarium.Gameplay
             if (_input == null || _keysVersion == _input.BindingsVersion) return;
             _keysVersion = _input.BindingsVersion;
             foreach (var (button, action, name) in _keyed)
-                button.text = KeyLabel(action, name);
+                SetButtonText(button, KeyLabel(action, name));
             Abilities?.RefreshKeys();
         }
 
@@ -289,6 +560,7 @@ namespace Antarium.Gameplay
             button.Add(swatch);
             button.Add(text);
             _scentPalette.Add(button);
+            Tip(button, ScentTips[(int)kind] + "\nScents fade after a few minutes unless a Pheromone Emitter keeps them. Left mouse paints, right mouse erases.");
             return button;
         }
 
@@ -304,8 +576,11 @@ namespace Antarium.Gameplay
             var button = new Button(() => BuildingClicked?.Invoke(index)) { focusable = false };
             button.AddToClassList("building");
             var swatch = new VisualElement();
-            swatch.AddToClassList("building__swatch");
-            swatch.style.backgroundColor = def.color;
+            if (!SetIcon(swatch, _art, "building_" + def.Id, "building__icon"))
+            {
+                swatch.AddToClassList("building__swatch");
+                swatch.style.backgroundColor = def.color;
+            }
             var text = new VisualElement();
             text.AddToClassList("building__text");
             text.pickingMode = PickingMode.Ignore;
@@ -320,6 +595,7 @@ namespace Antarium.Gameplay
             button.Add(swatch);
             button.Add(text);
             _palette.Add(button);
+            Tip(button, () => BuildingTip(index), "building_" + def.Id);
             return button;
         }
 
@@ -339,6 +615,74 @@ namespace Antarium.Gameplay
             return _sb.Length > 0 ? _sb.ToString() : "Free";
         }
 
+        /// <summary>A brush size button was clicked (1..3).</summary>
+        public event Action<int> BrushSizeClicked;
+        /// <summary>The Vein Instinct switch in the Mine tool's row was clicked.</summary>
+        public event Action VeinToggleClicked;
+
+        /// <summary>The Vein Instinct switch: shown with the Mine tool once the colony knows it, lit while it is on.</summary>
+        void RefreshVeinToggle(Simulation sim)
+        {
+            if (_veinToggle == null || sim == null) return;
+            int state = _brushMode != ToolMode.Mine || !sim.VeinInstinctKnown ? 0 : sim.Colony.AutoMarkOres ? 2 : 1;
+            if (state == _veinShown) return;
+            _veinShown = state;
+            _veinToggle.EnableInClassList("hidden", state == 0);
+            _veinToggle.EnableInClassList("vein-toggle--on", state == 2);
+            _veinToggle.text = state == 2 ? "Auto-mark ores: On" : "Auto-mark ores: Off";
+        }
+
+        /// <summary>Shows the brush row for painting tools with <paramref name="size"/> lit; the strength bar with the Dig tool.</summary>
+        public void SetBrush(ToolMode mode, int size)
+        {
+            if (_toolOptions == null) return;
+            _brushMode = mode;
+            _veinShown = -1;
+            _toolOptions.EnableInClassList("hidden", !ToolController.HasBrush(mode));
+            _staminaBox.EnableInClassList("hidden", mode != ToolMode.Dig);
+            for (int i = 0; i < _brushButtons.Length; i++)
+                _brushButtons[i].EnableInClassList("brush-size--active", i + 1 == size);
+        }
+
+        /// <summary>The Dig tool's strength bar (0..1; red while it rests after running dry).</summary>
+        public void SetDigStamina(float value, bool exhausted)
+        {
+            if (_staminaFill == null) return;
+            int percent = Mathf.RoundToInt(Mathf.Clamp01(value) * 100f);
+            if (percent == _shownStamina && exhausted == _shownExhausted) return;
+            _shownStamina = percent;
+            _shownExhausted = exhausted;
+            _staminaFill.style.width = Length.Percent(percent);
+            _staminaBox.EnableInClassList("stamina--exhausted", exhausted);
+            _staminaBox.EnableInClassList("stamina--low", !exhausted && percent < 25);
+        }
+
+        /// <summary>Makes the HUD element a tutorial step is about blink (None: nothing blinks).</summary>
+        public void SetHighlight(TutorialHighlight target)
+        {
+            var element = target switch
+            {
+                TutorialHighlight.DigTool => _toolButtons[(int)ToolMode.Dig],
+                TutorialHighlight.MineTool => _toolButtons[(int)ToolMode.Mine],
+                TutorialHighlight.StorageTool => _toolButtons[(int)ToolMode.Storage],
+                TutorialHighlight.BuildTool => _toolButtons[(int)ToolMode.Build],
+                TutorialHighlight.QueenButton => _queenButton,
+                TutorialHighlight.ResearchButton => _researchButton,
+                TutorialHighlight.Contracts => _contracts,
+                TutorialHighlight.Resources => _resources,
+                _ => null,
+            };
+            if (element == _glow) return;
+            if (_glow != null)
+            {
+                _glow.RemoveFromClassList("tutorial-glow");
+                _glow.RemoveFromClassList("tutorial-glow--on");
+            }
+            _glow = element;
+            _glowTimer = 0f;
+            _glow?.AddToClassList("tutorial-glow");
+        }
+
         public void SetActiveTool(ToolMode mode)
         {
             for (int i = 0; i < _toolButtons.Length; i++)
@@ -354,7 +698,20 @@ namespace Antarium.Gameplay
                 _buildingButtons[i].EnableInClassList("building--active", i == index);
         }
 
-        public void SetOverlay(bool on) => _overlayButton?.EnableInClassList("tool--on", on);
+        /// <summary>The overlay that is on (the toolbar button lights up) and its legend above the toolbar.</summary>
+        public void SetOverlay(OverlayMode mode, OreSurvey survey)
+        {
+            _overlayButton?.EnableInClassList("tool--on", mode != OverlayMode.None);
+            Legend?.Show(mode, survey);
+        }
+
+        public OverlayLegend Legend { get; private set; }
+
+        /// <summary>The build palette's button for building <paramref name="index"/> (capture shots).</summary>
+        public VisualElement BuildingButton(int index) => _buildingButtons != null && index >= 0 && index < _buildingButtons.Length ? _buildingButtons[index] : null;
+
+        /// <summary>The resource bar entry of <paramref name="item"/> (capture shots).</summary>
+        public VisualElement ItemEntry(ushort item) => _itemEntries != null && item < _itemEntries.Length ? _itemEntries[item] : null;
 
         // ---------------------------------------------------------------- modal layer (menu, research, welcome back)
 
@@ -372,7 +729,7 @@ namespace Antarium.Gameplay
             // Pop in: start small and transparent, let the USS transition run from the next frame.
             panel.AddToClassList("pop-enter");
             panel.schedule.Execute(() => panel.RemoveFromClassList("pop-enter")).StartingIn(16);
-            HoverTip = null;
+            Tips.Clear();
             if (!was) ModalOpened?.Invoke();
         }
 
@@ -394,7 +751,7 @@ namespace Antarium.Gameplay
             if (Title == null) return;
             Title.Root.EnableInClassList("hidden", !show);
             _hudRoot?.EnableInClassList("hud--title", show);
-            HoverTip = null;
+            Tips.Clear();
             if (show) HideModal();
         }
 
@@ -402,16 +759,28 @@ namespace Antarium.Gameplay
         public void ResetSession(Simulation sim)
         {
             EventFeed?.Reset(sim);
+            Configure?.Hide();
             HideModal();
         }
 
-        /// <summary>Hover / selection details; null hides the panel.</summary>
-        public void SetInfo(string text)
+        /// <summary>Hover / selection details with an optional icon (<c>UI/Icons/</c> name); null text hides the panel.</summary>
+        public void SetInfo(string text, string icon = null)
         {
-            if (_info == null) return;
-            _info.EnableInClassList("hidden", string.IsNullOrEmpty(text));
-            if (!string.IsNullOrEmpty(text)) _info.text = text;
+            if (_info == null || _infoBox == null) return;
+            bool show = !string.IsNullOrEmpty(text);
+            _infoBox.EnableInClassList("hidden", !show);
+            if (!show) return;
+            if (_info.text != text) _info.text = text;
+            if (_infoIcon == null || icon == _infoIconName) return;
+            _infoIconName = icon;
+            Texture2D texture = null;
+            bool hasIcon = icon != null && _art != null && _art.TryGet("UI/Icons/" + icon, out texture);
+            _infoIcon.EnableInClassList("hidden", !hasIcon);
+            _infoIcon.style.backgroundImage = hasIcon ? new StyleBackground(texture) : new StyleBackground(StyleKeyword.None);
         }
+
+        /// <summary>A message is on screen (the help's "new topic" note waits for it).</summary>
+        public bool ToastShowing => _toastTimer > 0f;
 
         public void ShowToast(string text)
         {
@@ -447,11 +816,11 @@ namespace Antarium.Gameplay
             {
                 var data = _content.Research[e.Research];
                 _sb.Clear().Append("Researched ").Append(data.Def.DisplayName).Append('.');
-                foreach (int b in data.UnlockBuildings) _sb.Append(' ').Append(_content.Buildings[b].Def.DisplayName).Append(" unlocked (4).");
+                foreach (int b in data.UnlockBuildings) _sb.Append(' ').Append(_content.Buildings[b].Def.DisplayName).Append(" unlocked (Build, ").Append(Keys.Build).Append(").");
                 foreach (int a in data.UnlockAbilities) _sb.Append(' ').Append(_content.Abilities[a].DisplayName).Append(" unlocked.");
                 foreach (var caste in data.UnlockCastes)
                     _sb.Append(" The queen now lays ").Append(_content.Caste(caste).DisplayName.ToLowerInvariant())
-                        .Append("s: set their share in the castes panel (K).");
+                        .Append("s: set their share in the castes panel (").Append(Keys.Castes).Append(").");
                 ShowToast(_sb.ToString());
             }
             foreach (var e in events.Read<ResearchFailedEvent>())
@@ -461,6 +830,8 @@ namespace Antarium.Gameplay
                 ShowToast(e.Result switch
                 {
                     ResearchResult.NeedsPrerequisites => $"{name} needs the research before it first.",
+                    ResearchResult.NeedsLore =>
+                        $"{name} needs {_content.Research[e.Research].Def.loreRequired} lore fragments; {sim.Lore.FoundCount} found. Study relics in an Archive (Codex: {CodexKey}).",
                     ResearchResult.CantAfford => $"Not enough for {name} yet.",
                     _ => $"{name} is already researched.",
                 });
@@ -482,7 +853,7 @@ namespace Antarium.Gameplay
                 string name = e.Ability >= 0 && e.Ability < _content.Abilities.Length ? _content.Abilities[e.Ability].DisplayName : "That ability";
                 ShowToast(e.Result switch
                 {
-                    AbilityResult.Locked => $"{name} is locked: unlock it with research (T).",
+                    AbilityResult.Locked => $"{name} is locked: unlock it with research ({Keys.Research}).",
                     AbilityResult.Cooling => $"{name} is still recharging ({HudText.Duration(sim.Abilities.Cooldown[e.Ability])}).",
                     AbilityResult.CantAfford => $"Not enough food for {name}.",
                     AbilityResult.NoEffect when e.Ability < _content.Abilities.Length && _content.Abilities[e.Ability].kind == AbilityKind.PheromoneBurst =>
@@ -504,6 +875,10 @@ namespace Antarium.Gameplay
                 if (startOnly) _sb.Append(" It takes effect in the next colony.");
                 ShowToast(_sb.ToString());
             }
+            foreach (var e in events.Read<RespecEvent>())
+                ShowToast(e.Fee > 0
+                    ? $"Your bloodline forgot its traits: {e.Refund} Genetic Memory came back ({e.Fee} lost to the respec)."
+                    : $"Your bloodline forgot its traits: all {e.Refund} Genetic Memory came back. Spend it again in the tree.");
             foreach (var e in events.Read<GeneticFailedEvent>())
             {
                 if (e.Trait < 0 || e.Trait >= _content.Genetics.Length) continue;
@@ -515,10 +890,75 @@ namespace Antarium.Gameplay
                     _ => $"{name} is already at its highest level.",
                 });
             }
+            foreach (var e in events.Read<EvolutionBoughtEvent>())
+            {
+                var data = _content.Evolutions[e.Evolution];
+                _sb.Clear().Append("The queen evolved ").Append(data.Def.DisplayName);
+                if (data.MaxLevel > 1) _sb.Append(" (level ").Append(e.Level).Append(')');
+                _sb.Append('.');
+                foreach (var effect in data.Effects)
+                {
+                    if (Math.Max(1, effect.level) != e.Level) continue;
+                    if (effect.kind == EvolutionEffectKind.UnlockCaste)
+                        _sb.Append(" She now lays ").Append(_content.Caste(effect.caste).DisplayName.ToLowerInvariant()).Append("s: set their share in the castes panel (").Append(Keys.Castes).Append(").");
+                    else if (effect.kind == EvolutionEffectKind.UnlockAbility && effect.ability != null)
+                        _sb.Append(' ').Append(effect.ability.DisplayName).Append(" unlocked.");
+                }
+                ShowToast(_sb.ToString());
+            }
+            foreach (var e in events.Read<EvolutionFailedEvent>())
+            {
+                if (e.Evolution < 0 || e.Evolution >= _content.Evolutions.Length) continue;
+                string name = _content.Evolutions[e.Evolution].Def.DisplayName;
+                ShowToast(e.Result switch
+                {
+                    EvolutionResult.NeedsPrerequisites => $"{name} needs the evolution to its left first.",
+                    EvolutionResult.CantAfford => $"Not enough in the stock for {name} yet.",
+                    _ => $"{name} is fully evolved.",
+                });
+            }
+            foreach (var e in events.Read<AntLevelUpEvent>())
+            {
+                if (e.Level < 5 || _masterToastCooldown > 0f) continue;
+                ShowToast($"An ant became a master {HudText.SkillName(e.Skill)} (level 5): it does that job fastest now.");
+                _masterToastCooldown = 30f;
+            }
             foreach (var e in events.Read<PrincessRaisedEvent>())
                 ShowToast(e.Total >= sim.Colony.PrincessCap
-                    ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen (N)."
-                    : $"A princess is ready ({e.Total}/{sim.Colony.PrincessCap}). Each one raises the Genetic Memory of a Nuptial Flight (N).");
+                    ? $"A princess is ready: {e.Total} wait for the Nuptial Flight, as many as count. Open the flight screen ({Keys.Flight})."
+                    : $"A princess is ready ({e.Total}/{sim.Colony.PrincessCap}). Each one raises the Genetic Memory of a Nuptial Flight ({Keys.Flight}).");
+            if (events.Read<ElderTreeFoundEvent>().Length > 0)
+                ShowToast("Your diggers broke into a vast cavern: an ancient tree grows down here. Its golden apples glow in the dark and grow back once picked.");
+            foreach (var e in events.Read<LoreFoundEvent>())
+            {
+                Codex.Select(e.Lore);
+                ShowToast($"Lore found: \"{_content.Lore[e.Lore].Def.DisplayName}\" ({e.Found}/{e.Total}). Read it in the Codex ({CodexKey}).");
+            }
+            foreach (var e in events.Read<EngineStageEvent>())
+            {
+                var data = e.Building >= 0 && e.Building < sim.Buildings.All.Length ? _content.Buildings[sim.Buildings.All[e.Building].Def] : null;
+                if (data == null || e.Stage < 0 || e.Stage >= data.StageCount) continue;
+                string step = data.Def.stages[e.Stage].name;
+                ShowToast(e.Phase switch
+                {
+                    EngineStagePhase.Started => $"{data.Def.DisplayName}: \"{step}\" is paid. Workers are building it now.",
+                    EngineStagePhase.Finished => $"{data.Def.DisplayName}: \"{step}\" is done ({e.Stage + 1}/{data.StageCount}). Restore the next step with {ConfigureKey}.",
+                    EngineStagePhase.Awakened => $"The {data.Def.DisplayName} wakes! It makes knowledge, and this colony's Nuptial Flight earns " +
+                                                 $"{Mathf.RoundToInt((1f + sim.Config.prestige.engineMemoryBonus) * 100f)}% Genetic Memory.",
+                    _ => $"{data.Def.DisplayName}: \"{step}\" cancelled and refunded.",
+                });
+            }
+            foreach (var e in events.Read<StageFailedEvent>())
+            {
+                var data = e.Def >= 0 && e.Def < _content.Buildings.Length ? _content.Buildings[e.Def] : null;
+                if (data == null) continue;
+                ShowToast(e.Result switch
+                {
+                    StageResult.Busy => $"The {data.Def.DisplayName} is being built; workers have to finish first.",
+                    StageResult.Finished => $"The {data.Def.DisplayName} is fully restored.",
+                    _ => $"Not enough in the stock for the next step of the {data.Def.DisplayName}.",
+                });
+            }
             foreach (var e in events.Read<ContractClaimedEvent>())
                 ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
             if (events.Read<GateBrokenEvent>().Length > 0) ShowToast("Enemies broke a gate! Workers will repair it once it is safe.");
@@ -534,9 +974,9 @@ namespace Antarium.Gameplay
                 string caste = _content.Caste(e.Caste).DisplayName.ToLowerInvariant();
                 ShowToast(e.Phase switch
                 {
-                    PossessionPhase.Started => $"You control a {caste}. WASD: move. Left mouse: dig / bite. Right mouse or Space: pick up / drop. F: let go.",
+                    PossessionPhase.Started => $"You control a {caste}. Camera keys: move. Left mouse: dig / bite. Right mouse or {Keys.Interact}: pick up / drop. {Keys.Possess}: let go.",
                     PossessionPhase.Died => $"Your {caste} died. You are the colony's mind again.",
-                    PossessionPhase.Missed => "No ant there. Point at an ant and press F.",
+                    PossessionPhase.Missed => $"No ant there. Point at an ant and press {Keys.Possess}.",
                     _ => $"You let go of the {caste}.",
                 });
             }
@@ -566,6 +1006,8 @@ namespace Antarium.Gameplay
                 DeathCause.Burned => $"{subject} burned in lava.",
                 DeathCause.Gassed => $"{subject} choked on gas.",
                 DeathCause.Crushed => $"{subject} {verb} buried by a cave-in.",
+                DeathCause.Bird => $"{subject} {verb} taken by a bird.",
+                DeathCause.Heat => $"{subject} died of the heat. Fire ants don't mind it.",
                 DeathCause.Killed when first.Killer >= 0 && first.Killer < _content.Enemies.Length =>
                     $"{subject} {verb} killed by {(same == 1 ? HudText.Plural(1, _content.Enemies[first.Killer].Def.DisplayName) : "enemies")}.",
                 _ => $"{subject} died.",
@@ -581,7 +1023,10 @@ namespace Antarium.Gameplay
             {
                 case PlaceResult.Hidden: return "You can only build where you can see.";
                 case PlaceResult.Flooded: return "Can't build in water, gas or lava.";
-                case PlaceResult.Protected: return "Walls can't go into the royal chamber or a storage zone.";
+                case PlaceResult.Protected:
+                    return data != null && data.Def.kind == BuildingKind.Chest
+                        ? "Chests can't go on a storage zone (erase the zone there first)."
+                        : "Walls can't go into the royal chamber or a storage zone.";
                 case PlaceResult.NotOpen:
                     if (data != null && data.Def.IsChamber) return "Machines and nurseries need dug-out space underground.";
                     return data != null && data.Def.IsDefense ? "Needs open space ants can walk on." : "Belts need dug-out space or the ground surface.";
@@ -589,8 +1034,18 @@ namespace Antarium.Gameplay
                 case PlaceResult.NeedsFloor:
                     return data != null && data.Def.kind == BuildingKind.Trap ? "Traps need a solid floor under them." : "Machines need a flat, solid floor under their whole width.";
                 case PlaceResult.OutOfBounds: return "That is outside the world.";
+                case PlaceResult.Unique: return data != null ? $"There is only one {data.Def.DisplayName}." : "Only one of those.";
+                case PlaceResult.WrongBiome:
+                    return data != null && data.RequiredBiome >= 0
+                        ? $"The {data.Def.DisplayName} can only be built in the {sim.BiomeName(data.RequiredBiome)}."
+                        : "It can't be built here.";
+                case PlaceResult.NeedsCrystal: return "A Crystal Resonator must touch glow crystals (or copper / iron ore leading to them).";
+                case PlaceResult.Permanent: return data != null ? $"The {data.Def.DisplayName} can't be taken down once it stands." : "That stays.";
+                case PlaceResult.NeedsQueen: return "The Queen's Throne is built around the queen: her cell must be in its bottom row.";
                 case PlaceResult.Locked:
-                    return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first (T)." : "Locked.";
+                    if (data != null && _unlockedByTrait[def] != null)
+                        return $"{data.Def.DisplayName} is known only to your bloodline: buy {_unlockedByTrait[def]} in the Genetic Memory tree ({Keys.Genetics}).";
+                    return data != null ? $"{data.Def.DisplayName} is locked: research {_unlockedBy[def] ?? "it"} first ({Keys.Research})." : "Locked.";
                 case PlaceResult.CantAfford:
                 {
                     if (data == null) return "Not enough resources.";
@@ -608,7 +1063,11 @@ namespace Antarium.Gameplay
         /// <param name="menuStatus">Line shown in the Esc menu (seed, play time, last save).</param>
         public void Update(float dt, Simulation sim, int targeting, string menuStatus, bool possessing = false, bool targetingPossess = false)
         {
+            _sim = sim;
+            RefreshVeinToggle(sim);
             RefreshKeyLabels();
+            Keys.Refresh();
+            Tips.Update(dt);
             if (TitleShowing) Title.Update(dt);
             if (Settings != null && IsShowing(Settings.Root)) Settings.Update(dt);
             if (_possessButton != null)
@@ -616,7 +1075,7 @@ namespace Antarium.Gameplay
                 _possessButton.EnableInClassList("tool--possessing", possessing);
                 _possessButton.EnableInClassList("tool--targeting", targetingPossess);
                 string label = KeyLabel(_input.Possess, possessing ? "Let go" : "Possess");
-                if (_possessButton.text != label) _possessButton.text = label;
+                if (ButtonText(_possessButton) != label) SetButtonText(_possessButton, label);
             }
             if (_resources == null) return;
             if (_toastTimer > 0f)
@@ -625,12 +1084,23 @@ namespace Antarium.Gameplay
                 if (_toastTimer <= 0f) _toast.AddToClassList("hidden");
             }
             if (_caveInToastCooldown > 0f) _caveInToastCooldown -= dt;
+            if (_glow != null)
+            {
+                _glowTimer -= dt;
+                if (_glowTimer <= 0f)
+                {
+                    _glowTimer = 0.45f;
+                    _glow.ToggleInClassList("tutorial-glow--on");
+                }
+            }
+            if (_masterToastCooldown > 0f) _masterToastCooldown -= dt;
             _timer -= dt;
             if (_timer > 0f) return;
             _timer = RefreshInterval;
 
             var colony = sim.Colony;
             var inv = colony.Inventory;
+            UpdateClock(sim.Surface);
             _food.text = $"Food {NumberFormat.Format(inv.Food)}/{NumberFormat.Format(inv.FoodCapacity)}";
             SetRate(_foodRate, inv.FoodIncomePerMinute - colony.UpkeepPerMinute(sim.AliveByCaste));
             int specialists = sim.Ants.Count - sim.Workers;
@@ -642,6 +1112,23 @@ namespace Antarium.Gameplay
             _castesButton.EnableInClassList("tool--on", Castes.Visible);
             if (!castes) Castes.Hide();
             Castes.Refresh(sim);
+            if (Priorities != null)
+            {
+                Priorities.Refresh(sim);
+                _jobsButton.EnableInClassList("tool--on", Priorities.Visible);
+            }
+            bool codexOpen = IsShowing(Codex.Root);
+            _codexButton.EnableInClassList("hidden", sim.Lore.FoundCount == 0 && !codexOpen);
+            _codexButton.EnableInClassList("tool--on", codexOpen);
+            if (codexOpen) Codex.Refresh(sim);
+            bool queenOpen = IsShowing(Queen.Root);
+            _queenButton.EnableInClassList("tool--on", queenOpen);
+            if (queenOpen)
+            {
+                Queen.SetCastesKey(castes ? GameInput.KeyName(_input.Castes) : null);
+                Queen.Refresh(sim);
+            }
+            Configure.Refresh(sim);
             for (int k = 0; k < _scentButtons.Length; k++)
                 _scentButtons[k].EnableInClassList("building--locked", !ToolController.ScentAvailable(sim, (PheromoneKind)k));
             _eggs.text = $"Eggs {colony.Eggs.Count}";
@@ -685,6 +1172,7 @@ namespace Antarium.Gameplay
             for (int i = 0; i < _buildingButtons.Length; i++)
             {
                 bool locked = !colony.BuildingUnlocked[i];
+                _buildingButtons[i].EnableInClassList("hidden", locked && _unlockedByTrait[i] != null); // a bloodline secret until bought
                 _buildingButtons[i].EnableInClassList("building--poor", !locked && !inv.CanAfford(_content.Buildings[i]));
                 _buildingButtons[i].EnableInClassList("building--locked", locked);
                 if (locked == _buildingLockShown[i]) continue;
@@ -693,7 +1181,8 @@ namespace Antarium.Gameplay
             }
 
             _sb.Clear();
-            if (colony.QueenDisturbed) _sb.Append("Raiders are in the royal chamber! They eat your food and the queen stopped laying.");
+            if (sim.Surface.Bird == BirdPhase.Circling) _sb.Append("A bird is circling! Ants on the surface are running for cover.");
+            if (colony.QueenDisturbed) _sb.Append(_sb.Length > 0 ? "\n" : "").Append("Raiders are in the royal chamber! They eat your food and the queen stopped laying.");
             if (colony.Starving)
             {
                 if (_sb.Length > 0) _sb.Append('\n');
@@ -701,6 +1190,29 @@ namespace Antarium.Gameplay
             }
             _alert.EnableInClassList("hidden", _sb.Length == 0);
             if (_sb.Length > 0) _alert.text = _sb.ToString();
+        }
+
+        /// <summary>"Day 3  14:20" with the weather next to it; the swatch is the sun by day and the moon by night.</summary>
+        void UpdateClock(SurfaceState surface)
+        {
+            int minutes = (int)(surface.TimeOfDay * 24f * 60f) % (24 * 60);
+            _clock.text = $"Day {surface.Day}  {minutes / 60:00}:{minutes % 60:00}";
+            if (_clockSwatch != null) _clockSwatch.style.backgroundColor = surface.IsDay ? new Color(1f, 0.85f, 0.35f) : new Color(0.55f, 0.65f, 1f);
+            if (_clockIcon != null && surface.IsDay != _clockShowsDay)
+            {
+                _clockShowsDay = surface.IsDay;
+                var icon = surface.IsDay || _moonIcon == null ? _sunIcon : _moonIcon;
+                if (icon != null) _clockIcon.style.backgroundImage = new StyleBackground(icon);
+            }
+            string weather = surface.Weather switch
+            {
+                WeatherKind.Rain => surface.Thunderstorm ? "Storm" : "Rain",
+                WeatherKind.Drought => "Drought",
+                _ => surface.IsDay ? "" : surface.Starfall ? "Starfall" : "Night",
+            };
+            _weather.EnableInClassList("hidden", weather.Length == 0);
+            _weather.text = weather;
+            _weather.EnableInClassList("resource__rate--negative", surface.Weather != WeatherKind.Clear);
         }
 
         /// <summary>The Nuptial Flight is known: a princess chamber is unlocked, princesses exist, or the colony has flown before.</summary>

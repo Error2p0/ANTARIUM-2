@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f796b96acc2d2ef42bae9ebd78a5593f, type: 3}
+  m_Name: tutorial_dig
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.TutorialStepDef
+  id: tutorial_dig
+  displayName: Dig with your own jaws
+  order: 30
+  body: 'Press {Dig} for the Dig tool and hold the left mouse on the soil next to the chamber. Keep digging without a pause to build up a combo.
+
+
+    The Strength bar drains while you dig and fills up while you rest. Your workers never tire.'
+  goal: 2
+  amount: 6
+  building: {fileID: 0}
+  highlight: 1
+  helpTopic: {fileID: 11400000, guid: abd929c1213fca44ab68d0546ff2bd82, type: 2}

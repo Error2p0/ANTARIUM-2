@@ -1,0 +1,13 @@
+"lang"
+{
+	"english"
+	{
+		"tokens"
+		{
+			"#Title"		"In the main menu"
+			"#FirstColony"	"Founding a colony, %depth% cells deep"
+			"#Colony"		"Generation %gen%, %depth% cells deep"
+			"#Flight"		"Watching a Nuptial Flight"
+		}
+	}
+}

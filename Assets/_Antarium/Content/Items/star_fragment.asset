@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Star Fragment
   color: {r: 0.7254902, g: 0.654902, b: 1, a: 1}
   foodValue: 0
+  fuel: 0
+  mapColor: {r: 0.7137255, g: 1, b: 0.23921569, a: 1}

@@ -28,6 +28,9 @@ namespace Antarium.Sim
     /// Thin water films and gas evaporate once they reach explored tunnels; untouched pockets stay forever.
     /// While playing, chunks the player has not revealed at all are left asleep: hidden lakes finish settling
     /// when the colony digs close (world generation settles everything).
+    /// Cells taken by pumps and water wheels (<see cref="CellFlags.FluidBlock"/>) count as closed. Burning cells
+    /// (<see cref="FluidKind.Fire"/> on a solid cell) are left alone; moving lava next to a flammable cell may light it
+    /// (<see cref="Ignitions"/>, handled by the fire system).
     /// </summary>
     public sealed class FluidSystem : IDisposable
     {
@@ -38,7 +41,18 @@ namespace Antarium.Sim
         NativeList<int> _active;
         NativeList<int2> _reactions;
         NativeArray<int> _counters;
+        NativeArray<int> _surfaceY;
+        NativeList<int2> _ignitions;
+        NativeArray<byte> _flammable;
         uint _step;
+
+        /// <summary>Chance per lava step that moving lava lights a flammable neighbour (0 = never).</summary>
+        public float IgniteChance;
+
+        /// <summary>Water this many cells below the surface (or less) soaks into the ground by <see cref="SoakChance"/> (0 = never).</summary>
+        public int SoakDepth;
+        /// <summary>Chance per step that a wet cell within <see cref="SoakDepth"/> of the surface loses one level.</summary>
+        public float SoakChance;
         byte _stampValue;
 
         public FluidSystem(WorldGrid world, FluidConfig config)
@@ -51,7 +65,21 @@ namespace Antarium.Sim
             _active = new NativeList<int>(64, Allocator.Persistent);
             _reactions = new NativeList<int2>(16, Allocator.Persistent);
             _counters = new NativeArray<int>(3, Allocator.Persistent);
+            _surfaceY = new NativeArray<int>(world.SurfaceY, Allocator.Persistent);
+            _ignitions = new NativeList<int2>(8, Allocator.Persistent);
+            _flammable = new NativeArray<byte>(1, Allocator.Persistent);
         }
+
+        /// <summary>Which materials lava can set alight (per material index).</summary>
+        public void SetMaterials(NativeArray<MaterialSim> materials)
+        {
+            if (_flammable.IsCreated) _flammable.Dispose();
+            _flammable = new NativeArray<byte>(math.max(1, materials.Length), Allocator.Persistent);
+            for (int i = 0; i < materials.Length; i++) _flammable[i] = materials[i].IsFlammable ? (byte)1 : (byte)0;
+        }
+
+        /// <summary>Solid flammable cells moving lava touched in the last step that should catch fire (may repeat).</summary>
+        public NativeList<int2> Ignitions => _ignitions;
 
         /// <summary>Chunks processed by the last step.</summary>
         public int ActiveChunks => _active.Length;
@@ -130,6 +158,7 @@ namespace Antarium.Sim
                 _awake[i]--;
             }
             _reactions.Clear();
+            _ignitions.Clear();
             if (_active.Length == 0) return default;
 
             _step++;
@@ -144,6 +173,9 @@ namespace Antarium.Sim
                 Stamp = _stamp,
                 Active = _active.AsArray(),
                 Reactions = _reactions,
+                Ignitions = _ignitions,
+                Flammable = _flammable,
+                IgniteChance = (uint)(math.saturate(IgniteChance) * 65535f),
                 Counters = _counters,
                 ChunksX = _world.ChunksX,
                 ChunksY = _world.ChunksY,
@@ -161,6 +193,9 @@ namespace Antarium.Sim
                 SteamLoss = _config.steamLoss,
                 AwakeSteps = (byte)math.clamp(_config.awakeSteps, 1, 255),
                 SkipHidden = !includeHidden,
+                SurfaceY = _surfaceY,
+                SoakDepth = SoakChance > 0f ? SoakDepth : -1,
+                SoakChance = (uint)(math.saturate(SoakChance) * 65535f),
             }.Run();
             return new FluidStepResult { Changed = _counters[0], NavChanged = _counters[1] > 0, Reactions = _reactions.Length };
         }
@@ -180,7 +215,7 @@ namespace Antarium.Sim
             for (int y = c.y + 1; y < _world.Height && f.Level > 0; y++)
             {
                 int ai = _world.Index(c.x, y);
-                if (!_world.Cells[ai].IsOpen) break;
+                if (!_world.Cells[ai].HoldsFluid) break;
                 var a = _world.Fluid[ai];
                 if (a.Level != 0 && a.Kind != f.Kind) break;
                 int move = math.min(f.Level, FluidCell.Full - a.Level);
@@ -190,6 +225,30 @@ namespace Antarium.Sim
                 _world.MarkChanged(c.x, y, ChunkFlags.FluidUpload | (f.Kind == FluidKind.Lava ? ChunkFlags.LightRecompute : 0));
             }
             Wake(c);
+        }
+
+        /// <summary>
+        /// Rain: adds <paramref name="amount"/> water to the open cell <paramref name="c"/>, spilling into the open cells above
+        /// when it is full. Cells holding another fluid take nothing. Returns the water added.
+        /// </summary>
+        public int AddWater(int2 c, int amount)
+        {
+            int added = 0;
+            for (int y = c.y; y < _world.Height && amount > 0; y++)
+            {
+                int i = _world.Index(c.x, y);
+                if (!_world.Cells[i].HoldsFluid) break;
+                var f = _world.Fluid[i];
+                if (f.Level != 0 && f.Kind != FluidKind.Water) break;
+                int move = math.min(amount, FluidCell.Full - f.Level);
+                if (move <= 0) continue;
+                _world.Fluid[i] = new FluidCell(FluidKind.Water, (byte)(f.Level + move));
+                _world.MarkChanged(c.x, y, ChunkFlags.FluidUpload);
+                amount -= move;
+                added += move;
+            }
+            if (added > 0) Wake(c);
+            return added;
         }
 
         /// <summary>Puts fluid into an open cell (tests, events, debug).</summary>
@@ -217,6 +276,9 @@ namespace Antarium.Sim
             if (_active.IsCreated) _active.Dispose();
             if (_reactions.IsCreated) _reactions.Dispose();
             if (_counters.IsCreated) _counters.Dispose();
+            if (_surfaceY.IsCreated) _surfaceY.Dispose();
+            if (_ignitions.IsCreated) _ignitions.Dispose();
+            if (_flammable.IsCreated) _flammable.Dispose();
         }
 
         [BurstCompile]
@@ -229,6 +291,9 @@ namespace Antarium.Sim
             public NativeArray<byte> Stamp;
             [ReadOnly] public NativeArray<int> Active;
             public NativeList<int2> Reactions;
+            public NativeList<int2> Ignitions;
+            [ReadOnly] public NativeArray<byte> Flammable;
+            public uint IgniteChance;
             /// <summary>0 = cells changed, 1 = nav-blocking flips, 2 = lava appeared / vanished.</summary>
             public NativeArray<int> Counters;
 
@@ -245,6 +310,10 @@ namespace Antarium.Sim
             public int SteamLoss;
             public byte AwakeSteps;
             public bool SkipHidden;
+            [ReadOnly] public NativeArray<int> SurfaceY;
+            /// <summary>Water at most this deep below the surface soaks away (-1 = off).</summary>
+            public int SoakDepth;
+            public uint SoakChance;
 
             const int Full = FluidCell.Full;
 
@@ -275,9 +344,9 @@ namespace Antarium.Sim
                             int lx = leftToRight ? t : WorldConstants.ChunkMask - t;
                             int i = baseIndex | (ly << WorldConstants.ChunkShift) | lx;
                             var f = Fluid[i];
-                            if (f.Level == 0 || Stamp[i] == StampValue) continue;
+                            if (f.Level == 0 || Stamp[i] == StampValue || f.Kind == FluidKind.Fire) continue;
                             int x = ox + lx, y = oy + ly;
-                            if (!Cells[i].IsOpen)
+                            if (!Cells[i].HoldsFluid)
                             {
                                 Set(i, x, y, FluidCell.Empty); // the cell turned solid without displacing (should not happen)
                                 continue;
@@ -288,9 +357,12 @@ namespace Antarium.Sim
                                     UpdateLiquid(i, x, y, f, 2, 1, leftToRight);
                                     break;
                                 case FluidKind.Lava:
-                                    if (LavaMoves) UpdateLiquid(i, x, y, f, LavaMinDiff, LavaThickness, leftToRight);
+                                    if (!LavaMoves) break;
+                                    if (IgniteChance > 0) TryIgnite(x, y);
+                                    UpdateLiquid(i, x, y, f, LavaMinDiff, LavaThickness, leftToRight);
                                     break;
                                 case FluidKind.Gas:
+                                case FluidKind.Smoke:
                                     UpdateGas(i, x, y, f, leftToRight);
                                     break;
                             }
@@ -299,8 +371,20 @@ namespace Antarium.Sim
                 }
             }
 
-            /// <param name="minDiff">Smallest level difference that still flows sideways.</param>
-            /// <param name="thickness">Sideways flow is divided by this (lava creeps).</param>
+            /// <summary>Lava next to a solid flammable cell that is not burning yet may light it.</summary>
+            void TryIgnite(int x, int y)
+            {
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = x + (d == 0 ? 1 : d == 1 ? -1 : 0), ny = y + (d == 2 ? 1 : d == 3 ? -1 : 0);
+                    if (!InBounds(nx, ny)) continue;
+                    int ni = Idx(nx, ny);
+                    var c = Cells[ni];
+                    if (c.IsOpen || c.Material >= Flammable.Length || Flammable[c.Material] == 0 || Fluid[ni].Kind == FluidKind.Fire) continue;
+                    if ((math.hash(new uint3((uint)ni, Step, 0xF12Eu)) & 0xFFFF) < IgniteChance) Ignitions.Add(new int2(nx, ny));
+                }
+            }
+
             bool AnyRevealed(int baseIndex)
             {
                 for (int i = 0; i < WorldConstants.ChunkCellCount; i++)
@@ -315,7 +399,7 @@ namespace Antarium.Sim
                 if (y > 0)
                 {
                     int bi = Idx(x, y - 1);
-                    if (Cells[bi].IsOpen)
+                    if (Cells[bi].HoldsFluid)
                     {
                         var b = Fluid[bi];
                         if (b.Level == 0 || b.Kind == f.Kind)
@@ -327,7 +411,7 @@ namespace Antarium.Sim
                                 level -= move;
                             }
                         }
-                        else if (b.Kind == FluidKind.Gas)
+                        else if (b.Kind.IsGas())
                         {
                             // Liquid sinks through gas: swap.
                             Set(bi, x, y - 1, new FluidCell(f.Kind, (byte)level));
@@ -353,11 +437,11 @@ namespace Antarium.Sim
                         int nx = x + (s == 0 ? dx0 : -dx0);
                         if (!InBounds(nx, y)) continue;
                         int ni = Idx(nx, y);
-                        if (!Cells[ni].IsOpen) continue;
+                        if (!Cells[ni].HoldsFluid) continue;
                         var n = Fluid[ni];
                         if (n.Level != 0 && n.Kind != f.Kind)
                         {
-                            if (n.Kind != FluidKind.Gas)
+                            if (!n.Kind.IsGas())
                             {
                                 React(i, x, y, f.Kind, level, ni, nx, y, n);
                                 return;
@@ -390,6 +474,12 @@ namespace Antarium.Sim
                     && (Cells[i].Flags & CellFlags.Explored) != 0 && Roll(i, EvaporateChance))
                     level--;
 
+                // 4. Water near the surface (rain) soaks into the ground, so floods there drain again.
+                // Lakes and rivers (Milestone 11) keep their water.
+                if (f.Kind == FluidKind.Water && level > 0 && SurfaceY[x] - y <= SoakDepth && (Cells[i].Flags & CellFlags.Lake) == 0
+                    && (math.hash(new uint3((uint)i, Step, 0x50A6u)) & 0xFFFF) < SoakChance)
+                    level--;
+
                 if (level != f.Level) Set(i, x, y, new FluidCell(f.Kind, (byte)level));
             }
 
@@ -400,15 +490,15 @@ namespace Antarium.Sim
                 if (y < Height - 1)
                 {
                     int ai = Idx(x, y + 1);
-                    if (Cells[ai].IsOpen)
+                    if (Cells[ai].HoldsFluid)
                     {
                         var a = Fluid[ai];
-                        if (a.Level == 0 || a.Kind == FluidKind.Gas)
+                        if (a.Level == 0 || a.Kind == f.Kind)
                         {
                             int move = math.min(level, Full - a.Level);
                             if (move > 0)
                             {
-                                Set(ai, x, y + 1, new FluidCell(FluidKind.Gas, (byte)(a.Level + move)));
+                                Set(ai, x, y + 1, new FluidCell(f.Kind, (byte)(a.Level + move)));
                                 Stamp[ai] = StampValue;
                                 level -= move;
                             }
@@ -426,9 +516,9 @@ namespace Antarium.Sim
                         int nx = x + (s == 0 ? dx0 : -dx0);
                         if (!InBounds(nx, y)) continue;
                         int ni = Idx(nx, y);
-                        if (!Cells[ni].IsOpen) continue;
+                        if (!Cells[ni].HoldsFluid) continue;
                         var n = Fluid[ni];
-                        if (n.Level != 0 && n.Kind != FluidKind.Gas) continue;
+                        if (n.Level != 0 && n.Kind != f.Kind) continue;
                         if (level - n.Level < 2) continue;
                         if (na < 0) { na = ni; la = n.Level; }
                         else { nb = ni; lb = n.Level; }
@@ -436,23 +526,23 @@ namespace Antarium.Sim
                     if (na >= 0 && nb >= 0)
                     {
                         int ma = (level - la) / 3, mb = (level - lb) / 3;
-                        Give(na, ma, FluidKind.Gas, la, false);
-                        Give(nb, mb, FluidKind.Gas, lb, false);
+                        Give(na, ma, f.Kind, la, false);
+                        Give(nb, mb, f.Kind, lb, false);
                         level -= ma + mb;
                     }
                     else if (na >= 0)
                     {
                         int m = (level - la) / 2;
-                        Give(na, m, FluidKind.Gas, la, false);
+                        Give(na, m, f.Kind, la, false);
                         level -= m;
                     }
                 }
 
-                // 3. Gas that reached the colony's tunnels slowly thins out.
-                if (level > 0 && (Cells[i].Flags & CellFlags.Explored) != 0 && Roll(i, GasDecayChance))
+                // 3. Gas that reached the colony's tunnels slowly thins out; smoke thins out anywhere.
+                if (level > 0 && (f.Kind == FluidKind.Smoke || (Cells[i].Flags & CellFlags.Explored) != 0) && Roll(i, GasDecayChance))
                     level--;
 
-                if (level != f.Level) Set(i, x, y, new FluidCell(FluidKind.Gas, (byte)level));
+                if (level != f.Level) Set(i, x, y, new FluidCell(f.Kind, (byte)level));
             }
 
             /// <summary>

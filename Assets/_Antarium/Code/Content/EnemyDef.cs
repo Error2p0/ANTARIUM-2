@@ -9,6 +9,17 @@ namespace Antarium.Content
         CaveDweller,
         /// <summary>Comes from the surface in a raid, heads for the royal chamber, eats food and leaves when full.</summary>
         Raider,
+        /// <summary>Comes out on the surface near the nest at night, hunts ants nearby and slinks off at dawn.</summary>
+        NightHunter,
+        /// <summary>A rival ant from the surface (10.5): comes in a raid, steals items from the stock and carries them home.</summary>
+        Thief,
+        /// <summary>Tunnels toward the nest through soft ground (10.5), then hunts the ants it finds there.</summary>
+        Digger,
+        /// <summary>
+        /// The giant earthworm of the random event (Milestone 11): meanders through soft ground near the tunnels, leaving a
+        /// tunnel behind; its body (<c>ThreatConfig.wormSegments</c>) can be bitten anywhere. Never hunts.
+        /// </summary>
+        Worm,
     }
 
     /// <summary>Which generated placeholder sprite an enemy uses until real art exists.</summary>
@@ -20,6 +31,12 @@ namespace Antarium.Content
         Mite,
         FireBeetle,
         Guardian,
+        WolfSpider,
+        RivalAnt,
+        /// <summary>Mole cricket: 2 walk frames and 2 dig frames.</summary>
+        MoleCricket,
+        /// <summary>Giant earthworm (Milestone 11): the head (2 frames), and 2 body segment frames of its own.</summary>
+        Worm,
     }
 
     /// <summary>A hostile creature: deep-cave dwellers per biome, and raiders from the surface.</summary>
@@ -53,6 +70,18 @@ namespace Antarium.Content
         [Min(0f)] public float foodPerSecond = 1f;
         [Tooltip("A raider leaves once it has eaten this much.")]
         [Min(0f)] public float carryFood = 10f;
+
+        [Header("Thieves (rival ants)")]
+        [Tooltip("Items a thief carries off at most (one kind at a time).")]
+        [Min(1)] public int carryItems = 3;
+        [Tooltip("Seconds a thief needs to grab one item from the stock.")]
+        [Min(0.1f)] public float stealSeconds = 1f;
+
+        [Header("Diggers")]
+        [Tooltip("Hardness units it digs away per second.")]
+        [Min(0.1f)] public float digPower = 2f;
+        [Tooltip("Rock harder than this stops it (it digs around).")]
+        [Min(0.1f)] public float maxDigHardness = 2f;
 
         [Header("Loot")]
         public List<ItemAmount> drops = new();

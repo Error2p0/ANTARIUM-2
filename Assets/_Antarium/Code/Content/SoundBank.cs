@@ -20,6 +20,18 @@ namespace Antarium.Content
         GeneticBought, Flight, Achievement,
         // interface
         UiClick, UiHover, UiOpen, UiClose, Refused, Toast,
+        // the surface (Milestone 10.2; appended so saved banks keep their cues)
+        BirdCry, BirdStrike, Rain, Dusk, Dawn,
+        // the living world (Milestone 10.3)
+        FireIgnite,
+        // the deep endgame (Milestone 10.5)
+        LoreFound, EngineStage, EngineAwakened, Burrow, ItemStolen,
+        // presentation pass (Milestone 10.7): queen evolutions, ant levels, the respec, the Quickening, raiders getting away
+        Evolution, LevelUp, Respec, Quickening, Escaped,
+        // Milestone 11: thunder after a lightning strike, a sparkling chime when a starfall night begins
+        Thunder, Starfall,
+        // Milestone 11 batch 3: a bright twinkle when the player catches a shooting star, a wet churning rumble while the giant worm digs
+        StarCaught, WormBurrow,
     }
 
     public enum SoundBus : byte { Sfx, Ui, Ambience, Music }
@@ -137,6 +149,10 @@ namespace Antarium.Content
         public AudioClip flightCue;
         [Tooltip("Plays once when the colony first digs into a deeper biome.")]
         public AudioClip discoveryCue;
+        [Tooltip("Plays once when a lore fragment of the ruins is found (10.5).")]
+        public AudioClip loreCue;
+        [Tooltip("Plays once when the Ancient Engine wakes (10.5).")]
+        public AudioClip engineCue;
         [Range(0f, 1f)] public float trackVolume = 0.8f;
         [Range(0f, 1f)] public float cueVolume = 0.9f;
         [Tooltip("Seconds to crossfade between tracks (and to fade the generative music in and out).")]

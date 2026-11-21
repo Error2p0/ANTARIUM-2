@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc189f904cd08e84ea2386ff4948045d, type: 3}
+  m_Name: vein_instinct
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.ResearchDef
+  id: vein_instinct
+  displayName: Vein Instinct
+  description: 'Ore and other finds next to every cell your colony digs out are ordered for mining automatically: ants follow veins on their own. Switch it off and on with the Mine tool.'
+  treePosition: {x: 0, y: 5}
+  knowledgeCost: 25
+  cost:
+  - item: {fileID: 11400000, guid: f1582a35f603b1544a29ee46632295c6, type: 2}
+    count: 10
+  foodCost: 0
+  loreRequired: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 80f60cdd5630d7146adba849e7849b57, type: 2}
+  effects:
+  - kind: 4
+    stat: 0
+    value: 0
+    building: {fileID: 0}
+    ability: {fileID: 0}
+    caste: 0
+    feature: 1

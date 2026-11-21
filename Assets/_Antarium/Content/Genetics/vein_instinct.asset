@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Antarium.Content::Antarium.Content.GeneticDef
   id: vein_instinct
   displayName: Vein Instinct
-  description: 'Ore next to every cell your colony digs out is ordered for mining automatically: ants follow veins on their own.'
+  description: 'Every colony knows Vein Instinct from the start, as if researched: ore next to every cell your colony digs out is ordered for mining automatically.'
   treePosition: {x: 2, y: 2}
   cost: 6
   costPerLevel: 0
@@ -29,3 +29,4 @@ MonoBehaviour:
     count: 0
     research: {fileID: 0}
     modifier: {fileID: 0}
+    building: {fileID: 0}

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810031e0539baf849a8ec048a6ff4b7a, type: 3}
+  m_Name: help_belts
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.HelpTopicDef
+  id: help_belts
+  displayName: Belts and lifts
+  order: 210
+  category: Building
+  icon: building_silk_belt
+  body: 'Silk Belts carry items left or right, Root Lifts up or down. Drag to lay a line: it flows the way you drag. Dragging over a line turns it around.
+
+
+    A line delivers where it ends: into a machine, into a chest, or into the stock when it ends in or next to the royal chamber or a storage zone. A line that leads nowhere stops, and the info panel warns you.
+
+
+    Workers drop their loads onto the nearest belt that can deliver them and go straight back to work, and what you dig falls onto belts below it. A full line backs up; a jammed one shows red in the flow overlay ({Flow}).
+
+
+    Splitters share items out between lines and filters send one item one way (research Silk Routing). Iron belts and lifts are twice as fast.'
+  reveal: 0
+  revealBiome: {fileID: 0}
+  revealResearch: {fileID: 0}

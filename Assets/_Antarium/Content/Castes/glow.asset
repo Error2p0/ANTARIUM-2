@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da33025706420a84e954e088ef8d3a0e, type: 3}
+  m_Name: glow
+  m_EditorClassIdentifier: Antarium.Content::Antarium.Content.CasteDef
+  id: glow
+  displayName: Glow Ant
+  caste: 8
+  description: 'A worker whose gaster glows: it lights the tunnels around it as it digs, hauls and builds, a little slower than a worker.'
+  order: 8
+  eggFoodCost: 10
+  upkeep: 0.35
+  defaultShare: 0.1
+  health: 35
+  attack: 2
+  speed: 1
+  dig: 0.8
+  build: 0.8
+  carry: 1
+  digJob: 1
+  haulJob: 1
+  buildJob: 1
+  supplyJob: 1
+  senseRadius: 10
+  machineBoost: 0.5
+  heatProof: 0
+  lavaDamageTaken: 1
+  lightRadius: 6
+  color: {r: 0.4862745, g: 0.9411765, b: 0.78431374, a: 1}

@@ -18,6 +18,16 @@ MonoBehaviour:
   surfaceAmplitude: 5
   surfaceFrequency: 0.012
   grassDepth: 2
+  hillAmplitude: 19
+  hillFrequency: 0.0055
+  bumpAmplitude: 1.5
+  bumpFrequency: 0.09
+  terraceThreshold: 0.25
+  terraceFrequency: 0.004
+  terraceStep: 5
+  nestFlatRadius: 16
+  nestFlatBlend: 28
+  waterFlatBlend: 14
   air: {fileID: 11400000, guid: cb82451f557686e41b367b63ec284a90, type: 2}
   surfaceMaterial: {fileID: 11400000, guid: dba79727118b0a345894740594dce39d, type: 2}
   bedrock: {fileID: 11400000, guid: 93805c4604632d04fac6c5d05a2a4993, type: 2}
@@ -35,6 +45,98 @@ MonoBehaviour:
   caveMinDepth: 24
   caveFadeDepth: 24
   fluidReactionMaterial: {fileID: 11400000, guid: 750aeb7a41d0c48468897ab834ec9fa8, type: 2}
+  ashMaterial: {fileID: 11400000, guid: 1585313deb4f6ea46a9b5c83a4935644, type: 2}
+  plantGap: {x: 8, y: 20}
+  plantClearance: 6
+  rootMaterial: {fileID: 11400000, guid: a286ed699116a39419d1c76776f52d9d, type: 2}
+  rootLength: {x: 10, y: 32}
+  rootMaxDepth: 60
+  berryBushShare: 0.25
+  treeGap: {x: 26, y: 60}
+  treeClearance: 10
+  appleTreeShare: 0.45
+  treeRootMaterial: {fileID: 11400000, guid: 54fc341cf8e398c4c9a4e3f43f8692ea, type: 2}
+  treeRoots: {x: 3, y: 4}
+  treeRootLength: {x: 28, y: 56}
+  treeRootMaxDepth: 90
+  surfaceFeatures:
+  - kind: 0
+    count: {x: 3, y: 6}
+    width: {x: 4, y: 8}
+    material: {fileID: 11400000, guid: 8b7e86cb7dce5c942a47b6799374ebf6, type: 2}
+    find: {fileID: 0}
+    finds: 0
+  - kind: 1
+    count: {x: 0, y: 1}
+    width: {x: 12, y: 16}
+    material: {fileID: 11400000, guid: 8b7e86cb7dce5c942a47b6799374ebf6, type: 2}
+    find: {fileID: 0}
+    finds: 0
+  - kind: 2
+    count: {x: 1, y: 2}
+    width: {x: 12, y: 18}
+    material: {fileID: 11400000, guid: bf2e2747a8f204342b6f68b8260f0d36, type: 2}
+    find: {fileID: 11400000, guid: 0476c2bba1101384798b9f1c72376ed0, type: 2}
+    finds: 2
+  - kind: 3
+    count: {x: 0, y: 1}
+    width: {x: 16, y: 22}
+    material: {fileID: 11400000, guid: 2ff2069541c958f4e82e8f23ee1ea491, type: 2}
+    find: {fileID: 11400000, guid: 7def0e179ba399b4cb5c709014eada32, type: 2}
+    finds: 3
+  - kind: 4
+    count: {x: 0, y: 1}
+    width: {x: 11, y: 14}
+    material: {fileID: 11400000, guid: 4666e344b6f2a0b41aecc0764c364f2a, type: 2}
+    find: {fileID: 11400000, guid: aed1530ffbaaef541aa281810cdb63ee, type: 2}
+    finds: 1
+  featureClearance: 30
+  elderBiome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+  elderCaveSize: {x: 92, y: 58}
+  elderDepthShare: 0.3
+  elderMinDistance: 110
+  elderWood: {fileID: 11400000, guid: 2431a087a30842a4494f9a0c210cccc5, type: 2}
+  elderLeaves: {fileID: 11400000, guid: 2551bb5f991a198468cae67e284505e5, type: 2}
+  elderFruit: {fileID: 11400000, guid: a67fa61cf106a674191836fa30cc6b96, type: 2}
+  elderFruitChance: 0.25
+  elderFruitMax: 16
+  lakeCount: {x: 2, y: 3}
+  riverCount: {x: 1, y: 2}
+  lakeWidth: {x: 14, y: 28}
+  lakeDepth: {x: 4, y: 7}
+  riverWidth: {x: 10, y: 18}
+  riverDepth: {x: 2, y: 3}
+  waterClearance: 110
+  waterSpacing: 24
+  waterBedMaterial: {fileID: 11400000, guid: 66f14a2537721424ca1b11819648d02d, type: 2}
+  waterBedDepth: 2
+  caveGrowths:
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: 45945662f98807044ba0a950bc89ce4a, type: 2}
+    chance: 0.05
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: 6dd87aa3e609aa848bd80e10513cee77, type: 2}
+    chance: 0.06
+  - item: {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+    biome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+    chance: 0.012
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: 6b8ac0fe399525a48979e53c22e3c99c, type: 2}
+    chance: 0.04
+  - item: {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+    biome: {fileID: 11400000, guid: e34003af733857549a27adcfc89a230d, type: 2}
+    chance: 0.03
+  - item: {fileID: 11400000, guid: 871cf72c6937b4548bc56db7ff0c27db, type: 2}
+    biome: {fileID: 11400000, guid: bbdd45a9d3d3da6439706d3305f9878d, type: 2}
+    chance: 0.12
+  - item: {fileID: 11400000, guid: 93bf4cd093d02ca4495b16cf47bd141e, type: 2}
+    biome: {fileID: 11400000, guid: b3eeca26cf81ea4499940dbcea578f82, type: 2}
+    chance: 0.025
+  growthPatchScale: 0.07
+  maxCaveGrowths: 2500
+  tabletMaterial: {fileID: 11400000, guid: 05761e1042302b4479dead0f149a8487, type: 2}
+  tabletCount: 4
+  tabletSpacing: 60
   nestDepth: 14
   nestRadius: {x: 7, y: 3.5}
   shaftHalfWidth: 1
