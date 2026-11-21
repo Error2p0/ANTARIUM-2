@@ -104,15 +104,15 @@ Logs: `steam/output/log/app_build_4453940.log` (the commit result), `steam/outpu
 
 ## The demo
 
-The Steam Next Fest demo (GDD 2.16) is the same project built with `ANTARIUM_DEMO`: the first colony down to the Ancient Seal at the bottom of the stone strata, no achievements, Wishlist buttons. On Steam it is **its own app** (a demo app linked to Antarium 2), with its own App ID and depot.
+The Steam Next Fest demo (GDD 2.16) is the same project built with `ANTARIUM_DEMO`: the first colony down to the Ancient Seal at the bottom of the stone strata, no achievements, Wishlist buttons. On Steam it is **its own app** (a demo app linked to Antarium 2): **App ID 5676510**, depot 5676511 (App ID + 1; check it under SteamPipe → Depots).
 
 **What the code does.** *Antarium → Build → Windows Demo* builds `Builds/Windows/Demo/Antarium2Demo.exe` with the define, product name *ANTARIUM 2 Demo* and bundle id `com.elevatestudios.antarium2.demo` (both only for the build; Player Settings go back to the full game's afterwards), so the demo's saves, settings and profile live in `LocalLow/Elevate Studios/ANTARIUM 2 Demo/`. It starts Steam with `DemoConfig.demoAppId` (`Assets/_Antarium/Content/DemoConfig.asset`); while that is **0** the demo runs without Steam and *Wishlist on Steam* opens the store page in the browser. With Steam it opens the full game's page (`fullGameAppId`, 4453940) in the overlay. No achievements, stats or rich presence are sent from the demo. *Windows Demo (Development)* adds `steam_appid.txt` with the demo's App ID. The full game's title screen offers *Continue your demo colony* when it has no saves and finds one in the demo's folder (same PC only: Steam Cloud is per app).
 
 **One-time setup (you):**
-1. Steamworks → Antarium 2 → **Create demo** (on the app's landing page, under *All Associated Packages, DLC, Demos and Tools* or the *Demo* section; Valve's wording changes). It gets its own App ID; the depot is usually that ID + 1.
+1. ✅ (App ID 5676510) Steamworks → Antarium 2 → **Create demo** (on the app's landing page, under *All Associated Packages, DLC, Demos and Tools* or the *Demo* section; Valve's wording changes). It gets its own App ID; the depot is usually that ID + 1.
 2. The demo's store page is short: it inherits most of the main page. Fill in what Steamworks asks for (capsules can reuse the main ones with a *Demo* tag). Check *Steam Next Fest* rules for the demo (a playable build, no time-limited trials that hide the game, available during the fest).
 3. **Installation → General**: launch option `Antarium2Demo.exe`, *Launch (Default)*, Windows. **Redistributables**: none (as the main app). Steam Cloud is not needed for the demo.
-4. Enter the App ID in `DemoConfig.asset` → *Demo App Id*, and `$DemoAppId` / `$DemoDepotId` in `steam/upload.ps1`. Rebuild (*Antarium → Build → Windows Demo*).
+4. The App ID is in `DemoConfig.asset` → *Demo App Id* (5676510) and in `steam/upload.ps1` (`$DemoAppId` 5676510, `$DemoDepotId` 5676511: change the depot there if Steamworks shows another). Rebuild (*Antarium → Build → Windows Demo*).
 5. Upload: `./steam/upload.ps1 -User <account> -Demo` (`-Preview` for a dry run; as for the main app the first upload may need the `default` build set live by hand before a `beta` branch can be made). Install the demo from Steam, start it, check `LocalLow/Elevate Studios/ANTARIUM 2 Demo/Player.log`, the Wishlist button (overlay) and that nothing unlocks achievements.
 6. Publish the demo (Valve reviews it like any build; allow several business days, more over the holidays), then post a Steam event on the main page.
 

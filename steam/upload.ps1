@@ -33,8 +33,8 @@ $Exe = "Antarium2.exe"
 $Folder = "Release"
 $Menu = "Windows Release"
 # The demo: must match DemoConfig.demoAppId (Assets/_Antarium/Content/DemoConfig.asset) and its depot. 0 = not created yet.
-$DemoAppId = 0
-$DemoDepotId = 0
+$DemoAppId = 5676510
+$DemoDepotId = 5676511
 if ($Demo) {
     if ($DemoAppId -eq 0 -or $DemoDepotId -eq 0) { throw "Fill in `$DemoAppId and `$DemoDepotId in steam/upload.ps1 first (Steamworks -> the app -> Create demo; docs/STEAM.md)." }
     $AppId = $DemoAppId

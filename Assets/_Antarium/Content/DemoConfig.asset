@@ -40,4 +40,4 @@ MonoBehaviour:
   flightBody: When a colony has grown, its princesses fly off to found the next one. Each flight earns Genetic Memory for permanent traits.
   sealHover: 'The Old Colony sealed the deep here. It can''t be broken in the demo: in the full game the depths go on.'
   fullGameAppId: 4453940
-  demoAppId: 0
+  demoAppId: 5676510
