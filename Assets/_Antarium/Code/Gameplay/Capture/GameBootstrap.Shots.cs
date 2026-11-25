@@ -58,6 +58,15 @@ namespace Antarium.Gameplay
             yield return ("trees", ShotTrees, false);
             yield return ("stars", ShotStars, false);
             yield return ("achievements11", ShotAchievements11, false);
+            // The demo's store media (the "demo" set): the store shots again with the demo's rules on, then the seal.
+            yield return ("demo_stills", () => AsDemo(ShotStills), false);
+            yield return ("demo_surface", () => AsDemo(ShotSurface), false);
+            yield return ("demo_story", () => AsDemo(ShotStory), false);
+            yield return ("demo_raid", () => AsDemo(ShotRaid), false);
+            yield return ("demo_possess", () => AsDemo(ShotPossess), false);
+            yield return ("demo_living", () => AsDemo(ShotLiving), false);
+            yield return ("demo_panels", () => AsDemo(ShotPanels), false);
+            yield return ("demo_seal", ShotDemoSeal, false);
         }
 
         // ---------------------------------------------------------------- stills

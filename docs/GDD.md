@@ -394,7 +394,7 @@ Versioned save format (binary or compressed JSON) including the full world grid,
 - Store page: media and texts uploaded (refreshed for Milestones 10 and 11), content survey done, approved and public as *Coming Soon*; price and release date set.
 - Build: first IL2CPP release build, first-run experience checked on a clean Windows account, Steam Cloud and the real Steam client verified, uploaded to `beta` and submitted for review.
 - *The demo* (2.16) ✅: built with `ANTARIUM_DEMO` as its own product (*ANTARIUM 2 Demo*, own save folder, own App ID 5676510 in `DemoConfig.demoAppId`), no achievements, Wishlist buttons through the overlay (`IPlatformServices.OpenStorePage`); `steam/upload.ps1 -Demo` uploads it once its App ID and depot are filled in.
-- *The demo's store page*: its own texts, capsules with a DEMO plate, demo-only screenshots, a demo trailer and GIFs (`steam/store/demo/`, `tools/media/make_demo_capsules.py`, `make_trailer.py --cut demo`; `docs/STEAM.md` → *Demo store page*).
+- *The demo's store page*: its own texts, capsules with a DEMO plate, a demo trailer and GIFs, and screenshots from a **demo capture set** (the showcase colony built with the demo's rules, the store shots again in demo mode, and the Ancient Seal: digging to it, the crystal caverns glowing through, the end screen) (`steam/store/demo/`, `tools/media/make_demo_capsules.py`, `make_trailer.py --cut demo`, *Antarium → Capture → Run Demo Store Shots*; `docs/STEAM.md` → *Demo store page*).
 - Missing: Steam Deck / gamepad pass, the release itself (Q1 2027, after the fest).
 
 ---

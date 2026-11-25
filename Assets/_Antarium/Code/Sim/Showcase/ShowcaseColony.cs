@@ -11,6 +11,9 @@ namespace Antarium.Sim
     /// all research. Built from a fixed seed with the instant showcase edits, then run for a while so ants, belts and
     /// machines are busy. Everything near the surface has light wells: sky light only reaches ~32 open cells.
     /// Positions are relative to the queen (<c>q</c>; y grows upward).
+    /// <para>Built while <see cref="ContentDB.DemoActive"/> is on, it is the demo's showcase: the world has the Ancient Seal, the
+    /// shaft stops a few rows above it (the shots dig the rest), and nothing the demo doesn't have is researched, placed or given
+    /// (no deep outposts, no Princess Chamber, no full game items, no princesses).</para>
     /// </summary>
     public static class ShowcaseColony
     {
@@ -31,6 +34,8 @@ namespace Antarium.Sim
             public int ShaftX;
             public int2[] Outposts;
             public int Surface;
+            /// <summary>Demo: the shaft's bottom cell (a few rows of rock left above the seal), else zero.</summary>
+            public int2 SealShaft;
         }
 
         public static Layout Last;
@@ -70,9 +75,17 @@ namespace Antarium.Sim
                 _layout.Surface = _surface;
 
                 CarveNest();
-                int shaftX = FindClearColumn(_q.x - 62, _q.x - 58, _q.y - 12, _surface - OutpostDepths[^1] - 4);
-                _layout.ShaftX = shaftX;
-                CarveShaft(shaftX);
+                if (_sim.IsDemo)
+                {
+                    _layout.ShaftX = PickSealColumn();
+                    CarveSealTunnel(_layout.ShaftX);
+                }
+                else
+                {
+                    int shaftX = FindClearColumn(_q.x - 62, _q.x - 58, _q.y - 12, _surface - OutpostDepths[^1] - 4);
+                    _layout.ShaftX = shaftX;
+                    CarveShaft(shaftX);
+                }
                 _sim.ClearPilesNow();
 
                 FillOre();
@@ -171,6 +184,79 @@ namespace Antarium.Sim
                 }
             }
 
+            /// <summary>
+            /// Demo: the lowest row the shaft and its landing (9 wide) around column <paramref name="x"/> may reach and still leave
+            /// <see cref="SealRock"/> rows of rock above the seal in every column they cover (and the next ones, for diagonals).
+            /// </summary>
+            int SealShaftBottom(int x)
+            {
+                var top = _sim.Demo.SealTop;
+                int highest = 0;
+                for (int dx = -6; dx <= 6; dx++)
+                    if (top != null && x + dx >= 0 && x + dx < top.Length) highest = math.max(highest, top[x + dx]);
+                return highest + SealRock + 1;
+            }
+
+            /// <summary>Demo: rows of rock the build leaves between the shaft's bottom and the seal (the shot digs them).</summary>
+            const int SealRock = 3;
+
+            /// <summary>
+            /// Demo: the column under the nest where the seal is flattest and the rock above it most solid and dry (no caves,
+            /// pools or sand to flood or cave in on the shot).
+            /// </summary>
+            int PickSealColumn()
+            {
+                var world = _sim.World;
+                var top = _sim.Demo.SealTop;
+                int best = _q.x - 60;
+                float bestScore = float.MaxValue;
+                for (int x = _q.x - 72; x <= _q.x + 120; x += 2)
+                {
+                    int lo = int.MaxValue, hi = int.MinValue;
+                    for (int dx = -6; dx <= 6; dx++)
+                    {
+                        if (top == null || x + dx < 0 || x + dx >= top.Length || top[x + dx] < 0) continue;
+                        lo = math.min(lo, top[x + dx]);
+                        hi = math.max(hi, top[x + dx]);
+                    }
+                    if (hi < 0) continue;
+                    float score = (hi - lo) * 6f;
+                    int bottom = SealShaftBottom(x);
+                    for (int dx = -14; dx <= 14; dx++)
+                    for (int dy = -12; dy <= 32; dy++)
+                    {
+                        int cx = x + dx, cy = bottom + dy;
+                        if (!world.InBounds(cx, cy)) continue;
+                        if (!world.Fluid[world.Index(cx, cy)].IsEmpty) score += 3f;
+                        else if (world[cx, cy].IsOpen) score += 1f;
+                    }
+                    if (score < bestScore)
+                    {
+                        bestScore = score;
+                        best = x;
+                    }
+                }
+                return best;
+            }
+
+            /// <summary>
+            /// Demo: the colony's deepest tunnel, coming down to just above the Ancient Seal and ending in a small landing. Only
+            /// its last stretch is dug (a shaft all the way from the nest would drain the groundwater layer onto the landing).
+            /// </summary>
+            void CarveSealTunnel(int x)
+            {
+                int bottom = SealShaftBottom(x);
+                int top = bottom + SealTunnel;
+                _sim.CarveLineNow(new float2(x + 0.5f, top + 0.5f), new float2(x + 0.5f, bottom + 0.5f), 1.5f);
+                _sim.CarveRectNow(new int2(x - 4, bottom), new int2(x + 4, bottom + 3));
+                _sim.ClearFluidNow(new int2(x - 16, bottom - 12), new int2(x + 16, top + 4));
+                _layout.Outposts = new int2[0];
+                _layout.SealShaft = new int2(x, bottom);
+            }
+
+            /// <summary>Demo: rows of tunnel above the landing.</summary>
+            const int SealTunnel = 30;
+
             /// <summary>The column in [x0, x1] with the least fluid within 3 cells along the depth range.</summary>
             int FindClearColumn(int x0, int x1, int top, int bottom)
             {
@@ -243,7 +329,7 @@ namespace Antarium.Sim
                 Place(Building("archive"), Q(66, 4), default);
                 _layout.Archive = Q(67, 5);
 
-                Place(Building("princess_chamber"), Q(58, 4), default);
+                Place(Building("princess_chamber"), Q(58, 4), default); // skipped in the demo (full game)
                 _layout.Princess = Q(59, 5);
                 Place(Building("fungus_garden"), Q(46, 4), default);
                 Place(Building("pheromone_emitter"), Q(-50, -2), default, (ushort)PheromoneKind.Trail);
@@ -275,7 +361,7 @@ namespace Antarium.Sim
             {
                 _sim.GiveResources(40, 1000f);
                 _sim.Colony.Inventory.AddKnowledge(240f, studied: false);
-                _sim.Colony.Princesses = 2;
+                _sim.Colony.Princesses = _sim.IsDemo ? 0 : 2;
             }
 
             void Populate()
@@ -341,6 +427,7 @@ namespace Antarium.Sim
             void Place(int def, int2 origin, int2 dir, ushort filter = 0)
             {
                 if (def < 0) return;
+                if (_sim.DemoRules != null && _sim.DemoRules.FullGameBuilding[def]) return;
                 var result = _sim.PlaceNow(def, origin, dir, filter);
                 if (result != PlaceResult.Ok) Warnings.Add($"{_c.Buildings[def].Def.Id} at {origin - _q} (q-relative): {result}");
             }

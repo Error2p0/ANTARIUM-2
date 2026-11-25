@@ -61,6 +61,7 @@ namespace Antarium.Gameplay
                 _captureSound = new CaptureSound(_audio, _rig, request.OutputDirectory);
             }
             _debugHud.Visible = false;
+            _hud.QuietCaveIns = true;
             Application.runInBackground = true;
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = -1;
@@ -167,12 +168,14 @@ namespace Antarium.Gameplay
             _hud.SetTitle(false);
             Hud(true);
             _camera.ShakeScale = 1f;
+            _content.DemoActive = false; // the demo shots turn it on (Shots.Demo.cs)
         }
 
         /// <summary>Called by Update in capture mode instead of the camera controller.</summary>
         void DriveShot(float dt, bool paused)
         {
             _shotTime += dt;
+            if (DemoPass) KeepDemoFed();
             _shotTick?.Invoke(_shotTime, dt);
             if (_camPath != null)
             {
@@ -198,19 +201,27 @@ namespace Antarium.Gameplay
 
         IEnumerator Seconds(float seconds) => Frames(math.max(1, (int)math.round(seconds * _fps)));
 
-        /// <summary>Records <paramref name="seconds"/> of frames to <c>clips/&lt;name&gt;/NNNNN.png</c>.</summary>
+        /// <summary>
+        /// Records <paramref name="seconds"/> of frames to <c>clips/&lt;name&gt;/NNNNN.png</c>. In a demo pass only the demo's own
+        /// clips (<c>d_*</c>) are recorded; the store shots' clips just let the time pass.
+        /// </summary>
         IEnumerator Clip(string name, float seconds)
         {
+            if (DemoPass && !name.StartsWith("d_", StringComparison.Ordinal))
+            {
+                yield return Seconds(seconds);
+                yield break;
+            }
             _rig.BeginClip(Path.Combine(_captureRequest.OutputDirectory, "clips", name));
             int frames = math.max(1, (int)math.round(seconds * _fps));
             for (int i = 0; i < frames; i++) yield return null;
             _rig.EndClip();
         }
 
-        /// <summary>Writes this frame to <c>stills/&lt;name&gt;.png</c>.</summary>
+        /// <summary>Writes this frame to <c>stills/&lt;name&gt;.png</c> (in a demo pass <c>demo_stills/</c>).</summary>
         IEnumerator Still(string name)
         {
-            _stillPath = Path.Combine(_captureRequest.OutputDirectory, "stills", name + ".png");
+            _stillPath = Path.Combine(_captureRequest.OutputDirectory, DemoPass ? "demo_stills" : "stills", name + ".png");
             yield return null;
         }
 
@@ -245,11 +256,15 @@ namespace Antarium.Gameplay
             _showPointer = show;
         }
 
-        /// <summary>Loads the showcase colony (built and saved once; see <see cref="ShowcaseColony"/>).</summary>
+        /// <summary>
+        /// Loads the showcase colony (built and saved once; see <see cref="ShowcaseColony"/>). In a demo pass the demo's
+        /// showcase, built in demo mode in its own folder.
+        /// </summary>
         void LoadShowcase()
         {
-            var store = new SaveStore(_captureRequest.ShowcaseDirectory);
-            if (_captureRequest.RebuildShowcase || !store.HasSave)
+            string dir = ShowcaseDirectory;
+            var store = new SaveStore(dir);
+            if (_captureRequest.RebuildShowcase && _rebuiltShowcases.Add(dir) || !store.HasSave)
             {
                 var t0 = DateTime.Now;
                 var built = ShowcaseColony.Build(_content, config);
@@ -257,16 +272,18 @@ namespace Antarium.Gameplay
                 built.Dispose();
                 File.WriteAllText(LayoutPath, JsonUtility.ToJson(ShowcaseColony.Last, true));
                 foreach (var w in ShowcaseColony.Warnings) Debug.LogWarning("Showcase: " + w);
-                File.WriteAllText(Path.Combine(_captureRequest.ShowcaseDirectory, "warnings.txt"), string.Join("\n", ShowcaseColony.Warnings));
-                _captureRequest.RebuildShowcase = false;
-                Debug.Log($"Capture: showcase colony built in {(DateTime.Now - t0).TotalSeconds:0.0} s.");
+                File.WriteAllText(Path.Combine(dir, "warnings.txt"), string.Join("\n", ShowcaseColony.Warnings));
+                Debug.Log($"Capture: {(DemoPass ? "demo " : "")}showcase colony built in {(DateTime.Now - t0).TotalSeconds:0.0} s.");
             }
             BeginSession(store.Load(_content, config, out _));
             _freshColony = false;
             _show = JsonUtility.FromJson<ShowcaseColony.Layout>(File.ReadAllText(LayoutPath));
         }
 
-        string LayoutPath => Path.Combine(_captureRequest.ShowcaseDirectory, "layout.json");
+        string ShowcaseDirectory => DemoPass ? _captureRequest.DemoShowcaseDirectory : _captureRequest.ShowcaseDirectory;
+        string LayoutPath => Path.Combine(ShowcaseDirectory, "layout.json");
+        /// <summary>Showcase folders already rebuilt in this run (a rebuild request rebuilds each once).</summary>
+        readonly HashSet<string> _rebuiltShowcases = new();
 
         /// <summary>Where things are in the showcase colony (loaded with it).</summary>
         ShowcaseColony.Layout _show;

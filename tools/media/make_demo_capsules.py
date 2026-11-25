@@ -52,15 +52,23 @@ CAPSULES = {
     "library_capsule": dict(size=(600, 900), focus=(0.47, 0.5), logo_w=0.82, logo_top=0.06, plate=0.62, place="below"),
     "library_header": dict(size=(920, 430), focus=(0.5, 0.36), logo_w=0.33, logo_top=0.04, plate=0.62, place="below"),
 }
-# The store stills (Captures/stills) that show only what the demo has, in upload order: the meadow, nest, factory,
-# Elder Tree, threats and weather; none from the crystal caverns down, of fire ants, the Engine, the Codex, the flight
-# or the genetic tree, nor the research / castes / queen screens (they list full game nodes as bought).
+# The demo's screenshots in upload order (the first five show on the page): the store shots captured again in demo mode
+# (Antarium -> Capture -> Run Demo Store Shots, Captures/demo_stills: the demo's HUD, research tree and queen panel) and
+# the Ancient Seal, which only the demo has. Nothing from the crystal caverns down, fire ants, the Engine, the Codex,
+# the flight or the genetic tree. A still missing from demo_stills falls back to the full game's (Captures/stills).
 DEMO_SCREENSHOTS = [
-    "01_surface_and_nest", "02_colony", "03_factory", "06_elder_tree", "12_raid", "14_possession",
-    "13_thunderstorm", "04_factory_flow_overlay", "07_starfall_night", "15_giant_worm", "26_ore_room",
-    "27_queen_and_storage", "17_waterworks", "18_ore_overlay", "25_sunset", "28_nest_wide",
+    "01_surface_and_nest", "02_colony", "03_factory", "06_elder_tree", "seal_2_the_deep_glows", "12_raid",
+    "14_possession", "13_thunderstorm", "04_factory_flow_overlay", "07_starfall_night", "15_giant_worm",
+    "seal_1_below_the_shaft", "26_ore_room", "20_research", "19_queen_panel", "27_queen_and_storage",
+    "17_waterworks", "18_ore_overlay", "25_sunset", "28_nest_wide",
 ]
+DEMO_STILLS = os.path.join("Captures", "demo_stills")
 STILLS = os.path.join("Captures", "stills")
+# Full game stills that may stand in when the demo pass hasn't made one (their HUD lists full game items); the panels
+# and the seal have no stand-in.
+FALLBACK_OK = {"01_surface_and_nest", "02_colony", "03_factory", "06_elder_tree", "12_raid", "14_possession",
+               "13_thunderstorm", "04_factory_flow_overlay", "07_starfall_night", "15_giant_worm", "26_ore_room",
+               "27_queen_and_storage", "17_waterworks", "18_ore_overlay", "25_sunset", "28_nest_wide"}
 LIBRARY_LOGO_HEIGHT = 720  # Valve: 1280 wide and/or 720 tall, transparent PNG
 OVERLAP = 0.05  # the plate tucks this share of its height under the logo's "2" plate
 
@@ -263,13 +271,20 @@ def main():
     shots = os.path.join(args.out, "screenshots")
     os.makedirs(shots, exist_ok=True)
     copied = 0
-    for i, name in enumerate(DEMO_SCREENSHOTS, 1):
-        src = os.path.join(STILLS, name + ".png")
-        if os.path.exists(src):
-            shutil.copyfile(src, os.path.join(shots, f"{i:02d}_{name[3:]}.png"))
-            copied += 1
-        else:
-            print(f"missing still {src} (run the store shots first)")
+    for old in os.listdir(shots):
+        if old.endswith(".png"):
+            os.remove(os.path.join(shots, old))
+    for name in DEMO_SCREENSHOTS:
+        src = os.path.join(DEMO_STILLS, name + ".png")
+        if not os.path.exists(src) and name in FALLBACK_OK:
+            src = os.path.join(STILLS, name + ".png")
+            print(f"{name}: no demo still, using the full game's (its HUD lists full game items)")
+        if not os.path.exists(src):
+            print(f"{name}: missing (run Antarium -> Capture -> Run Demo Store Shots)")
+            continue
+        copied += 1
+        short = name[3:] if name[:2].isdigit() else name
+        shutil.copyfile(src, os.path.join(shots, f"{copied:02d}_{short}.png"))
     print(f"{shots}: {copied} of {len(DEMO_SCREENSHOTS)} demo screenshots, in upload order")
     if args.preview:
         sheet = os.path.join(args.out, "contact_sheet.jpg")

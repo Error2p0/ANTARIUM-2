@@ -207,9 +207,17 @@ namespace Antarium.Gameplay
             return i < 0 ? "" : KeyName(action, i);
         }
 
+        /// <summary>
+        /// Key names from the binding path (a US keyboard's: "1", "Q") instead of the machine's keyboard layout (a Czech layout
+        /// names the 2 key "Ě"). On for media capture, so store screenshots show the keys most players see.
+        /// </summary>
+        public static bool LayoutNeutralKeyNames;
+
         public static string KeyName(InputAction action, int binding)
         {
-            string text = action.GetBindingDisplayString(binding, InputBinding.DisplayStringOptions.DontIncludeInteractions);
+            string text = LayoutNeutralKeyNames
+                ? InputControlPath.ToHumanReadableString(action.bindings[binding].effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice)
+                : action.GetBindingDisplayString(binding, InputBinding.DisplayStringOptions.DontIncludeInteractions);
             return text switch
             {
                 "Left Button" => "LMB",

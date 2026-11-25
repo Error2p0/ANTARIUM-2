@@ -68,6 +68,7 @@ Every system works, there is no time limit, and [b]your colony carries over to t
 [/list]
 
 [h2]The Ancient Seal[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_seal[/img]
 At the bottom of the stone strata your ants hit the [b]Ancient Seal[/b], where the Old Colony closed off the deep. This is where the demo ends, but you get a look through it first.
 
 When you buy the full game, it offers to [b]continue your demo colony[/b] with its ants, tunnels and progress, and the seal opens. Keep playing the demo as long as you like: nothing is lost.

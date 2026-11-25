@@ -134,6 +134,7 @@ namespace Antarium.Gameplay
                 yield return Still("06_elder_tree");
                 Hud(false);
             }
+            if (DemoPass) yield break; // the ruins, the Engine and the Codex lie beyond the demo's seal
 
             // Glow ants carrying their light through the dark ruins (zoom 4, a slow pan; the still camera part feeds a GIF).
             int ruins = math.min(3, _show.Outposts.Length - 1);
@@ -217,17 +218,20 @@ namespace Antarium.Gameplay
                 Hud(false);
             }
 
-            // Fire ants at work by the lava of the magma zone.
-            int magma = math.min(2, _show.Outposts.Length - 1);
-            var hot = _show.Outposts[magma];
-            for (int i = 0; i < 8; i++) _sim.Ants.Spawn(hot + new int2(i * 2 - 8, 0), (uint)(760 + i), AntCaste.Fire);
-            Cam((float2)hot + new float2(0f, 2f), 4);
-            yield return Seconds(2f);
-            yield return Clip("s08_fire_ants", 5f);
-            Hud(true);
-            yield return Seconds(0.2f);
-            yield return Still("16_fire_ants");
-            Hud(false);
+            // Fire ants at work by the lava of the magma zone (not in the demo: both lie beyond its seal).
+            if (!DemoPass)
+            {
+                int magma = math.min(2, _show.Outposts.Length - 1);
+                var hot = _show.Outposts[magma];
+                for (int i = 0; i < 8; i++) _sim.Ants.Spawn(hot + new int2(i * 2 - 8, 0), (uint)(760 + i), AntCaste.Fire);
+                Cam((float2)hot + new float2(0f, 2f), 4);
+                yield return Seconds(2f);
+                yield return Clip("s08_fire_ants", 5f);
+                Hud(true);
+                yield return Seconds(0.2f);
+                yield return Still("16_fire_ants");
+                Hud(false);
+            }
 
             // A water wheel under a stream, in a chamber under the storage hall (glow ants light it).
             yield return Waterworks(q + new float2(-34f, -21f));

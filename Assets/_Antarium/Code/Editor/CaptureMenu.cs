@@ -25,6 +25,16 @@ namespace Antarium.Editor
         [MenuItem("Antarium/Capture/Run Short-Form Video Shots")]
         static void RunShorts() => Run("shorts", rebuild: false);
 
+        /// <summary>
+        /// The demo's store page media: the store stills again in demo mode on the demo's own showcase colony (to
+        /// <c>Captures/demo_stills</c>) and the Ancient Seal (stills and the <c>d_seal</c> clip).
+        /// </summary>
+        [MenuItem("Antarium/Capture/Run Demo Store Shots")]
+        static void RunDemo() => Run("demo", rebuild: false);
+
+        [MenuItem("Antarium/Capture/Rebuild Demo Showcase and Run Demo Store Shots")]
+        static void RebuildDemo() => Run("demo", rebuild: true);
+
         [MenuItem("Antarium/Capture/Run Every Shot (with review stills)")]
         static void RunEvery() => Run("all", rebuild: false);
 

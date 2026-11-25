@@ -124,6 +124,8 @@ namespace Antarium.Gameplay
 
             _content = ContentDB.Build(content);
             var capture = CaptureRequest.Get();
+            // Store media show the keys as a US keyboard prints them, whatever layout the capturing machine has.
+            GameInput.LayoutNeutralKeyNames = capture != null;
             // The demo (GDD 2.16): sealed colonies, full game locks, its own save folder and Steam app, no achievements.
             _content.DemoActive = capture == null && DemoBuild && _content.Demo != null;
             string data = DataDirectory(IsDemo);

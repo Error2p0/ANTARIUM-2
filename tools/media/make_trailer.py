@@ -104,7 +104,8 @@ GAMEPLAY = [
 
 # The demo app's own page (Valve asks a demo page for a trailer of the demo itself): only what the demo has, from the
 # meadow down to the stone strata and the Elder Tree; no crystal caverns, magma, ruins, fire ants, Engine or flight.
-# Ends on the free demo and the carry-over instead of the wishlist line.
+# Its last beat is the Ancient Seal (d_seal, from the demo capture set: Antarium -> Capture -> Run Demo Store Shots), and
+# it ends on the free demo and the carry-over instead of the wishlist line.
 DEMO = [
     ("clip", "t03_dig", 0.2, 4.0, "DIG YOUR NEST"),
     ("clip", "t03b_dig_haul", 0.0, 2.0),
@@ -122,6 +123,7 @@ DEMO = [
     ("clip", "t10_raid", 0.5, 4.5, "DEFEND THE NEST"),
     ("clip", "s07_worm", 0.5, 3.0),
     ("clip", "t11_possess", 0.3, 4.0, "TAKE CONTROL OF ANY ANT"),
+    ("clip", "d_seal", 2.0, 5.5, "REACH THE ANCIENT SEAL"),
     ("end", None, 4.5),
 ]
 

@@ -113,8 +113,9 @@ namespace Antarium.Sim
         /// <summary>Completes every research node (effects applied, nothing paid).</summary>
         public void ResearchAllNow()
         {
+            var fullGame = DemoRules?.FullGameResearch; // a demo run researches only what the demo has
             for (int r = 0; r < Content.Research.Length; r++)
-                Research.Apply(r);
+                if (fullGame == null || !fullGame[r]) Research.Apply(r);
             Buildings.MarkNetworkDirty();
             _forceFields = true;
         }

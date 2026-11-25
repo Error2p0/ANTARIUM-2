@@ -36,9 +36,10 @@ GIFS = {
     "antarium_flight": [("t15_flight", 0.0, 4.5)],
     # Demo page (only what the demo has; the others above that qualify are colony, dig, factory, sky, raid, possess).
     "antarium_elder_tree": [("s04_elder_tree", 2.0, 3.2)],
+    "antarium_seal": [("d_seal", 2.5, 4.5)],  # from the demo capture set
 }
 # Clips shot at zoom 3: the centre THIRD_CROP is scaled to a third instead (one GIF pixel per art pixel).
-THIRDS = {"s04_elder_tree"}
+THIRDS = {"s04_elder_tree", "d_seal"}
 THIRD_CROP = (1680, 945)  # -> 560x315
 
 

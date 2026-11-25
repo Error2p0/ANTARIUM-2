@@ -417,8 +417,9 @@ namespace Antarium.Sim
         public void GiveResources(int items, float food)
         {
             var inv = Colony.Inventory;
+            var fullGame = DemoRules?.FullGameItem; // a demo run gets only what the demo has
             for (int i = 0; i < Content.Items.Length; i++)
-                if (!Content.Items[i].IsFood) inv.Add((ushort)i, items, Colony.QueenCell);
+                if (!Content.Items[i].IsFood && (fullGame == null || !fullGame[i])) inv.Add((ushort)i, items, Colony.QueenCell);
             inv.Food = math.min(inv.FoodCapacity, inv.Food + food);
             inv.AcceptanceChanged = true;
         }

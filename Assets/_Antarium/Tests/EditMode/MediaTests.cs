@@ -160,5 +160,43 @@ namespace Antarium.Tests
             for (int y = layout.Outposts[^1].y + 2; y < layout.Queen.y - 8; y += 50)
                 Assert.IsTrue(sim.World[layout.ShaftX, y].IsOpen, $"shaft open at {y}");
         }
+
+        [Test]
+        public void ShowcaseColony_InDemoMode_StopsAboveTheSealWithNothingFromTheFullGame()
+        {
+            var db = AssetDatabase.LoadAssetAtPath<ContentDatabase>("Assets/_Antarium/Content/ContentDatabase.asset");
+            var config = AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/_Antarium/Content/GameConfig.asset");
+            using var content = ContentDB.Build(db);
+            content.DemoActive = true;
+            using var sim = ShowcaseColony.Build(content, config, settleSeconds: 5f);
+            var demo = content.ActiveDemo;
+            Assert.IsNotNull(demo);
+            Assert.IsTrue(sim.Demo.Sealed, "the demo showcase's world has the seal");
+            Assert.IsFalse(sim.Demo.SealReached, "the build leaves the seal for the shot to reach");
+            var layout = ShowcaseColony.Last;
+            CollectionAssert.IsEmpty(layout.Outposts, "no outposts beyond the seal");
+
+            // The deepest tunnel comes down to just above the seal: rock left above it in every column it covers.
+            var s = layout.SealShaft;
+            Assert.AreEqual(layout.ShaftX, s.x);
+            Assert.IsTrue(sim.World[s.x, s.y].IsOpen, "the landing is dug out");
+            for (int y = s.y; y < s.y + 25; y += 4) Assert.IsTrue(sim.World[s.x, y].IsOpen, $"tunnel open at {y}");
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                int top = sim.Demo.SealTop[s.x + dx];
+                Assert.Greater(top, 0);
+                Assert.IsFalse(sim.World[s.x + dx, top + 1].IsOpen, $"rock left above the seal in column {s.x + dx}");
+            }
+
+            // Nothing the demo doesn't have: research, buildings, items, princesses.
+            for (int r = 0; r < content.Research.Length; r++)
+                Assert.AreEqual(!demo.FullGameResearch[r], sim.Research.Done[r], $"research {content.Research[r].Def.Id}");
+            foreach (var b in sim.Buildings.All)
+                if (b.Alive) Assert.IsFalse(demo.FullGameBuilding[b.Def], $"full game building {content.Buildings[b.Def].Def.Id} placed");
+            for (int i = 0; i < content.Items.Length; i++)
+                if (demo.FullGameItem[i]) Assert.AreEqual(0, sim.Colony.Inventory.Items[i], $"full game item {content.Items[i].Id} in stock");
+            Assert.AreEqual(0, sim.Colony.Princesses);
+            CollectionAssert.IsEmpty(ShowcaseColony.Warnings, string.Join("; ", ShowcaseColony.Warnings));
+        }
     }
 }

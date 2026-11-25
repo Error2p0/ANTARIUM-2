@@ -74,6 +74,8 @@ namespace Antarium.Gameplay
         /// <summary>Per building: name of the genetic trait that unlocks it when no research does (10.6: the Queen's Throne), else null.</summary>
         readonly string[] _unlockedByTrait;
         float _caveInToastCooldown;
+        /// <summary>No cave-in message (media capture: the showcase's sand settles often, and the message sat in many stills).</summary>
+        public bool QuietCaveIns;
         readonly VisualElement _contracts;
         /// <summary>The HUD element the tutorial points at (blinks), or null.</summary>
         VisualElement _glow;
@@ -799,6 +801,14 @@ namespace Antarium.Gameplay
             ToastShown?.Invoke();
         }
 
+        /// <summary>Takes the message off the screen at once (media capture: a still without a stale message).</summary>
+        public void ClearToast()
+        {
+            if (_toast == null) return;
+            _toastTimer = 0f;
+            _toast.AddToClassList("hidden");
+        }
+
         /// <summary>True when the pointer is over an interactive HUD element.</summary>
         public bool IsPointerOverUi(Vector2 screenPosition)
         {
@@ -969,7 +979,7 @@ namespace Antarium.Gameplay
             foreach (var e in events.Read<ContractClaimedEvent>())
                 ShowToast($"Contract complete: {_content.Contracts[e.Contract].Def.DisplayName}.");
             if (events.Read<GateBrokenEvent>().Length > 0) ShowToast("Enemies broke a gate! Workers will repair it once it is safe.");
-            if (events.Read<CaveInEvent>().Length > 0 && _caveInToastCooldown <= 0f)
+            if (events.Read<CaveInEvent>().Length > 0 && _caveInToastCooldown <= 0f && !QuietCaveIns)
             {
                 ShowToast("Cave-in! Fallen sand is marked for digging.");
                 _caveInToastCooldown = 15f;

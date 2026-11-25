@@ -16,7 +16,8 @@ namespace Antarium.Gameplay
 
         /// <summary>
         /// Shot names (see <c>GameBootstrap.Shots</c>); empty or "all" = every shot, "store" = the store page media only
-        /// (not the review stills), "shorts" = the vertical short-form footage (<c>shorts_*</c>).
+        /// (not the review stills), "shorts" = the vertical short-form footage (<c>shorts_*</c>), "demo" = the demo's store
+        /// media (<c>demo_*</c>: the store stills again in demo mode, and the Ancient Seal).
         /// </summary>
         public string[] Shots = Array.Empty<string>();
         public string OutputDirectory;
@@ -25,6 +26,8 @@ namespace Antarium.Gameplay
         /// <summary>Profile, settings and saves of the capture run: never the player's own.</summary>
         public string ScratchDirectory => Path.Combine(OutputDirectory, "_scratch");
         public string ShowcaseDirectory => Path.Combine(OutputDirectory, "_showcase");
+        /// <summary>The demo's showcase colony (built in demo mode: the Ancient Seal, nothing from the full game).</summary>
+        public string DemoShowcaseDirectory => Path.Combine(OutputDirectory, "_showcase_demo");
 
         /// <param name="storeMedia">The shot makes store page media (stills, clips), not review stills.</param>
         public bool Wants(string shot, bool storeMedia = false)
@@ -32,6 +35,7 @@ namespace Antarium.Gameplay
             if (Shots.Length == 0) return true;
             foreach (var s in Shots)
                 if (s == "all" || storeMedia && s == "store" || s == "shorts" && shot.StartsWith("shorts_", StringComparison.Ordinal)
+                    || s == "demo" && shot.StartsWith("demo_", StringComparison.Ordinal)
                     || string.Equals(s, shot, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
