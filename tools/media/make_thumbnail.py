@@ -1,7 +1,7 @@
 """Makes a trailer's custom thumbnail (1920x1080 PNG): one frame of the trailer itself, unchanged.
 
 Usage (from the project root, after a capture run):
-    python tools/media/make_thumbnail.py [--cut gameplay|general] [--frame g_colony/00090] [--out <file>.png]
+    python tools/media/make_thumbnail.py [--cut gameplay|general|demo] [--frame g_colony/00090] [--out <file>.png]
 
 Steam only accepts a frame from the video itself (1920x1080 .jpg or .png) and advises against text, so this takes a
 captured clip frame as it is (no logo, no caption) and checks that the trailer's edit really shows it: the frame
@@ -18,8 +18,9 @@ from make_trailer import CUTS, FADE, FPS, SIZE  # noqa: E402
 
 CLIPS = os.path.join("Captures", "clips")
 # The colony in cross-section (meadow on top, the busy nest below) for the gameplay cut; the storm over the hills and the nest for the general one.
-DEFAULT_FRAME = {"gameplay": "g_colony/00090", "general": "s03_storm/00120"}
-OUTPUTS = {"gameplay": "antarium2_gameplay_trailer_thumbnail.png", "general": "antarium2_trailer_thumbnail.png"}
+DEFAULT_FRAME = {"gameplay": "g_colony/00090", "general": "s03_storm/00120", "demo": "g_colony/00090"}
+OUTPUTS = {"gameplay": "antarium2_gameplay_trailer_thumbnail.png", "general": "antarium2_trailer_thumbnail.png",
+           "demo": "antarium2_demo_trailer_thumbnail.png"}
 
 
 def shown_in_cut(cut, clip, index):

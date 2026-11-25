@@ -110,11 +110,33 @@ The Steam Next Fest demo (GDD 2.16) is the same project built with `ANTARIUM_DEM
 
 **One-time setup (you):**
 1. ✅ (App ID 5676510) Steamworks → Antarium 2 → **Create demo** (on the app's landing page, under *All Associated Packages, DLC, Demos and Tools* or the *Demo* section; Valve's wording changes). It gets its own App ID; the depot is usually that ID + 1.
-2. The demo's store page is short: it inherits most of the main page. Fill in what Steamworks asks for (capsules can reuse the main ones with a *Demo* tag). Check *Steam Next Fest* rules for the demo (a playable build, no time-limited trials that hide the game, available during the fest).
+2. The demo's **own store page**: see [Demo store page](#demo-store-page) below. Check *Steam Next Fest* rules for the demo (a playable build, no time-limited trials that hide the game, available during the fest).
 3. **Installation → General**: launch option `Antarium2Demo.exe`, *Launch (Default)*, Windows. **Redistributables**: none (as the main app). Steam Cloud is not needed for the demo.
 4. The App ID is in `DemoConfig.asset` → *Demo App Id* (5676510) and in `steam/upload.ps1` (`$DemoAppId` 5676510, `$DemoDepotId` 5676511: change the depot there if Steamworks shows another). Rebuild (*Antarium → Build → Windows Demo*).
 5. Upload: `./steam/upload.ps1 -User <account> -Demo` (`-Preview` for a dry run; as for the main app the first upload may need the `default` build set live by hand before a `beta` branch can be made). Install the demo from Steam, start it, check `LocalLow/Elevate Studios/ANTARIUM 2 Demo/Player.log`, the Wishlist button (overlay) and that nothing unlocks achievements.
 6. Publish the demo (Valve reviews it like any build; allow several business days, more over the holidays), then post a Steam event on the main page.
+
+### Demo store page
+
+Valve's rules for a demo with its own page (*Demos* in the Steamworks docs, checked November 2026): a written description of **what the demo contains**, with anything only in the full game left out or clearly marked as such; **a trailer and at least 5 screenshots of the demo**; capsules and library art that **clearly show it is a demo**; a content survey that matches the demo. Steam adds the link back to the full game by itself. Everything below is in the repo or made by the scripts, all English (the main page's translations are not redone for the demo).
+
+| Steamworks field (demo app 5676510) | File |
+|---|---|
+| *Description → Short description* | `steam/store/demo/short_description.txt` (255 of 300 characters) |
+| *Description → About This Game* | `steam/store/demo/about_this_game.txt` (BBCode; what's in the demo, six sections with a GIF each, the Ancient Seal and the carry-over, *Only in the full game*, English only / no achievements) |
+| GIFs for *About* (upload first, as for the main page) | `Captures/gifs/`: `antarium_colony`, `_dig`, `_factory`, `_sky`, `_elder_tree` (new), `_raid`, `_possess` (~11 MB together) |
+| Trailer (category *Gameplay*) + thumbnail | `Captures/trailer/antarium2_demo_trailer.mp4` (~50 s) + `antarium2_demo_trailer_thumbnail.png` |
+| Screenshots (in this order; the first 5 show on the page) | `Captures/demo_store/screenshots/01_…`–`16_…` |
+| Header, small, main, vertical capsule | `Captures/demo_store/header_capsule.png`, `small_capsule.png`, `main_capsule.png`, `vertical_capsule.png` |
+| Library capsule, header, logo | `Captures/demo_store/library_capsule.png`, `library_header.png`, `library_logo.png` |
+| Library hero, page background | the main game's (the hero may not carry text; the background is the same scene) |
+
+**Making them:**
+- `python tools/media/make_demo_capsules.py --preview` → `Captures/demo_store/`: every capsule rebuilt from the main page's scene without the logo (`steam/store/demo/art/background.jpg`, the main page's 1438×810 page background as Steam serves it) and the game logo (`Assets/_Antarium/Icon/shortcut.png`), with a **DEMO plate** under the logo in the logo's own style (slate metal, gold bolts, yellow-to-orange letters in Silkscreen), drawn in art pixels and scaled by a whole number; the small capsule has the plate beside the logo. Layout per capsule in `CAPSULES`. With the original (lossless) capsule art, pass `--bg <scene> --logo <logo>`. It also copies the 16 demo screenshots (`DEMO_SCREENSHOTS`: stills of the meadow, nest, factory, Elder Tree, threats and weather; none from the crystal caverns down, nor the research / castes / queen screens, which list full game nodes as bought) into `screenshots/`, renumbered in upload order. `contact_sheet.jpg` shows every capsule at once.
+- `python tools/media/make_trailer.py --cut demo` and `python tools/media/make_thumbnail.py --cut demo`: the gameplay style (captions over the footage) with only demo content (*Dig your nest*, *Grow a colony*, *Build a living machine*, *Day, night and storm*, *Dig deeper*, *Find the Elder Tree*, *Defend the nest*, *Take control of any ant*), ending on *Free demo out now* / *Your colony carries over to the full game*.
+- `python tools/media/make_gifs.py --only antarium_elder_tree` (zoom-3 clips are scaled to a third whole, `THIRDS`).
+
+**Known limits:** the stills were captured in the full game's showcase colony, so the HUD's resource bar also lists full game items (princesses, crystal shards, obsidian, relics, tablets). A demo capture set (the showcase in demo mode, and a shot of the Ancient Seal with the crystal caverns glowing through) would fix that and add the one view only the demo has. The capsules are rebuilt from the JPEG Steam serves, not the original art.
 
 ## Store page media and text
 

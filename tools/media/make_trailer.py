@@ -4,9 +4,9 @@ Usage (from the project root, after Antarium -> Capture -> Run All Store Shots):
     python tools/media/make_trailer.py [--cut general|gameplay] [--music Assets/_Antarium/Audio/Music/music_title.wav]
                                        [--logo game_logo.png] [--studio studio_logo.png] [--out <file>.mp4]
 
-Two cuts (CUTS below): "general" (story-led, Steam category General / Cinematic; the default) and "gameplay" (straight
+Three cuts (CUTS below): "general" (story-led, Steam category General / Cinematic; the default), "gameplay" (straight
 into play, short captions over the footage instead of cards, Steam category Gameplay; list it first on the store
-page). Each edit is a list of clip segments (1080p60 PNG frames from Captures/clips) and title cards drawn in the
+page) and "demo" (the demo app's page: the gameplay style with only what the demo has, ending on the free demo). Each edit is a list of clip segments (1080p60 PNG frames from Captures/clips) and title cards drawn in the
 game's Silkscreen font, joined with short crossfades, with one music track faded in and out. The end card shows the
 game logo (--logo, default Assets/_Antarium/Icon/shortcut.png) over the wishlist line and the studio logo (--studio,
 default Assets/_Antarium/Icon/elevate_white_logo.png); a missing logo falls back to text. Output: H.264 1920x1080 60 fps,
@@ -102,8 +102,36 @@ GAMEPLAY = [
     ("end", None, 4.0),
 ]
 
-CUTS = {"general": GENERAL, "gameplay": GAMEPLAY}
-OUTPUTS = {"general": "antarium2_trailer.mp4", "gameplay": "antarium2_gameplay_trailer.mp4"}
+# The demo app's own page (Valve asks a demo page for a trailer of the demo itself): only what the demo has, from the
+# meadow down to the stone strata and the Elder Tree; no crystal caverns, magma, ruins, fire ants, Engine or flight.
+# Ends on the free demo and the carry-over instead of the wishlist line.
+DEMO = [
+    ("clip", "t03_dig", 0.2, 4.0, "DIG YOUR NEST"),
+    ("clip", "t03b_dig_haul", 0.0, 2.0),
+    ("clip", "t02_queen", 0.3, 2.6, "GROW A COLONY"),
+    ("clip", "g_colony", 0.0, 3.0),
+    ("clip", "t04_ore_room", 0.5, 2.6, "BUILD A LIVING MACHINE"),
+    ("clip", "t05_factory", 0.5, 4.0),
+    ("clip", "t05b_flow_overlay", 0.3, 2.0),
+    ("clip", "s09_waterworks", 0.5, 2.6),
+    ("clip", "s03_storm", 0.3, 3.0, "DAY, NIGHT AND STORM"),
+    ("clip", "s01_dusk", 1.0, 3.0),
+    ("clip", "s02_starfall", 0.5, 2.6),
+    ("clip", "t12_seismic", 0.5, 2.6, "DIG DEEPER"),
+    ("clip", "s04_elder_tree", 0.5, 3.6, "FIND THE ELDER TREE"),
+    ("clip", "t10_raid", 0.5, 4.5, "DEFEND THE NEST"),
+    ("clip", "s07_worm", 0.5, 3.0),
+    ("clip", "t11_possess", 0.3, 4.0, "TAKE CONTROL OF ANY ANT"),
+    ("end", None, 4.5),
+]
+
+CUTS = {"general": GENERAL, "gameplay": GAMEPLAY, "demo": DEMO}
+OUTPUTS = {"general": "antarium2_trailer.mp4", "gameplay": "antarium2_gameplay_trailer.mp4",
+           "demo": "antarium2_demo_trailer.mp4"}
+# The end card's lines under the logo: the first large, the rest smaller.
+END_LINES = {"general": ["WISHLIST NOW ON STEAM"], "gameplay": ["WISHLIST NOW ON STEAM"],
+             "demo": ["FREE DEMO OUT NOW", "YOUR COLONY CARRIES OVER TO THE FULL GAME"]}
+end_lines = END_LINES["general"]
 
 
 def font(size, path=FONT):
@@ -149,7 +177,9 @@ def end_card(logo, studio):
         paste_logo(im, logo, (0, 50, SIZE[0], 610))
     else:
         centred("ANTARIUM 2", 280, 150, AMBER)
-    centred("WISHLIST NOW ON STEAM", 715, 52, AMBER)
+    centred(end_lines[0], 700 if len(end_lines) > 1 else 715, 52, AMBER)
+    for k, line in enumerate(end_lines[1:]):
+        centred(line, 785 + k * 44, 28, PARCHMENT)
     if studio and os.path.exists(studio):
         paste_logo(im, studio, (0, 850, SIZE[0], 150))
     else:
@@ -207,7 +237,8 @@ def segment_frames(kind, data, start, seconds, clips, tmp, logo, studio, index, 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cut", choices=sorted(CUTS), default="general",
-                        help="general = story-led (Steam: General / Cinematic), gameplay = straight into play (Steam: Gameplay)")
+                        help="general = story-led (Steam: General / Cinematic), gameplay = straight into play (Steam: Gameplay), "
+                             "demo = the demo's own page (Gameplay, demo content only)")
     parser.add_argument("--clips", default=os.path.join("Captures", "clips"))
     parser.add_argument("--music", default=os.path.join("Assets", "_Antarium", "Audio", "Music", "music_title.wav"))
     parser.add_argument("--logo", default=os.path.join(ICONS, "shortcut.png"), help="game logo on the end card")
@@ -216,6 +247,8 @@ def main():
     parser.add_argument("--bitrate", default="12M", help="video bitrate; Steam asks for 5000+ kbps")
     args = parser.parse_args()
     args.out = args.out or os.path.join("Captures", "trailer", OUTPUTS[args.cut])
+    global end_lines
+    end_lines = END_LINES[args.cut]
 
     tmp = tempfile.mkdtemp(prefix="trailer_")
     seq = os.path.join(tmp, "seq")

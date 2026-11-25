@@ -1,0 +1,85 @@
+[img]{STEAM_APP_IMAGE}/extras/antarium_colony[/img]
+
+[i]Long ago, the Old Colony filled these depths. Then the fire below grew restless, and before it fell silent, the Old Colony sealed the deep behind it.[/i]
+
+[i]Now, under the grass, a new queen begins to dig.[/i]
+
+[b]This is the free demo of Antarium 2[/b], an active incremental game and a colony automation sim in one. Found your first colony in a hole in a meadow and grow it into a living machine of tunnels, silk belts and busy chambers, all the way down to the Ancient Seal at the bottom of the stone strata.
+
+Every system works, there is no time limit, and [b]your colony carries over to the full game[/b].
+
+[h2]What's in the demo[/h2]
+[list]
+[*][b]Your first colony[/b], from the meadow down to the Ancient Seal: [b]Topsoil and Roots[/b], [b]Clay and Groundwater[/b] and the [b]Stone Strata[/b], with the hidden cavern of the [b]Elder Tree[/b].
+[*][b]9 of the 10 castes[/b], [b]39 of the 46 research discoveries[/b] and [b]22 of the 26 buildings[/b].
+[*]Day and night, rain, thunderstorms and starfall nights, raids, random events and offline progress.
+[*]A tutorial for your first minutes and a help guide that grows with your colony (F1).
+[/list]
+
+[h2]Dig, and the colony follows[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_dig[/img]
+[list]
+[*][b]Click and hold to dig[/b] yourself: debris flies, the screen shakes and a combo builds while you keep breaking rock. Pick a brush size, and mind your strength.
+[*][b]Paint orders, not ants.[/b] Mark rock for mining and paint storage zones. Workers take the jobs, haul every find home and climb walls and ceilings to get there.
+[*]Every item is physical: ore piles up where it falls, sits on storage shelves and rides on belts.
+[/list]
+
+[h2]Build a living machine[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_factory[/img]
+[list]
+[*][b]Silk and iron belts, root lifts, splitters, filters, chests and unloaders[/b] move ore from the mining front to your machines, and the items visibly ride along.
+[*][b]Smelters, crushers, fungus gardens, aphid ranches, archives and nurseries[/b] turn raw finds into copper, iron, food, honeydew and knowledge.
+[*][b]Put the water to work:[/b] pumps move it, water wheels speed up nearby machines and irrigation grows bigger harvests.
+[*][b]Flow, light and ore overlays[/b] show what is moving, what is jammed, where it is dark and where the ore lies.
+[/list]
+
+[h2]A world above and below[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_sky[/img]
+[list]
+[*]Your colony lives under [b]a real sky[/b]: day and night, rolling hills, trees with deep roots, lakes and rivers.
+[*][b]Rain and thunderstorms[/b] pour water into careless tunnels. On rare [b]starfall nights[/b] shooting stars fill the sky and the hunters stay home.
+[*][b]Forage the wild:[/b] seeds, berries, apples and toadstools on the surface, and mushrooms that glow in the caves below.
+[*]Groundwater floods, sand caves in, and fire spreads through coal seams and roots. Bring [b]glow ants[/b] to light the dark.
+[/list]
+
+[h2]Find the Elder Tree[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_elder_tree[/img]
+[list]
+[*]Somewhere in the stone lies a great hidden cavern, and an ancient tree grows there, glowing in the dark.
+[*]Break in to harvest its [b]golden apples[/b], and climb its branches like any rock.
+[/list]
+
+[h2]Defend the nest[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_raid[/img]
+[list]
+[*][b]Termite raids[/b] march in for your food stores, and [b]rival ants[/b] come to rob your storerooms.
+[*]A [b]mole cricket[/b] tunnels toward the queen, a [b]giant earthworm[/b] churns through the soil, and centipedes wait in the stone.
+[*]Birds hunt your foragers by day, and wolf spiders come out at night.
+[*]Raise soldiers, build resin and iron gates, traps and earth walls, and design chokepoints that hold.
+[/list]
+
+[h2]Take control[/h2]
+[img]{STEAM_APP_IMAGE}/extras/antarium_possess[/img]
+[list]
+[*][b]Possess any ant[/b] and play it yourself: run, tunnel, carry and fight, with a warm light in the dark.
+[*][b]Paint pheromones:[/b] trails that speed ants up, scents that pull them to digging, gathering or defending, and areas to avoid.
+[*][b]Set the caste mix[/b] and the queen lays it: workers, miners, haulers, builders, nurses, scouts, engineers, soldiers and glow ants.
+[*][b]Evolve your queen[/b], set job priorities, and use [b]Frenzy, Seismic Sense, Royal Decree and Pheromone Burst[/b] when it counts.
+[/list]
+
+[h2]The Ancient Seal[/h2]
+At the bottom of the stone strata your ants hit the [b]Ancient Seal[/b], where the Old Colony closed off the deep. This is where the demo ends, but you get a look through it first.
+
+When you buy the full game, it offers to [b]continue your demo colony[/b] with its ants, tunnels and progress, and the seal opens. Keep playing the demo as long as you like: nothing is lost.
+
+[h2]Only in the full game[/h2]
+[list]
+[*][b]Four deep biomes below the seal:[/b] the crystal caverns, the fungal depths, the magma zone and the ancient ruins, each with its own creatures and dangers.
+[*][b]The story of the Old Colony:[/b] relics, tablets, twelve lore fragments and the Ancient Engine to restore.
+[*][b]Fire ants[/b], Crystal Resonators, obsidian plating and the ancient research tier.
+[*][b]The Nuptial Flight:[/b] raise princesses, found new colonies and spend Genetic Memory on 23 permanent traits.
+[*]Bloodlines in three save slots, 12 world modifiers and biome variants, and 49 Steam achievements.
+[/list]
+In the demo these show as [i]Full game[/i] in the research tree and the queen's evolutions, so you can see what is coming.
+
+[i]The demo and the game are in English only. The demo has no Steam achievements. Your demo colony carries over on the same PC.[/i]

@@ -5,7 +5,7 @@ Usage (from the project root, after Antarium -> Capture -> Run All Store Shots):
 
 Each GIF is one or more segments of 1080p60 clips in Captures/clips: the centre 1280x720 is cut out and halved with
 nearest-neighbour scaling (clips that feed a GIF use an even zoom, so art pixels stay crisp), every 3rd frame is kept
-(15 fps) and ffmpeg builds one palette per GIF without dithering (the game's own dither stays exact). Needs Pillow
+(15 fps; clips at zoom 3 are scaled to a third whole, THIRDS) and ffmpeg builds one palette per GIF without dithering (the game's own dither stays exact). Needs Pillow
 and imageio-ffmpeg (pip install pillow imageio-ffmpeg).
 """
 import argparse
@@ -34,7 +34,12 @@ GIFS = {
     "antarium_raid": [("t10_raid", 1.5, 4.5)],
     "antarium_possess": [("t11_possess", 0.5, 4.0)],
     "antarium_flight": [("t15_flight", 0.0, 4.5)],
+    # Demo page (only what the demo has; the others above that qualify are colony, dig, factory, sky, raid, possess).
+    "antarium_elder_tree": [("s04_elder_tree", 2.0, 3.2)],
 }
+# Clips shot at zoom 3: the centre THIRD_CROP is scaled to a third instead (one GIF pixel per art pixel).
+THIRDS = {"s04_elder_tree"}
+THIRD_CROP = (1680, 945)  # -> 560x315
 
 
 def frames_of(clips_dir, clip, start, seconds):
@@ -58,6 +63,12 @@ def build(name, segments, clips_dir, out_dir, colors=128):
             for path in frames_of(clips_dir, clip, start, seconds):
                 im = Image.open(path).convert("RGB")
                 w, h = im.size
+                if clip in THIRDS:
+                    left, top = (w - THIRD_CROP[0]) // 6 * 3, (h - THIRD_CROP[1]) // 6 * 3
+                    im = im.crop((left, top, left + THIRD_CROP[0], top + THIRD_CROP[1]))
+                    im.resize((THIRD_CROP[0] // 3, THIRD_CROP[1] // 3), Image.NEAREST).save(os.path.join(tmp, f"{n:05d}.png"))
+                    n += 1
+                    continue
                 left, top = (w - CROP[0]) // 2 // 2 * 2, (h - CROP[1]) // 2 // 2 * 2
                 im = im.crop((left, top, left + CROP[0], top + CROP[1]))
                 im = im.resize((CROP[0] // 2, CROP[1] // 2), Image.NEAREST)
